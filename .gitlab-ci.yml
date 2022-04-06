@@ -1,0 +1,88 @@
+image: debian:11.2
+
+stages: 
+  - static analysis 
+  - build
+
+.cmake_vriables:
+  default_cmake_variables: &default_cmake_variables 
+    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
+    CMAKE_BUILD_TYPE: Debug 
+    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    CXX: g++
+
+.snippets: 
+  - &install_dependencies
+    apt-get update -y
+    && apt-get install --no-install-recommends -y build-essential cmake
+  - &configure 
+    mkdir -p "${CMAKE_BUILD_DIR}"
+    && pushd "${CMAKE_BUILD_DIR}"
+    && (
+      set -x;
+      cmake ..
+      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
+      -DCMAKE_CXX_COMPILER="${CXX}"
+    )
+    && popd
+  - &build 
+    make -C "${CMAKE_BUILD_DIR}" -j 4 
+
+.default_job: &default_job 
+  tags: 
+    - docker
+  variables:
+    <<: *default_cmake_variables 
+  before_script: 
+    - *install_dependencies
+  script: 
+    - *configure 
+    - *build 
+
+Format: 
+  <<: *default_job
+  stage: static analysis
+  variables: 
+    <<: *default_cmake_variables 
+  before_script: 
+    - apt-get update -y
+    - apt-get install --no-install-recommends -y
+      git
+      clang clang-format
+  script: 
+    - ./tools/run_format.sh
+      && git status 
+      && git diff-index --quiet HEAD 
+      || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
+
+Lint: 
+  <<: *default_job
+  stage: static analysis
+  variables:
+    <<: *default_cmake_variables
+    CMAKE_BUILD_TYPE: Debug
+    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    CXX: clang++
+  before_script:
+    - *install_dependencies
+    - apt-get update -y && apt-get upgrade -y
+    - apt-get install --no-install-recommends -y
+      clang clang-tidy
+    - *configure
+    - *build
+  script: 
+    - ./tools/run_lint.sh "${CMAKE_BUILD_DIR}"
+
+Debug:
+  <<: *default_job
+  stage: build
+  variables:
+    <<: *default_cmake_variables
+    CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    name: debug 
+    paths:
+      - "${CMAKE_BUILD_DIR}"
+
+
