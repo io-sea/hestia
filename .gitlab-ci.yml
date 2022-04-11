@@ -8,14 +8,17 @@ stages:
 .cmake_vriables:
   default_cmake_variables: &default_cmake_variables 
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
-    CMAKE_BUILD_TYPE: Debug 
-    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    CMAKE_BUILD_TYPE: Release 
     CXX: g++
+    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    HESTIA_BUILD_TESTS: "OFF" 
+    HESTIA_DEPENDENCIES: "build-essential cmake" 
 
 .snippets: 
   - &install_dependencies
     apt-get update -y
-    && apt-get install --no-install-recommends -y build-essential cmake
+    && [[ "${HESTIA_BUILD_TESTS}" = "ON" ]] && HESTIA_DEPENDENCIES="${HESTIA_DEPENDENCIES} catch2" || true
+    && apt-get install --no-install-recommends -y ${HESTIA_DEPENDENCIES}
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -86,4 +89,12 @@ Debug:
     paths:
       - "${CMAKE_BUILD_DIR}"
 
-
+Release:
+  <<: *default_job
+  stage: build
+  variables:
+    <<: *default_cmake_variables
+  artifacts:
+    name: release 
+    paths:
+      - "${CMAKE_BUILD_DIR}"
