@@ -28,6 +28,7 @@ stages:
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
       -DCMAKE_CXX_COMPILER="${CXX}"
+      -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
     )
     && popd
   - &build 
@@ -68,6 +69,7 @@ Lint:
     CMAKE_BUILD_TYPE: Debug
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     CXX: clang++
+    HESTIA_BUILD_TESTS: "ON" 
   before_script:
     - *install_dependencies
     - apt-get update -y && apt-get upgrade -y
@@ -98,3 +100,16 @@ Release:
     name: release 
     paths:
       - "${CMAKE_BUILD_DIR}"
+Unit_test:
+  <<: *default_job
+  stage: test
+  variables:
+    <<: *default_cmake_variables
+    CMAKE_BUILD_TYPE: Debug
+    HESTIA_BUILD_TESTS: "ON"
+  artifacts:
+    name: debug 
+    paths:
+      - "${CMAKE_BUILD_DIR}"
+  dependencies:
+    - Debug
