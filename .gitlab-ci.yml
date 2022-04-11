@@ -3,6 +3,7 @@ image: debian:11.2
 stages: 
   - static analysis 
   - build
+  - test
 
 .cmake_vriables:
   default_cmake_variables: &default_cmake_variables 
