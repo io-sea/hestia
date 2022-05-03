@@ -29,6 +29,17 @@ class Object_store {
         const struct hsm_uint& oid,
         const void* buf,
         const std::size_t length) = 0;
+
+    ///
+    /// @brief  Retrieve teh actual data rfom the object store
+    ///
+    /// @param buf Buffer to store the data retrieved
+    /// @param length Amount of data to retrieve in bytes
+    ///
+
+
+    virtual int get(
+        const struct hsm_uint& oid, void* buf, const std::size_t lentgh) = 0;
 };
 
 }  // namespace obj

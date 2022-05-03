@@ -30,6 +30,15 @@ class Kv_store {
     /// @param hsm_obj Object containing relevant metatdata
     ///
     virtual int put_meta_data(const struct hsm_obj& obj) = 0;
+
+
+    ///
+    /// @brief Retrieve the metadata associated with an object from teh key-value store and populate the object with it
+    ///
+    /// @param hsm_obj Object to retrieve the metadata for
+    ///
+
+    virtual int get_meta_data(struct hsm_obj& obj) = 0;
 };
 
 }  // namespace kv

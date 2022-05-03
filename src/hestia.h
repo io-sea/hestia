@@ -13,4 +13,13 @@ int put(
     const std::size_t length,
     const std::uint8_t tgt_tier);
 
+int get(
+    const struct hsm_uint oid,
+    struct hsm_obj* obj,
+    void* buf,
+    const std::size_t off,
+    const std::size_t len,
+    const std::uint8_t src_tier,
+    const std::uint8_t tgt_tier);
+
 }  // namespace hestia

@@ -16,6 +16,9 @@ class Disk : Kv_store {
 
     /// @copydoc Kv_store::put_meta_data
     int put_meta_data(const struct hsm_obj& obj);
+
+    /// @copydoc Kv_store::get_meta_data
+    int get_meta_data(struct hsm_obj& obj);
 };
 
 }  // namespace kv

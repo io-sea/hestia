@@ -5,6 +5,7 @@ add_library(
     hestia_lib
 
     put.cc
+    get.cc
 )
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)
