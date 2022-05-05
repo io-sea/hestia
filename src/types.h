@@ -13,7 +13,6 @@ struct hsm_uint {
 
     hsm_uint() {}
     hsm_uint(std::uint64_t val) : lower(val) {}
-    hsm_uint(const hsm_uint& in) : higher(in.higher), lower(in.lower) {}
 };
 
 struct hsm_obj {

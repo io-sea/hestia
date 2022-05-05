@@ -28,18 +28,20 @@ class Object_store {
     virtual int put(
         const struct hsm_uint& oid,
         const void* buf,
-        const std::size_t length) = 0;
+        const std::size_t length,
+        const std::uint8_t target_tier = 0) = 0;
 
     ///
-    /// @brief  Retrieve teh actual data rfom the object store
+    /// @brief  Retrieve the actual data from the object store
     ///
     /// @param buf Buffer to store the data retrieved
     /// @param length Amount of data to retrieve in bytes
     ///
-
-
     virtual int get(
-        const struct hsm_uint& oid, void* buf, const std::size_t lentgh) = 0;
+        const struct hsm_uint& oid,
+        void* buf,
+        const std::size_t length,
+        const std::uint8_t src_tier = 0) = 0;
 };
 
 }  // namespace obj

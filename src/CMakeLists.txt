@@ -10,7 +10,12 @@ add_library(
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)
 
-target_link_libraries(hestia_lib kv_disk obj_disk)
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    include(../cmake/development_flags.cmake)
+    target_link_libraries(hestia_lib PUBLIC development_flags)
+endif()
+
+target_link_libraries(hestia_lib PRIVATE kv_disk obj_disk)
 
 add_executable(
     hestia

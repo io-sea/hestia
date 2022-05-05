@@ -17,9 +17,11 @@ int hestia::get(
 {
     // check for existance when that check is implemented
 
-    obj::Disk object_store;
-    object_store.get(oid, buf, len);
+    /* TODO temporary */
+    src_tier = tgt_tier;
 
+    obj::Disk object_store;
+    object_store.get(oid, static_cast<char*>(buf) + off, len, src_tier);
 
     kv::Disk kvs;
     kvs.get_meta_data(*obj);
