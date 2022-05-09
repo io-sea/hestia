@@ -1,8 +1,7 @@
+#include "../test/kv_store/disk.h"
+#include "../test/object_store/disk.h"
 #include "hestia.h"
-#include "kv_store/disk.h"
-#include "object_store/disk.h"
 #include <chrono>
-#include <iostream>
 
 void hestia::create_object(const struct hsm_uint& oid, struct hsm_obj& obj)
 {
@@ -26,7 +25,6 @@ int hestia::put(
     const std::uint8_t target_tier)
 {
     if (!is_overwrite) {
-        obj = new hsm_obj;
         create_object(oid, *obj);
     }
     else {

@@ -1,5 +1,5 @@
-add_subdirectory(kv_store)
-add_subdirectory(object_store)
+add_subdirectory(../test/kv_store ${CMAKE_CURRENT_BINARY_DIR}/kv_store)
+add_subdirectory(../test/object_store ${CMAKE_CURRENT_BINARY_DIR}/object_store)
 
 add_library(
     hestia_lib

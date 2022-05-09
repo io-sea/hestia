@@ -1,10 +1,8 @@
+#include "../test/kv_store/disk.h"
+#include "../test/object_store/disk.h"
 #include "hestia.h"
-#include "kv_store/disk.h"
-#include "object_store/disk.h"
 #include <chrono>
 #include <fstream>
-#include <iostream>
-
 
 int hestia::get(
     struct hsm_uint oid,
@@ -25,7 +23,6 @@ int hestia::get(
 
     kv::Disk kvs;
     kvs.get_meta_data(*obj);
-
 
     return 0;
 }

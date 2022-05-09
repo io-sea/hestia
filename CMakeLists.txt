@@ -20,6 +20,7 @@ option(
 #
 
 add_subdirectory(src)
+include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 if (HESTIA_BUILD_TESTS)
     add_subdirectory(test)

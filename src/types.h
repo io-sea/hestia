@@ -13,6 +13,15 @@ struct hsm_uint {
 
     hsm_uint() {}
     hsm_uint(std::uint64_t val) : lower(val) {}
+    hsm_uint(std::uint64_t higher, std::uint64_t lower) :
+        higher(higher), lower(lower)
+    {
+    }
+
+    bool operator==(const hsm_uint& other) const
+    {
+        return other.higher == higher && other.lower == lower;
+    }
 };
 
 struct hsm_obj {

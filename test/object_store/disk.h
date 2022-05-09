@@ -1,4 +1,4 @@
-#include "../object_store.h"
+#include "../../src/object_store.h"
 
 namespace hestia {
 namespace obj {
