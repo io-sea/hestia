@@ -12,7 +12,7 @@ stages:
     CXX: g++
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     HESTIA_BUILD_TESTS: "OFF" 
-    HESTIA_DEPENDENCIES: "build-essential cmake" 
+    HESTIA_DEPENDENCIES: "build-essential cmake nlohmann-json3-dev" 
 
 .snippets: 
   - &install_dependencies
@@ -33,6 +33,8 @@ stages:
     && popd
   - &build 
     make -C "${CMAKE_BUILD_DIR}" -j 4 
+  - &test
+    make -C "${CMAKE_BUILD_DIR}" test
 
 .default_job: &default_job 
   tags: 
@@ -100,16 +102,21 @@ Release:
     name: release 
     paths:
       - "${CMAKE_BUILD_DIR}"
+
 Unit_test:
   <<: *default_job
   stage: test
   variables:
     <<: *default_cmake_variables
-    CMAKE_BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: Release 
     HESTIA_BUILD_TESTS: "ON"
   artifacts:
     name: debug 
     paths:
       - "${CMAKE_BUILD_DIR}"
   dependencies:
-    - Debug
+    - Release
+  script:
+    - *configure
+    - *build
+    - *test

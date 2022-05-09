@@ -16,11 +16,19 @@ option(
 )
 
 #
+# External dependencies 
+#
+find_package(nlohmann_json 3.9.1 REQUIRED)
+
+#
 # Include subdirectories
 #
-
 add_subdirectory(src)
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
+target_include_directories(hestia_lib INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+  $<INSTALL_INTERFACE:src>
+)
 
 if (HESTIA_BUILD_TESTS)
     add_subdirectory(test)

@@ -22,4 +22,6 @@ int get(
     const std::uint8_t src_tier = 0,
     const std::uint8_t tgt_tier = 0);
 
+int set_attrs(const struct hsm_uint oid, const char* attrs);
+
 }  // namespace hestia

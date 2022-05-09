@@ -14,6 +14,8 @@ int main()
 
     hestia::get(oid, &obj, read_data.data(), 0, write_data.size(), 0, 0);
 
+    hestia::set_attrs(oid, R"({"key": "value"})");
+
     std::cout << read_data << '\n';
 
     return 0;

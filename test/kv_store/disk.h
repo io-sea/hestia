@@ -1,4 +1,5 @@
 #include "../../src/kv_store.h"
+#include <nlohmann/json.hpp>
 
 namespace hestia {
 namespace kv {
@@ -16,6 +17,9 @@ class Disk : Kv_store {
 
     /// @copydoc Kv_store::put_meta_data
     int put_meta_data(const struct hsm_obj& obj);
+
+    /// @copydoc Kv_store::put_meta_data
+    int put_meta_data(const struct hsm_uint& oid, const nlohmann::json& attrs);
 
     /// @copydoc Kv_store::get_meta_data
     int get_meta_data(struct hsm_obj& obj);

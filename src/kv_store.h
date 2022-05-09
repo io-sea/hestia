@@ -1,4 +1,5 @@
 #include "types.h"
+#include <nlohmann/json.hpp>
 
 namespace hestia {
 namespace kv {
@@ -27,10 +28,19 @@ class Kv_store {
     /// @brief  Send the metadata associated with an object to the key-value
     ///         store
     ///
-    /// @param hsm_obj Object containing relevant metatdata
+    /// @param oid ID of the object to check for existence
     ///
     virtual int put_meta_data(const struct hsm_obj& obj) = 0;
 
+    ///
+    /// @brief  Send the metadata associated with an object to the key-value
+    ///         store
+    ///
+    /// @param oid ID of the object to set attributes for
+    /// @param attrs JSON string representing the attributes to set
+    ///
+    virtual int put_meta_data(
+        const struct hsm_uint& oid, const nlohmann::json& attrs) = 0;
 
     ///
     /// @brief Retrieve the metadata associated with an object from teh key-value store and populate the object with it

@@ -13,12 +13,29 @@ bool hestia::kv::Disk::object_exists(const struct hsm_uint& oid)
 int hestia::kv::Disk::put_meta_data(const struct hsm_obj& obj)
 {
     std::ofstream file(
-        std::to_string(obj.oid.higher) + std::to_string(obj.oid.lower) + ".md");
+        std::to_string(obj.oid.higher) + std::to_string(obj.oid.lower) + ".md",
+        std::ios_base::app);
 
     std::for_each(
         obj.meta_data.begin(), obj.meta_data.end(), [&file](const auto& md) {
             file << md.first << " ; " << md.second << '\n';
         });
+
+    return 0;
+}
+
+int hestia::kv::Disk::put_meta_data(
+    const struct hsm_uint& oid, const nlohmann::json& attrs)
+{
+    auto attrs_map = attrs.get<std::unordered_map<std::string, std::string>>();
+
+    std::ofstream file(
+        std::to_string(oid.higher) + std::to_string(oid.lower) + ".md",
+        std::ios_base::app);
+
+    std::for_each(attrs_map.begin(), attrs_map.end(), [&file](const auto& md) {
+        file << md.first << " ; " << md.second << '\n';
+    });
 
     return 0;
 }

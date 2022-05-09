@@ -10,7 +10,8 @@ int hestia::obj::Disk::put(
 {
     std::ofstream file(
         std::to_string(target_tier) + '-' + std::to_string(oid.higher)
-        + std::to_string(oid.lower) + ".data");
+            + std::to_string(oid.lower) + ".data",
+        std::ios_base::app);
 
     file.write(static_cast<const char*>(buf), length);
 
