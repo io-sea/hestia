@@ -111,7 +111,7 @@ Unit_test:
     CMAKE_BUILD_TYPE: Release 
     HESTIA_BUILD_TESTS: "ON"
   artifacts:
-    name: debug 
+    name: release 
     paths:
       - "${CMAKE_BUILD_DIR}"
   dependencies:

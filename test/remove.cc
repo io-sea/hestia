@@ -31,14 +31,16 @@ SCENARIO(
 
         hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
 
-        std::string oid_string =
-            std::to_string(oid.higher) + std::to_string(oid.lower);
+        std::string md_filename = std::to_string(oid.higher) + '-'
+                                  + std::to_string(oid.lower) + ".md";
+        std::string data_filename = std::to_string(tier) + '-'
+                                    + std::to_string(oid.higher)
+                                    + std::to_string(oid.lower) + ".data";
 
         /* TODO: more general way of testing for object presence */
         /* ensure object exists in KV store and object store */
-        REQUIRE(std::filesystem::exists(oid_string + ".md"));
-        REQUIRE(std::filesystem::exists(
-            std::to_string(tier) + '-' + oid_string + ".data"));
+        REQUIRE(std::filesystem::exists(md_filename));
+        REQUIRE(std::filesystem::exists(data_filename));
 
         WHEN("the object is removed")
         {
@@ -47,12 +49,11 @@ SCENARIO(
             /* TODO: more general way of testing for object presence */
             THEN("the object does not exist in the KV store")
             {
-                REQUIRE(!std::filesystem::exists(oid_string + ".md"));
+                REQUIRE(!std::filesystem::exists(md_filename));
             }
             THEN("the object does not exist in the object store")
             {
-                REQUIRE(!std::filesystem::exists(
-                    std::to_string(tier) + '-' + oid_string + ".data"));
+                REQUIRE(!std::filesystem::exists(data_filename));
             }
         }
     }

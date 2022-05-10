@@ -30,6 +30,12 @@ int main()
 
     std::cout << read_data << '\n';
 
+    auto oids = hestia::list();
+
+    for (const auto& id : oids) {
+        std::cout << id.higher << id.lower << std::endl;
+    }
+
     hestia::remove(oid);
 
     return 0;

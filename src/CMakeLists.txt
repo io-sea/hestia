@@ -8,6 +8,7 @@ add_library(
     get.cc
     set_attrs.cc
     remove.cc
+    list.cc
 )
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)

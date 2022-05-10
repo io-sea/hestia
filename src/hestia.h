@@ -1,4 +1,5 @@
 #include "types.h"
+#include <vector>
 
 namespace hestia {
 
@@ -25,5 +26,7 @@ int get(
 int set_attrs(const struct hsm_uint oid, const char* attrs);
 
 int remove(const struct hsm_uint oid);
+
+std::vector<struct hsm_uint> list(const std::uint8_t tier = 0);
 
 }  // namespace hestia
