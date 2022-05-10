@@ -10,6 +10,7 @@ set(
     tests
 
     put_get.cc
+    remove.cc
 )
 
 set(sources catch_main.cc ${tests})

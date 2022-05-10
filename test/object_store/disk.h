@@ -24,6 +24,9 @@ class Disk : Object_store {
         void* buf,
         const std::size_t length,
         const std::uint8_t src_tier = 0);
+
+    /// @copydoc Object_store::remove
+    int remove(const struct hsm_uint& oid, const std::uint8_t tier = 0);
 };
 
 }  // namespace obj

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <unordered_map>
@@ -7,7 +8,8 @@
 
 bool hestia::kv::Disk::object_exists(const struct hsm_uint& oid)
 {
-    return false;
+    return std::filesystem::exists(
+        std::to_string(oid.higher) + std::to_string(oid.lower) + ".md");
 }
 
 int hestia::kv::Disk::put_meta_data(const struct hsm_obj& obj)
@@ -17,8 +19,9 @@ int hestia::kv::Disk::put_meta_data(const struct hsm_obj& obj)
         std::ios_base::app);
 
     std::for_each(
-        obj.meta_data.begin(), obj.meta_data.end(), [&file](const auto& md) {
-            file << md.first << " ; " << md.second << '\n';
+        obj.meta_data.begin(), obj.meta_data.end(),
+        [&file, this](const auto& md) {
+            file << md.first << m_delim << md.second << '\n';
         });
 
     return 0;
@@ -33,9 +36,10 @@ int hestia::kv::Disk::put_meta_data(
         std::to_string(oid.higher) + std::to_string(oid.lower) + ".md",
         std::ios_base::app);
 
-    std::for_each(attrs_map.begin(), attrs_map.end(), [&file](const auto& md) {
-        file << md.first << " ; " << md.second << '\n';
-    });
+    std::for_each(
+        attrs_map.begin(), attrs_map.end(), [&file, this](const auto& md) {
+            file << md.first << m_delim << md.second << '\n';
+        });
 
     return 0;
 }
@@ -46,13 +50,12 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
         std::to_string(obj.oid.higher) + std::to_string(obj.oid.lower) + ".md");
 
     std::string line;
-    std::string delim = ";";
 
     std::unordered_map<std::string, std::string> temp_md;
     while (std::getline(file, line)) {
         // split into the key and value using the delim ;
         // turn them into an unordered map
-        int pos           = line.find(delim);
+        int pos           = line.find(m_delim);
         std::string key   = line.substr(0, pos);
         std::string value = line.substr(pos + 1);
         temp_md.insert({key, value});
@@ -63,4 +66,10 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
     std::swap(obj.meta_data, temp_md);
 
     return 0;
+}
+
+int hestia::kv::Disk::remove(const struct hsm_uint& oid)
+{
+    return static_cast<int>(std::filesystem::remove(
+        std::to_string(oid.higher) + std::to_string(oid.lower) + ".md"));
 }

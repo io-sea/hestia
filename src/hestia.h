@@ -24,4 +24,6 @@ int get(
 
 int set_attrs(const struct hsm_uint oid, const char* attrs);
 
+int remove(const struct hsm_uint oid);
+
 }  // namespace hestia

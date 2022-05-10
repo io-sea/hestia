@@ -47,8 +47,14 @@ class Kv_store {
     ///
     /// @param hsm_obj Object to retrieve the metadata for
     ///
-
     virtual int get_meta_data(struct hsm_obj& obj) = 0;
+
+    ///
+    /// @brief Remove an object from the KV_store
+    ///
+    /// @param oid ID of the object to be removed
+    ///
+    virtual int remove(const struct hsm_uint& oid) = 0;
 };
 
 }  // namespace kv

@@ -42,6 +42,13 @@ class Object_store {
         void* buf,
         const std::size_t length,
         const std::uint8_t src_tier = 0) = 0;
+
+    ///
+    /// @brief  Remove the object for the backend object storage
+    ///
+    /// @param oid ID of the object to be removed
+    ///
+    virtual int remove(const struct hsm_uint& oid, const std::uint8_t tier) = 0;
 };
 
 }  // namespace obj

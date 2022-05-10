@@ -32,8 +32,21 @@ int hestia::put(
             std::chrono::system_clock::now().time_since_epoch().count();
     }
 
+    /* add object tier to metadata */
+    obj->meta_data["tier"] = std::to_string(target_tier);
+
     /* interface with kv store */
     kv::Disk kv_store;
+
+    /*
+     * if the object already exists and we are not attempting to overwrite or if
+     * the object doesn't exist and we are attempting to overwrite we should
+     * stop here and return an error (TODO: appropriate error code)
+     */
+    if (kv_store.object_exists(oid) != is_overwrite) {
+        return 1;
+    }
+
     kv_store.put_meta_data(*obj);
 
     /* send data to backend */

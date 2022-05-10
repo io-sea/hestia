@@ -13,16 +13,23 @@ int hestia::get(
     std::uint8_t src_tier,
     std::uint8_t tgt_tier)
 {
-    // check for existance when that check is implemented
-
     /* TODO temporary */
     src_tier = tgt_tier;
 
+    kv::Disk kvs;
+
+    /*
+     * check if the object exists before attempting a potentially expensive call
+     * to the object store! (TODO: appropriate error code)
+     */
+    if (!kvs.object_exists(oid)) {
+        return 1;
+    }
+
+    kvs.get_meta_data(*obj);
+
     obj::Disk object_store;
     object_store.get(oid, static_cast<char*>(buf) + off, len, src_tier);
-
-    kv::Disk kvs;
-    kvs.get_meta_data(*obj);
 
     return 0;
 }

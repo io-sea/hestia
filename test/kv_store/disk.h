@@ -1,5 +1,4 @@
 #include "../../src/kv_store.h"
-#include <nlohmann/json.hpp>
 
 namespace hestia {
 namespace kv {
@@ -23,6 +22,12 @@ class Disk : Kv_store {
 
     /// @copydoc Kv_store::get_meta_data
     int get_meta_data(struct hsm_obj& obj);
+
+    /// @copydoc Kv_store::remove
+    int remove(const struct hsm_uint& oid);
+
+  private:
+    const char m_delim = ';';
 };
 
 }  // namespace kv
