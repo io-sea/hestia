@@ -35,7 +35,7 @@ class Disk : Kv_store {
     std::string get_filename_from_oid(const struct hsm_uint& oid) const
     {
         return std::to_string(oid.higher) + '-' + std::to_string(oid.lower)
-               + ".md";
+               + ".meta";
     }
 };
 

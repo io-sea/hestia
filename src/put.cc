@@ -8,11 +8,11 @@ void hestia::create_object(const struct hsm_uint& oid, struct hsm_obj& obj)
     obj     = *(new hsm_obj);
     obj.oid = oid;
 
-    auto time_since_epoch = std::to_string(
-        std::chrono::system_clock::now().time_since_epoch().count());
+    auto time_since_epoch =
+        std::chrono::system_clock::now().time_since_epoch().count();
 
-    obj.meta_data.insert({"creation_time", time_since_epoch});
-    obj.meta_data.insert({"last_modified", time_since_epoch});
+    obj.meta_data["creation_time"] = time_since_epoch;
+    obj.meta_data["last_modified"] = time_since_epoch;
 }
 
 int hestia::put(
@@ -33,7 +33,7 @@ int hestia::put(
     }
 
     /* add object tier to metadata */
-    obj->meta_data["tier"] = std::to_string(target_tier);
+    obj->meta_data["tier"] = target_tier;
 
     /* interface with kv store */
     kv::Disk kv_store;

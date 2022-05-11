@@ -32,7 +32,7 @@ SCENARIO(
         hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
 
         std::string md_filename = std::to_string(oid.higher) + '-'
-                                  + std::to_string(oid.lower) + ".md";
+                                  + std::to_string(oid.lower) + ".meta";
         std::string data_filename = std::to_string(tier) + '-'
                                     + std::to_string(oid.higher)
                                     + std::to_string(oid.lower) + ".data";

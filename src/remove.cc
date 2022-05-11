@@ -15,7 +15,7 @@ int hestia::remove(const struct hsm_uint oid)
     struct hsm_obj obj(oid);
     kv_store.get_meta_data(obj);
 
-    const std::uint8_t tier = std::stoi(obj.meta_data["tier"]);
+    const std::uint8_t tier = obj.meta_data["tier"];
 
     kv_store.remove(oid);
 

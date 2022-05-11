@@ -10,9 +10,7 @@ int hestia::obj::Disk::put(
     const std::uint8_t target_tier)
 {
     std::ofstream file(
-        std::to_string(target_tier) + '-' + std::to_string(oid.higher)
-            + std::to_string(oid.lower) + ".data",
-        std::ios_base::app);
+        get_filename_from_oid(oid, target_tier), std::ios_base::app);
 
     file.write(static_cast<const char*>(buf), length);
 
@@ -25,9 +23,7 @@ int hestia::obj::Disk::get(
     const std::size_t length,
     const std::uint8_t src_tier)
 {
-    std::ifstream file(
-        std::to_string(src_tier) + '-' + std::to_string(oid.higher)
-        + std::to_string(oid.lower) + ".data");
+    std::ifstream file(get_filename_from_oid(oid, src_tier));
 
     file.read(static_cast<char*>(buf), length);
 
@@ -37,7 +33,6 @@ int hestia::obj::Disk::get(
 int hestia::obj::Disk::remove(
     const struct hsm_uint& oid, const std::uint8_t tier)
 {
-    return static_cast<int>(std::filesystem::remove(
-        std::to_string(tier) + '-' + std::to_string(oid.higher)
-        + std::to_string(oid.lower) + ".data"));
+    return static_cast<int>(
+        std::filesystem::remove(get_filename_from_oid(oid, tier)));
 }

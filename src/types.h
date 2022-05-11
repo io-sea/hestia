@@ -2,8 +2,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
-#include <unordered_map>
+
+#include <nlohmann/json.hpp>
 
 namespace hestia {
 
@@ -26,7 +26,7 @@ struct hsm_uint {
 
 struct hsm_obj {
     struct hsm_uint oid;
-    std::unordered_map<std::string, std::string> meta_data;
+    nlohmann::json meta_data;
 
     hsm_obj() {}
     hsm_obj(std::uint64_t val) : oid(val) {}

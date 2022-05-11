@@ -27,6 +27,14 @@ class Disk : Object_store {
 
     /// @copydoc Object_store::remove
     int remove(const struct hsm_uint& oid, const std::uint8_t tier = 0);
+
+  private:
+    std::string get_filename_from_oid(
+        const struct hsm_uint& oid, const std::uint8_t tier = 0) const
+    {
+        return std::to_string(tier) + '-' + std::to_string(oid.higher)
+               + std::to_string(oid.lower) + ".data";
+    }
 };
 
 }  // namespace obj

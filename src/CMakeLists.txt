@@ -13,7 +13,7 @@ add_library(
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)
 
-target_link_libraries(hestia_lib PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(hestia_lib PUBLIC nlohmann_json::nlohmann_json)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     include(../cmake/development_flags.cmake)

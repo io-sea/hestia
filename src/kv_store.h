@@ -1,5 +1,4 @@
 #include "types.h"
-#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace hestia {
