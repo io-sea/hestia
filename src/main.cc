@@ -36,7 +36,7 @@ int main()
         std::cout << id.higher << id.lower << std::endl;
     }
 
-    hestia::remove(oid);
+    // hestia::remove(oid);
 
     return 0;
 }

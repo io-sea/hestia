@@ -16,9 +16,21 @@ int hestia::kv::Disk::put_meta_data(const struct hsm_obj& obj)
 int hestia::kv::Disk::put_meta_data(
     const struct hsm_uint& oid, const nlohmann::json& attrs)
 {
-    std::ofstream file(get_filename_from_oid(oid), std::ios_base::app);
+    auto metadata = attrs;
 
-    file << attrs;
+    if (object_exists(oid)) {
+        std::ifstream read_file(get_filename_from_oid(oid));
+
+        /* we need to overwrite potential duplicates */
+        nlohmann::json old_metadata;
+        read_file >> old_metadata;
+
+        metadata.merge_patch(old_metadata);
+    }
+
+    std::ofstream file(get_filename_from_oid(oid));
+
+    file << metadata;
 
     return 0;
 }

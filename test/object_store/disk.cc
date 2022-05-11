@@ -9,8 +9,7 @@ int hestia::obj::Disk::put(
     const std::size_t length,
     const std::uint8_t target_tier)
 {
-    std::ofstream file(
-        get_filename_from_oid(oid, target_tier), std::ios_base::app);
+    std::ofstream file(get_filename_from_oid(oid, target_tier));
 
     file.write(static_cast<const char*>(buf), length);
 
