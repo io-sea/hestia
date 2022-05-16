@@ -8,6 +8,7 @@ add_library(
     get.cc
     set_attrs.cc
     get_attrs.cc
+    list_attrs.cc
     remove.cc
     list.cc
 )
