@@ -49,6 +49,16 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
 }
 
 int hestia::kv::Disk::get_meta_data(
+    const struct hsm_uint& oid, nlohmann::json& attrs)
+{
+    std::ifstream file(get_filename_from_oid(oid));
+
+    file >> attrs;
+
+    return 0;
+}
+
+int hestia::kv::Disk::get_meta_data(
     const struct hsm_uint& oid, char* attr_keys, nlohmann::json& attrs)
 {
     if (!object_exists(oid)) {

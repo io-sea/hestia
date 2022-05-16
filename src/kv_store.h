@@ -54,6 +54,15 @@ class Kv_store {
     virtual int get_meta_data(struct hsm_obj& obj) = 0;
 
     ///
+    /// @brief Retrieve all entries of the metadata associated with an object
+    ///
+    /// @param hsm_uint ID of the object to retrieve attributed for
+    ///
+    /// @param nlohmann::json JSON string to hold the retrieved attributes
+    virtual int get_meta_data(
+        const struct hsm_uint& oid, nlohmann::json& attrs) = 0;
+
+    ///
     /// @brief Retrieve entries of the metadata associated with an object, corresponding to the given keys
     ///
     /// @param hsm_uint ID of the object to retrieve attributed for

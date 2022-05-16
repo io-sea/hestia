@@ -24,6 +24,9 @@ class Disk : Kv_store {
     int get_meta_data(struct hsm_obj& obj);
 
     ///@copydoc kv_store::get_meta_data
+    int get_meta_data(const struct hsm_uint& oid, nlohmann::json& attrs);
+
+    ///@copydoc kv_store::get_meta_data
     int get_meta_data(
         const struct hsm_uint& oid, char* attr_keys, nlohmann::json& attrs);
 
