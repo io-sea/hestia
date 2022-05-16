@@ -48,41 +48,42 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
     return 0;
 }
 
-int hestia::kv::Disk::get_meta_data(
-    const struct hsm_uint& oid, nlohmann::json& attrs)
+nlohmann::json hestia::kv::Disk::get_meta_data(const struct hsm_uint& oid)
 {
     std::ifstream file(get_filename_from_oid(oid));
 
+    nlohmann::json attrs;
     file >> attrs;
 
-    return 0;
+    return attrs;
 }
 
-int hestia::kv::Disk::get_meta_data(
-    const struct hsm_uint& oid, char* attr_keys, nlohmann::json& attrs)
+nlohmann::json hestia::kv::Disk::get_meta_data(
+    const struct hsm_uint& oid, const std::string& attr_keys)
 {
-    if (!object_exists(oid)) {
-        return -1;
+    if (!object_exists(oid) || attr_keys.empty()) {
+        return "";
     }
 
     std::ifstream read_file(get_filename_from_oid(oid));
 
-    nlohmann::json metadata;
+    nlohmann::json metadata, attrs;
     read_file >> metadata;
 
-    char* key;
-    key = strtok(attr_keys, &m_delim);
+    std::size_t pos      = 0;
+    std::size_t next_pos = 0;
 
-    while (key != NULL) {
-        if (!metadata.contains(key)) {
-            return -1;
-        }
+    do {
+        next_pos = attr_keys.find(m_delim, pos);
+
+        auto key   = attr_keys.substr(pos, next_pos);
         attrs[key] = metadata[key];
 
-        key = strtok(NULL, &m_delim);
-    }
+        pos = next_pos + 1;
+    } while (next_pos != std::string::npos);
 
-    return 0;
+
+    return attrs;
 }
 
 int hestia::kv::Disk::remove(const struct hsm_uint& oid)

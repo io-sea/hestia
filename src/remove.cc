@@ -9,14 +9,13 @@ int hestia::remove(const struct hsm_uint& oid)
 
     /*
      * get the tier of storage the object resides in
-     * TODO: this can be replaced with a call to get_attrs once it is
-     * implemented
+     * TODO (suggestion): alternatively, kv_store.remove could return the tier
+     * ID on success and a negative error code on error
      */
     struct hsm_obj obj(oid);
-    nlohmann::json tier_attr;
-    char tier_key[] = "tier";
-    kv_store.get_meta_data(obj.oid, tier_key, tier_attr);
-    const std::uint8_t tier = tier_attr[tier_key];
+    std::string tier_key = "tier";
+
+    const auto tier = kv_store.get_meta_data(obj.oid, tier_key)[tier_key];
 
     kv_store.remove(oid);
 
