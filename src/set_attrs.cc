@@ -2,7 +2,7 @@
 #include "hestia.h"
 #include <chrono>
 
-int hestia::set_attrs(const struct hsm_uint oid, const char* attrs)
+int hestia::set_attrs(const struct hsm_uint& oid, const char* attrs)
 {
     auto attrs_json = nlohmann::json::parse(attrs);
 

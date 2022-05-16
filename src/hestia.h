@@ -23,9 +23,11 @@ int get(
     const std::uint8_t src_tier = 0,
     const std::uint8_t tgt_tier = 0);
 
-int set_attrs(const struct hsm_uint oid, const char* attrs);
+int set_attrs(const struct hsm_uint& oid, const char* attrs);
 
-int remove(const struct hsm_uint oid);
+std::string get_attrs(const struct hsm_uint& oid, char* attr_keys);
+
+int remove(const struct hsm_uint& oid);
 
 std::vector<struct hsm_uint> list(const std::uint8_t tier = 0);
 

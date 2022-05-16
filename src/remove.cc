@@ -2,7 +2,7 @@
 #include "../test/object_store/disk.h"
 #include "hestia.h"
 
-int hestia::remove(const struct hsm_uint oid)
+int hestia::remove(const struct hsm_uint& oid)
 {
     /* interface with kv store to erase metadata */
     kv::Disk kv_store;
@@ -13,9 +13,10 @@ int hestia::remove(const struct hsm_uint oid)
      * implemented
      */
     struct hsm_obj obj(oid);
-    kv_store.get_meta_data(obj);
-
-    const std::uint8_t tier = obj.meta_data["tier"];
+    nlohmann::json tier_attr;
+    char tier_key[] = "tier";
+    kv_store.get_meta_data(obj.oid, tier_key, tier_attr);
+    const std::uint8_t tier = tier_attr[tier_key];
 
     kv_store.remove(oid);
 

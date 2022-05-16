@@ -48,6 +48,33 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
     return 0;
 }
 
+int hestia::kv::Disk::get_meta_data(
+    const struct hsm_uint& oid, char* attr_keys, nlohmann::json& attrs)
+{
+    if (!object_exists(oid)) {
+        return -1;
+    }
+
+    std::ifstream read_file(get_filename_from_oid(oid));
+
+    nlohmann::json metadata;
+    read_file >> metadata;
+
+    char* key;
+    key = strtok(attr_keys, &m_delim);
+
+    while (key != NULL) {
+        if (!metadata.contains(key)) {
+            return -1;
+        }
+        attrs[key] = metadata[key];
+
+        key = strtok(NULL, &m_delim);
+    }
+
+    return 0;
+}
+
 int hestia::kv::Disk::remove(const struct hsm_uint& oid)
 {
     return static_cast<int>(
