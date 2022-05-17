@@ -1,5 +1,5 @@
-#include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "disk.h"
 
@@ -95,7 +95,8 @@ std::vector<struct hestia::hsm_uint> hestia::kv::Disk::list(
     const std::uint8_t tier)
 {
     std::vector<struct hsm_uint> oid_list;
-    for (const auto& file : std::filesystem::directory_iterator{"./"}) {
+    for (const auto& file :
+         std::filesystem::directory_iterator{m_store.path()}) {
         auto filename               = file.path().filename().string();
         const std::string extension = ".meta";
 
@@ -103,12 +104,15 @@ std::vector<struct hestia::hsm_uint> hestia::kv::Disk::list(
             && filename.substr(
                    filename.size() - extension.size(), extension.size())
                    == extension) {
-            std::ifstream metadata_file(filename);
+            std::cout << filename << std::endl;
+            std::ifstream metadata_file(m_store.path() / filename);
             nlohmann::json metadata;
 
+            std::cout << "here2" << std::endl;
             /* extract all metadata entries */
             metadata_file >> metadata;
 
+            std::cout << "here3" << std::endl;
             if (metadata["tier"] == tier) {
                 const auto int_split = filename.find_first_of('-');
                 const std::uint64_t higher =

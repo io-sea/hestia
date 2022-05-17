@@ -4,6 +4,8 @@
 #include <string>
 
 #include "common.h"
+#include "kv_store/disk.h"
+#include "object_store/disk.h"
 
 SCENARIO(
     "Remove erases the object from the KV store and the object store",
@@ -31,10 +33,11 @@ SCENARIO(
 
         hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
 
-        std::string md_filename = std::to_string(oid.higher) + '-'
+        std::string md_filename = hestia::kv::Disk().get_path() + '/'
+                                  + std::to_string(oid.higher) + '-'
                                   + std::to_string(oid.lower) + ".meta";
-        std::string data_filename = std::to_string(tier) + '-'
-                                    + std::to_string(oid.higher)
+        std::string data_filename = hestia::obj::Disk().get_tier_path(tier)
+                                    + '/' + std::to_string(oid.higher)
                                     + std::to_string(oid.lower) + ".data";
 
         /* TODO: more general way of testing for object presence */

@@ -1,4 +1,5 @@
 #include "../../src/kv_store.h"
+#include <filesystem>
 
 namespace hestia {
 namespace kv {
@@ -7,7 +8,13 @@ namespace kv {
 class Disk : Kv_store {
   public:
     /// @copydoc Kv_store::Kv_store
-    Disk(){};
+    Disk()
+    {
+        if (!m_store.exists()) {
+            std::filesystem::create_directory(m_store.path());
+        }
+    };
+
     /// @copydoc Kv_store::Kv_store
     ~Disk(){};
 
@@ -36,13 +43,20 @@ class Disk : Kv_store {
     /// @copydoc Kv_store::list
     std::vector<struct hsm_uint> list(const std::uint8_t tier = 0);
 
+    std::string get_path() const { return m_store.path().string(); }
+
   private:
     const char m_delim = ';';
 
+    const std::filesystem::directory_entry m_store{"kv_store"};
+
     std::string get_filename_from_oid(const struct hsm_uint& oid) const
     {
-        return std::to_string(oid.higher) + '-' + std::to_string(oid.lower)
-               + ".meta";
+        const std::string filename{
+            std::to_string(oid.higher) + '-' + std::to_string(oid.lower)
+            + ".meta"};
+        const auto path = m_store.path() / filename;
+        return path.string();
     }
 };
 
