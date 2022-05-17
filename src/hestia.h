@@ -25,7 +25,7 @@ int get(
 
 int set_attrs(const struct hsm_uint& oid, const char* attrs);
 
-std::string get_attrs(const struct hsm_uint& oid, char* attr_keys);
+std::string get_attrs(const struct hsm_uint& oid, const char* attr_keys);
 
 std::string list_attrs(const struct hsm_uint& oid);
 

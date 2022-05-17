@@ -9,5 +9,5 @@ std::string hestia::list_attrs(const struct hsm_uint& oid)
         return "";
     }
 
-    return kv_store.get_meta_data(oid);
+    return kv_store.get_meta_data(oid).dump();
 }

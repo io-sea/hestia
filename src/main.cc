@@ -32,11 +32,17 @@ int main()
 
     auto oids = hestia::list();
 
+    const std::string test_key = "key";
+
+    auto get_att = hestia::get_attrs(oid, test_key.data());
+
+    std::cout << get_att << std::endl;
+
     for (const auto& id : oids) {
         std::cout << id.higher << id.lower << std::endl;
     }
 
-    // hestia::remove(oid);
+    hestia::remove(oid);
 
     return 0;
 }

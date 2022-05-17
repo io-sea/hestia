@@ -82,7 +82,6 @@ nlohmann::json hestia::kv::Disk::get_meta_data(
         pos = next_pos + 1;
     } while (next_pos != std::string::npos);
 
-
     return attrs;
 }
 
