@@ -76,7 +76,7 @@ nlohmann::json hestia::kv::Disk::get_meta_data(
     do {
         next_pos = attr_keys.find(m_delim, pos);
 
-        auto key   = attr_keys.substr(pos, next_pos);
+        auto key   = attr_keys.substr(pos, next_pos - pos);
         attrs[key] = metadata[key];
 
         pos = next_pos + 1;

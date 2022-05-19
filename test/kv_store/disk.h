@@ -45,6 +45,8 @@ class Disk : Kv_store {
 
     std::string get_path() const { return m_store.path().string(); }
 
+    char get_delim() const { return m_delim; }
+
   private:
     const char m_delim = ';';
 

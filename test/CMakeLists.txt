@@ -8,7 +8,8 @@ include(Catch)
 #
 set(
     tests
-
+    
+    set_get_attrs.cc
     put_get.cc
     remove.cc
     list.cc
