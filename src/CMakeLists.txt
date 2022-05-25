@@ -1,5 +1,6 @@
 add_subdirectory(../test/kv_store ${CMAKE_CURRENT_BINARY_DIR}/kv_store)
 add_subdirectory(../test/object_store ${CMAKE_CURRENT_BINARY_DIR}/object_store)
+add_subdirectory(../test/data_placement_engine ${CMAKE_CURRENT_BINARY_DIR}/data_placement_engine)
 
 add_library(
     hestia_lib
@@ -22,7 +23,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_link_libraries(hestia_lib PUBLIC development_flags)
 endif()
 
-target_link_libraries(hestia_lib PRIVATE kv_disk obj_disk)
+target_link_libraries(hestia_lib PRIVATE kv_disk obj_disk dpe)
 
 add_executable(
     hestia

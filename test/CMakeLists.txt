@@ -9,9 +9,9 @@ include(Catch)
 set(
     tests
     
+    put_get.cc
     set_get_attrs.cc
     list_attrs.cc
-    put_get.cc
     remove.cc
     list.cc
 )

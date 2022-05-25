@@ -1,6 +1,8 @@
+#include "../test/data_placement_engine/eejit.h"
 #include "../test/kv_store/disk.h"
 #include "../test/object_store/disk.h"
 #include "hestia.h"
+#include "tiers.h"
 #include <chrono>
 
 void hestia::create_object(const struct hsm_uint& oid, struct hsm_obj& obj)
@@ -32,8 +34,11 @@ int hestia::put(
             std::chrono::system_clock::now().time_since_epoch().count();
     }
 
+    dpe::Eejit dpe(tiers);
+    const auto chosen_tier = dpe.choose_tier(length, target_tier);
+
     /* add object tier to metadata */
-    obj->meta_data["tier"] = target_tier;
+    obj->meta_data["tier"] = chosen_tier;
 
     /* interface with kv store */
     kv::Disk kv_store;
@@ -52,7 +57,7 @@ int hestia::put(
     /* send data to backend */
     obj::Disk object_store;
     object_store.put(
-        oid, static_cast<const char*>(buf) + offset, length, target_tier);
+        oid, static_cast<const char*>(buf) + offset, length, chosen_tier);
 
     return 0;
 }

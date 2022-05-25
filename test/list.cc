@@ -11,11 +11,7 @@ SCENARIO("List functions correctly", "[kv][store]")
         std::vector<std::string> data_vecs(max_num_objects);
         auto data_pool = GENERATE(chunk(
             max_num_objects * max_data_size,
-            take(
-                max_num_objects * max_data_size,
-                random(
-                    std::numeric_limits<char>::min(),
-                    std::numeric_limits<char>::max()))));
+            take(max_num_objects * max_data_size, random(' ', 'z'))));
 
         auto data_it = data_pool.begin();
         for (auto& data_vec : data_vecs) {
@@ -39,27 +35,41 @@ SCENARIO("List functions correctly", "[kv][store]")
             oid = hestia::hsm_uint(*(++oid_it), *(++oid_it));
         }
 
+        /* store which tier each object is placed in */
+        std::unordered_map<std::uint8_t, std::vector<struct hestia::hsm_uint>>
+            oids_per_tier;
         for (unsigned int i = 0; i < max_num_objects; ++i) {
             hestia::put(
                 oids[i], &objs[i], false, data_vecs[i].data(), 0,
                 data_vecs[i].size(), 0);
+            const auto json_attrs =
+                nlohmann::json::parse(hestia::get_attrs(oids[i], "tier"));
+            const int dest_tier = json_attrs["tier"];
+            oids_per_tier[dest_tier].push_back(oids[i]);
         }
 
         WHEN("a list of the IDs of the stored objects is retrieved")
         {
-            auto recv_oids = hestia::list();
+            /* use separate list for each tier */
+            std::unordered_map<
+                std::uint8_t, std::vector<struct hestia::hsm_uint>>
+                recv_oids_per_tier;
+            for (const auto& kv : oids_per_tier) {
+                recv_oids_per_tier[kv.first] = hestia::list(kv.first);
+            }
 
             THEN("the retrieved list matches to IDs of the stored objects")
             {
                 /*
                  * there may be more objects than those added during this test
                  */
-                REQUIRE(recv_oids.size() >= oids.size());
-
-                for (const auto& oid : oids) {
-                    REQUIRE(
-                        std::find(recv_oids.begin(), recv_oids.end(), oid)
-                        != recv_oids.end());
+                for (const auto& kv : recv_oids_per_tier) {
+                    REQUIRE(kv.second.size() >= oids_per_tier[kv.first].size());
+                    for (const auto& oid : oids_per_tier[kv.first]) {
+                        REQUIRE(
+                            std::find(kv.second.begin(), kv.second.end(), oid)
+                            != kv.second.end());
+                    }
                 }
             }
         }

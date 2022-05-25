@@ -10,12 +10,8 @@ SCENARIO(
 {
     GIVEN("a string representing data to be stored")
     {
-        auto data_vec = GENERATE(chunk(
-            max_data_size,
-            take(
-                max_data_size, random(
-                                   std::numeric_limits<char>::min(),
-                                   std::numeric_limits<char>::max()))));
+        auto data_vec = GENERATE(
+            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
         std::string data(data_vec.begin(), data_vec.end());
 
@@ -31,6 +27,10 @@ SCENARIO(
 
             hestia::put(oid, &obj, false, data.data(), 0, data.size(), 0);
 
+            const auto json_attrs =
+                nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+            const int dest_tier = json_attrs["tier"];
+
             THEN("a hsm_obj is created")
             {
                 REQUIRE(obj.oid == oid);
@@ -41,7 +41,8 @@ SCENARIO(
                 std::string recv_data;
                 recv_data.resize(data.size());
                 hestia::get(
-                    oid, &obj, &recv_data[0], 0, recv_data.size(), 0, 0);
+                    oid, &obj, &recv_data[0], 0, recv_data.size(), 0,
+                    dest_tier);
 
                 THEN("the stored data matches the retrieved data")
                 {
@@ -70,6 +71,10 @@ SCENARIO(
 
             hestia::put(oid, &obj, false, data.data(), offset, length, 0);
 
+            const auto json_attrs =
+                nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+            const int dest_tier = json_attrs["tier"];
+
             THEN("a hsm_obj is created")
             {
                 REQUIRE(obj.oid == oid);
@@ -79,7 +84,8 @@ SCENARIO(
             {
                 std::string recv_data;
                 recv_data.resize(data.size());
-                hestia::get(oid, &obj, &recv_data[0], offset, length, 0, 0);
+                hestia::get(
+                    oid, &obj, &recv_data[0], offset, length, 0, dest_tier);
 
                 THEN("the stored data matches the retrieved data")
                 {

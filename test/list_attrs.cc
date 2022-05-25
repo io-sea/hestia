@@ -21,7 +21,7 @@ SCENARIO(
                 2 * max_num_objects * max_data_size,
                 filter(  // NOLINT
                     [&delim](auto var) { return var != delim; },
-                    random(' ', '~')))));
+                    random(' ', 'z')))));
 
         // use the same data pool to fill both the vector of keys and the vector
         // of values

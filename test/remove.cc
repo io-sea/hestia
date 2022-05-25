@@ -13,12 +13,8 @@ SCENARIO(
 {
     GIVEN("an object existing in the KV store and the object store")
     {
-        auto data_vec = GENERATE(chunk(
-            max_data_size,
-            take(
-                max_data_size, random(
-                                   std::numeric_limits<char>::min(),
-                                   std::numeric_limits<char>::max()))));
+        auto data_vec = GENERATE(
+            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
         std::string data(data_vec.begin(), data_vec.end());
 
@@ -29,9 +25,12 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
         struct hestia::hsm_obj obj;
-        const std::uint8_t tier = 0;
 
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
+        hestia::put(oid, &obj, false, data.data(), 0, data.size(), 0);
+
+        const auto json_attrs =
+            nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+        const auto tier = json_attrs["tier"];
 
         std::string md_filename = hestia::kv::Disk().get_path() + '/'
                                   + std::to_string(oid.higher) + '-'
