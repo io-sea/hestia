@@ -1,0 +1,39 @@
+
+PROJECT_NAME           = DoxygenParserTest
+
+# Extraction options
+EXTRACT_PRIVATE        = YES
+EXTRACT_PACKAGE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+
+# Generate case sensitive filenames
+CASE_SENSE_NAMES       = YES
+
+# Warning options
+# Warn on everything possible, and fail on warning
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = YES
+
+# Input directories
+INPUT                  =  include
+
+RECURSIVE              = YES
+
+# HTML output options
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+
+# Macro options
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+SEARCH_INCLUDES        = YES
+
+GENERATE_XML           = YES
+XML_NS_MEMB_FILE_SCOPE = YES

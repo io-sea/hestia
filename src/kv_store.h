@@ -22,6 +22,8 @@ class Kv_store {
     ///
     /// @brief check if an object exists
     ///
+    /// @param oid ID of the object to check for existence
+    ///
     /// @returns boolean for whether the object exists
     virtual bool object_exists(const struct hsm_uint& oid) = 0;
 
@@ -29,7 +31,7 @@ class Kv_store {
     /// @brief  Send the metadata associated with an object to the key-value
     ///         store
     ///
-    /// @param oid ID of the object to check for existence
+    /// @param obj Object to send the metadata to
     ///
     /// @returns 0 on success or error code on failure
     virtual int put_meta_data(const struct hsm_obj& obj) = 0;
@@ -84,7 +86,6 @@ class Kv_store {
     /// @brief List
     ///
     /// @param tier Storage tier from which to list objects
-    /// @param oids Array to store the list of oids in
     ///
     /// @returns array of IDs for the objects found
     virtual std::vector<struct hsm_uint> list(const std::uint8_t tier = 0) = 0;

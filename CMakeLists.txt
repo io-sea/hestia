@@ -15,6 +15,12 @@ option(
     OFF
 )
 
+option(
+    HESTIA_BUILD_DOCUMENTATION
+    "Build Hestia Documentation. Depends on Doxygen"
+    OFF
+)
+
 #
 # External dependencies 
 #
@@ -29,6 +35,10 @@ target_include_directories(hestia_lib INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<INSTALL_INTERFACE:src>
 )
+
+if(HESTIA_BUILD_DOCUMENTATION)
+    add_subdirectory(doc)
+endif(HESTIA_BUILD_DOCUMENTATION)
 
 if (HESTIA_BUILD_TESTS)
     add_subdirectory(test)

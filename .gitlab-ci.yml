@@ -12,6 +12,8 @@ stages:
     CXX: g++
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     HESTIA_BUILD_TESTS: "OFF" 
+    HESTIA_BUILD_DOCUMENTATION: "OFF"
+    HESTIA_DOC_DIR: ""
     HESTIA_DEPENDENCIES: "build-essential cmake nlohmann-json3-dev" 
 
 .snippets: 
@@ -81,6 +83,27 @@ Lint:
     - *build
   script: 
     - ./tools/run_lint.sh "${CMAKE_BUILD_DIR}"
+
+#Documentation:
+#   <<: *default_job
+#   stage: build 
+#   variables:
+#       <<: *default_cmake_variables
+#       HESTIA_BUILD_DOCUMENTATION: "ON"
+#        HESTIA_DOC_DIR: ../../doc/parser/src
+#    script:
+#        - apt-get install --no-install-recommends -y
+#            cmake
+#            git
+#            doxygen
+#            graphviz
+#            texlive texlive-font-utils
+#        - *configure
+#        - make -C build/doc
+#            && git status
+#            && git diff-index --quiet HEAD
+#            || { echo "This commit contains changes to the documentation! Run doxygen-XML-parser on the project update the documentation."; false; }
+
 
 Debug:
   <<: *default_job
