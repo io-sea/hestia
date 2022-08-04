@@ -24,7 +24,8 @@ int hestia::kv::Disk::put_meta_data(
         nlohmann::json old_metadata;
         read_file >> old_metadata;
 
-        metadata.merge_patch(old_metadata);
+        old_metadata.merge_patch(metadata);
+        metadata = std::move(old_metadata);
     }
 
     std::ofstream file(get_filename_from_oid(oid));

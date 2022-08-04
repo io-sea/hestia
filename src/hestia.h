@@ -89,4 +89,16 @@ int remove(const struct hsm_uint& oid);
 /// @returns A vector of all found object IDs
 std::vector<struct hsm_uint> list(const std::uint8_t tier = 0);
 
+int copy(
+    const struct hsm_uint& oid,
+    const std::uint8_t src_tier,
+    const std::uint8_t tgt_tier);
+
+
+int move(
+    const struct hsm_uint& oid,
+    const std::uint8_t src_tier,
+    const std::uint8_t tgt_tier);
+
+int release(const struct hsm_uint& oid, const std::uint8_t src_tier);
 }  // namespace hestia

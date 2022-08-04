@@ -33,6 +33,17 @@ class Disk : Object_store {
 
     /// @copydoc Object_store::remove
     int remove(const struct hsm_uint& oid, const std::uint8_t tier = 0);
+    /// @copydoc Object_store::copy
+    int copy(
+        const struct hsm_uint& oid,
+        const std::uint8_t src_tier,
+        const std::uint8_t tgt_tier);
+
+    /// @copydoc Object_store::move
+    int move(
+        const struct hsm_uint& oid,
+        const std::uint8_t src_tier,
+        const std::uint8_t tgt_tier);
 
     std::string get_path() const { return m_store.path().string(); }
 

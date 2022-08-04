@@ -12,6 +12,9 @@ add_library(
     list_attrs.cc
     remove.cc
     list.cc
+    copy.cc
+    move.cc
+    release.cc
 )
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)

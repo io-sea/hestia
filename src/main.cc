@@ -14,7 +14,10 @@ int main()
         exit(1);
     }
 
-    if (hestia::set_attrs(oid, R"({"key": "value"})") != 0) {
+    if (hestia::set_attrs(
+            oid,
+            R"({"trigger_migration": {"operation":"release","src_tier" : 0, "tgt_tier":1}})")
+        != 0) {
         std::cout << "set_attrs error!" << std::endl;
         exit(1);
     }
@@ -42,7 +45,7 @@ int main()
         std::cout << id.higher << id.lower << std::endl;
     }
 
-    hestia::remove(oid);
+    //    hestia::remove(oid);
 
     return 0;
 }
