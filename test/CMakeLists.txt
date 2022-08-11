@@ -14,6 +14,7 @@ set(
     list_attrs.cc
     remove.cc
     list.cc
+    copy.cc
 )
 
 set(sources catch_main.cc ${tests})
