@@ -15,6 +15,7 @@ set(
     remove.cc
     list.cc
     copy.cc
+    move.cc
 )
 
 set(sources catch_main.cc ${tests})
