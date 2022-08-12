@@ -8,14 +8,15 @@ include(Catch)
 #
 set(
     tests
-    
+        
     put_get.cc
     set_get_attrs.cc
     list_attrs.cc
     remove.cc
     list.cc
-    copy.cc
     move.cc
+    release.cc
+    copy.cc
 )
 
 set(sources catch_main.cc ${tests})

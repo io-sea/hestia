@@ -11,9 +11,9 @@ int hestia::release(const struct hsm_uint& oid, const std::uint8_t src_tier)
     kv::Disk kv_store;
     nlohmann::json tier_info;
 
-    tier_info["tier"] = nullptr;
+    //    tier_info["tier"] = nullptr;
 
-    kv_store.put_meta_data(oid, tier_info);
+    //    kv_store.put_meta_data(oid, tier_info);
 
     return 0;
 }

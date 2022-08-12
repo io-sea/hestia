@@ -27,7 +27,10 @@ int hestia::get(
     kvs.get_meta_data(*obj);
 
     obj::Disk object_store;
-    object_store.get(oid, static_cast<char*>(buf) + off, len, src_tier);
+    if (object_store.get(oid, static_cast<char*>(buf) + off, len, src_tier)
+        != 0) {
+        return 2;
+    }
 
     return 0;
 }

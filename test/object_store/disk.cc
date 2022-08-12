@@ -21,6 +21,10 @@ int hestia::obj::Disk::get(
     const std::size_t length,
     const std::uint8_t src_tier)
 {
+    if (!std::filesystem::exists(get_filename_from_oid(oid, src_tier))) {
+        return -1;
+    }
+
     std::ifstream file(get_filename_from_oid(oid, src_tier));
 
     file.read(static_cast<char*>(buf), length);

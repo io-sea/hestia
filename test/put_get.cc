@@ -49,6 +49,7 @@ SCENARIO(
                     REQUIRE(recv_data == data);
                 }
             }
+            hestia::remove(oid);
         }
         WHEN("offset data is sent to the object store")
         {
@@ -94,6 +95,7 @@ SCENARIO(
                         == data.substr(offset, length));
                 }
             }
+            hestia::remove(oid);
         }
     }
 }

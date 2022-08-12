@@ -80,5 +80,6 @@ SCENARIO(
                 }
             }
         }
+        hestia::remove(oid);
     }
 }
