@@ -23,6 +23,9 @@ class Eejit : public DPE {
     /// @copydoc DPE::reorganise
     void reorganise() const {}
 
+    /// @copydoc DPE::get_tiers_info
+    std::list<struct hsm_tier> get_tiers_info();
+
   private:
     std::random_device m_rd;
     std::mt19937 m_gen;

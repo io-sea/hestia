@@ -38,6 +38,12 @@ class DPE {
     /// @brief Move objects between tiers
     ///
     virtual void reorganise() const = 0;
+    
+    ///
+    /// @brief Return list of information about the tiers
+    ///
+
+    virtual std::list<struct hsm_tier> get_tiers_info()=0;
 
   protected:
     std::list<struct hsm_tier> m_tiers;
