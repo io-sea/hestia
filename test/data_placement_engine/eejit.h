@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../src/data_placement_engine.h"
 #include <random>
 
