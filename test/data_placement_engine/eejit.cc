@@ -12,7 +12,7 @@ std::uint8_t hestia::dpe::Eejit::choose_tier(
     return hint;
 }
 
-std::list<struct hestia::hsm_tier> hestia::dpe::Eejit::get_tiers_info(){
+std::list<struct hestia::hsm_tier> hestia::dpe::Eejit::get_tiers_info()
+{
     return m_tiers;
 }
-

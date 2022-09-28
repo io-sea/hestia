@@ -1,6 +1,6 @@
 #include "types.h"
+#include <list>
 #include <vector>
-#include<list>
 
 namespace hestia {
 
@@ -103,6 +103,5 @@ int move(
 
 int release(const struct hsm_uint& oid, const std::uint8_t src_tier);
 
-std::list<hsm_tier> get_tiers_info();
+std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
 }  // namespace hestia
-

@@ -13,15 +13,16 @@ int main()
         std::cout << "put error!" << std::endl;
         exit(1);
     }
-/*
-    if (hestia::set_attrs(
-            oid,
-            R"({"trigger_migration": {"operation":"release","src_tier" : 0, "tgt_tier":1}})")
-        != 0) {
-        std::cout << "set_attrs error!" << std::endl;
-        exit(1);
-    }
-*/
+    /*
+        if (hestia::set_attrs(
+                oid,
+                R"({"trigger_migration": {"operation":"release","src_tier" : 0,
+       "tgt_tier":1}})")
+            != 0) {
+            std::cout << "set_attrs error!" << std::endl;
+            exit(1);
+        }
+    */
     std::string read_data;
     read_data.resize(write_data.size());
 
@@ -45,12 +46,14 @@ int main()
         std::cout << id.higher << id.lower << std::endl;
     }
 
-    auto tiers_info = hestia::get_tiers_info();
-    for(const auto& it: tiers_info){
-        std::cout<< it.id <<" "<< it.store<<" "<<it.capacity<<" "<<it.bandwith<<std::endl;
+    std::vector<int> tids = {1};
+    auto tiers_info       = hestia::get_tiers_info(tids);
+    for (const auto& it : tiers_info) {
+        std::cout << " " << +it.id << " " << it.store << " " << it.capacity
+                  << " " << it.bandwith << std::endl;
     }
 
-        hestia::remove(oid);
+    hestia::remove(oid);
 
     return 0;
 }
