@@ -16,3 +16,14 @@ std::list<struct hestia::hsm_tier> hestia::dpe::Eejit::get_tiers_info()
 {
     return m_tiers;
 }
+
+std::vector<uint8_t> hestia::dpe::Eejit::list_tiers()
+{
+    std::vector<uint8_t> tids; 
+
+    for (auto it = m_tiers.begin(); it != m_tiers.end(); ++it) {
+            tids.push_back(static_cast<int>(it->id));
+    }
+   
+    return tids;
+}

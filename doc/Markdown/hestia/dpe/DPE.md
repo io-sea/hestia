@@ -12,6 +12,8 @@ virtual key value store class to be implemented by key value store solutions
 | [~DPE](#hestia-dpe-DPE-~DPE) | default destructor  |
 | [choose_tier](#hestia-dpe-DPE-choose_tier) | Choose tier.  |
 | [reorganise](#hestia-dpe-DPE-reorganise) | Move objects between tiers.  |
+| [get_tiers_info](#hestia-dpe-DPE-get_tiers_info) | Return array of tier ids.  |
+| [list_tiers](#hestia-dpe-DPE-list_tiers) | Return list of information about the tiers.  |
 
 
 
@@ -111,6 +113,50 @@ Move objects between tiers.
 
 #### Qualifiers: 
 * const
+* virtual
+
+
+[Go to Top](#hestia-dpe-DPE)
+
+### <a name='hestia-dpe-DPE-get_tiers_info' /> public std::list< struct [hsm_tier][hestia-hsm_tier] > hestia::dpe::DPE::get_tiers_info ()=0
+
+Return array of tier ids. 
+
+
+
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| std::list< struct [hsm_tier][hestia-hsm_tier] > |  |
+
+
+
+
+
+#### Qualifiers: 
+* virtual
+
+
+[Go to Top](#hestia-dpe-DPE)
+
+### <a name='hestia-dpe-DPE-list_tiers' /> public std::vector< uint8_t > hestia::dpe::DPE::list_tiers ()=0
+
+Return list of information about the tiers. 
+
+
+
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| std::vector< uint8_t > |  |
+
+
+
+
+
+#### Qualifiers: 
 * virtual
 
 

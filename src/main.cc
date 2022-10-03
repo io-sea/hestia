@@ -46,6 +46,12 @@ int main()
         std::cout << id.higher << id.lower << std::endl;
     }
 
+    auto tier_ids       = hestia::list_tiers();
+    for(auto i : tier_ids)
+    {
+        std::cout<<unsigned(i)<<std::endl;
+    }
+
     std::vector<int> tids = {1};
     auto tiers_info       = hestia::get_tiers_info(tids);
     for (const auto& it : tiers_info) {

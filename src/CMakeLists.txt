@@ -16,6 +16,7 @@ add_library(
     move.cc
     release.cc
     get_tiers_info.cc
+    list_tiers.cc
 )
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)

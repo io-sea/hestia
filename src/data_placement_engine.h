@@ -40,10 +40,15 @@ class DPE {
     virtual void reorganise() const = 0;
 
     ///
+    /// @brief Return array of tier ids
+    ///
+    virtual std::list<struct hsm_tier> get_tiers_info() = 0;
+
+    ///
     /// @brief Return list of information about the tiers
     ///
 
-    virtual std::list<struct hsm_tier> get_tiers_info() = 0;
+    virtual std::vector<uint8_t> list_tiers() = 0;
 
   protected:
     std::list<struct hsm_tier> m_tiers;
