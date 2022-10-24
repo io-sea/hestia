@@ -26,7 +26,7 @@ int main()
     std::string read_data;
     read_data.resize(write_data.size());
 
-    if (hestia::get(oid, &obj, read_data.data(), 0, write_data.size(), 0, 0)
+    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 0)
         != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);

@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(
     hestia
-    VERSION 0.0.1 
-    LANGUAGES C CXX 
+    VERSION 0.0.1
+    LANGUAGES C CXX
 )
 
 #
@@ -22,9 +22,9 @@ option(
 )
 
 #
-# External dependencies 
+# External dependencies
 #
-find_package(nlohmann_json 3.9.1 REQUIRED)
+find_package(nlohmann_json 3.6.1 REQUIRED)
 
 #
 # Include subdirectories
