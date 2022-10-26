@@ -106,4 +106,6 @@ int release(const struct hsm_uint& oid, const std::uint8_t src_tier);
 std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
 
 std::vector<uint8_t> list_tiers();
+
+std::string locate(const struct hsm_uint& oid);
 }  // namespace hestia

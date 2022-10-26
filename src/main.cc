@@ -34,6 +34,9 @@ int main()
 
     std::cout << read_data << '\n';
 
+    std::string location = hestia::locate(oid);
+
+    std::cout << "Object Location: " << location << std::endl;
     auto oids = hestia::list();
 
     const std::string test_key = "key";

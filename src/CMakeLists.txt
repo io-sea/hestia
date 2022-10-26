@@ -19,6 +19,7 @@ add_library(
     release.cc
     get_tiers_info.cc
     list_tiers.cc
+    locate.cc
 )
 
 target_compile_features(hestia_lib PUBLIC cxx_std_17)
