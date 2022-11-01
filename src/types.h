@@ -55,6 +55,12 @@ struct hsm_tier {
         store(store), capacity(capacity), bandwith(bandwith)
     {
     }
+
+    bool operator==(const hsm_tier& other) const
+    {
+        return (other.id == id && other.store == store)
+               && (other.capacity == capacity && other.bandwith == bandwith);
+    }
 };
 
 }  // namespace hestia

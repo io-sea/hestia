@@ -14,6 +14,8 @@ set(
     list_attrs.cc
     remove.cc
     list.cc
+    get_tiers_info.cc
+    list_tiers.cc
     move.cc
     release.cc
     copy.cc
