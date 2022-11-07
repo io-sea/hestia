@@ -8,7 +8,7 @@ int main()
 
     std::string write_data = "testing data 123";
     if (hestia::put(
-            oid, &obj, false, write_data.data(), 0, write_data.size(), 0)
+            oid, &obj, false, write_data.data(), 0, write_data.size(), 1)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
@@ -26,7 +26,7 @@ int main()
     std::string read_data;
     read_data.resize(write_data.size());
 
-    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 0)
+    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 1)
         != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);
@@ -34,9 +34,10 @@ int main()
 
     std::cout << read_data << '\n';
 
-    std::string location = hestia::locate(oid);
+    auto location = hestia::locate(oid);
 
-    std::cout << "Object Location: " << location << std::endl;
+    std::cout << "Object Location tier: " << static_cast<int>(location)
+              << std::endl;
     auto oids = hestia::list();
 
     const std::string test_key = "key";

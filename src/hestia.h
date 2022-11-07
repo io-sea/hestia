@@ -107,5 +107,5 @@ std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
 
 std::vector<uint8_t> list_tiers();
 
-std::string locate(const struct hsm_uint& oid);
+std::uint8_t locate(const struct hsm_uint& oid);
 }  // namespace hestia
