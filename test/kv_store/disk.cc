@@ -109,8 +109,7 @@ std::vector<struct hestia::hsm_uint> hestia::kv::Disk::list(
 
             /* extract all metadata entries */
             metadata_file >> metadata;
-
-            if (metadata["tier"] == tier) {
+            if (metadata["tiers"][tier] == true) {
                 const auto int_split = filename.find_first_of('-');
                 const std::uint64_t higher =
                     std::stoull(filename.substr(0, int_split));

@@ -22,12 +22,13 @@ SCENARIO("Release interfaces correctly with the object store backend"
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
         struct hestia::hsm_obj obj;
 
+        const int dest_tier = 1;
         hestia::put(oid, &obj, false, data.data(), 0, data.size(), 1);
-
-        const auto json_attrs =
-            nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
-        const int dest_tier = json_attrs["tier"];
-
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const int dest_tier = json_attrs["tier"];
+        */
         WHEN("The data is released from the current tier")
         {
             hestia::set_attrs(
@@ -52,5 +53,6 @@ SCENARIO("Release interfaces correctly with the object store backend"
                 // the object store
             }
         }
+        hestia::remove(oid);
     }
 }

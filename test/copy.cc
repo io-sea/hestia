@@ -23,12 +23,13 @@ SCENARIO(
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
         struct hestia::hsm_obj obj;
 
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), 1);
-
-        const auto json_attrs =
-            nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
-        const int dest_tier = json_attrs["tier"];
-
+        const int dest_tier = 1;
+        hestia::put(oid, &obj, false, data.data(), 0, data.size(), dest_tier);
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const int dest_tier = json_attrs["tier"];
+        */
         WHEN("the data is copied to a different tier")
         {
             // auto migration_call = nlohmann::json::parse(
@@ -59,5 +60,6 @@ SCENARIO(
                 REQUIRE(original_data == copy_data);
             }
         }
+        hestia::remove(oid);
     }
 }

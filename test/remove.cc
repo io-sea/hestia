@@ -26,12 +26,14 @@ SCENARIO(
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
         struct hestia::hsm_obj obj;
 
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), 0);
+        const auto tier = 0;
+        hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
 
-        const auto json_attrs =
-            nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
-        const auto tier = json_attrs["tier"];
-
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const auto tier = json_attrs["tier"];
+        */
         std::string md_filename = hestia::kv::Disk().get_path() + '/'
                                   + std::to_string(oid.higher) + '-'
                                   + std::to_string(oid.lower) + ".meta";

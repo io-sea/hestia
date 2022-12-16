@@ -12,9 +12,10 @@ int hestia::move(
     object_store.move(oid, src_tier, tgt_tier);
 
     kv::Disk kv_store;
-    nlohmann::json tier_info;
+    nlohmann::json tier_info = kv_store.get_meta_data(oid, "tiers");
 
-    tier_info["tier"] = tgt_tier;
+    tier_info["tiers"][tgt_tier] = true;
+    tier_info["tiers"][src_tier] = false;
 
     kv_store.put_meta_data(oid, tier_info);
 

@@ -2,14 +2,16 @@
 #include "tiers.h"
 #include <catch2/catch.hpp>
 #include <hestia.h>
+#include <iostream>
 #include <string>
+#include <vector>
 
 SCENARIO("Locate interfaces correctly with the kv store backend", "[kv][store]")
 {
-    GIVEN("an object in hte object store")
+    GIVEN("an object in the object store that exists on a single tier")
     {
         auto data_vec = GENERATE(
-            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
+            chunk(max_data_size, take(max_data_size, random('a', 'z'))));
 
         std::string data(data_vec.begin(), data_vec.end());
 
@@ -30,14 +32,18 @@ SCENARIO("Locate interfaces correctly with the kv store backend", "[kv][store]")
                    },
                    random(0, 10))));
 
+
         hestia::put(oid, &obj, false, data.data(), 0, data.size(), dest_tier);
 
         WHEN("locate is used to retrieve the tier for the object")
         {
-            auto located_tier = hestia::locate(oid);
-            THEN("the retrieved tier matches the original destination tier")
+            std::vector<uint8_t> located_tier = hestia::locate(oid);
+            auto tier_attrs =
+                nlohmann::json::parse(hestia::get_attrs(oid, "tiers"));
+            THEN(
+                "the only retrieved tier matches the original destination tier")
             {
-                REQUIRE(located_tier == dest_tier);
+                REQUIRE(static_cast<int>(located_tier[0]) == dest_tier);
             }
         }
         hestia::remove(oid);

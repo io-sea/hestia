@@ -13,13 +13,13 @@ set(
     set_get_attrs.cc
     list_attrs.cc
     remove.cc
-    list.cc
-    locate.cc
-    get_tiers_info.cc
-    list_tiers.cc
+    copy.cc
     move.cc
     release.cc
-    copy.cc
+    locate.cc
+    list.cc
+    get_tiers_info.cc
+    list_tiers.cc
 )
 
 set(sources catch_main.cc ${tests})

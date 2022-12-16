@@ -8,25 +8,42 @@ int main()
 
     std::string write_data = "testing data 123";
     if (hestia::put(
-            oid, &obj, false, write_data.data(), 0, write_data.size(), 1)
+            oid, &obj, false, write_data.data(), 0, write_data.size(), 0)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
     }
-    /*
-        if (hestia::set_attrs(
-                oid,
-                R"({"trigger_migration": {"operation":"release","src_tier" : 0,
+
+    if (hestia::set_attrs(
+            oid,
+            R"({"trigger_migration": {"operation":"copy","src_tier" : 0,
        "tgt_tier":1}})")
-            != 0) {
-            std::cout << "set_attrs error!" << std::endl;
-            exit(1);
-        }
-    */
+        != 0) {
+        std::cout << "set_attrs error!" << std::endl;
+        exit(1);
+    }
+
+    if (hestia::set_attrs(
+            oid,
+            R"({"trigger_migration": {"operation":"release","src_tier" : 0,
+       "tgt_tier":1}})")
+        != 0) {
+        std::cout << "set_attrs error!" << std::endl;
+        exit(1);
+    }
+
+    if (hestia::set_attrs(
+            oid,
+            R"({"trigger_migration": {"operation":"move","src_tier" : 1,
+       "tgt_tier":0}})")
+        != 0) {
+        std::cout << "set_attrs error!" << std::endl;
+        exit(1);
+    }
     std::string read_data;
     read_data.resize(write_data.size());
 
-    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 1)
+    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 0)
         != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);
@@ -36,8 +53,11 @@ int main()
 
     auto location = hestia::locate(oid);
 
-    std::cout << "Object Location tier: " << static_cast<int>(location)
-              << std::endl;
+    std::cout << "Object is located on " << location.size() << "tiers\n";
+    std::cout << "Object Location tiers: " << std::endl;
+    for (const auto& it : location) {
+        std::cout << +it << std::endl;
+    }
     auto oids = hestia::list();
 
     const std::string test_key = "key";

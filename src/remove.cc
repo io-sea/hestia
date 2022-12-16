@@ -15,13 +15,15 @@ int hestia::remove(const struct hsm_uint& oid)
     struct hsm_obj obj(oid);
     std::string tier_key = "tier";
 
-    const auto tier = kv_store.get_meta_data(obj.oid, tier_key)[tier_key];
-
+    // const auto tier = kv_store.get_meta_data(obj.oid, tier_key)[tier_key];
+    const auto tiers = hestia::locate(oid);
     kv_store.remove(oid);
 
     /* request for object to be removed from backend storage */
     obj::Disk object_store;
-    object_store.remove(oid, tier);
+    for (const auto& it : tiers) {
+        object_store.remove(oid, it);
+    }
 
     return 0;
 }

@@ -23,12 +23,13 @@ SCENARIO(
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
         struct hestia::hsm_obj obj;
 
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), 0);
-
-        const auto json_attrs =
-            nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
-        const int dest_tier = json_attrs["tier"];
-
+        const int dest_tier = 0;
+        hestia::put(oid, &obj, false, data.data(), 0, data.size(), dest_tier);
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const int dest_tier = json_attrs["tier"];
+        */
         WHEN("the data is moved to a different tier")
         {
             std::string original_data;
@@ -46,13 +47,14 @@ SCENARIO(
                 "The data retrieved from the original object above matches the data retrieved from the move")
             {
 
-                const auto json_attrs =
-                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
-                const int tgt_tier = json_attrs["tier"];
+                /*              const auto json_attrs =
+                                  nlohmann::json::parse(hestia::get_attrs(oid,
+                   "tier")); const int tgt_tier = json_attrs["tier"];
+                  */
                 std::string move_data;
                 move_data.resize(data.size());
                 hestia::get(
-                    oid, &obj, &move_data[0], 0, move_data.size(), 0, tgt_tier);
+                    oid, &obj, &move_data[0], 0, move_data.size(), 0, 1);
                 REQUIRE(original_data == move_data);
             }
         }

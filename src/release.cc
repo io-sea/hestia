@@ -9,11 +9,11 @@ int hestia::release(const struct hsm_uint& oid, const std::uint8_t src_tier)
     object_store.remove(oid, src_tier);
 
     kv::Disk kv_store;
-    nlohmann::json tier_info;
+    nlohmann::json tier_info = kv_store.get_meta_data(oid, "tiers");
 
-    //    tier_info["tier"] = nullptr;
+    tier_info["tiers"][src_tier] = false;
 
-    //    kv_store.put_meta_data(oid, tier_info);
+    kv_store.put_meta_data(oid, tier_info);
 
     return 0;
 }

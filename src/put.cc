@@ -15,6 +15,12 @@ void hestia::create_object(const struct hsm_uint& oid, struct hsm_obj& obj)
 
     obj.meta_data["creation_time"] = time_since_epoch;
     obj.meta_data["last_modified"] = time_since_epoch;
+
+    auto num_tiers = hestia::list_tiers().size();
+
+    for (auto i = 0; i < static_cast<int>(num_tiers); i++) {
+        obj.meta_data["tiers"][i] = false;
+    }
 }
 
 int hestia::put(
@@ -38,7 +44,7 @@ int hestia::put(
     const auto chosen_tier = dpe.choose_tier(length, target_tier);
 
     /* add object tier to metadata */
-    obj->meta_data["tier"] = chosen_tier;
+    obj->meta_data["tiers"][chosen_tier] = true;
 
     /* interface with kv store */
     kv::Disk kv_store;

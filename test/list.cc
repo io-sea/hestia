@@ -1,8 +1,9 @@
+#include "common.h"
+#include "tiers.h"
 #include <catch2/catch.hpp>
 #include <hestia.h>
 #include <string>
-
-#include "common.h"
+#include <vector>
 
 SCENARIO("List functions correctly", "[kv][store]")
 {
@@ -39,12 +40,23 @@ SCENARIO("List functions correctly", "[kv][store]")
         std::unordered_map<std::uint8_t, std::vector<struct hestia::hsm_uint>>
             oids_per_tier;
         for (unsigned int i = 0; i < max_num_objects; ++i) {
+            const int dest_tier = 0;
             hestia::put(
                 oids[i], &objs[i], false, data_vecs[i].data(), 0,
                 data_vecs[i].size(), 0);
-            const auto json_attrs =
-                nlohmann::json::parse(hestia::get_attrs(oids[i], "tier"));
-            const int dest_tier = json_attrs["tier"];
+            //            const auto json_attrs =
+            //              nlohmann::json::parse(hestia::get_attrs(oids[i],
+            //              "tiers"));
+            //            const int dest_tier = json_attrs["tier"];
+
+            //            int dest_tier =
+            //            static_cast<int>(hestia::locate(oids[i])[0]); for(int
+            //            j=0; j< static_cast<int>((hestia::tiers).size());
+            //            j++){
+            //              if(json_attrs["tiers"][j] == true){
+            //                dest_tier = j;
+            //          }
+            //    }
             oids_per_tier[dest_tier].push_back(oids[i]);
         }
 
