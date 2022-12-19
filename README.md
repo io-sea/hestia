@@ -2,9 +2,19 @@
 
 Hierarchical Storage Tiers Interface for Applications
 
+## Requirements
+
+To configure and build Hestia, following are required. 
+- C++17 compatible compiler
+- CMake >= 3.0
+- nlohmann-json-devel 
+
+Optional dependencies:
+- catch2 (for tests)
+- doxygen (for documentation)
+
 ## Build Instructions
 
-To configure and build Hestia, a C++17 compatible compiler is required, and CMake >= 3.0.
 
 ```
 # Make a directory to hold the temporary build files
@@ -40,14 +50,18 @@ Option | Effect
 Option | Effect
 ------ | ------
 `-DHESTIA_BUILD_TESTS=...`     | Set to `ON` to build Hestia tests and enable the `make test` target, or `OFF` to skip (Default `OFF`).
+`-DHESTIA_BUILD_DOCUMENTATION=...`     | Set to `ON` to generate doxygen documentation (Default `OFF`).
 
 #### Setting installation directories
 Option | Effect
 ------ | ------
-`-DHESTIA_INSTALL_PREFIX=...` | Set to the root install directory for the compiled libraries and programs.
-`-DHESTIA_INSTALL_BINDIR=...` | Set the install directory for the `hestia` executable. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `bin`).
-`-DHESTIA_INSTALL_LIBDIR=...` | Set the install directory for `hestia` libraries. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `lib`).
+`-DCMAKE_INSTALL_PREFIX=...` | Set to the root install directory for the compiled libraries and programs.
+`-DCMAKE_INSTALL_BINDIR=...` | Set the install directory for the `hestia` executable. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `bin`).
+`-DCMAKE_INSTALL_LIBDIR=...` | Set the install directory for `hestia` libraries. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `lib`).
 
 ## Testing
 
-Units test can be run with `make -C build tests`, given `HESTIA_BUILD_TESTS` was set to `ON` during the build process.
+Units test can be run with `make -C build test`, given `HESTIA_BUILD_TESTS` was set to `ON` during the build process. 
+
+## Running
+The main function can be run with `./hestia` from `/path/to/hestia/project/build/src`. Note that the executable must be run from this directory. 
