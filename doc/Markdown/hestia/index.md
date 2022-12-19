@@ -14,6 +14,12 @@
 | [list_attrs](#hestia-list_attrs) | List all available attributes and their values for a given object.  |
 | [remove](#hestia-remove) | remove an object and from the system, release all storage space and delete its data from the kvs  |
 | [list](#hestia-list) | List all objects on a given tier.  |
+| [copy](#hestia-copy) | Copy an object from one tier to another.  |
+| [move](#hestia-move) | Move an object from one tier to another.  |
+| [release](#hestia-release) | Remove an objects data from a given tier.  |
+| [get_tiers_info](#hestia-get_tiers_info) | Returns information about the specified tiers.  |
+| [list_tiers](#hestia-list_tiers) | Lists all tiers.  |
+| [locate](#hestia-locate) | Gives the location of the object's data in the object store.  |
 
 
 
@@ -266,5 +272,190 @@ List all objects on a given tier.
 
 [Go to Top](#hestia)
 
+### <a name='hestia-copy' /> public int hestia::copy (const struct hsm_uint &oid, const std::uint8_t src_tier, const std::uint8_t tgt_tier)
+
+Copy an object from one tier to another. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of object to be copied  |
+| const std::uint8_t | src_tier | Tier the object is to be copies from  |
+| const std::uint8_t | tgt_tier | Tier the object will be copied to |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| int | 0 on success, negative error code on error 
+  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-move' /> public int hestia::move (const struct hsm_uint &oid, const std::uint8_t src_tier, const std::uint8_t tgt_tier)
+
+Move an object from one tier to another. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of object to be moved  |
+| const std::uint8_t | src_tier | Tier the object is to be moved from  |
+| const std::uint8_t | tgt_tier | Tier the object will be moved to |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| int | 0 on success, negative error code on error 
+  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-release' /> public int hestia::release (const struct hsm_uint &oid, const std::uint8_t src_tier)
+
+Remove an objects data from a given tier. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of object to be released  |
+| const std::uint8_t | src_tier | Tier the object is to be removed from |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| int | 0 on success, negative error code on error 
+  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-get_tiers_info' /> public std::list< [hsm_tier][hestia-hsm_tier] > hestia::get_tiers_info (std::vector< int > tids)
+
+Returns information about the specified tiers. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| std::vector< int > | tids | The ids of the tiers to return information for |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| std::list< [hsm_tier][hestia-hsm_tier] > | A list containing the information about the specified tiers 
+  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-list_tiers' /> public std::vector< uint8_t > hestia::list_tiers ()
+
+Lists all tiers. 
+
+
+
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| std::vector< uint8_t > | A list of the IDs of all the tiers  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-locate' /> public std::vector< uint8_t > hestia::locate (const struct hsm_uint &oid)
+
+Gives the location of the object's data in the object store. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of the object to be located |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| std::vector< uint8_t > | a vector of all the tier IDs where the object is located  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
 [hestia-hsm_obj]:./hsm_obj.md#hestia-hsm_obj
+[hestia-hsm_tier]:./hsm_tier.md#hestia-hsm_tier
 [hestia-hsm_uint]:./hsm_uint.md#hestia-hsm_uint

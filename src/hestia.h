@@ -90,22 +90,55 @@ int remove(const struct hsm_uint& oid);
 /// @returns A vector of all found object IDs
 std::vector<struct hsm_uint> list(const std::uint8_t tier = 0);
 
+/// @brief Copy an object from one tier to another
+///
+/// @param oid ID of object to be copied
+/// @param src_tier Tier the object is to be copies from
+/// @param tgt_tier Tier the object will be copied to
+///
+/// @returns 0 on success, negative error code on error
 int copy(
     const struct hsm_uint& oid,
     const std::uint8_t src_tier,
     const std::uint8_t tgt_tier);
 
 
+/// @brief Move an object from one tier to another
+///
+/// @param oid ID of object to be moved
+/// @param src_tier Tier the object is to be moved from
+/// @param tgt_tier Tier the object will be moved to
+///
+/// @returns 0 on success, negative error code on error
 int move(
     const struct hsm_uint& oid,
     const std::uint8_t src_tier,
     const std::uint8_t tgt_tier);
 
+/// @brief Remove an objects data from a given tier
+///
+/// @param oid ID of object to be released
+/// @param src_tier Tier the object is to be removed from
+///
+/// @returns 0 on success, negative error code on error
 int release(const struct hsm_uint& oid, const std::uint8_t src_tier);
 
+/// @brief Returns information about the specified tiers
+///
+/// @param tids The ids of the tiers to return information for
+///
+/// @returns A list containing the information about the specified tiers
 std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
 
+/// @brief Lists all tiers
+///
+/// @returns A list of the IDs of all the tiers
 std::vector<uint8_t> list_tiers();
 
+/// @brief Gives the location of the object's data in the object store
+///
+/// @param oid ID of the object to be located
+///
+/// @returns a vector of all the tier IDs where the object is located
 std::vector<uint8_t> locate(const struct hsm_uint& oid);
 }  // namespace hestia
