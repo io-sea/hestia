@@ -1,6 +1,6 @@
 # Hestia
 
-Hierarchical Storage Tiers Interface for Applications. This is version 0.1 completed in December 2022. It handles data movements and managing metadata for a single object. 
+Hierarchical Storage Tiers Interface for Applications 
 
 ## Requirements
 
