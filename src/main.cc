@@ -6,13 +6,21 @@ int main()
     struct hestia::hsm_uint oid(23905702934);
     struct hestia::hsm_obj obj;
 
-    std::string write_data = "testing data 123";
+    std::string write_data = "Buffer testing data 123";
+    std::ofstream testfile("testfile.txt");
+    testfile.write(write_data.data(), write_data.size());
+    testfile.close();
+
+    int offset = 7;
+
+    std::ifstream writefile("testfile.txt");
     if (hestia::put(
-            oid, &obj, false, write_data.data(), 0, write_data.size(), 0)
+            oid, &obj, false, writefile, offset, write_data.size() - offset, 0)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
     }
+    writefile.close();
 
     if (hestia::set_attrs(
             oid,
@@ -41,10 +49,9 @@ int main()
         exit(1);
     }
     std::string read_data;
-    read_data.resize(write_data.size());
+    read_data.resize(write_data.size() - offset);
 
-    if (hestia::get(oid, &obj, &read_data[0], 0, write_data.size(), 0, 0)
-        != 0) {
+    if (hestia::get(oid, &obj, &read_data[0], 0, read_data.size(), 0, 0) != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);
     }

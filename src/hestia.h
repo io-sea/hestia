@@ -1,4 +1,5 @@
 #include "types.h"
+#include <fstream>
 #include <list>
 #include <vector>
 
@@ -32,6 +33,25 @@ int put(
     const std::size_t length,
     const std::uint8_t target_tier = 0);
 
+/// @brief Sends data to the object store
+///
+/// @param oid ID of the object to send the data to
+/// @param obj Object to send the data to
+/// @param is_overwrite Signifies whether we are overwriting an existing object or writing to a new one
+/// @param infile File to write the data from
+/// @param offset Offset into the file to begin writing from (used for the multipart upload feature)
+/// @param length Amount of data being sent in bytes
+/// @param target_tier The tier to write the data to
+///
+/// @returns 0 on success, negative error code on error
+int put(
+    const struct hsm_uint oid,
+    struct hsm_obj* obj,
+    const bool is_overwrite,
+    std::ifstream& infile,
+    const std::size_t offset,
+    const std::size_t length,
+    const std::uint8_t target_tier = 0);
 /// @brief Retrieves data from the object store
 ///
 /// @param oid ID of the object to retrieve the data from
