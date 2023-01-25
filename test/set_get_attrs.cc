@@ -43,8 +43,7 @@ SCENARIO(
 
         hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
 
-        hestia::hsm_obj obj;
-        hestia::put(oid, &obj, false, "", 0, 0, 0);
+        hestia::put(oid, false, "", 0, 0, 0);
 
         std::string attr_keys;
         nlohmann::json kvs;

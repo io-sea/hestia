@@ -31,15 +31,6 @@ class Kv_store {
     /// @brief  Send the metadata associated with an object to the key-value
     ///         store
     ///
-    /// @param obj Object to send the metadata to
-    ///
-    /// @returns 0 on success or error code on failure
-    virtual int put_meta_data(const struct hsm_obj& obj) = 0;
-
-    ///
-    /// @brief  Send the metadata associated with an object to the key-value
-    ///         store
-    ///
     /// @param oid ID of the object to set attributes for
     /// @param attrs JSON string representing the attributes to set
     ///
@@ -47,13 +38,6 @@ class Kv_store {
     virtual int put_meta_data(
         const struct hsm_uint& oid, const nlohmann::json& attrs) = 0;
 
-    ///
-    /// @brief Retrieve the metadata associated with an object from the key-value store and populate the object with it
-    ///
-    /// @param obj Object to retrieve the metadata for
-    ///
-    /// @returns 0 on success or error code on failure
-    virtual int get_meta_data(struct hsm_obj& obj) = 0;
 
     ///
     /// @brief Retrieve all entries of the metadata associated with an object

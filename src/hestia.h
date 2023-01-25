@@ -11,7 +11,7 @@ namespace hestia {
 /// @param obj Object to be created
 ///
 
-void create_object(const struct hsm_uint& oid, struct hsm_obj& obj);
+void create_object(const struct hsm_uint& oid);
 
 /// @brief Sends data to the object store
 ///
@@ -26,7 +26,6 @@ void create_object(const struct hsm_uint& oid, struct hsm_obj& obj);
 /// @returns 0 on success, negative error code on error
 int put(
     const struct hsm_uint oid,
-    struct hsm_obj* obj,
     const bool is_overwrite,
     const void* buf,
     const std::size_t offset,
@@ -46,7 +45,6 @@ int put(
 /// @returns 0 on success, negative error code on error
 int put(
     const struct hsm_uint oid,
-    struct hsm_obj* obj,
     const bool is_overwrite,
     std::ifstream& infile,
     const std::size_t offset,
@@ -66,7 +64,6 @@ int put(
 
 int get(
     const struct hsm_uint oid,
-    struct hsm_obj* obj,
     void* buf,
     const std::size_t off,
     const std::size_t len,
@@ -161,4 +158,9 @@ std::vector<uint8_t> list_tiers();
 ///
 /// @returns a vector of all the tier IDs where the object is located
 std::vector<uint8_t> locate(const struct hsm_uint& oid);
+
+void create_dataset(const struct hsm_uint oid, std::vector<hsm_uint>& members);
+
+std::vector<hsm_uint> get_dataset_members(const struct hsm_uint& oid);
+
 }  // namespace hestia

@@ -24,11 +24,9 @@ SCENARIO(
                               std::numeric_limits<std::uint64_t>::min(),
                               std::numeric_limits<std::uint64_t>::max()))));
             struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-            struct hestia::hsm_obj obj;
 
             const int dest_tier = 0;
-            hestia::put(
-                oid, &obj, false, data.data(), 0, data.size(), dest_tier);
+            hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
             /*
                         const auto json_attrs =
                             nlohmann::json::parse(hestia::get_attrs(oid,
@@ -40,18 +38,17 @@ SCENARIO(
                         }
             //            REQUIRE(!(dest_tier < 0));
             */
-            THEN("a hsm_obj is created")
-            {
-                REQUIRE(obj.oid == oid);
-                REQUIRE(!obj.meta_data.empty());
-            }
+            // THEN("a hsm_obj is created")
+            //{
+            //     REQUIRE(obj.oid == oid);
+            //     REQUIRE(!obj.meta_data.empty());
+            // }
             WHEN("the data is retrieved")
             {
                 std::string recv_data;
                 recv_data.resize(data.size());
                 hestia::get(
-                    oid, &obj, &recv_data[0], 0, recv_data.size(), 0,
-                    dest_tier);
+                    oid, &recv_data[0], 0, recv_data.size(), 0, dest_tier);
 
                 THEN("the stored data matches the retrieved data")
                 {
@@ -68,7 +65,6 @@ SCENARIO(
                               std::numeric_limits<std::uint64_t>::min(),
                               std::numeric_limits<std::uint64_t>::max()))));
             struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-            struct hestia::hsm_obj obj;
 
             const std::size_t offset = GENERATE_COPY(take(
                 1, random(
@@ -80,8 +76,7 @@ SCENARIO(
                        data.size() - offset)));
 
             const int dest_tier = 0;
-            hestia::put(
-                oid, &obj, false, data.data(), offset, length, dest_tier);
+            hestia::put(oid, false, data.data(), offset, length, dest_tier);
             /*
                         const auto json_attrs =
                             nlohmann::json::parse(hestia::get_attrs(oid,
@@ -93,17 +88,20 @@ SCENARIO(
                         }
               //          REQUIRE(!(dest_tier < 0));
             */
+            /*
             THEN("a hsm_obj is created")
             {
                 REQUIRE(obj.oid == oid);
                 REQUIRE(!obj.meta_data.empty());
             }
+            */
             WHEN("the data is retrieved")
             {
                 std::string recv_data;
                 recv_data.resize(data.size());
                 hestia::get(
-                    oid, &obj, &recv_data[0], offset, length, 0, dest_tier);
+                    oid, /* &obj,*/ &recv_data[0], offset, length, 0,
+                    dest_tier);
 
                 THEN("the stored data matches the retrieved data")
                 {

@@ -6,12 +6,12 @@ bool hestia::kv::Disk::object_exists(const struct hsm_uint& oid)
 {
     return std::filesystem::exists(get_filename_from_oid(oid));
 }
-
+/*
 int hestia::kv::Disk::put_meta_data(const struct hsm_obj& obj)
 {
     return put_meta_data(obj.oid, obj.meta_data);
 }
-
+*/
 int hestia::kv::Disk::put_meta_data(
     const struct hsm_uint& oid, const nlohmann::json& attrs)
 {
@@ -34,7 +34,7 @@ int hestia::kv::Disk::put_meta_data(
 
     return 0;
 }
-
+/*
 int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
 {
     std::ifstream file(get_filename_from_oid(obj.oid));
@@ -47,7 +47,7 @@ int hestia::kv::Disk::get_meta_data(struct hsm_obj& obj)
 
     return 0;
 }
-
+*/
 nlohmann::json hestia::kv::Disk::get_meta_data(const struct hsm_uint& oid)
 {
     std::ifstream file(get_filename_from_oid(oid));

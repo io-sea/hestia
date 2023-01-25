@@ -24,10 +24,9 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-        struct hestia::hsm_obj obj;
 
         const auto tier = 0;
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), tier);
+        hestia::put(oid, false, data.data(), 0, data.size(), tier);
 
         /*
                 const auto json_attrs =

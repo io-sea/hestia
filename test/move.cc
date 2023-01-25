@@ -21,10 +21,9 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-        struct hestia::hsm_obj obj;
 
         const int dest_tier = 0;
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), dest_tier);
+        hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
         /*
                 const auto json_attrs =
                     nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
@@ -35,8 +34,7 @@ SCENARIO(
             std::string original_data;
             original_data.resize(data.size());
             hestia::get(
-                oid, &obj, &original_data[0], 0, original_data.size(), 0,
-                dest_tier);
+                oid, &original_data[0], 0, original_data.size(), 0, dest_tier);
 
             hestia::set_attrs(
                 oid,
@@ -53,8 +51,7 @@ SCENARIO(
                   */
                 std::string move_data;
                 move_data.resize(data.size());
-                hestia::get(
-                    oid, &obj, &move_data[0], 0, move_data.size(), 0, 1);
+                hestia::get(oid, &move_data[0], 0, move_data.size(), 0, 1);
                 REQUIRE(original_data == move_data);
             }
         }

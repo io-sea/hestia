@@ -4,7 +4,12 @@
 int main()
 {
     struct hestia::hsm_uint oid(23905702934);
-    struct hestia::hsm_obj obj;
+    struct hestia::hsm_uint oid2(34016813045);
+    struct hestia::hsm_uint set(12894691823);
+
+    std::vector<hestia::hsm_uint> members = {oid, oid2};
+
+    hestia::create_dataset(set, members);
 
     std::string write_data = "Buffer testing data 123";
     std::ofstream testfile("testfile.txt");
@@ -15,7 +20,7 @@ int main()
 
     std::ifstream writefile("testfile.txt");
     if (hestia::put(
-            oid, &obj, false, writefile, offset, write_data.size() - offset, 0)
+            oid, false, writefile, offset, write_data.size() - offset, 0)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
@@ -51,7 +56,7 @@ int main()
     std::string read_data;
     read_data.resize(write_data.size() - offset);
 
-    if (hestia::get(oid, &obj, &read_data[0], 0, read_data.size(), 0, 0) != 0) {
+    if (hestia::get(oid, &read_data[0], 0, read_data.size(), 0, 0) != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);
     }
@@ -89,7 +94,13 @@ int main()
                   << " " << it.bandwith << std::endl;
     }
 
-    hestia::remove(oid);
+    auto member_list = hestia::get_dataset_members(set);
+
+    for (const auto& it : member_list) {
+        std::cout << it.higher << '-' << it.lower << std::endl;
+    }
+    //    hestia::remove(oid);
+
 
     return 0;
 }

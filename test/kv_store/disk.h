@@ -22,7 +22,7 @@ class Disk : Kv_store {
     bool object_exists(const struct hsm_uint& oid);
 
     /// @copydoc Kv_store::put_meta_data
-    int put_meta_data(const struct hsm_obj& obj);
+    //    int put_meta_data(const struct hsm_obj& obj);
 
     /// @copydoc Kv_store::put_meta_data
     int put_meta_data(const struct hsm_uint& oid, const nlohmann::json& attrs);

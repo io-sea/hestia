@@ -29,7 +29,6 @@ SCENARIO("List functions correctly", "[kv][store]")
                     std::numeric_limits<std::uint64_t>::max()))));
 
         std::vector<struct hestia::hsm_uint> oids(max_num_objects);
-        std::vector<struct hestia::hsm_obj> objs(max_num_objects);
 
         auto oid_it = hsm_uint_parts.begin() - 1;
         for (auto& oid : oids) {
@@ -42,8 +41,7 @@ SCENARIO("List functions correctly", "[kv][store]")
         for (unsigned int i = 0; i < max_num_objects; ++i) {
             const int dest_tier = 0;
             hestia::put(
-                oids[i], &objs[i], false, data_vecs[i].data(), 0,
-                data_vecs[i].size(), 0);
+                oids[i], false, data_vecs[i].data(), 0, data_vecs[i].size(), 0);
             //            const auto json_attrs =
             //              nlohmann::json::parse(hestia::get_attrs(oids[i],
             //              "tiers"));

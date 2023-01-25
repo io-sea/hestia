@@ -21,7 +21,6 @@ SCENARIO("Locate interfaces correctly with the kv store backend", "[kv][store]")
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-        struct hestia::hsm_obj obj;
 
         // randomly generate a tier for the object to be sent to
         auto num_tiers = static_cast<int>((hestia::tiers).size());
@@ -33,7 +32,7 @@ SCENARIO("Locate interfaces correctly with the kv store backend", "[kv][store]")
                    random(0, 10))));
 
 
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), dest_tier);
+        hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
 
         WHEN("locate is used to retrieve the tier for the object")
         {

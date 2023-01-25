@@ -20,10 +20,9 @@ SCENARIO("Release interfaces correctly with the object store backend"
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-        struct hestia::hsm_obj obj;
 
         const int dest_tier = 1;
-        hestia::put(oid, &obj, false, data.data(), 0, data.size(), 1);
+        hestia::put(oid, false, data.data(), 0, data.size(), 1);
         /*
                 const auto json_attrs =
                     nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
@@ -45,8 +44,7 @@ SCENARIO("Release interfaces correctly with the object store backend"
 
                 REQUIRE(
                     hestia::get(
-                        oid, &obj, &copy_data[0], 0, copy_data.size(), 0,
-                        dest_tier)
+                        oid, &copy_data[0], 0, copy_data.size(), 0, dest_tier)
                     == 2);
                 // The error code 2 for get is thrown when the object is found
                 // in the kvs but its data is not found on the specified tier of

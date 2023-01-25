@@ -24,15 +24,6 @@ struct hsm_uint {
     }
 };
 
-struct hsm_obj {
-    struct hsm_uint oid;
-    nlohmann::json meta_data;
-
-    hsm_obj() {}
-    hsm_obj(std::uint64_t val) : oid(val) {}
-    hsm_obj(const hsm_uint& in) : oid(in) {}
-};
-
 enum storage_class { ssd_nvme, ssd_sata, hdd, tape };
 
 struct hsm_tier {

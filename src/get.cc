@@ -4,7 +4,6 @@
 
 int hestia::get(
     struct hsm_uint oid,
-    struct hsm_obj* obj,
     void* buf,
     std::size_t off,
     std::size_t len,
@@ -24,7 +23,7 @@ int hestia::get(
         return 1;
     }
 
-    kvs.get_meta_data(*obj);
+    //    kvs.get_meta_data(oid);
 
     obj::Disk object_store;
     if (object_store.get(oid, static_cast<char*>(buf) + off, len, src_tier)
