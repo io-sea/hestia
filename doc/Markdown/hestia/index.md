@@ -8,6 +8,7 @@
 | ---- | ---- |
 | [create_object](#hestia-create_object) | Creates an object in the object store and an entry for it in the key value store.  |
 | [put](#hestia-put) | Sends data to the object store.  |
+| [put](#hestia-put-1) | Sends data to the object store.  |
 | [get](#hestia-get) | Retrieves data from the object store.  |
 | [set_attrs](#hestia-set_attrs) | Update an attribute for an object.  |
 | [get_attrs](#hestia-get_attrs) |  |
@@ -24,7 +25,7 @@
 
 
 ## Functions
-### <a name='hestia-create_object' /> public void hestia::create_object (const struct hsm_uint &oid, struct hsm_obj &obj)
+### <a name='hestia-create_object' /> public void hestia::create_object (const struct hsm_uint &oid)
 
 Creates an object in the object store and an entry for it in the key value store. 
 
@@ -35,7 +36,6 @@ Creates an object in the object store and an entry for it in the key value store
 | Type | Name | Description | 
 | ---- | ---- | ---- |
 | const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of the object to be created  |
-| struct [hsm_obj][hestia-hsm_obj] & | obj | Object to be created  |
 
 
 
@@ -50,7 +50,7 @@ Creates an object in the object store and an entry for it in the key value store
 
 [Go to Top](#hestia)
 
-### <a name='hestia-put' /> public int hestia::put (const struct hsm_uint oid, struct hsm_obj *obj, const bool is_overwrite, const void *buf, const std::size_t offset, const std::size_t length, const std::uint8_t target_tier=0)
+### <a name='hestia-put' /> public int hestia::put (const struct hsm_uint oid, const bool is_overwrite, const void *buf, const std::size_t offset, const std::size_t length, const std::uint8_t target_tier=0)
 
 Sends data to the object store. 
 
@@ -61,7 +61,6 @@ Sends data to the object store.
 | Type | Name | Description | 
 | ---- | ---- | ---- |
 | const struct [hsm_uint][hestia-hsm_uint] | oid | ID of the object to send the data to  |
-| struct [hsm_obj][hestia-hsm_obj] * | obj | Object to send the data to  |
 | const bool | is_overwrite | Signifies whether we are overwriting an existing object or writing to a new one  |
 | const void * | buf | Buffer to hold the data being sent to the object store  |
 | const std::size_t | offset | Offset into the buffer to begin writing from (used for the multipart upload feature)  |
@@ -86,7 +85,42 @@ Sends data to the object store.
 
 [Go to Top](#hestia)
 
-### <a name='hestia-get' /> public int hestia::get (const struct hsm_uint oid, struct hsm_obj *obj, void *buf, const std::size_t off, const std::size_t len, const std::uint8_t src_tier=0, const std::uint8_t tgt_tier=0)
+### <a name='hestia-put-1' /> public int hestia::put (const struct hsm_uint oid, const bool is_overwrite, std::ifstream &infile, const std::size_t offset, const std::size_t length, const std::uint8_t target_tier=0)
+
+Sends data to the object store. 
+
+
+
+
+#### Parameters: 
+| Type | Name | Description | 
+| ---- | ---- | ---- |
+| const struct [hsm_uint][hestia-hsm_uint] | oid | ID of the object to send the data to  |
+| const bool | is_overwrite | Signifies whether we are overwriting an existing object or writing to a new one  |
+| std::ifstream & | infile | File to write the data from  |
+| const std::size_t | offset | Offset into the file to begin writing from (used for the multipart upload feature)  |
+| const std::size_t | length | Amount of data being sent in bytes  |
+| const std::uint8_t | target_tier | The tier to write the data to |
+
+#### Returns: 
+| Type | Description | 
+| ---- | ---- |
+| int | 0 on success, negative error code on error  |
+
+
+
+
+
+
+
+
+
+
+
+
+[Go to Top](#hestia)
+
+### <a name='hestia-get' /> public int hestia::get (const struct hsm_uint oid, void *buf, const std::size_t off, const std::size_t len, const std::uint8_t src_tier=0, const std::uint8_t tgt_tier=0)
 
 Retrieves data from the object store. 
 
@@ -97,7 +131,6 @@ Retrieves data from the object store.
 | Type | Name | Description | 
 | ---- | ---- | ---- |
 | const struct [hsm_uint][hestia-hsm_uint] | oid | ID of the object to retrieve the data from  |
-| struct [hsm_obj][hestia-hsm_obj] * | obj | Object to retrieve the data from  |
 | void * | buf | Buffer to store the retrieved data  |
 | const std::size_t | off | Start offset for the data being read  |
 | const std::size_t | len | Amount of data being retrieved in bytes  |
@@ -289,8 +322,7 @@ Copy an object from one tier to another.
 #### Returns: 
 | Type | Description | 
 | ---- | ---- |
-| int | 0 on success, negative error code on error 
-  |
+| int | 0 on success, negative error code on error  |
 
 
 
@@ -322,8 +354,7 @@ Move an object from one tier to another.
 #### Returns: 
 | Type | Description | 
 | ---- | ---- |
-| int | 0 on success, negative error code on error 
-  |
+| int | 0 on success, negative error code on error  |
 
 
 
@@ -354,8 +385,7 @@ Remove an objects data from a given tier.
 #### Returns: 
 | Type | Description | 
 | ---- | ---- |
-| int | 0 on success, negative error code on error 
-  |
+| int | 0 on success, negative error code on error  |
 
 
 
@@ -385,8 +415,7 @@ Returns information about the specified tiers.
 #### Returns: 
 | Type | Description | 
 | ---- | ---- |
-| std::list< [hsm_tier][hestia-hsm_tier] > | A list containing the information about the specified tiers 
-  |
+| std::list< [hsm_tier][hestia-hsm_tier] > | A list containing the information about the specified tiers  |
 
 
 
@@ -456,6 +485,5 @@ Gives the location of the object's data in the object store.
 
 [Go to Top](#hestia)
 
-[hestia-hsm_obj]:./hsm_obj.md#hestia-hsm_obj
 [hestia-hsm_tier]:./hsm_tier.md#hestia-hsm_tier
 [hestia-hsm_uint]:./hsm_uint.md#hestia-hsm_uint

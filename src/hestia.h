@@ -8,7 +8,6 @@ namespace hestia {
 /// @brief Creates an object in the object store and an entry for it in the key value store
 ///
 /// @param oid ID of the object to be created
-/// @param obj Object to be created
 ///
 
 void create_object(const struct hsm_uint& oid);
@@ -16,7 +15,6 @@ void create_object(const struct hsm_uint& oid);
 /// @brief Sends data to the object store
 ///
 /// @param oid ID of the object to send the data to
-/// @param obj Object to send the data to
 /// @param is_overwrite Signifies whether we are overwriting an existing object or writing to a new one
 /// @param buf Buffer to hold the data being sent to the object store
 /// @param offset Offset into the buffer to begin writing from (used for the multipart upload feature)
@@ -35,7 +33,6 @@ int put(
 /// @brief Sends data to the object store
 ///
 /// @param oid ID of the object to send the data to
-/// @param obj Object to send the data to
 /// @param is_overwrite Signifies whether we are overwriting an existing object or writing to a new one
 /// @param infile File to write the data from
 /// @param offset Offset into the file to begin writing from (used for the multipart upload feature)
@@ -53,7 +50,6 @@ int put(
 /// @brief Retrieves data from the object store
 ///
 /// @param oid ID of the object to retrieve the data from
-/// @param obj Object to retrieve the data from
 /// @param buf Buffer to store the retrieved data
 /// @param off Start offset for the data being read
 /// @param len Amount of data being retrieved in bytes
