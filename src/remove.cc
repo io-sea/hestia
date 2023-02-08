@@ -12,7 +12,22 @@ int hestia::remove(const struct hsm_uint& oid)
      * TODO (suggestion): alternatively, kv_store.remove could return the tier
      * ID on success and a negative error code on error
      */
-    std::string tier_key = "tier";
+    //    std::string tier_key = "tier";
+
+
+    //        int error_no = 0;
+    nlohmann::json dataset_test = kv_store.get_meta_data(oid, "dataset");
+    if (dataset_test["dataset"] == true) {
+        auto members = hestia::get_dataset_members(oid);
+        for (auto& it : members) {
+            remove(it);
+/*            if (remove(it) != 0) {
+                error_no=1;
+            }
+*/        }
+//        return 0;
+    }
+
 
     const auto tiers = hestia::locate(oid);
     kv_store.remove(oid);

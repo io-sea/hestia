@@ -27,8 +27,17 @@ int main()
     }
     writefile.close();
 
+
+    if (hestia::put(
+            oid2, false, write_data.data(), offset, write_data.size() - offset,
+            0)
+        != 0) {
+        std::cout << "put error!" << std::endl;
+        exit(1);
+    }
+
     if (hestia::set_attrs(
-            oid,
+            set,
             R"({"trigger_migration": {"operation":"copy","src_tier" : 0,
        "tgt_tier":1}})")
         != 0) {
@@ -37,7 +46,7 @@ int main()
     }
 
     if (hestia::set_attrs(
-            oid,
+            set,
             R"({"trigger_migration": {"operation":"release","src_tier" : 0,
        "tgt_tier":1}})")
         != 0) {
@@ -46,7 +55,7 @@ int main()
     }
 
     if (hestia::set_attrs(
-            oid,
+            set,
             R"({"trigger_migration": {"operation":"move","src_tier" : 1,
        "tgt_tier":0}})")
         != 0) {
@@ -99,7 +108,7 @@ int main()
     for (const auto& it : member_list) {
         std::cout << it.higher << '-' << it.lower << std::endl;
     }
-    //    hestia::remove(oid);
+    hestia::remove(set);
 
 
     return 0;
