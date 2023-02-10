@@ -44,24 +44,26 @@ int main()
         std::cout << "set_attrs error!" << std::endl;
         exit(1);
     }
+    std::cout << "Copied dataset from tier 0 to tier 1\n";
+    /*
+        if (hestia::set_attrs(
+                set,
+                R"({"trigger_migration": {"operation":"release","src_tier" : 0,
+           "tgt_tier":1}})")
+            != 0) {
+            std::cout << "set_attrs error!" << std::endl;
+            exit(1);
+        }
 
-    if (hestia::set_attrs(
-            set,
-            R"({"trigger_migration": {"operation":"release","src_tier" : 0,
-       "tgt_tier":1}})")
-        != 0) {
-        std::cout << "set_attrs error!" << std::endl;
-        exit(1);
-    }
-
-    if (hestia::set_attrs(
-            set,
-            R"({"trigger_migration": {"operation":"move","src_tier" : 1,
-       "tgt_tier":0}})")
-        != 0) {
-        std::cout << "set_attrs error!" << std::endl;
-        exit(1);
-    }
+        if (hestia::set_attrs(
+                set,
+                R"({"trigger_migration": {"operation":"move","src_tier" : 1,
+           "tgt_tier":0}})")
+            != 0) {
+            std::cout << "set_attrs error!" << std::endl;
+            exit(1);
+        }
+        */
     std::string read_data;
     read_data.resize(write_data.size() - offset);
 
@@ -72,11 +74,21 @@ int main()
 
     std::cout << read_data << '\n';
 
-    auto location = hestia::locate(oid);
+    auto location  = hestia::locate(oid);
+    auto location2 = hestia::locate(oid2);
 
-    std::cout << "Object is located on " << location.size() << "tiers\n";
-    std::cout << "Object Location tiers: " << std::endl;
+    std::cout << "Object " << oid.higher << oid.lower << " is located on "
+              << location.size() << " tiers\n";
+    std::cout << "Object " << oid.higher << oid.lower
+              << " Location tiers: " << std::endl;
     for (const auto& it : location) {
+        std::cout << +it << std::endl;
+    }
+    std::cout << "Object " << oid2.higher << oid2.lower << " is located on "
+              << location.size() << " tiers\n";
+    std::cout << "Object " << oid2.higher << oid2.lower
+              << " Location tiers: " << std::endl;
+    for (const auto& it : location2) {
         std::cout << +it << std::endl;
     }
     auto oids = hestia::list();
@@ -87,6 +99,7 @@ int main()
 
     std::cout << get_att << std::endl;
 
+    std::cout << "Object list: \n";
     for (const auto& id : oids) {
         std::cout << id.higher << id.lower << std::endl;
     }
@@ -105,10 +118,11 @@ int main()
 
     auto member_list = hestia::get_dataset_members(set);
 
+    std::cout << "Dataset members:\n";
     for (const auto& it : member_list) {
         std::cout << it.higher << '-' << it.lower << std::endl;
     }
-    hestia::remove(set);
+    //    hestia::remove(set);
 
 
     return 0;
