@@ -20,8 +20,8 @@ SCENARIO("Release interfaces correctly with the object store backend"
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-       
-        //object 1
+
+        // object 1
         auto data_vec1 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -34,7 +34,7 @@ SCENARIO("Release interfaces correctly with the object store backend"
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid1(hsm_uint_parts1[0], hsm_uint_parts1[1]);
 
-        //object 2
+        // object 2
         auto data_vec2 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -47,7 +47,7 @@ SCENARIO("Release interfaces correctly with the object store backend"
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid2(hsm_uint_parts2[0], hsm_uint_parts2[1]);
 
-        //dataset object
+        // dataset object
         auto hsm_uint_parts3 = GENERATE(chunk(
             2, take(
                    2, random(
@@ -106,7 +106,8 @@ SCENARIO("Release interfaces correctly with the object store backend"
 
                 REQUIRE(
                     hestia::get(
-                        oid1, &copy_data1[0], 0, copy_data1.size(), 0, dest_tier)
+                        oid1, &copy_data1[0], 0, copy_data1.size(), 0,
+                        dest_tier)
                     == 2);
 
                 std::string copy_data2;
@@ -114,7 +115,8 @@ SCENARIO("Release interfaces correctly with the object store backend"
 
                 REQUIRE(
                     hestia::get(
-                        oid2, &copy_data2[0], 0, copy_data2.size(), 0, dest_tier)
+                        oid2, &copy_data2[0], 0, copy_data2.size(), 0,
+                        dest_tier)
                     == 2);
                 // The error code 2 for get is thrown when the object is found
                 // in the kvs but its data is not found on the specified tier of

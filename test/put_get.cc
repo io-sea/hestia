@@ -132,7 +132,7 @@ SCENARIO(
 
             std::ofstream testfile("testfile.txt");
             testfile.write(data.data(), data.size());
-            testfile.close(); 
+            testfile.close();
             std::ifstream writefile("testfile.txt");
 
             const int dest_tier = 0;

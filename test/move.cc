@@ -21,8 +21,8 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-   
-        //object 1
+
+        // object 1
         auto data_vec1 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -35,7 +35,7 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid1(hsm_uint_parts1[0], hsm_uint_parts1[1]);
 
-        //object 2
+        // object 2
         auto data_vec2 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -48,7 +48,7 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid2(hsm_uint_parts2[0], hsm_uint_parts2[1]);
 
-        //dataset object
+        // dataset object
         auto hsm_uint_parts3 = GENERATE(chunk(
             2, take(
                    2, random(
@@ -100,12 +100,14 @@ SCENARIO(
             std::string original_data1;
             original_data1.resize(data1.size());
             hestia::get(
-                oid1, &original_data1[0], 0, original_data1.size(), 0, dest_tier);
+                oid1, &original_data1[0], 0, original_data1.size(), 0,
+                dest_tier);
 
             std::string original_data2;
             original_data2.resize(data2.size());
             hestia::get(
-                oid2, &original_data2[0], 0, original_data2.size(), 0, dest_tier);
+                oid2, &original_data2[0], 0, original_data2.size(), 0,
+                dest_tier);
 
             hestia::set_attrs(
                 set,
@@ -124,7 +126,7 @@ SCENARIO(
                 move_data1.resize(data1.size());
                 hestia::get(oid1, &move_data1[0], 0, move_data1.size(), 0, 1);
                 REQUIRE(original_data1 == move_data1);
-           
+
                 std::string move_data2;
                 move_data2.resize(data2.size());
                 hestia::get(oid2, &move_data2[0], 0, move_data2.size(), 0, 1);

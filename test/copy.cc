@@ -21,8 +21,8 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-       
-        //object 1
+
+        // object 1
         auto data_vec1 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -35,7 +35,7 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid1(hsm_uint_parts1[0], hsm_uint_parts1[1]);
 
-        //object 2
+        // object 2
         auto data_vec2 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
 
@@ -48,7 +48,7 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid2(hsm_uint_parts2[0], hsm_uint_parts2[1]);
 
-        //dataset object
+        // dataset object
         auto hsm_uint_parts3 = GENERATE(chunk(
             2, take(
                    2, random(
