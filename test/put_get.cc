@@ -95,6 +95,7 @@ SCENARIO(
                 REQUIRE(!obj.meta_data.empty());
             }
             */
+
             WHEN("the data is retrieved")
             {
                 std::string recv_data;
@@ -112,29 +113,35 @@ SCENARIO(
             }
             hestia::remove(oid);
         }
-        WHEN("file to write the data from and offset data are given.")
+    }
+    GIVEN("A file to write data to the object store from")
+    {
+        auto data_vec = GENERATE(
+            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
+
+        std::string data(data_vec.begin(), data_vec.end());
+        auto hsm_uint_parts = GENERATE(chunk(
+            2, take(
+                   2, random(
+                          std::numeric_limits<std::uint64_t>::min(),
+                          std::numeric_limits<std::uint64_t>::max()))));
+        struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
+
+        const std::size_t offset = GENERATE_COPY(take(
+            1,
+            random(
+                std::numeric_limits<std::size_t>::min() + 1, data.size() - 1)));
+        const std::size_t length = GENERATE_COPY(take(
+            1, random(
+                   std::numeric_limits<std::size_t>::min() + 1,
+                   data.size() - offset)));
+        std::ofstream testfile("testfile.txt");
+        testfile.write(data.data(), data.size());
+        testfile.close();
+
+        WHEN("The data is sent to the object store.")
         {
-            auto hsm_uint_parts = GENERATE(chunk(
-                2, take(
-                       2, random(
-                              std::numeric_limits<std::uint64_t>::min(),
-                              std::numeric_limits<std::uint64_t>::max()))));
-            struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
-
-            const std::size_t offset = GENERATE_COPY(take(
-                1, random(
-                       std::numeric_limits<std::size_t>::min() + 1,
-                       data.size() - 1)));
-            const std::size_t length = GENERATE_COPY(take(
-                1, random(
-                       std::numeric_limits<std::size_t>::min() + 1,
-                       data.size() - offset)));
-
-            std::ofstream testfile("testfile.txt");
-            testfile.write(data.data(), data.size());
-            testfile.close();
             std::ifstream writefile("testfile.txt");
-
             const int dest_tier = 0;
             hestia::put(oid, false, writefile, offset, length, dest_tier);
             writefile.close();

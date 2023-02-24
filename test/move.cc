@@ -5,10 +5,10 @@
 #include "common.h"
 
 SCENARIO(
-    "Move interfaces correctly with the object store backend",
+    "Move interfaces correctly with the object store backend for single objects",
     "[object][store]")
 {
-    GIVEN("an object and a dataset with two objects within the object store")
+    GIVEN("an object within the object store")
     {
         auto data_vec = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
@@ -22,6 +22,48 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
 
+        const int dest_tier = 0;
+        hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const int dest_tier = json_attrs["tier"];
+        */
+        WHEN("the data is moved to a different tier")
+        {
+            std::string original_data;
+            original_data.resize(data.size());
+            hestia::get(
+                oid, &original_data[0], 0, original_data.size(), 0, dest_tier);
+
+            hestia::set_attrs(
+                oid,
+                R"({"trigger_migration": {"operation":"move", "src_tier":0,"tgt_tier":1}})");
+
+
+            THEN(
+                "The data retrieved from the original object above matches the data retrieved from the move")
+            {
+
+                /*              const auto json_attrs =
+                                  nlohmann::json::parse(hestia::get_attrs(oid,
+                   "tier")); const int tgt_tier = json_attrs["tier"];
+                  */
+                std::string move_data;
+                move_data.resize(data.size());
+                hestia::get(oid, &move_data[0], 0, move_data.size(), 0, 1);
+                REQUIRE(original_data == move_data);
+            }
+        }
+        hestia::remove(oid);
+    }
+}
+SCENARIO(
+    "Move interfaces correctly with the object store backend for sets of objects",
+    "[object][store]")
+{
+    GIVEN("a dataset with two objects within the object store")
+    {
         // object 1
         auto data_vec1 = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
@@ -61,7 +103,6 @@ SCENARIO(
 
 
         const int dest_tier = 0;
-        hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
         hestia::put(oid1, false, data1.data(), 0, data1.size(), dest_tier);
         hestia::put(oid2, false, data2.data(), 0, data2.size(), dest_tier);
         /*
@@ -69,32 +110,6 @@ SCENARIO(
                     nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
                 const int dest_tier = json_attrs["tier"];
         */
-        WHEN("the data is moved to a different tier")
-        {
-            std::string original_data;
-            original_data.resize(data.size());
-            hestia::get(
-                oid, &original_data[0], 0, original_data.size(), 0, dest_tier);
-
-            hestia::set_attrs(
-                oid,
-                R"({"trigger_migration": {"operation":"move", "src_tier":0,"tgt_tier":1}})");
-
-
-            THEN(
-                "The data retrieved from the original object above matches the data retrieved from the move")
-            {
-
-                /*              const auto json_attrs =
-                                  nlohmann::json::parse(hestia::get_attrs(oid,
-                   "tier")); const int tgt_tier = json_attrs["tier"];
-                  */
-                std::string move_data;
-                move_data.resize(data.size());
-                hestia::get(oid, &move_data[0], 0, move_data.size(), 0, 1);
-                REQUIRE(original_data == move_data);
-            }
-        }
         WHEN("the dataset is moved to a different tier")
         {
             std::string original_data1;
@@ -133,7 +148,6 @@ SCENARIO(
                 REQUIRE(original_data2 == move_data2);
             }
         }
-        hestia::remove(oid);
         hestia::remove(set);
     }
 }

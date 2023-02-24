@@ -4,10 +4,11 @@
 
 #include "common.h"
 
-SCENARIO("Release interfaces correctly with the object store backend"
-         "[object][store]")
+SCENARIO(
+    "Release interfaces correctly with the object store backend for single objects"
+    "[object][store]")
 {
-    GIVEN("an object and a dataset with two objects within the object store")
+    GIVEN("an object within the object store")
     {
         auto data_vec = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
@@ -20,6 +21,47 @@ SCENARIO("Release interfaces correctly with the object store backend"
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
+
+        const int dest_tier = 1;
+        hestia::put(oid, false, data.data(), 0, data.size(), 1);
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const int dest_tier = json_attrs["tier"];
+        */
+        WHEN("The data is released from the current tier")
+        {
+            hestia::set_attrs(
+                oid,
+                R"({"trigger_migration": {"operation":"release", "src_tier":1}})");
+
+
+            THEN(
+                "The data associated with that object is deleted from the corresponding tier of the object store")
+            {
+
+                std::string copy_data;
+                copy_data.resize(data.size());
+
+                REQUIRE(
+                    hestia::get(
+                        oid, &copy_data[0], 0, copy_data.size(), 0, dest_tier)
+                    == 2);
+                // The error code 2 for get is thrown when the object is found
+                // in the kvs but its data is not found on the specified tier of
+                // the object store
+            }
+        }
+        hestia::remove(oid);
+    }
+}
+
+SCENARIO(
+    "Release interfaces correctly with the object store backend for sets of objects"
+    "[object][store]")
+{
+    GIVEN("a dataset with two objects within the object store")
+    {
 
         // object 1
         auto data_vec1 = GENERATE(
@@ -60,7 +102,6 @@ SCENARIO("Release interfaces correctly with the object store backend"
 
 
         const int dest_tier = 1;
-        hestia::put(oid, false, data.data(), 0, data.size(), 1);
         hestia::put(oid1, false, data1.data(), 0, data1.size(), dest_tier);
         hestia::put(oid2, false, data2.data(), 0, data2.size(), dest_tier);
         /*
@@ -68,29 +109,6 @@ SCENARIO("Release interfaces correctly with the object store backend"
                     nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
                 const int dest_tier = json_attrs["tier"];
         */
-        WHEN("The data is released from the current tier")
-        {
-            hestia::set_attrs(
-                oid,
-                R"({"trigger_migration": {"operation":"release", "src_tier":1}})");
-
-
-            THEN(
-                "The data associated with that object is deleted from the corresponding tier of the object store")
-            {
-
-                std::string copy_data;
-                copy_data.resize(data.size());
-
-                REQUIRE(
-                    hestia::get(
-                        oid, &copy_data[0], 0, copy_data.size(), 0, dest_tier)
-                    == 2);
-                // The error code 2 for get is thrown when the object is found
-                // in the kvs but its data is not found on the specified tier of
-                // the object store
-            }
-        }
         WHEN("The dataset is released from the current tier")
         {
             hestia::set_attrs(
@@ -123,7 +141,6 @@ SCENARIO("Release interfaces correctly with the object store backend"
                 // the object store
             }
         }
-        hestia::remove(oid);
         hestia::remove(set);
     }
 }

@@ -11,8 +11,7 @@ SCENARIO(
     "Remove erases the object from the KV store and the object store",
     "[kv][object][store]")
 {
-    GIVEN(
-        "an object and a dataset with two objects existing in the KV store and the object store")
+    GIVEN("an object in the KV store and the object store")
     {
         auto data_vec = GENERATE(
             chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
@@ -25,6 +24,52 @@ SCENARIO(
                           std::numeric_limits<std::uint64_t>::min(),
                           std::numeric_limits<std::uint64_t>::max()))));
         struct hestia::hsm_uint oid(hsm_uint_parts[0], hsm_uint_parts[1]);
+
+
+        const auto tier = 0;
+        hestia::put(oid, false, data.data(), 0, data.size(), tier);
+
+        /*
+                const auto json_attrs =
+                    nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
+                const auto tier = json_attrs["tier"];
+        */
+        std::string md_filename = hestia::kv::Disk().get_path() + '/'
+                                  + std::to_string(oid.higher) + '-'
+                                  + std::to_string(oid.lower) + ".meta";
+        std::string data_filename = hestia::obj::Disk().get_tier_path(tier)
+                                    + '/' + std::to_string(oid.higher)
+                                    + std::to_string(oid.lower) + ".data";
+
+        /* TODO: more general way of testing for object presence */
+        /* ensure object exists in KV store and object store */
+        REQUIRE(std::filesystem::exists(md_filename));
+        REQUIRE(std::filesystem::exists(data_filename));
+
+
+        WHEN("the object is removed")
+        {
+            hestia::remove(oid);
+
+            // TODO: more general way of testing for object presence
+            THEN("the object does not exist in the KV store")
+            {
+                REQUIRE(!std::filesystem::exists(md_filename));
+            }
+            THEN("the object does not exist in the object store")
+            {
+                REQUIRE(!std::filesystem::exists(data_filename));
+            }
+        }
+    }
+}
+SCENARIO(
+    "Remove erases the dataset from the KV store and the object store",
+    "[kv][object][store]")
+{
+    GIVEN(
+        "a dataset with two objects existing in the KV store and the object store")
+    {
 
         // object 1
         auto data_vec1 = GENERATE(
@@ -64,7 +109,6 @@ SCENARIO(
         hestia::create_dataset(set, members);
 
         const auto tier = 0;
-        hestia::put(oid, false, data.data(), 0, data.size(), tier);
         hestia::put(oid1, false, data1.data(), 0, data1.size(), tier);
         hestia::put(oid2, false, data2.data(), 0, data2.size(), tier);
 
@@ -73,17 +117,6 @@ SCENARIO(
                     nlohmann::json::parse(hestia::get_attrs(oid, "tier"));
                 const auto tier = json_attrs["tier"];
         */
-        std::string md_filename = hestia::kv::Disk().get_path() + '/'
-                                  + std::to_string(oid.higher) + '-'
-                                  + std::to_string(oid.lower) + ".meta";
-        std::string data_filename = hestia::obj::Disk().get_tier_path(tier)
-                                    + '/' + std::to_string(oid.higher)
-                                    + std::to_string(oid.lower) + ".data";
-
-        /* TODO: more general way of testing for object presence */
-        /* ensure object exists in KV store and object store */
-        REQUIRE(std::filesystem::exists(md_filename));
-        REQUIRE(std::filesystem::exists(data_filename));
 
         // Files for object 1
         std::string md_filename1 = hestia::kv::Disk().get_path() + '/'
@@ -117,20 +150,17 @@ SCENARIO(
 
         WHEN("the object and dataset is removed")
         {
-            hestia::remove(oid);
             hestia::remove(set);
 
             // TODO: more general way of testing for object presence
             THEN("the object does not exist in the KV store")
             {
-                REQUIRE(!std::filesystem::exists(md_filename));
                 REQUIRE(!std::filesystem::exists(md_filename1));
                 REQUIRE(!std::filesystem::exists(md_filename2));
                 REQUIRE(!std::filesystem::exists(md_filenameset));
             }
             THEN("the object does not exist in the object store")
             {
-                REQUIRE(!std::filesystem::exists(data_filename));
                 REQUIRE(!std::filesystem::exists(data_filename1));
                 REQUIRE(!std::filesystem::exists(data_filename2));
             }
