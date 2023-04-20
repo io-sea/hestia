@@ -4,32 +4,28 @@
 
 CopyToolConnection::~CopyToolConnection()
 {
-    if (mType == Type::MANAGED)
-    {
+    if (mType == Type::MANAGED) {
         terminateExternal();
     }
-    else if(mType == Type::DAEMON)
-    {
+    else if (mType == Type::DAEMON) {
         disconnect();
     }
 }
 
-CopyToolConnection::State CopyToolConnection::initialize(const CopyToolConfig& config, Type connectionType)
+CopyToolConnection::State CopyToolConnection::initialize(
+    const CopyToolConfig& config, Type connectionType)
 {
     mType = connectionType;
 
-    if (mType == Type::IN_PROCESS)
-    {
+    if (mType == Type::IN_PROCESS) {
         mInProcessCopyTool = std::make_unique<CopyTool>(nullptr);
-        //mInProcessCopyTool->initialize(config);    
+        // mInProcessCopyTool->initialize(config);
         mState = State::CONNECTED;
     }
-    else if(mType == Type::MANAGED)
-    {
+    else if (mType == Type::MANAGED) {
         launchExternal();
     }
-    else
-    {
+    else {
         mState = State::INITIALIZED;
     }
     return mState;
@@ -37,8 +33,7 @@ CopyToolConnection::State CopyToolConnection::initialize(const CopyToolConfig& c
 
 CopyToolConnection::State CopyToolConnection::connect()
 {
-    if (mState != State::INITIALIZED)
-    {
+    if (mState != State::INITIALIZED) {
         return mState;
     }
     return mState;
@@ -46,30 +41,34 @@ CopyToolConnection::State CopyToolConnection::connect()
 
 CopyToolConnection::State CopyToolConnection::disconnect()
 {
-    if (mState != State::CONNECTED)
-    {
+    if (mState != State::CONNECTED) {
         return mState;
     }
     return mState;
 }
 
-CopyToolResponse::Ptr CopyToolConnection::makeRequest(const CopyToolRequest& request)
+CopyToolResponse::Ptr CopyToolConnection::makeRequest(
+    const CopyToolRequest& request)
 {
     auto response = CopyToolResponse::Create();
 
-    if (mState != State::CONNECTED)
-    {
-        response->setError({CopyToolError::Code::ERROR_NO_CONNECTION, "Attempted copy with no connection"});
+    if (mState != State::CONNECTED) {
+        response->setError(
+            {CopyToolError::Code::ERROR_NO_CONNECTION,
+             "Attempted copy with no connection"});
         return response;
     }
 
-    if (mType == Type::IN_PROCESS)
-    {
-        response->setObjectStoreRespose(mInProcessCopyTool->makeObjectStoreRequest(request.getObjectStoreRequest()));
+    if (mType == Type::IN_PROCESS) {
+        response->setObjectStoreRespose(
+            mInProcessCopyTool->makeObjectStoreRequest(
+                request.getObjectStoreRequest()));
         return response;
     }
 
-    response->setError({CopyToolError::Code::ERROR_NO_CONNECTION, "Attempted copy with no connection"});
+    response->setError(
+        {CopyToolError::Code::ERROR_NO_CONNECTION,
+         "Attempted copy with no connection"});
     return response;
 }
 
@@ -83,12 +82,6 @@ CopyToolConnection::State CopyToolConnection::getState() const
     return mState;
 }
 
-void CopyToolConnection::launchExternal()
-{
+void CopyToolConnection::launchExternal() {}
 
-}
-
-void CopyToolConnection::terminateExternal()
-{
-
-}
+void CopyToolConnection::terminateExternal() {}

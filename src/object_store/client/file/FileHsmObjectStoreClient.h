@@ -4,14 +4,12 @@
 
 #include <filesystem>
 
-struct FileHsmObjectStoreClientConfig
-{
+struct FileHsmObjectStoreClientConfig {
     std::filesystem::directory_entry mStoreLocation{"object_store"};
 };
 
-class FileHsmObjectStoreClient : public HsmObjectStoreClient
-{
-public:
+class FileHsmObjectStoreClient : public HsmObjectStoreClient {
+  public:
     using Ptr = std::unique_ptr<FileHsmObjectStoreClient>;
 
     FileHsmObjectStoreClient();
@@ -24,10 +22,14 @@ public:
 
     void initialize(const FileHsmObjectStoreClientConfig& config);
 
-private:
-    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream) const override;
+  private:
+    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream)
+        const override;
 
-    void get(const HsmObjectStoreRequest& request, ostk::StorageObject& object, ostk::Stream* stream) const override;
+    void get(
+        const HsmObjectStoreRequest& request,
+        ostk::StorageObject& object,
+        ostk::Stream* stream) const override;
 
     void remove(const HsmObjectStoreRequest& request) const override;
 

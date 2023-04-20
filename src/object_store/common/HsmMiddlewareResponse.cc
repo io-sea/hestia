@@ -2,15 +2,9 @@
 
 #include "HsmObjectStoreResponse.h"
 
-HsmMiddlewareResponse::~HsmMiddlewareResponse()
-{
-
-}
+HsmMiddlewareResponse::~HsmMiddlewareResponse() {}
 
 HsmObjectStoreResponse* HsmMiddlewareResponse::getObjectStoreResponse() const
 {
     return mObjectStoreResponse.get();
 }
-
-
-

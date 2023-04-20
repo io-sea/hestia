@@ -2,11 +2,9 @@
 
 #include <string>
 
-class CopyToolError
-{
-public:
-    enum class Code
-    {
+class CopyToolError {
+  public:
+    enum class Code {
         NO_ERROR,
         ERROR_NO_CONNECTION,
         ERROR_OBJECT_STORE,
@@ -15,13 +13,12 @@ public:
 
     CopyToolError() = default;
 
-    CopyToolError(Code code, const std::string& message)
-        : mCode(code),
-            mMessage(message)
+    CopyToolError(Code code, const std::string& message) :
+        mCode(code), mMessage(message)
     {
     }
 
-private:
+  private:
     Code mCode{Code::NO_ERROR};
     std::string mMessage;
 };

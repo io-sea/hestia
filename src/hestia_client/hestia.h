@@ -23,14 +23,15 @@ struct hsm_uint {
     }
 };
 
-typedef enum hestia_error_e
-{
+typedef enum hestia_error_e {
     /// No error
     HESTIA_ERROR_OK = 0,
-    
-    HESTIA_ERROR_PUT_NOEXIST_OVRWRITE, // Tried to overwrite non-existing object
-    HESTIA_ERROR_PUT_EXIST_NOOVRWRITE, // Tried to Put an existing object with no-overwrite
-    
+
+    HESTIA_ERROR_PUT_NOEXIST_OVRWRITE,  // Tried to overwrite non-existing
+                                        // object
+    HESTIA_ERROR_PUT_EXIST_NOOVRWRITE,  // Tried to Put an existing object with
+                                        // no-overwrite
+
     HESTIA_ERROR_BAD_STREAM,
     HESTIA_ERROR_UNKOWN,
     HESTIA_ERROR_COUNT,
@@ -165,7 +166,7 @@ int release(const struct hsm_uint& oid, const std::uint8_t src_tier);
 /// @param tids The ids of the tiers to return information for
 ///
 /// @returns A list containing the information about the specified tiers
-//std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
+// std::list<hsm_tier> get_tiers_info(std::vector<int> tids);
 
 /// @brief Lists all tiers
 ///

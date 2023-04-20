@@ -2,23 +2,17 @@
 
 #include <ostk/JsonUtils.h>
 
-HsmAction::HsmAction()
-{
-
-}
+HsmAction::HsmAction() {}
 
 void HsmAction::setAction(const std::string& action)
 {
-    if (action == "release")
-    {
+    if (action == "release") {
         mAction = Action::RELEASE;
     }
-    else if (action == "copy")
-    {
+    else if (action == "copy") {
         mAction = Action::COPY;
     }
-    else if (action == "move")
-    {
+    else if (action == "move") {
         mAction = Action::MOVE;
     }
 }

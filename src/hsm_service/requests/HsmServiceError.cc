@@ -1,15 +1,14 @@
 #include "HsmServiceError.h"
 
-HsmServiceError::HsmServiceError()
-    : RequestError<HsmServiceErrorCode>(HsmServiceErrorCode::NO_ERROR, {})
+HsmServiceError::HsmServiceError() :
+    RequestError<HsmServiceErrorCode>(HsmServiceErrorCode::NO_ERROR, {})
 {
-
 }
 
-HsmServiceError::HsmServiceError(HsmServiceErrorCode code, const std::string& message)
-    : RequestError<HsmServiceErrorCode>(code, message)
+HsmServiceError::HsmServiceError(
+    HsmServiceErrorCode code, const std::string& message) :
+    RequestError<HsmServiceErrorCode>(code, message)
 {
-
 }
 
 std::string HsmServiceError::codeAsString() const
@@ -19,8 +18,7 @@ std::string HsmServiceError::codeAsString() const
 
 std::string HsmServiceError::codeToString(HsmServiceErrorCode code)
 {
-    switch(code)
-    {
+    switch (code) {
         case HsmServiceErrorCode::NO_ERROR:
             return "NO_ERROR";
         case HsmServiceErrorCode::ERROR:

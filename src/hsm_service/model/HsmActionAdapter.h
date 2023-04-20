@@ -4,9 +4,8 @@
 
 #include <memory>
 
-class HsmActionAdapter
-{
-public:
+class HsmActionAdapter {
+  public:
     using Ptr = std::unique_ptr<HsmActionAdapter>;
 
     static Ptr Create();

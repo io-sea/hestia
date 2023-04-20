@@ -3,14 +3,12 @@
 #include <string>
 #include <vector>
 
-struct MotrHsmTierInfo
-{
+struct MotrHsmTierInfo {
     std::string mName;
     std::string mIdentifier;
 };
 
-struct MotrConfig
-{
+struct MotrConfig {
     std::string mLocalAddress;
     std::string mHaAddress;
     std::string mProfile;

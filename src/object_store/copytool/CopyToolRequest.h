@@ -2,12 +2,11 @@
 
 #include "HsmObjectStoreRequest.h"
 
-#include <string>
 #include <sstream>
+#include <string>
 
-class CopyToolRequest
-{
-public:
+class CopyToolRequest {
+  public:
     CopyToolRequest(const HsmObjectStoreRequest& request);
 
     CopyToolRequest(const std::string& requestStr);
@@ -18,7 +17,7 @@ public:
 
     std::string serialize() const;
 
-private:
+  private:
     static constexpr char OBJECT_TOKEN[] = "ObjectId: ";
     static constexpr char OFFSET_TOKEN[] = "Offset: ";
     static constexpr char LENGTH_TOKEN[] = "Length: ";

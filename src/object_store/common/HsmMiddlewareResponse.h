@@ -4,16 +4,16 @@
 
 class HsmObjectStoreResponse;
 
-class HsmMiddlewareResponse
-{
-public:
+class HsmMiddlewareResponse {
+  public:
     using Ptr = std::unique_ptr<HsmMiddlewareResponse>;
     virtual ~HsmMiddlewareResponse();
 
     HsmObjectStoreResponse* getObjectStoreResponse() const;
 
-    virtual void setObjectStoreRespose(std::unique_ptr<HsmObjectStoreResponse> objectStoreResponse) = 0;
+    virtual void setObjectStoreRespose(
+        std::unique_ptr<HsmObjectStoreResponse> objectStoreResponse) = 0;
 
-protected:
+  protected:
     std::unique_ptr<HsmObjectStoreResponse> mObjectStoreResponse;
 };

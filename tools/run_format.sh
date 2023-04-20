@@ -23,19 +23,13 @@ nprocs=1
 
 for dir in $source_dirs
 do
-    if [ "$dir" = "src" ]; then
-        MAX_DEPTH=1
-    else
-        MAX_DEPTH=5
-    fi
-
     for ext in $source_exts
     do
         # Run clang-format on all the files with the given extension in each
         # directory
-        if [ ! -z "$(find $dir -iname "*.${ext}" -maxdepth ${MAX_DEPTH})" ]
+        if [ ! -z "$(find $dir -iname "*.${ext}")" ]
         then
-            find $dir -iname "*.${ext}" -maxdepth ${MAX_DEPTH} -print0 \
+            find $dir -iname "*.${ext}" -print0 \
                 | xargs -n 1 -0 -P "${nprocs}" ${FORMAT_EXECUTABLE}
         fi
     done

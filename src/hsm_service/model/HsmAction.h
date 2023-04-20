@@ -2,23 +2,13 @@
 
 #include <string>
 
-class HsmAction
-{
-public:
-    enum class Action
-    {
-        MOVE,
-        COPY,
-        RELEASE,
-        NONE
-    };
+class HsmAction {
+  public:
+    enum class Action { MOVE, COPY, RELEASE, NONE };
 
     HsmAction();
 
-    bool hasAction() const
-    {
-        return mAction != Action::NONE;
-    }
+    bool hasAction() const { return mAction != Action::NONE; }
 
     void setAction(const std::string& action);
 

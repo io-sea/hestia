@@ -4,15 +4,14 @@
 
 class HsmService;
 
-class ApplicationContext
-{
-public:
+class ApplicationContext {
+  public:
     static ApplicationContext& get();
 
     HsmService* getHsmService() const;
 
     void setHsmService(std::unique_ptr<HsmService> hsmService);
 
-private:
+  private:
     std::unique_ptr<HsmService> mHsmService;
 };

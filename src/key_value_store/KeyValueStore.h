@@ -4,15 +4,15 @@
 
 class KeyValueStoreClient;
 
-class KeyValueStore 
-{
-public:
+class KeyValueStore {
+  public:
     KeyValueStore(std::unique_ptr<KeyValueStoreClient> client);
 
     virtual ~KeyValueStore();
- 
-    [[nodiscard]] ostk::ObjectStoreResponse::Ptr makeRequest(const ostk::ObjectStoreRequest& request) const noexcept;
 
-private:
-  std::unique_ptr<KeyValueStoreClient> mClient;
+    [[nodiscard]] ostk::ObjectStoreResponse::Ptr makeRequest(
+        const ostk::ObjectStoreRequest& request) const noexcept;
+
+  private:
+    std::unique_ptr<KeyValueStoreClient> mClient;
 };

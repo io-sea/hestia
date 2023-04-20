@@ -4,23 +4,32 @@
 
 #include <fstream>
 
-namespace hestia
-{
+namespace hestia {
 
-int put(const struct hsm_uint oid, const bool is_overwrite, const void* buf,
-    const std::size_t offset, const std::size_t length, const std::uint8_t target_tier)
+int put(
+    const struct hsm_uint oid,
+    const bool is_overwrite,
+    const void* buf,
+    const std::size_t offset,
+    const std::size_t length,
+    const std::uint8_t target_tier)
 {
-    return HestiaCppInterface::put(ostk::Uuid(oid.lower, oid.higher), ostk::Extent(offset, length), 
+    return HestiaCppInterface::put(
+        ostk::Uuid(oid.lower, oid.higher), ostk::Extent(offset, length),
         ostk::ReadableBufferView(buf, length), target_tier, is_overwrite);
 }
 
-int put(const struct hsm_uint oid, const bool is_overwrite, std::ifstream& infile,
-    const std::size_t offset, const std::size_t length, const std::uint8_t target_tier)
+int put(
+    const struct hsm_uint oid,
+    const bool is_overwrite,
+    std::ifstream& infile,
+    const std::size_t offset,
+    const std::size_t length,
+    const std::uint8_t target_tier)
 {
     std::string buf;
     buf.resize(length);
-    if (!infile.is_open()) 
-    {
+    if (!infile.is_open()) {
         return -1;
     }
     infile.seekg(offset, infile.beg);
@@ -28,30 +37,39 @@ int put(const struct hsm_uint oid, const bool is_overwrite, std::ifstream& infil
     return put(oid, is_overwrite, buf.data(), offset, length, target_tier);
 }
 
-int get(const struct hsm_uint oid, void* buf, const std::size_t offset, const std::size_t length,
-    const std::uint8_t src_tier, const std::uint8_t)
+int get(
+    const struct hsm_uint oid,
+    void* buf,
+    const std::size_t offset,
+    const std::size_t length,
+    const std::uint8_t src_tier,
+    const std::uint8_t)
 {
     ostk::WriteableBufferView writeable_buffer(buf, length);
-    return HestiaCppInterface::get(ostk::Uuid(oid.lower, oid.higher), ostk::Extent(offset, length), 
+    return HestiaCppInterface::get(
+        ostk::Uuid(oid.lower, oid.higher), ostk::Extent(offset, length),
         writeable_buffer, src_tier);
 }
 
 int set_attrs(const struct hsm_uint& oid, const char* attrs)
 {
-    return HestiaCppInterface::setAttributes(ostk::Uuid(oid.lower, oid.higher), attrs);  
+    return HestiaCppInterface::setAttributes(
+        ostk::Uuid(oid.lower, oid.higher), attrs);
 }
 
 std::string get_attrs(const struct hsm_uint& oid, const char* attr_keys)
 {
     std::string result;
-    HestiaCppInterface::getAttributes(ostk::Uuid(oid.lower, oid.higher), attr_keys, result);  
+    HestiaCppInterface::getAttributes(
+        ostk::Uuid(oid.lower, oid.higher), attr_keys, result);
     return result;
 }
 
 std::string list_attrs(const struct hsm_uint& oid)
 {
     std::string result;
-    HestiaCppInterface::listAttributes(ostk::Uuid(oid.lower, oid.higher), result);
+    HestiaCppInterface::listAttributes(
+        ostk::Uuid(oid.lower, oid.higher), result);
     return result;
 }
 
@@ -62,7 +80,8 @@ int remove(const struct hsm_uint& oid)
 
 int release(const struct hsm_uint& oid, const std::uint8_t src_tier)
 {
-    return HestiaCppInterface::release(ostk::Uuid(oid.lower, oid.higher), src_tier);
+    return HestiaCppInterface::release(
+        ostk::Uuid(oid.lower, oid.higher), src_tier);
 }
 
 std::vector<struct hsm_uint> list(const std::uint8_t tier)
@@ -71,21 +90,28 @@ std::vector<struct hsm_uint> list(const std::uint8_t tier)
     HestiaCppInterface::listObjects(tier, objectIds);
 
     std::vector<hsm_uint> hestia_ids;
-    for(const auto& id : objectIds)
-    {
+    for (const auto& id : objectIds) {
         hestia_ids.push_back({id.mLo, id.mHi});
     }
     return hestia_ids;
 }
 
-int copy(const struct hsm_uint& oid, const std::uint8_t src_tier, const std::uint8_t tgt_tier)
+int copy(
+    const struct hsm_uint& oid,
+    const std::uint8_t src_tier,
+    const std::uint8_t tgt_tier)
 {
-    return HestiaCppInterface::copy(ostk::Uuid(oid.lower, oid.higher), {0 , 0}, src_tier, tgt_tier);
+    return HestiaCppInterface::copy(
+        ostk::Uuid(oid.lower, oid.higher), {0, 0}, src_tier, tgt_tier);
 }
 
-int move(const struct hsm_uint& oid, const std::uint8_t src_tier, const std::uint8_t tgt_tier)
+int move(
+    const struct hsm_uint& oid,
+    const std::uint8_t src_tier,
+    const std::uint8_t tgt_tier)
 {
-    return HestiaCppInterface::move(ostk::Uuid(oid.lower, oid.higher), {0 , 0}, src_tier, tgt_tier);
+    return HestiaCppInterface::move(
+        ostk::Uuid(oid.lower, oid.higher), {0, 0}, src_tier, tgt_tier);
 }
 
 std::vector<uint8_t> locate(const struct hsm_uint& oid)
@@ -94,4 +120,4 @@ std::vector<uint8_t> locate(const struct hsm_uint& oid)
     HestiaCppInterface::listTiers(ostk::Uuid(oid.lower, oid.higher), tiers);
     return tiers;
 }
-}
+}  // namespace hestia

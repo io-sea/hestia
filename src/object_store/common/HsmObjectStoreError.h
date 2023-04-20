@@ -2,8 +2,7 @@
 
 #include <ostk/ObjectStoreError.h>
 
-enum class HsmObjectStoreErrorCode
-{
+enum class HsmObjectStoreErrorCode {
     NO_ERROR,
     ERROR,
     STL_EXCEPTION,
@@ -13,16 +12,17 @@ enum class HsmObjectStoreErrorCode
     MAX_ERROR
 };
 
-class HsmObjectStoreError : public ostk::RequestError<HsmObjectStoreErrorCode>
-{
-public:
+class HsmObjectStoreError : public ostk::RequestError<HsmObjectStoreErrorCode> {
+  public:
     HsmObjectStoreError();
-    HsmObjectStoreError(HsmObjectStoreErrorCode code, const std::string& message);
-    HsmObjectStoreError(const ostk::ObjectStoreError& error, const std::string& message);
-    
+    HsmObjectStoreError(
+        HsmObjectStoreErrorCode code, const std::string& message);
+    HsmObjectStoreError(
+        const ostk::ObjectStoreError& error, const std::string& message);
+
     std::string toString() const override;
 
-private:
+  private:
     std::string codeAsString() const override;
     static std::string codeToString(HsmObjectStoreErrorCode code);
     ostk::ObjectStoreError mBaseObjectStoreError;

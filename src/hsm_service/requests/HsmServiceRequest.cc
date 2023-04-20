@@ -1,18 +1,19 @@
 #include "HsmServiceRequest.h"
 
-HsmServiceRequest::HsmServiceRequest(const ostk::Uuid& objectId, HsmServiceRequestMethod method)
-    : ostk::MethodRequest<HsmServiceRequestMethod>(method)
+HsmServiceRequest::HsmServiceRequest(
+    const ostk::Uuid& objectId, HsmServiceRequestMethod method) :
+    ostk::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
 
-HsmServiceRequest::HsmServiceRequest(const ostk::StorageObject& object, HsmServiceRequestMethod method)
-    : ostk::MethodRequest<HsmServiceRequestMethod>(method)
+HsmServiceRequest::HsmServiceRequest(
+    const ostk::StorageObject& object, HsmServiceRequestMethod method) :
+    ostk::MethodRequest<HsmServiceRequestMethod>(method)
 {
-
 }
 
-HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method)
-    : ostk::MethodRequest<HsmServiceRequestMethod>(method)
+HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
+    ostk::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
 

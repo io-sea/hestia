@@ -2,8 +2,7 @@
 
 #include <ostk/RequestError.h>
 
-enum class HsmServiceErrorCode
-{
+enum class HsmServiceErrorCode {
     NO_ERROR,
     ERROR,
     STL_EXCEPTION,
@@ -14,14 +13,13 @@ enum class HsmServiceErrorCode
     MAX_ERROR
 };
 
-class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode>
-{
-public:
+class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode> {
+  public:
     HsmServiceError();
     HsmServiceError(HsmServiceErrorCode code, const std::string& message);
     virtual ~HsmServiceError() = default;
 
-private:
+  private:
     std::string codeAsString() const override;
     static std::string codeToString(HsmServiceErrorCode code);
 };

@@ -5,14 +5,14 @@
 #include <list>
 #include <vector>
 
-class DataPlacementEngine 
-{
-public:
+class DataPlacementEngine {
+  public:
     DataPlacementEngine(){};
 
     virtual ~DataPlacementEngine() = default;
 
-    virtual std::uint8_t chooseTier(const std::size_t length, const std::uint8_t hint = 0) = 0;
+    virtual std::uint8_t chooseTier(
+        const std::size_t length, const std::uint8_t hint = 0) = 0;
 
     virtual void reorganise() const = 0;
 
@@ -20,10 +20,7 @@ public:
 
     virtual std::vector<uint8_t> listTiers() = 0;
 
-    void setTiers(const std::list<hestia::HsmTier>& tiers)
-    {
-        mTiers = tiers;
-    }
+    void setTiers(const std::list<hestia::HsmTier>& tiers) { mTiers = tiers; }
 
   protected:
     std::list<hestia::HsmTier> mTiers;

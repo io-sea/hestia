@@ -1,6 +1,4 @@
 #pragma once
 
-struct CopyToolConfig
-{
-
+struct CopyToolConfig {
 };

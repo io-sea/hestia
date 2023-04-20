@@ -4,18 +4,17 @@
 
 #include <ostk/Uuid.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
-#include <filesystem>
 
 struct m0_obj;
 struct m0_uint128;
 
 class MotrObjImpl;
 
-class MotrObject
-{
-public:
+class MotrObject {
+  public:
     MotrObject(const ostk::Uuid& oid);
 
     ~MotrObject();
@@ -26,14 +25,13 @@ public:
 
     static m0_uint128 toMotrId(const ostk::Uuid& id);
 
-private:
+  private:
     ostk::Uuid mId;
     std::unique_ptr<MotrObjImpl> mHandleImpl;
 };
 
-class MotrInterface
-{
-public:
+class MotrInterface {
+  public:
     MotrInterface(std::unique_ptr<IMotrInterfaceImpl> impl = nullptr);
 
     ~MotrInterface();
@@ -42,7 +40,10 @@ public:
 
     void copy(const HsmObjectStoreRequest& request) const;
 
-    void get(const HsmObjectStoreRequest& request, ostk::StorageObject& object, ostk::Stream* stream) const;
+    void get(
+        const HsmObjectStoreRequest& request,
+        ostk::StorageObject& object,
+        ostk::Stream* stream) const;
 
     void move(const HsmObjectStoreRequest& request) const;
 
@@ -50,10 +51,12 @@ public:
 
     void remove(const HsmObjectStoreRequest& request) const;
 
-private:
+  private:
     void validateConfig(MotrConfig& config);
 
-    void writeTierInfo(const std::filesystem::path& path, const std::vector<MotrHsmTierInfo>& tierInfo) const;
+    void writeTierInfo(
+        const std::filesystem::path& path,
+        const std::vector<MotrHsmTierInfo>& tierInfo) const;
 
     std::unique_ptr<IMotrInterfaceImpl> mImpl;
 };

@@ -1,43 +1,52 @@
-#include"HsmObjectStoreRequest.h"
+#include "HsmObjectStoreRequest.h"
 
 #include <sstream>
 
-HsmObjectStoreRequest::HsmObjectStoreRequest(const std::string& objectId, HsmObjectStoreRequestMethod method)
-    : ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(objectId, method)
+HsmObjectStoreRequest::HsmObjectStoreRequest(
+    const std::string& objectId, HsmObjectStoreRequestMethod method) :
+    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
+        objectId, method)
 {
 }
 
-HsmObjectStoreRequest::HsmObjectStoreRequest(const ostk::StorageObject& object, HsmObjectStoreRequestMethod method)
-    : ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(object, method)
+HsmObjectStoreRequest::HsmObjectStoreRequest(
+    const ostk::StorageObject& object, HsmObjectStoreRequestMethod method) :
+    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(object, method)
 {
 }
 
-HsmObjectStoreRequest::HsmObjectStoreRequest(const ostk::Uuid& objectId, HsmObjectStoreRequestMethod method)
-    : ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(objectId.toString(), method)        
+HsmObjectStoreRequest::HsmObjectStoreRequest(
+    const ostk::Uuid& objectId, HsmObjectStoreRequestMethod method) :
+    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
+        objectId.toString(), method)
 {
 }
 
-HsmObjectStoreRequest::HsmObjectStoreRequest(const ostk::ObjectStoreRequest& request)
-    : ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(request, fromBaseMethod(request.method()))
+HsmObjectStoreRequest::HsmObjectStoreRequest(
+    const ostk::ObjectStoreRequest& request) :
+    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
+        request, fromBaseMethod(request.method()))
 {
 }
 
-ostk::ObjectStoreRequest HsmObjectStoreRequest::toBaseRequest(const HsmObjectStoreRequest& reqeust)
+ostk::ObjectStoreRequest HsmObjectStoreRequest::toBaseRequest(
+    const HsmObjectStoreRequest& reqeust)
 {
-    if (reqeust.isHsmOnlyRequest())
-    {
-        throw std::runtime_error("Attempted to convert a HSM operation to base type.");
+    if (reqeust.isHsmOnlyRequest()) {
+        throw std::runtime_error(
+            "Attempted to convert a HSM operation to base type.");
     }
 
-    ostk::ObjectStoreRequest base_request(reqeust.object(), toBaseMethod(reqeust.method()));
+    ostk::ObjectStoreRequest base_request(
+        reqeust.object(), toBaseMethod(reqeust.method()));
     base_request.setExtent(reqeust.extent());
     return base_request;
 }
 
-HsmObjectStoreRequestMethod HsmObjectStoreRequest::fromBaseMethod(ostk::ObjectStoreRequestMethod method)
+HsmObjectStoreRequestMethod HsmObjectStoreRequest::fromBaseMethod(
+    ostk::ObjectStoreRequestMethod method)
 {
-    switch(method)
-    {
+    switch (method) {
         case ostk::ObjectStoreRequestMethod::GET:
             return HsmObjectStoreRequestMethod::GET;
         case ostk::ObjectStoreRequestMethod::PUT:
@@ -45,14 +54,15 @@ HsmObjectStoreRequestMethod HsmObjectStoreRequest::fromBaseMethod(ostk::ObjectSt
         case ostk::ObjectStoreRequestMethod::REMOVE:
             return HsmObjectStoreRequestMethod::REMOVE;
         default:
-            throw std::runtime_error("Given unsupported base request type for hsm request type conversion.");
+            throw std::runtime_error(
+                "Given unsupported base request type for hsm request type conversion.");
     }
 }
 
-ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::toBaseMethod(HsmObjectStoreRequestMethod method)
+ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::toBaseMethod(
+    HsmObjectStoreRequestMethod method)
 {
-    switch(method)
-    {
+    switch (method) {
         case HsmObjectStoreRequestMethod::GET:
             return ostk::ObjectStoreRequestMethod::GET;
         case HsmObjectStoreRequestMethod::PUT:
@@ -64,14 +74,19 @@ ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::toBaseMethod(HsmObjectStor
     }
 }
 
-bool HsmObjectStoreRequest::isCopyOrMoveRequest(HsmObjectStoreRequestMethod method)
+bool HsmObjectStoreRequest::isCopyOrMoveRequest(
+    HsmObjectStoreRequestMethod method)
 {
-    return method == HsmObjectStoreRequestMethod::MOVE || method == HsmObjectStoreRequestMethod::COPY;
+    return method == HsmObjectStoreRequestMethod::MOVE
+           || method == HsmObjectStoreRequestMethod::COPY;
 }
 
-bool HsmObjectStoreRequest::isHsmSupportedMethod(ostk::ObjectStoreRequestMethod opType)
+bool HsmObjectStoreRequest::isHsmSupportedMethod(
+    ostk::ObjectStoreRequestMethod opType)
 {
-    return opType == ostk::ObjectStoreRequestMethod::GET || opType == ostk::ObjectStoreRequestMethod::PUT || opType == ostk::ObjectStoreRequestMethod::REMOVE;
+    return opType == ostk::ObjectStoreRequestMethod::GET
+           || opType == ostk::ObjectStoreRequestMethod::PUT
+           || opType == ostk::ObjectStoreRequestMethod::REMOVE;
 }
 
 bool HsmObjectStoreRequest::isHsmOnlyRequest() const
@@ -97,8 +112,7 @@ std::string HsmObjectStoreRequest::toString() const
 
 std::string HsmObjectStoreRequest::toString(HsmObjectStoreRequestMethod optType)
 {
-    switch(optType)
-    {
+    switch (optType) {
         case HsmObjectStoreRequestMethod::PUT:
             return "PUT";
         case HsmObjectStoreRequestMethod::GET:
@@ -114,12 +128,12 @@ std::string HsmObjectStoreRequest::toString(HsmObjectStoreRequestMethod optType)
     }
 }
 
-uint8_t HsmObjectStoreRequest::sourceTier() const 
+uint8_t HsmObjectStoreRequest::sourceTier() const
 {
     return mSourceTier;
 }
 
-uint8_t HsmObjectStoreRequest::targetTier() const 
+uint8_t HsmObjectStoreRequest::targetTier() const
 {
     return mTargetTier;
 }

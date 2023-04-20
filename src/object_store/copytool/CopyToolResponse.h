@@ -2,19 +2,14 @@
 
 #include "CopyToolError.h"
 
-#include "HsmObjectStoreResponse.h"
 #include "HsmMiddlewareResponse.h"
+#include "HsmObjectStoreResponse.h"
 
-class CopyToolResponse : public HsmMiddlewareResponse
-{
-public:
+class CopyToolResponse : public HsmMiddlewareResponse {
+  public:
     using Ptr = std::unique_ptr<CopyToolResponse>;
 
-    enum class Status
-    {
-        OK,
-        ERROR
-    };
+    enum class Status { OK, ERROR };
 
     CopyToolResponse();
     virtual ~CopyToolResponse() = default;
@@ -25,9 +20,10 @@ public:
 
     void setError(const CopyToolError& error);
 
-    void setObjectStoreRespose(HsmObjectStoreResponse::Ptr objectStoreResponse) override;
+    void setObjectStoreRespose(
+        HsmObjectStoreResponse::Ptr objectStoreResponse) override;
 
-private:
+  private:
     Status mStatus{Status::OK};
     CopyToolError mError;
 };

@@ -1,29 +1,27 @@
 #pragma once
 
+#include "CopyTool.h"
+#include "DataPlacementEngineRegistry.h"
 #include "HsmObjectStoreClientRegistry.h"
 #include "KeyValueStoreClientRegistry.h"
-#include "DataPlacementEngineRegistry.h"
-#include "CopyTool.h"
 
 class MultiBackendHsmObjectStoreClient;
 class KeyValueStore;
 class DataPlacementEngine;
 
-namespace hestia{
-struct HestiaConfig
-{
+namespace hestia {
+struct HestiaConfig {
     TierBackendRegistry mTierBackendRegistry;
     KeyValueStoreType mKeyValueStoreType;
     PlacementEngineType mPlacementEngineType;
     CopyToolConfig mCopyToolConfig;
 };
 
-class HestiaConfigurator
-{
-public:
+class HestiaConfigurator {
+  public:
     int initialize(const HestiaConfig& config);
 
-private:
+  private:
     std::unique_ptr<MultiBackendHsmObjectStoreClient> setUpObjectStore();
 
     std::unique_ptr<KeyValueStore> setUpKeyValueStore();
@@ -32,4 +30,4 @@ private:
 
     HestiaConfig mConfig;
 };
-}
+}  // namespace hestia

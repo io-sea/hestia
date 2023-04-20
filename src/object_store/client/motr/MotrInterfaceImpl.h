@@ -12,21 +12,25 @@ extern "C" {
 
 #include <filsystem>
 
-class MotrInterfaceImpl : public IMotrInterfaceImpl
-{
-public:
+class MotrInterfaceImpl : public IMotrInterfaceImpl {
+  public:
     void initialize(const MotrConfig& config);
 
     void copy(const HsmObjectStoreRequest& request) const override;
 
-    void get(const HsmObjectStoreRequest& request, ostk::StorageObject& object, ostk::Stream* stream) const override;
+    void get(
+        const HsmObjectStoreRequest& request,
+        ostk::StorageObject& object,
+        ostk::Stream* stream) const override;
 
     void move(const HsmObjectStoreRequest& request) const override;
 
-    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream) const override;
+    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream)
+        const override;
 
     void remove(const HsmObjectStoreRequest& request) const override;
-private:
+
+  private:
     void finish();
 
     void initializeHsm();
@@ -34,5 +38,5 @@ private:
     MotrConfig mConfig;
     m0_client* mClientInstance{nullptr};
     m0_container mContainer;
-    m0_realm mRealm;   
+    m0_realm mRealm;
 };

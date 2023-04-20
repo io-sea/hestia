@@ -1,29 +1,16 @@
 #pragma once
 
 #include "CopyTool.h"
-#include "CopyToolResponse.h"
 #include "CopyToolRequest.h"
+#include "CopyToolResponse.h"
 
 #include <memory>
 
-class CopyToolConnection
-{
-public:
+class CopyToolConnection {
+  public:
+    enum class Type { IN_PROCESS, MANAGED, DAEMON };
 
-    enum class Type
-    {
-        IN_PROCESS,
-        MANAGED,
-        DAEMON
-    };
-
-    enum class State
-    {
-        UNINITIALIZED,
-        INITIALIZED,
-        CONNECTED,
-        ERROR
-    };
+    enum class State { UNINITIALIZED, INITIALIZED, CONNECTED, ERROR };
 
     ~CopyToolConnection();
 
@@ -39,7 +26,7 @@ public:
 
     State initialize(const CopyToolConfig& config, Type connectionType);
 
-private:
+  private:
     void launchExternal();
     void terminateExternal();
 

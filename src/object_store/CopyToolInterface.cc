@@ -1,9 +1,9 @@
 #include "CopyToolInterface.h"
 
-void CopyToolInterface::initialize(const CopyToolConfig& config, CopyToolConnection::Type connectionType)
+void CopyToolInterface::initialize(
+    const CopyToolConfig& config, CopyToolConnection::Type connectionType)
 {
-    if (mConnection)
-    {
+    if (mConnection) {
         return;
     }
 
@@ -14,20 +14,25 @@ void CopyToolInterface::initialize(const CopyToolConfig& config, CopyToolConnect
 
 bool CopyToolInterface::hasConnection() const
 {
-    return mConnection && mConnection->getState() == CopyToolConnection::State::CONNECTED;
+    return mConnection
+           && mConnection->getState() == CopyToolConnection::State::CONNECTED;
 }
 
-HsmObjectStoreResponse::Ptr CopyToolInterface::makeRequest(const HsmObjectStoreRequest& request)
+HsmObjectStoreResponse::Ptr CopyToolInterface::makeRequest(
+    const HsmObjectStoreRequest& request)
 {
-    if (!hasConnection())
-    {
-        const std::string msg = "Attempted copytool operation with no connection";
+    if (!hasConnection()) {
+        const std::string msg =
+            "Attempted copytool operation with no connection";
         auto copytool_response = CopyToolResponse::Create();
-        copytool_response->setError({CopyToolError::Code::ERROR_NO_CONNECTION, msg});
-        return HsmObjectStoreResponse::Create(request, std::move(copytool_response));
+        copytool_response->setError(
+            {CopyToolError::Code::ERROR_NO_CONNECTION, msg});
+        return HsmObjectStoreResponse::Create(
+            request, std::move(copytool_response));
     }
 
     CopyToolRequest copytool_request(request);
     auto copytool_response = mConnection->makeRequest(copytool_request);
-    return HsmObjectStoreResponse::Create(request, std::move(copytool_response));
+    return HsmObjectStoreResponse::Create(
+        request, std::move(copytool_response));
 }

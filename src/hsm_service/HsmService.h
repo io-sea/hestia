@@ -1,8 +1,8 @@
 #pragma once
 
+#include "HsmObject.h"
 #include "HsmServiceRequest.h"
 #include "HsmServiceResponse.h"
-#include "HsmObject.h"
 
 #include <ostk/Stream.h>
 
@@ -15,27 +15,34 @@ class DataPlacementEngine;
 class HsmObjectAdapter;
 class HsmActionAdapter;
 
-class HsmService
-{
-public:
+class HsmService {
+  public:
     using Ptr = std::unique_ptr<HsmService>;
 
-    HsmService(std::unique_ptr<KeyValueStore> kvStore, 
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore, 
+    HsmService(
+        std::unique_ptr<KeyValueStore> kvStore,
+        std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore,
         std::unique_ptr<DataPlacementEngine> placementEngine);
 
     ~HsmService();
 
-    [[nodiscard]] HsmServiceResponse::Ptr makeRequest(const HsmServiceRequest& request, ostk::Stream* stream = nullptr) noexcept;
+    [[nodiscard]] HsmServiceResponse::Ptr makeRequest(
+        const HsmServiceRequest& request,
+        ostk::Stream* stream = nullptr) noexcept;
 
-private:
-    HsmServiceResponse::Ptr get(const HsmServiceRequest& request, ostk::Stream* stream = nullptr) noexcept;
-    HsmServiceResponse::Ptr put(const HsmServiceRequest& request, ostk::Stream* stream = nullptr) noexcept;
+  private:
+    HsmServiceResponse::Ptr get(
+        const HsmServiceRequest& request,
+        ostk::Stream* stream = nullptr) noexcept;
+    HsmServiceResponse::Ptr put(
+        const HsmServiceRequest& request,
+        ostk::Stream* stream = nullptr) noexcept;
     HsmServiceResponse::Ptr copy(const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr move(const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr remove(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr remove_all(const HsmServiceRequest& request) noexcept;
-    
+    HsmServiceResponse::Ptr remove_all(
+        const HsmServiceRequest& request) noexcept;
+
     void listAttributes(HsmObject& object);
     void listObjects(uint8_t tier, std::vector<HsmObject>& objects);
     void listTiers(HsmObject& object, std::vector<uint8_t>& tiers);
