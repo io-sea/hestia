@@ -26,12 +26,12 @@ else
     exit 1
 fi
 
-
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source_dir="$( cd "${script_dir}/.." && pwd)"
 
 # All the directories containing source files
-source_dirs="src test"
+src_dir="src"
+test_dir="test"
 
 # Run lint.sh on every source file in hestia.
 #
@@ -39,8 +39,15 @@ source_dirs="src test"
 # Need to cd into source_dir because source_dirs are defined relative to that.
 #
 cd "${source_dir}"
-find ${source_dirs} \( \
-    -iname "*.cc" -o -iname "*.c" \
+
+find ${src_dir} \( \
+    -iname "*.cc" -maxdepth 1 -o -iname "*.c" \
 \) -print0 \
     | xargs -0 -n 1 -P "${nprocs}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"
+
+find ${test_dir} \( \
+    -iname "*.cc" -maxdepth 5 -o -iname "*.c" \
+\) -print0 \
+    | xargs -0 -n 1 -P "${nprocs}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"
+
 
