@@ -1,0 +1,35 @@
+include(AddModule)
+
+add_module(
+    MODULE_NAME hsm_service 
+    HEADERS
+        HsmService.h
+        HsmStoreInterface.h
+        model/HsmAction.h
+        model/HsmActionAdapter.h
+        model/HsmObjectAdapter.h
+        model/HsmObject.h
+        model/CompositeLayer.h
+        requests/HsmServiceResponse.h 
+        requests/HsmServiceRequest.h
+        requests/HsmServiceError.h 
+    SOURCES
+        HsmService.cc
+        HsmStoreInterface.cc
+        model/HsmAction.cc
+        model/HsmActionAdapter.cc
+        model/HsmObjectAdapter.cc
+        model/HsmObject.cc
+        model/CompositeLayer.cc
+        requests/HsmServiceResponse.cc
+        requests/HsmServiceRequest.cc
+        requests/HsmServiceError.cc
+    INTERNAL_INCLUDE_DIRS
+        model
+        requests
+    INTERNAL_DEPENDENCIES 
+        object_store
+        key_value_store 
+        data_placement_engine
+        event_feed
+)
