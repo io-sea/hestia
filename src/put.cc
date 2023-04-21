@@ -65,6 +65,9 @@ int hestia::put(
 
     nlohmann::json meta_data;
     if (!is_overwrite) {
+        if (offset != 0) {
+            return 1;
+        }
         create_object(oid);
     }
     else {
@@ -85,11 +88,11 @@ int hestia::put(
     /* send data to backend */
     obj::Disk object_store;
     object_store.put(
-        oid, static_cast<const char*>(buf) + offset, length, chosen_tier);
+        oid, static_cast<const char*>(buf), offset, length, chosen_tier);
 
     return 0;
 }
-
+/*
 int hestia::put(
     const struct hsm_uint oid,
     const bool is_overwrite,
@@ -98,14 +101,14 @@ int hestia::put(
     const std::size_t length,
     const std::uint8_t target_tier)
 {
-    /* interface with kv store */
+    // interface with kv store
     kv::Disk kv_store;
 
-    /*
-     * if the object already exists and we are not attempting to overwrite or if
-     * the object doesn't exist and we are attempting to overwrite we should
-     * stop here and return an error (TODO: appropriate error code)
-     */
+    //
+    // if the object already exists and we are not attempting to overwrite or if
+    // the object doesn't exist and we are attempting to overwrite we should
+    // stop here and return an error (TODO: appropriate error code)
+
     if (kv_store.object_exists(oid) != is_overwrite) {
         return 1;
     }
@@ -121,13 +124,13 @@ int hestia::put(
     dpe::Eejit dpe(tiers);
     const auto chosen_tier = dpe.choose_tier(length, target_tier);
 
-    /* add object tier to metadata */
+    // add object tier to metadata
     meta_data["tiers"][chosen_tier] = true;
 
 
     kv_store.put_meta_data(oid, meta_data);
 
-    /* send data to backend */
+    // send data to backend
     obj::Disk object_store;
     std::string buf;
     buf.resize(length);
@@ -142,4 +145,4 @@ int hestia::put(
     object_store.put(oid, buf.data(), length, chosen_tier);
 
     return 0;
-}
+}*/

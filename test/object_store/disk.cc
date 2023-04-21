@@ -1,16 +1,48 @@
 #include "disk.h"
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+
 int hestia::obj::Disk::put(
     const struct hsm_uint& oid,
     const void* buf,
+    const std::size_t off,
     const std::size_t length,
     const std::uint8_t target_tier)
 {
+    if (!std::filesystem::exists(get_filename_from_oid(oid, target_tier))) {
+        std::ofstream file(get_filename_from_oid(oid, target_tier));
+        file.write(static_cast<const char*>(buf), length);
+        return 0;
+    }
+
+    std::ifstream original(get_filename_from_oid(oid, target_tier));
+
+    original.seekg(0, original.end);
+    int size = original.tellg();
+    std::cout << "Original file siez is " << size << std::endl;
+    original.seekg(0, original.beg);
+
+    if (off > size) {
+        return 1;
+    }
+
+    char* tmp = new char[size];
+
+    original.read(tmp, size);
+    original.close();
+
     std::ofstream file(get_filename_from_oid(oid, target_tier));
 
+    file.write(tmp, off);
     file.write(static_cast<const char*>(buf), length);
+
+    if ((off + length) < size) {
+        file.write(tmp + off + length, size - (off + length));
+    }
+    file.close();
+    delete[] tmp;
 
     return 0;
 }
@@ -18,6 +50,7 @@ int hestia::obj::Disk::put(
 int hestia::obj::Disk::get(
     const struct hsm_uint& oid,
     void* buf,
+    const std::size_t off,
     const std::size_t length,
     const std::uint8_t src_tier)
 {
@@ -26,6 +59,8 @@ int hestia::obj::Disk::get(
     }
 
     std::ifstream file(get_filename_from_oid(oid, src_tier));
+
+    file.seekg(off, file.beg);
 
     file.read(static_cast<char*>(buf), length);
 

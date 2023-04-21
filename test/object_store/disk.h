@@ -21,6 +21,7 @@ class Disk : Object_store {
     int put(
         const struct hsm_uint& oid,
         const void* buf,
+        const std::size_t off,
         const std::size_t length,
         const std::uint8_t target_tier = 0);
 
@@ -28,6 +29,7 @@ class Disk : Object_store {
     int get(
         const struct hsm_uint& oid,
         void* buf,
+        const std::size_t off,
         const std::size_t length,
         const std::uint8_t src_tier = 0);
 

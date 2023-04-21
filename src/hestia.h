@@ -40,6 +40,7 @@ int put(
 /// @param target_tier The tier to write the data to
 ///
 /// @returns 0 on success, negative error code on error
+/*
 int put(
     const struct hsm_uint oid,
     const bool is_overwrite,
@@ -47,6 +48,7 @@ int put(
     const std::size_t offset,
     const std::size_t length,
     const std::uint8_t target_tier = 0);
+*/
 /// @brief Retrieves data from the object store
 ///
 /// @param oid ID of the object to retrieve the data from

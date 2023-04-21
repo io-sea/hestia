@@ -1,6 +1,6 @@
 #include "common.h"
 #include "tiers.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <hestia.h>
 #include <iostream>
 #include <string>
@@ -10,8 +10,8 @@ SCENARIO("Locate interfaces correctly with the kv store backend", "[kv][store]")
 {
     GIVEN("an object in the object store that exists on a single tier")
     {
-        auto data_vec = GENERATE(
-            chunk(max_data_size, take(max_data_size, random('a', 'z'))));
+        auto data_vec =
+            GENERATE(chunk(max_data_size, take(max_data_size, random(1, 9))));
 
         std::string data(data_vec.begin(), data_vec.end());
 

@@ -1,6 +1,6 @@
 #include "common.h"
 #include "tiers.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <hestia.h>
 #include <string>
 #include <vector>
@@ -12,7 +12,7 @@ SCENARIO("List functions correctly", "[kv][store]")
         std::vector<std::string> data_vecs(max_num_objects);
         auto data_pool = GENERATE(chunk(
             max_num_objects * max_data_size,
-            take(max_num_objects * max_data_size, random(' ', 'z'))));
+            take(max_num_objects * max_data_size, random(32, 122))));
 
         auto data_it = data_pool.begin();
         for (auto& data_vec : data_vecs) {
@@ -46,7 +46,6 @@ SCENARIO("List functions correctly", "[kv][store]")
             //              nlohmann::json::parse(hestia::get_attrs(oids[i],
             //              "tiers"));
             //            const int dest_tier = json_attrs["tier"];
-
             //            int dest_tier =
             //            static_cast<int>(hestia::locate(oids[i])[0]); for(int
             //            j=0; j< static_cast<int>((hestia::tiers).size());
@@ -82,6 +81,9 @@ SCENARIO("List functions correctly", "[kv][store]")
                     }
                 }
             }
+        }
+        for (unsigned int i = 0; i < max_num_objects; ++i) {
+            hestia::remove(oids[i]);
         }
     }
 }

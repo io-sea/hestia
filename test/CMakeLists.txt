@@ -1,7 +1,8 @@
-find_package(Catch2 REQUIRED)
+include(FetchDependencies)
+fetch_catch2()
 
 include(CTest)
-include(Catch)
+#include(Catch)
 
 #
 # Set test files to be added to the test executable
@@ -25,5 +26,5 @@ set(
 set(sources catch_main.cc ${tests})
 
 add_executable(all_tests ${sources})
-target_link_libraries(all_tests PRIVATE hestia_lib Catch2::Catch2)
+target_link_libraries(all_tests PRIVATE hestia_lib Catch2::Catch2WithMain)
 catch_discover_tests(all_tests)

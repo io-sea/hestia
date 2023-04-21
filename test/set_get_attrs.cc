@@ -1,6 +1,8 @@
 #include "./kv_store/disk.h"
 #include "common.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 #include <cwctype>
 #include <hestia.h>
 #include <string>
@@ -21,7 +23,7 @@ SCENARIO(
                 2 * max_num_objects * max_data_size,
                 filter(  // NOLINT
                     [&delim](auto var) { return var != delim; },
-                    random(' ', 'z')))));
+                    random(32, 122)))));
 
         // use the same data pool to fill both the vector of keys and the vector
         // of values

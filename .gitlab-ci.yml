@@ -1,4 +1,4 @@
-image: debian:11.2
+image: debian:latest
 
 stages: 
   - static analysis 
@@ -14,19 +14,20 @@ stages:
     HESTIA_BUILD_TESTS: "OFF" 
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_DOC_DIR: ""
-    HESTIA_DEPENDENCIES: "build-essential cmake nlohmann-json3-dev" 
+    HESTIA_DEPENDENCIES: "ca-certificates wget build-essential cmake nlohmann-json3-dev git" 
 
 .snippets: 
   - &install_dependencies
     apt-get update -y
-    && [[ "${HESTIA_BUILD_TESTS}" = "ON" ]] && HESTIA_DEPENDENCIES="${HESTIA_DEPENDENCIES} catch2" || true
+    && [[ "${HESTIA_BUILD_TESTS}" = "ON" ]] && HESTIA_DEPENDENCIES="${HESTIA_DEPENDENCIES}" || true
     && apt-get install --no-install-recommends -y ${HESTIA_DEPENDENCIES}
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
+    && ${CI_PROJECT_DIR}/bootstrap_cmake.sh
     && (
       set -x;
-      cmake ..
+      ${CMAKE_BUILD_DIR}/cmake ..
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
       -DCMAKE_CXX_COMPILER="${CXX}"
@@ -108,23 +109,24 @@ Lint:
 Debug:
   <<: *default_job
   stage: build
+  dependencies: []
   variables:
     <<: *default_cmake_variables
     CMAKE_BUILD_TYPE: Debug
-  artifacts:
-    name: debug 
-    paths:
-      - "${CMAKE_BUILD_DIR}"
+      #  artifacts:
+      #name: debug 
+      #paths:
+      #- "${CMAKE_BUILD_DIR}"
 
 Release:
   <<: *default_job
   stage: build
   variables:
     <<: *default_cmake_variables
-  artifacts:
-    name: release 
-    paths:
-      - "${CMAKE_BUILD_DIR}"
+      #  artifacts:
+      #name: release 
+      #paths:
+      #- "${CMAKE_BUILD_DIR}"
 
 Unit_test:
   <<: *default_job
@@ -133,12 +135,12 @@ Unit_test:
     <<: *default_cmake_variables
     CMAKE_BUILD_TYPE: Release 
     HESTIA_BUILD_TESTS: "ON"
-  artifacts:
-    name: release 
-    paths:
-      - "${CMAKE_BUILD_DIR}"
-  dependencies:
-    - Release
+      #  artifacts:
+      # name: release 
+      #paths:
+      #- "${CMAKE_BUILD_DIR}"
+        #  dependencies:
+        #- Release
   script:
     - *configure
     - *build

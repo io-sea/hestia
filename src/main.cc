@@ -1,5 +1,6 @@
 #include "hestia.h"
 #include <iostream>
+#include <string>
 
 int main()
 {
@@ -12,25 +13,25 @@ int main()
     hestia::create_dataset(set, members);
 
     std::string write_data = "Buffer testing data 123";
-    std::ofstream testfile("testfile.txt");
-    testfile.write(write_data.data(), write_data.size());
-    testfile.close();
+    /*    std::ofstream testfile("testfile.txt");
+        testfile.write(write_data.data(), write_data.size());
+        testfile.close();
 
-    int offset = 7;
+        int offset = 0;
 
-    std::ifstream writefile("testfile.txt");
-    if (hestia::put(
-            oid, false, writefile, offset, write_data.size() - offset, 0)
+        std::ifstream writefile("testfile.txt");
+    */
+    int offset = 0;
+    if (hestia::put(oid, false, write_data.data(), offset, write_data.size(), 0)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
     }
-    writefile.close();
+    //    writefile.close();
 
 
     if (hestia::put(
-            oid2, false, write_data.data(), offset, write_data.size() - offset,
-            0)
+            oid2, false, write_data.data(), offset, write_data.size(), 0)
         != 0) {
         std::cout << "put error!" << std::endl;
         exit(1);
@@ -66,8 +67,16 @@ int main()
         */
     std::string read_data;
     read_data.resize(write_data.size() - offset);
+    std::string overwrite_data{"Overwriting data 123"};
+    offset = 7;
 
-    if (hestia::get(oid, &read_data[0], 0, read_data.size(), 0, 0) != 0) {
+    if (hestia::put(
+            oid, true, overwrite_data.data(), offset, overwrite_data.size(), 0)
+        != 0) {
+        std::cout << "put error!" << std::endl;
+        exit(1);
+    }
+    if (hestia::get(oid, &read_data[0], 7, read_data.size(), 0, 0) != 0) {
         std::cout << "get error!" << std::endl;
         exit(1);
     }
@@ -85,7 +94,7 @@ int main()
         std::cout << +it << std::endl;
     }
     std::cout << "Object " << oid2.higher << oid2.lower << " is located on "
-              << location.size() << " tiers\n";
+              << location2.size() << " tiers\n";
     std::cout << "Object " << oid2.higher << oid2.lower
               << " Location tiers: " << std::endl;
     for (const auto& it : location2) {
@@ -122,7 +131,7 @@ int main()
     for (const auto& it : member_list) {
         std::cout << it.higher << '-' << it.lower << std::endl;
     }
-    //    hestia::remove(set);
+    //        hestia::remove(set);
 
 
     return 0;

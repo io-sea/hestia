@@ -30,6 +30,7 @@ class Object_store {
     virtual int put(
         const struct hsm_uint& oid,
         const void* buf,
+        const std::size_t off,
         const std::size_t length,
         const std::uint8_t target_tier = 0) = 0;
 
@@ -38,12 +39,14 @@ class Object_store {
     ///
     /// @param oid ID of the object we are retrieving the data from
     /// @param buf Buffer to store the data retrieved
+    /// @param off Offset into the object to begin reading from
     /// @param length Amount of data to retrieve in bytes
     /// @param src_tier Tier the data resides on
     ///
     virtual int get(
         const struct hsm_uint& oid,
         void* buf,
+        const std::size_t off,
         const std::size_t length,
         const std::uint8_t src_tier = 0) = 0;
 

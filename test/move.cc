@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <hestia.h>
 #include <string>
 
@@ -11,7 +11,7 @@ SCENARIO(
     GIVEN("an object within the object store")
     {
         auto data_vec = GENERATE(
-            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
+            chunk(max_data_size, take(max_data_size, random(32, 122))));
 
         std::string data(data_vec.begin(), data_vec.end());
 
@@ -66,7 +66,7 @@ SCENARIO(
     {
         // object 1
         auto data_vec1 = GENERATE(
-            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
+            chunk(max_data_size, take(max_data_size, random(32, 122))));
 
         std::string data1(data_vec1.begin(), data_vec1.end());
 
@@ -79,7 +79,7 @@ SCENARIO(
 
         // object 2
         auto data_vec2 = GENERATE(
-            chunk(max_data_size, take(max_data_size, random(' ', 'z'))));
+            chunk(max_data_size, take(max_data_size, random(32, 122))));
 
         std::string data2(data_vec2.begin(), data_vec2.end());
 

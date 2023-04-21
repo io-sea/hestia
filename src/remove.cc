@@ -30,13 +30,13 @@ int hestia::remove(const struct hsm_uint& oid)
 
 
     const auto tiers = hestia::locate(oid);
-    kv_store.remove(oid);
 
     /* request for object to be removed from backend storage */
     obj::Disk object_store;
-    for (const auto& it : tiers) {
+    for (auto& it : tiers) {
         object_store.remove(oid, it);
     }
 
+    kv_store.remove(oid);
     return 0;
 }

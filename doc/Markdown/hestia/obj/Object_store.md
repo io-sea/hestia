@@ -89,7 +89,7 @@ Send the actual data to object storage.
 
 [Go to Top](#hestia-obj-Object_store)
 
-### <a name='hestia-obj-Object_store-get' /> public int hestia::obj::Object_store::get (const struct hsm_uint &oid, void *buf, const std::size_t length, const std::uint8_t src_tier=0)=0
+### <a name='hestia-obj-Object_store-get' /> public int hestia::obj::Object_store::get (const struct hsm_uint &oid, void *buf, const std::size_t off, const std::size_t length, const std::uint8_t src_tier=0)=0
 
 Retrieve the actual data from the object store. 
 
@@ -101,6 +101,7 @@ Retrieve the actual data from the object store.
 | ---- | ---- | ---- |
 | const struct [hsm_uint][hestia-hsm_uint] & | oid | ID of the object we are retrieving the data from  |
 | void * | buf | Buffer to store the data retrieved  |
+| const std::size_t | off | Offset into the object to begin reading from  |
 | const std::size_t | length | Amount of data to retrieve in bytes  |
 | const std::uint8_t | src_tier | Tier the data resides on  |
 
