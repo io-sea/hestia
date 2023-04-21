@@ -14,7 +14,7 @@ stages:
     HESTIA_BUILD_TESTS: "OFF" 
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_DOC_DIR: ""
-    HESTIA_DEPENDENCIES: "ca-certificates wget build-essential cmake nlohmann-json3-dev git" 
+    HESTIA_DEPENDENCIES: "ca-certificates wget build-essential cmake libssl-dev libcurl4-openssl-dev libxml2-dev git" 
 
 .snippets: 
   - &install_dependencies
@@ -24,7 +24,7 @@ stages:
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
-    && ${CI_PROJECT_DIR}/bootstrap_cmake.sh
+    && ${CI_PROJECT_DIR}/infra/cmake/bootstrap_cmake.sh
     && (
       set -x;
       ${CMAKE_BUILD_DIR}/cmake ..
@@ -81,7 +81,6 @@ Lint:
     - apt-get install --no-install-recommends -y
       clang clang-tidy
     - *configure
-    - *build
   script: 
     - ./tools/run_lint.sh "${CMAKE_BUILD_DIR}"
 

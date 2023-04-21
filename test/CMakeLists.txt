@@ -1,8 +1,7 @@
-include(FetchDependencies)
+include(ostk/FetchDependencies)
 fetch_catch2()
 
 include(CTest)
-#include(Catch)
 
 #
 # Set test files to be added to the test executable

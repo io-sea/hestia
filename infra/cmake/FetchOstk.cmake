@@ -38,10 +38,12 @@ endmacro()
 macro(fetch_ostk)
     hestia_fetch_openssl()
 
+    set(OSTK_WITH_PHOBOS OFF CACHE INTERNAL "")
+    set(OSTK_WITH_S3_CLIENT OFF CACHE INTERNAL "")
     FetchContent_Declare(
     ostk
     GIT_REPOSITORY https://git.ichec.ie/io-sea-internal/objectstore-toolkit
-    GIT_TAG        6b6b0f4b5684a8f763246ff208e621e3b6e30a8e
+    GIT_TAG        c152435d0d22fe8e286980b54c5e58cb11077d40
     FIND_PACKAGE_ARGS
     )
     FetchContent_MakeAvailable(ostk)

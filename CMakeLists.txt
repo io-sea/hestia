@@ -21,17 +21,13 @@ option(
     OFF
 )
 
-#set(CMAKE_MODULE_PATH 
-#    ${CMAKE_MODULE_PATH}
-#    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-#    )
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/infra/cmake)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(FetchOstk)
+fetch_ostk()
 
-#
-# External dependencies
-#
-find_package(nlohmann_json 3.6.1 REQUIRED)
+include(ostk/FetchDependencies)
+fetch_nlohmann_json()
 
 #
 # Include subdirectories

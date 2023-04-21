@@ -6,11 +6,10 @@ Hierarchical Storage Tiers Interface for Applications
 
 To configure and build Hestia, following are required. 
 - C++17 compatible compiler
-- CMake >= 3.0
-- nlohmann-json-devel 
+- CMake >= 3.24
+- OpenSSL development headers
 
 Optional dependencies:
-- catch2 (for tests)
 - doxygen (for documentation)
 
 ## Build Instructions

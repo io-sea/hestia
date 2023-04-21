@@ -31,7 +31,7 @@ else()
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    include(../cmake/development_flags.cmake)
+    include(development_flags)
     target_link_libraries(hestia_lib PUBLIC development_flags)
 endif()
 
