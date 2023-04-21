@@ -8,10 +8,10 @@ class ApplicationContext {
   public:
     static ApplicationContext& get();
 
-    HsmService* getHsmService() const;
+    HsmService* get_hsm_service() const;
 
-    void setHsmService(std::unique_ptr<HsmService> hsmService);
+    void set_hsm_service(std::unique_ptr<HsmService> hsm_service);
 
   private:
-    std::unique_ptr<HsmService> mHsmService;
+    std::unique_ptr<HsmService> m_hsm_service;
 };

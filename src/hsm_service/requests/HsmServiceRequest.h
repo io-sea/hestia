@@ -22,7 +22,7 @@ class HsmServiceRequest :
     public ostk::MethodRequest<HsmServiceRequestMethod> {
   public:
     HsmServiceRequest(
-        const ostk::Uuid& objectId, HsmServiceRequestMethod method);
+        const ostk::Uuid& object_id, HsmServiceRequestMethod method);
 
     HsmServiceRequest(
         const ostk::StorageObject& object, HsmServiceRequestMethod method);
@@ -37,28 +37,28 @@ class HsmServiceRequest :
 
     std::string methodAsString() const override { return {}; }
 
-    void setExtent(const ostk::Extent& extent);
+    void set_extent(const ostk::Extent& extent);
 
-    void setTargetTier(uint8_t tier);
+    void set_target_tier(uint8_t tier);
 
-    void setSourceTier(uint8_t tier);
+    void set_source_tier(uint8_t tier);
 
-    void setShouldPutOverwrite(bool overwrite);
+    void set_should_put_overwrite(bool overwrite);
 
-    bool shouldOverwritePut() const;
+    bool should_overwrite_put() const;
 
-    void setQuery(const std::string& query);
+    void set_query(const std::string& query);
 
-    uint8_t sourceTier() const { return mSourceTier; }
+    uint8_t source_tier() const { return mSourceTier; }
 
-    uint8_t targetTier() const { return mTargetTier; }
+    uint8_t target_tier() const { return mTargetTier; }
 
   private:
-    uint8_t mTargetTier{0};
-    uint8_t mSourceTier{0};
-    ostk::Extent mExtent;
-    ostk::StorageObject mObject;
+    uint8_t m_target_tier{0};
+    uint8_t m_source_tier{0};
+    ostk::Extent m_extent;
+    ostk::StorageObject m_object;
 
-    std::string mQuery;
-    bool mOverwriteIfExisting{false};
+    std::string m_query;
+    bool m_overwrite_if_existing{false};
 };

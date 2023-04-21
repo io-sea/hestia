@@ -27,7 +27,7 @@ void MotrInterfaceImpl::finish()
     }
 }
 
-void MotrInterfaceImpl::initializeHsm()
+void MotrInterfaceImpl::initialize_hsm()
 {
     m0hsm_options hsm_options;
     hsm_options.trace_level = LOG_INFO;

@@ -8,12 +8,12 @@ FileHsmObjectStoreClient::FileHsmObjectStoreClient() {}
 
 FileHsmObjectStoreClient::~FileHsmObjectStoreClient() {}
 
-std::string FileHsmObjectStoreClient::getRegistryIdentifier()
+std::string FileHsmObjectStoreClient::get_registry_identifier()
 {
     return "hestia::FileHsmObjectStoreClient";
 }
 
-FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::Create()
+FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::create()
 {
     return std::make_unique<FileHsmObjectStoreClient>();
 }
@@ -21,22 +21,23 @@ FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::Create()
 void FileHsmObjectStoreClient::initialize(
     const FileHsmObjectStoreClientConfig& config)
 {
-    mStore = config.mStoreLocation;
-    if (!mStore.exists()) {
-        std::filesystem::create_directories(mStore.path());
+    m_store = config.mStoreLocation;
+    if (!m_store.exists()) {
+        std::filesystem::create_directories(m_store.path());
     }
 }
 
-std::filesystem::path FileHsmObjectStoreClient::getTierPath(uint8_t tier) const
+std::filesystem::path FileHsmObjectStoreClient::get_tier_path(
+    uint8_t tier) const
 {
-    return mStore.path() / ("tier" + std::to_string(tier));
+    return m_store.path() / ("tier" + std::to_string(tier));
 }
 
 void FileHsmObjectStoreClient::put(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const
 {
     ostk::FileObjectStoreClient file_client;
-    file_client.initialize(getTierPath(request.targetTier()));
+    file_client.initialize(get_tier_path(request.targetTier()));
     if (const auto response = file_client.makeRequest(
             HsmObjectStoreRequest::toBaseRequest(request), stream);
         !response->ok()) {
@@ -53,7 +54,7 @@ void FileHsmObjectStoreClient::get(
     ostk::Stream* stream) const
 {
     ostk::FileObjectStoreClient file_client;
-    file_client.initialize(getTierPath(request.sourceTier()));
+    file_client.initialize(get_tier_path(request.sourceTier()));
     if (const auto response = file_client.makeRequest(
             HsmObjectStoreRequest::toBaseRequest(request), stream);
         !response->ok()) {
@@ -71,7 +72,7 @@ void FileHsmObjectStoreClient::remove(
     const HsmObjectStoreRequest& request) const
 {
     ostk::FileObjectStoreClient file_client;
-    file_client.initialize(getTierPath(request.sourceTier()));
+    file_client.initialize(get_tier_path(request.sourceTier()));
     if (const auto response = file_client.makeRequest(
             HsmObjectStoreRequest::toBaseRequest(request));
         !response->ok()) {
@@ -85,15 +86,15 @@ void FileHsmObjectStoreClient::remove(
 void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 {
     ostk::FileObjectStoreClient file_client;
-    file_client.initialize(getTierPath(request.sourceTier()));
+    file_client.initialize(get_tier_path(request.sourceTier()));
     file_client.migrate(
-        request.object().id(), getTierPath(request.targetTier()), true);
+        request.object().id(), get_tier_path(request.targetTier()), true);
 }
 
 void FileHsmObjectStoreClient::move(const HsmObjectStoreRequest& request) const
 {
     ostk::FileObjectStoreClient file_client;
-    file_client.initialize(getTierPath(request.sourceTier()));
+    file_client.initialize(get_tier_path(request.sourceTier()));
     file_client.migrate(
-        request.object().id(), getTierPath(request.targetTier()), false);
+        request.object().id(), get_tier_path(request.targetTier()), false);
 }

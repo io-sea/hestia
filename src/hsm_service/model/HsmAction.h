@@ -8,13 +8,13 @@ class HsmAction {
 
     HsmAction();
 
-    bool hasAction() const { return mAction != Action::NONE; }
+    bool has_action() const { return m_action != Action::NONE; }
 
-    void setAction(const std::string& action);
+    void set_action(const std::string& action);
 
-    Action mAction{Action::NONE};
-    std::uint8_t mSourceTier{0};
-    std::uint8_t mTargetTier{0};
+    Action m_action{Action::NONE};
+    std::uint8_t m_source_tier{0};
+    std::uint8_t m_target_tier{0};
 
-    static constexpr char TRIGGER_MIGRATION_KEY[] = "trigger_migration";
+    static constexpr char trigger_migration_key[] = "trigger_migration";
 };

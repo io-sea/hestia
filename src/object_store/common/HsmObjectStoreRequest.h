@@ -16,39 +16,39 @@ class HsmObjectStoreRequest :
     public ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod> {
   public:
     HsmObjectStoreRequest(
-        const std::string& objectId, HsmObjectStoreRequestMethod method);
+        const std::string& object_id, HsmObjectStoreRequestMethod method);
     HsmObjectStoreRequest(
         const ostk::StorageObject& object, HsmObjectStoreRequestMethod method);
     HsmObjectStoreRequest(
-        const ostk::Uuid& objectId, HsmObjectStoreRequestMethod method);
+        const ostk::Uuid& object_id, HsmObjectStoreRequestMethod method);
     HsmObjectStoreRequest(const ostk::ObjectStoreRequest& request);
 
-    bool isHsmOnlyRequest() const;
+    bool is_hsm_only_request() const;
 
-    std::string methodAsString() const override;
+    std::string method_as_string() const override;
 
-    void setSourceTier(uint8_t tier) { mSourceTier = tier; }
+    void set_source_tier(uint8_t tier) { m_source_tier = tier; }
 
-    void setTargetTier(uint8_t tier) { mTargetTier = tier; }
+    void set_target_tier(uint8_t tier) { m_target_tier = tier; }
 
-    uint8_t sourceTier() const;
-    uint8_t targetTier() const;
+    uint8_t source_tier() const;
+    uint8_t target_tier() const;
 
-    std::string toString() const;
+    std::string to_string() const;
 
-    static ostk::ObjectStoreRequest toBaseRequest(
+    static ostk::ObjectStoreRequest to_base_request(
         const HsmObjectStoreRequest& reqeust);
-    static bool isHsmSupportedMethod(ostk::ObjectStoreRequestMethod method);
-    static std::string toString(HsmObjectStoreRequestMethod method);
+    static bool is_hsm_supported_method(ostk::ObjectStoreRequestMethod method);
+    static std::string to_string(HsmObjectStoreRequestMethod method);
 
   private:
-    static bool isCopyOrMoveRequest(HsmObjectStoreRequestMethod method);
+    static bool is_copy_or_move_request(HsmObjectStoreRequestMethod method);
 
-    static HsmObjectStoreRequestMethod fromBaseMethod(
+    static HsmObjectStoreRequestMethod from_base_method(
         ostk::ObjectStoreRequestMethod method);
-    static ostk::ObjectStoreRequestMethod toBaseMethod(
+    static ostk::ObjectStoreRequestMethod to_base_method(
         HsmObjectStoreRequestMethod method);
 
-    uint8_t mTargetTier{0};
-    uint8_t mSourceTier{0};
+    uint8_t m_target_tier{0};
+    uint8_t m_source_tier{0};
 };

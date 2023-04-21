@@ -19,9 +19,9 @@
     return response;
 
 HsmService::HsmService(
-    std::unique_ptr<KeyValueStore> kvStore,
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore,
-    std::unique_ptr<DataPlacementEngine> placementEngine) :
+    std::unique_ptr<KeyValueStore> kv_store,
+    std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
+    std::unique_ptr<DataPlacementEngine> placement_engine) :
     mStore(
         HsmStoreInterface::Create(std::move(kvStore), std::move(objectStore))),
     mDataPlacementEngine(std::move(placementEngine)),
@@ -32,7 +32,7 @@ HsmService::HsmService(
 
 HsmService::~HsmService() {}
 
-HsmServiceResponse::Ptr HsmService::makeRequest(
+HsmServiceResponse::Ptr HsmService::make_request(
     const HsmServiceRequest& req, ostk::Stream* stream) noexcept
 {
     switch (req.method()) {
@@ -77,7 +77,7 @@ HsmServiceResponse::Ptr HsmService::put(
         HsmObject hsm_object(obj);
         hsm_object.addTier(chosen_tier);
 
-        mObjectAdapter->sync(hsm_object, obj);
+        m_object_adapter->sync(hsm_object, obj);
         auto metadata_put_response = mStore->putMetadata(obj);
 
         return HsmServiceResponse::Create(
@@ -86,7 +86,7 @@ HsmServiceResponse::Ptr HsmService::put(
 
     if (!req.query().empty()) {
         HsmAction action;
-        mActionAdapter->parse(req.query(), action);
+        m_action_adapter->parse(req.query(), action);
         if (action.hasAction()) {
             // First finish this request and remove the metadata
             /*
@@ -119,14 +119,14 @@ HsmServiceResponse::Ptr HsmService::put(
         }
     }
 
-    auto metadata_put_response = mStore->putMetadata(req.object());
+    auto metadata_put_response = m_store->putMetadata(req.object());
     return HsmServiceResponse::Create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::get(
     const HsmServiceRequest& req, ostk::Stream* stream) noexcept
 {
-    auto exists = mStore->exists(req.object());
+    auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
     if (!exists->objectFound()) {
         const std::string msg = "Requested Object Not Found.";
@@ -134,19 +134,19 @@ HsmServiceResponse::Ptr HsmService::get(
     }
 
     if (stream) {
-        auto response = mStore->getData(
+        auto response = m_store->getData(
             req.object(), req.extent(), req.sourceTier(), stream);
         return HsmServiceResponse::Create(req, std::move(response));
     }
     else {
-        auto response = mStore->getMetadata(req.object());
+        auto response = m_store->getMetadata(req.object());
         return HsmServiceResponse::Create(req, std::move(response));
     }
 }
 
 HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 {
-    auto exists = mStore->exists(req.object());
+    auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
     if (!exists->objectFound()) {
         const std::string msg = "Requested Object Not Found.";
@@ -155,27 +155,27 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     auto obj = req.object();
     /*
-    mKeyValueStore->fetch(obj, {"tiers"});
+    m_key_value_store->fetch(obj, {"tiers"});
     */
 
     HsmObject hsm_object(obj);
 
     mObjectAdapter->parseTiers(hsm_object);
 
-    auto copy_data_response = mStore->copyData(
+    auto copy_data_response = m_store->copyData(
         req.object(), req.extent(), req.sourceTier(), req.targetTier());
     ERROR_CHECK(copy_data_response);
 
     hsm_object.addTier(req.targetTier());
     mObjectAdapter->serialize(hsm_object);
 
-    auto metadata_put_response = mStore->putMetadata(obj);
+    auto metadata_put_response = m_store->putMetadata(obj);
     return HsmServiceResponse::Create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 {
-    auto exists = mStore->exists(req.object());
+    auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
     if (!exists->objectFound()) {
         const std::string msg = "Requested Object Not Found.";
@@ -184,21 +184,21 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     auto obj = req.object();
     /*
-    mKeyValueStore->fetch(obj, {"tiers"});
+    m_key_value_store->fetch(obj, {"tiers"});
     */
 
     HsmObject hsm_object(obj);
 
-    mObjectAdapter->parseTiers(hsm_object);
+    m_object_adapter->parseTiers(hsm_object);
 
-    auto move_data_response = mStore->moveData(
+    auto move_data_response = m_store->moveData(
         req.object(), req.extent(), req.sourceTier(), req.targetTier());
     ERROR_CHECK(move_data_response);
 
     hsm_object.addTier(req.targetTier());
-    mObjectAdapter->serialize(hsm_object);
+    m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = mStore->putMetadata(obj);
+    auto metadata_put_response = m_store->putMetadata(obj);
     return HsmServiceResponse::Create(req, std::move(metadata_put_response));
 }
 
@@ -208,19 +208,19 @@ HsmServiceResponse::Ptr HsmService::remove(
     auto obj = req.object();
 
     /*
-    mKeyValueStore->fetch(obj, {"tiers"});
+    m_key_value_store->fetch(obj, {"tiers"});
     */
 
     HsmObject hsm_object(obj);
-    mObjectAdapter->parseTiers(hsm_object);
-    mObjectAdapter->serialize(hsm_object);
+    m_object_adapter->parseTiers(hsm_object);
+    m_object_adapter->serialize(hsm_object);
 
     auto remove_data_response =
         mStore->releaseData(req.object(), req.extent(), req.sourceTier());
     ERROR_CHECK(remove_data_response);
 
     hsm_object.removeTier(req.sourceTier());
-    mObjectAdapter->serialize(hsm_object);
+    m_object_adapter->serialize(hsm_object);
 
     auto metadata_put_response = mStore->putMetadata(obj);
     return HsmServiceResponse::Create(req, std::move(metadata_put_response));
@@ -232,40 +232,41 @@ HsmServiceResponse::Ptr HsmService::remove_all(
     auto obj = req.object();
 
     /*
-    mKeyValueStore->fetch(obj, {"tiers"});
+    m_key_value_store->fetch(obj, {"tiers"});
     */
 
     HsmObject hsm_object(obj);
-    mObjectAdapter->parseTiers(hsm_object);
-    mObjectAdapter->serialize(hsm_object);
+    m_object_adapter->parseTiers(hsm_object);
+    m_object_adapter->serialize(hsm_object);
 
-    auto remove_data_response = mStore->releaseData(req.object(), req.extent());
+    auto remove_data_response =
+        m_store->releaseData(req.object(), req.extent());
     ERROR_CHECK(remove_data_response);
 
     hsm_object.removeAllButOneTiers();
-    mObjectAdapter->serialize(hsm_object);
+    m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = mStore->putMetadata(obj);
+    auto metadata_put_response = m_store->putMetadata(obj);
     return HsmServiceResponse::Create(req, std::move(metadata_put_response));
 }
 
-void HsmService::listObjects(uint8_t tier, std::vector<HsmObject>& objects)
+void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
 {
     /*
     std::vector<ostk::StorageObject> objs;
-    mKeyValueStore->list(tier, objs);
+    m_key_value_store->list(tier, objs);
     /*/
 }
 
-void HsmService::listTiers(HsmObject& object, std::vector<uint8_t>& tiers)
+void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
 {
     /*
-    if (!mKeyValueStore->exists(object.mStorageObject))
+    if (!m_key_value_store->exists(object.mStorageObject))
     {
         throw std::runtime_error("Requested non-existing object");
     }
 
-    mKeyValueStore->fetch(object.mStorageObject, {"tiers"});
+    m_key_value_store->fetch(object.mStorageObject, {"tiers"});
     HsmObjectAdapter::parseTiers(object);
     tiers = object.mTierIds;
     */

@@ -16,48 +16,49 @@ class MarkableExtent : public ostk::Extent {
     MarkableExtent(std::size_t offset, std::size_t length) : ostk::Extent() {}
 
     MarkableExtent(const ostk::Extent& extent) : ostk::Extent(extent) {}
-    bool mMarkedForDelete{false};
+    bool m_marked_for_delete{false};
 };
 
 class CompositeLayer {
   public:
-    int addExtent(const ostk::Extent& extentIn, bool isWrite, bool overwrite);
+    int add_extent(
+        const ostk::Extent& extent_in, bool is_write, bool overwrite);
 
-    int addMergeReadExtent(const ostk::Extent& extentIn);
+    int add_merge_read_extent(const ostk::Extent& extent_in);
 
-    void deleteMarkedExtents(bool isWrite);
+    void delete_marked_extents(bool is_write);
 
-    std::string dumpExtents(bool details, bool isWrite);
+    std::string dump_extents(bool details, bool isWrite);
 
-    int extentSubstract(
-        const ostk::Extent& extentIn, bool isWrite, bool* layerEmpty);
+    int extent_substract(
+        const ostk::Extent& extent_in, bool is_write, bool* layer_empty);
 
     using ExtentList = std::map<std::size_t, MarkableExtent>;
-    ExtentList* getExtents(bool isWrite);
+    ExtentList* get_extents(bool isWrite);
 
-    bool hasReadExtents() const;
+    bool has_read_extents() const;
 
-    bool hasWriteExtents() const;
+    bool has_write_extents() const;
 
-    int markForDeletion(const ostk::Extent& extentIn, bool isWrite);
+    int mark_for_deletion(const ostk::Extent& extent_in, bool is_write);
 
-    ExtentMatchCode matchExtent(
-        const ostk::Extent& extentIn,
+    ExtentMatchCode match_extent(
+        const ostk::Extent& extent_in,
         ostk::Extent* match,
         ExtentMatchType mode,
-        bool isWrite,
-        bool deletePrevious);
+        bool is_write,
+        bool delete_previous);
 
     bool operator<(const CompositeLayer& other) const
     {
-        return mPriority < other.mPriority;
+        return m_priority < other.m_priority;
     }
 
-    ostk::Uuid mId;
-    ostk::Uuid mParentId;
-    uint32_t mPriority{0};
+    ostk::Uuid m_id;
+    ostk::Uuid m_parent_id;
+    uint32_t m_priority{0};
 
   private:
-    ExtentList mReadExtents;
-    ExtentList mWriteExtents;
+    ExtentList m_read_extents;
+    ExtentList m_write_extents;
 };

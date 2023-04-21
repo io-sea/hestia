@@ -5,7 +5,7 @@
 #include <filesystem>
 
 struct FileHsmObjectStoreClientConfig {
-    std::filesystem::directory_entry mStoreLocation{"object_store"};
+    std::filesystem::directory_entry m_store_location{"object_store"};
 };
 
 class FileHsmObjectStoreClient : public HsmObjectStoreClient {
@@ -16,9 +16,9 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
 
     ~FileHsmObjectStoreClient();
 
-    static Ptr Create();
+    static Ptr create();
 
-    static std::string getRegistryIdentifier();
+    static std::string get_registry_identifier();
 
     void initialize(const FileHsmObjectStoreClientConfig& config);
 
@@ -37,6 +37,6 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
 
     void move(const HsmObjectStoreRequest& request) const override;
 
-    std::filesystem::path getTierPath(uint8_t tier) const;
-    std::filesystem::directory_entry mStore;
+    std::filesystem::path get_tier_path(uint8_t tier) const;
+    std::filesystem::directory_entry m_store;
 };

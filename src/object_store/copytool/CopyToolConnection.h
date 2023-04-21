@@ -14,23 +14,23 @@ class CopyToolConnection {
 
     ~CopyToolConnection();
 
-    CopyToolResponse::Ptr makeRequest(const CopyToolRequest& request);
+    CopyToolResponse::Ptr make_request(const CopyToolRequest& request);
 
     State connect();
 
     State disconnect();
 
-    Type getType() const;
+    Type get_type() const;
 
-    State getState() const;
+    State get_state() const;
 
-    State initialize(const CopyToolConfig& config, Type connectionType);
+    State initialize(const CopyToolConfig& config, Type connection_type);
 
   private:
-    void launchExternal();
-    void terminateExternal();
+    void launch_external();
+    void terminate_external();
 
-    State mState{State::UNINITIALIZED};
-    Type mType{Type::IN_PROCESS};
-    std::unique_ptr<CopyTool> mInProcessCopyTool;
+    State m_state{State::UNINITIALIZED};
+    Type m_type{Type::IN_PROCESS};
+    std::unique_ptr<CopyTool> m_in_process_copy_tool;
 };

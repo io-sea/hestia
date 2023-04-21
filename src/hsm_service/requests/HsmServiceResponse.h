@@ -16,30 +16,30 @@ class HsmServiceResponse : public ostk::Response<HsmServiceErrorCode> {
     HsmServiceResponse(const HsmServiceRequest& request);
     HsmServiceResponse(
         const HsmServiceRequest& request,
-        HsmObjectStoreResponse::Ptr objectStoreResponse);
+        HsmObjectStoreResponse::Ptr object_store_response);
     HsmServiceResponse(
         const HsmServiceRequest& request,
-        ostk::ObjectStoreResponse::Ptr kvStoreResponse);
+        ostk::ObjectStoreResponse::Ptr kv_store_response);
 
-    static Ptr Create(const HsmServiceRequest& request);
-    static Ptr Create(
+    static Ptr create(const HsmServiceRequest& request);
+    static Ptr create(
         const HsmServiceRequest& request,
         HsmObjectStoreResponse::Ptr objectStoreResponse);
-    static Ptr Create(
+    static Ptr create(
         const HsmServiceRequest& request,
         ostk::ObjectStoreResponse::Ptr kvStoreResponse);
 
-    const std::string& queryResult() const;
+    const std::string& query_result() const;
 
     const std::vector<ostk::Uuid>& objects() const;
 
     const std::vector<uint8_t>& tiers() const;
 
   private:
-    std::string mQueryResult;
-    std::vector<ostk::Uuid> mObjectIds;
-    std::vector<uint8_t> mTiers;
+    std::string m_query_result;
+    std::vector<ostk::Uuid> m_object_ids;
+    std::vector<uint8_t> m_tiers;
 
-    HsmObjectStoreResponse::Ptr mObjectStoreResponse;
-    ostk::ObjectStoreResponse::Ptr mKeyValueStoreResponse;
+    HsmObjectStoreResponse::Ptr m_object_store_response;
+    ostk::ObjectStoreResponse::Ptr m_key_value_store_response;
 };

@@ -28,7 +28,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::copyData(
     request.setExtent(request.extent());
     request.setSourceTier(request.sourceTier());
     request.setTargetTier(request.targetTier());
-    return mObjectStore->makeRequest(request);
+    return m_object_store->makeRequest(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::moveData(
@@ -41,7 +41,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::moveData(
     request.setExtent(request.extent());
     request.setSourceTier(request.sourceTier());
     request.setTargetTier(request.targetTier());
-    return mObjectStore->makeRequest(request);
+    return m_object_store->makeRequest(request);
 }
 
 ostk::ObjectStoreResponse::Ptr HsmStoreInterface::exists(
@@ -49,7 +49,7 @@ ostk::ObjectStoreResponse::Ptr HsmStoreInterface::exists(
 {
     ostk::ObjectStoreRequest request(
         object, ostk::ObjectStoreRequestMethod::EXISTS);
-    return mKeyValueStore->makeRequest(request);
+    return m_key_value_store->makeRequest(request);
 }
 
 ostk::ObjectStoreResponse::Ptr HsmStoreInterface::getMetadata(
@@ -57,7 +57,7 @@ ostk::ObjectStoreResponse::Ptr HsmStoreInterface::getMetadata(
 {
     ostk::ObjectStoreRequest request(
         object, ostk::ObjectStoreRequestMethod::GET);
-    return mKeyValueStore->makeRequest(request);
+    return m_key_value_store->makeRequest(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::getData(
@@ -69,7 +69,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::getData(
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::GET);
     request.setSourceTier(sourceTier);
     request.setExtent(extent);
-    return mObjectStore->makeRequest(request, stream);
+    return m_object_store->makeRequest(request, stream);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::putData(
@@ -88,7 +88,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::putData(
     else {
         request.object().initializeTimestamps();
     }
-    return mObjectStore->makeRequest(request, stream);
+    return m_object_store->makeRequest(request, stream);
 }
 
 ostk::ObjectStoreResponse::Ptr HsmStoreInterface::putMetadata(
@@ -96,7 +96,7 @@ ostk::ObjectStoreResponse::Ptr HsmStoreInterface::putMetadata(
 {
     ostk::ObjectStoreRequest request(
         object, ostk::ObjectStoreRequestMethod::PUT);
-    return mKeyValueStore->makeRequest(request);
+    return m_key_value_store->makeRequest(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::releaseData(
@@ -107,7 +107,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::releaseData(
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::REMOVE);
     request.setSourceTier(sourceTier);
     request.setExtent(extent);
-    return mObjectStore->makeRequest(request);
+    return m_object_store->makeRequest(request);
 }
 
 ostk::ObjectStoreResponse::Ptr HsmStoreInterface::releaseMetadata(
@@ -115,7 +115,7 @@ ostk::ObjectStoreResponse::Ptr HsmStoreInterface::releaseMetadata(
 {
     ostk::ObjectStoreRequest request(
         object, ostk::ObjectStoreRequestMethod::REMOVE);
-    return mKeyValueStore->makeRequest(request);
+    return m_key_value_store->makeRequest(request);
 }
 
 ostk::ObjectStoreResponse::Ptr HsmStoreInterface::releaseMetadata(
@@ -123,7 +123,7 @@ ostk::ObjectStoreResponse::Ptr HsmStoreInterface::releaseMetadata(
 {
     ostk::ObjectStoreRequest request(
         object, ostk::ObjectStoreRequestMethod::REMOVE);
-    return mKeyValueStore->makeRequest(request);
+    return m_key_value_store->makeRequest(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::releaseData(
@@ -132,5 +132,5 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::releaseData(
     HsmObjectStoreRequest request(
         object, HsmObjectStoreRequestMethod::REMOVE_ALL);
     request.setExtent(extent);
-    return mObjectStore->makeRequest(request);
+    return m_object_store->makeRequest(request);
 }

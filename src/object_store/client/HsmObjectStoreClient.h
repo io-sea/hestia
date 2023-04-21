@@ -9,7 +9,7 @@ class HsmObjectStoreClient : public ostk::ObjectStoreClient {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClient>;
 
-    [[nodiscard]] virtual HsmObjectStoreResponse::Ptr makeRequest(
+    [[nodiscard]] virtual HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,
         ostk::Stream* stream = nullptr) const noexcept;
 
@@ -52,17 +52,17 @@ class HsmObjectStoreClient : public ostk::ObjectStoreClient {
         std::vector<ostk::StorageObject>& fetched) const override;
 
   private:
-    void onException(
+    void on_exception(
         const HsmObjectStoreRequest& request,
         HsmObjectStoreResponse* response,
         const std::string& message = {}) const;
 
-    void onException(
+    void on_exception(
         const HsmObjectStoreRequest& request,
         HsmObjectStoreResponse* response,
         const ostk::ObjectStoreError& error) const;
 
-    void onException(
+    void on_exception(
         const HsmObjectStoreRequest& request,
         HsmObjectStoreResponse* response,
         const HsmObjectStoreError& error) const;

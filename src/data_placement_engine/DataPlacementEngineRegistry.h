@@ -10,11 +10,11 @@
 
 enum class PlacementEngineType { BASIC, ROBINHOOD };
 
-namespace PlacementEngineRegistry {
+namespace placement_engine_registry {
 
-static std::string toString(PlacementEngineType placementEngineType)
+static std::string to_string(PlacementEngineType placement_engine_type)
 {
-    switch (placementEngineType) {
+    switch (placement_engine_type) {
         case PlacementEngineType::BASIC:
             return "BASIC";
         case PlacementEngineType::ROBINHOOD:
@@ -24,9 +24,10 @@ static std::string toString(PlacementEngineType placementEngineType)
     }
 };
 
-static bool isPlacementEngineAvailable(PlacementEngineType placementEngineType)
+static bool is_placement_engine_available(
+    PlacementEngineType placement_engine_type)
 {
-    switch (placementEngineType) {
+    switch (placement_engine_type) {
         case PlacementEngineType::BASIC:
             return true;
         case PlacementEngineType::ROBINHOOD:
@@ -40,10 +41,10 @@ static bool isPlacementEngineAvailable(PlacementEngineType placementEngineType)
     }
 };
 
-static std::unique_ptr<DataPlacementEngine> getEngine(
-    PlacementEngineType placementEngineType)
+static std::unique_ptr<DataPlacementEngine> get_engine(
+    PlacementEngineType placement_engine_type)
 {
-    switch (placementEngineType) {
+    switch (placement_engine_type) {
         case PlacementEngineType::BASIC:
             return std::make_unique<BasicDataPlacementEngine>();
         case PlacementEngineType::ROBINHOOD:
@@ -57,4 +58,4 @@ static std::unique_ptr<DataPlacementEngine> getEngine(
     }
 };
 
-}  // namespace PlacementEngineRegistry
+}  // namespace placement_engine_registry

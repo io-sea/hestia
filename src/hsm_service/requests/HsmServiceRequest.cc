@@ -1,7 +1,7 @@
 #include "HsmServiceRequest.h"
 
 HsmServiceRequest::HsmServiceRequest(
-    const ostk::Uuid& objectId, HsmServiceRequestMethod method) :
+    const ostk::Uuid& object_id, HsmServiceRequestMethod method) :
     ostk::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
@@ -17,32 +17,32 @@ HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
 {
 }
 
-void HsmServiceRequest::setExtent(const ostk::Extent& extent)
+void HsmServiceRequest::set_extent(const ostk::Extent& extent)
 {
     mExtent = extent;
 }
 
-void HsmServiceRequest::setTargetTier(uint8_t tier)
+void HsmServiceRequest::set_target_tier(uint8_t tier)
 {
     mTargetTier = tier;
 }
 
-void HsmServiceRequest::setSourceTier(uint8_t tier)
+void HsmServiceRequest::set_source_tier(uint8_t tier)
 {
     mSourceTier = tier;
 }
 
-void HsmServiceRequest::setShouldPutOverwrite(bool overwrite)
+void HsmServiceRequest::set_should_put_overwrite(bool overwrite)
 {
-    mOverwriteIfExisting = overwrite;
+    m_overwrite_if_existing = overwrite;
 }
 
-bool HsmServiceRequest::shouldOverwritePut() const
+bool HsmServiceRequest::should_overwrite_put() const
 {
-    return mOverwriteIfExisting;
+    return m_overwrite_if_existing;
 }
 
-void HsmServiceRequest::setQuery(const std::string& query)
+void HsmServiceRequest::set_query(const std::string& query)
 {
     mQuery = query;
 }

@@ -27,8 +27,8 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
         const ostk::Metadata::Query& query,
         std::vector<ostk::StorageObject>& fetched) const override;
 
-    std::filesystem::path getFilename(const ostk::StorageObject& obj) const;
+    std::filesystem::path get_filename(const ostk::StorageObject& obj) const;
 
     // const char mDelimiter = ';';
-    const std::filesystem::directory_entry mStore{"kv_store"};
+    const std::filesystem::directory_entry m_store{"kv_store"};
 };

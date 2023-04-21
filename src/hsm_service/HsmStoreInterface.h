@@ -13,26 +13,26 @@ class HsmStoreInterface {
     using Ptr = std::unique_ptr<HsmStoreInterface>;
 
     HsmStoreInterface(
-        std::unique_ptr<KeyValueStore> kvStore,
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore);
+        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
-    static Ptr Create(
+    static Ptr create(
         std::unique_ptr<KeyValueStore> kvStore,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore);
 
     ostk::ObjectStoreResponse::Ptr exists(const ostk::StorageObject& object);
 
-    ostk::ObjectStoreResponse::Ptr getMetadata(
+    ostk::ObjectStoreResponse::Ptr get_metadata(
         const ostk::StorageObject& object);
-    HsmObjectStoreResponse::Ptr getData(
+    HsmObjectStoreResponse::Ptr get_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
         uint8_t sourceTier,
         ostk::Stream* stream);
 
-    ostk::ObjectStoreResponse::Ptr putMetadata(
+    ostk::ObjectStoreResponse::Ptr put_metadata(
         const ostk::StorageObject& object);
-    HsmObjectStoreResponse::Ptr putData(
+    HsmObjectStoreResponse::Ptr put_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
         uint8_t sourceTier,
@@ -40,30 +40,30 @@ class HsmStoreInterface {
         bool overwrite,
         ostk::Stream* stream);
 
-    HsmObjectStoreResponse::Ptr copyData(
+    HsmObjectStoreResponse::Ptr copy_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
         uint8_t sourceTier,
         uint8_t targetTier);
-    HsmObjectStoreResponse::Ptr moveData(
+    HsmObjectStoreResponse::Ptr move_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
         uint8_t sourceTier,
         uint8_t targetTier);
 
-    ostk::ObjectStoreResponse::Ptr releaseMetadata(
+    ostk::ObjectStoreResponse::Ptr release_metadata(
         const ostk::StorageObject& object);
-    ostk::ObjectStoreResponse::Ptr releaseMetadata(
+    ostk::ObjectStoreResponse::Ptr release_metadata(
         const ostk::StorageObject& object, uint8_t sourceTier);
-    HsmObjectStoreResponse::Ptr releaseData(
+    HsmObjectStoreResponse::Ptr release_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
         uint8_t sourceTier);
-    HsmObjectStoreResponse::Ptr releaseData(
+    HsmObjectStoreResponse::Ptr release_data(
         const ostk::StorageObject& object, const ostk::Extent& extent);
 
 
   private:
-    std::unique_ptr<KeyValueStore> mKeyValueStore;
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> mObjectStore;
+    std::unique_ptr<KeyValueStore> m_key_value_store;
+    std::unique_ptr<MultiBackendHsmObjectStoreClient> m_object_store;
 };

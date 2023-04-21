@@ -25,7 +25,7 @@ void MotrInterface::initialize(const MotrConfig& config)
     mImpl->initialize(working_config);
 }
 
-void MotrInterface::validateConfig(MotrConfig& config)
+void MotrInterface::validate_config(MotrConfig& config)
 {
     auto working_path = config.mHsmConfigPath;
     if (working_path.empty()) {
@@ -64,9 +64,9 @@ void MotrInterface::remove(const HsmObjectStoreRequest& request) const
     mImpl->remove(request);
 }
 
-void MotrInterface::writeTierInfo(
+void MotrInterface::write_tier_info(
     const std::filesystem::path& path,
-    const std::vector<MotrHsmTierInfo>& tierInfo) const
+    const std::vector<MotrHsmTierInfo>& tier_info) const
 {
     std::ofstream f_out;
     f_out.open(path);

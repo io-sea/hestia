@@ -30,5 +30,5 @@ class MotrHsmClient : public HsmObjectStoreClient {
     void remove(const HsmObjectStoreRequest& request) const override;
 
   protected:
-    std::unique_ptr<MotrInterface> mMotrInterface;
+    std::unique_ptr<MotrInterface> m_motr_interface;
 };

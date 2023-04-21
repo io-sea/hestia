@@ -1,6 +1,6 @@
 #include "BasicDataPlacementEngine.h"
 
-std::uint8_t BasicDataPlacementEngine::chooseTier(
+std::uint8_t BasicDataPlacementEngine::choose_tier(
     const std::size_t length, const std::uint8_t hint)
 {
     // std::uniform_int_distribution<> distrib(0, m_tiers.size() - 1);
@@ -12,16 +12,16 @@ std::uint8_t BasicDataPlacementEngine::chooseTier(
     return hint;
 }
 
-std::list<hestia::HsmTier> BasicDataPlacementEngine::getTierInfo()
+std::list<hestia::HsmTier> BasicDataPlacementEngine::get_tier_info()
 {
-    return mTiers;
+    return m_tiers;
 }
 
-std::vector<uint8_t> BasicDataPlacementEngine::listTiers()
+std::vector<uint8_t> BasicDataPlacementEngine::list_tiers()
 {
     std::vector<uint8_t> tids;
 
-    for (auto it = mTiers.begin(); it != mTiers.end(); ++it) {
+    for (auto it = m_tiers.begin(); it != m_tiers.end(); ++it) {
         tids.push_back(static_cast<int>(it->id));
     }
 

@@ -33,10 +33,10 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
   private:
     void finish();
 
-    void initializeHsm();
+    void initialize_hsm();
 
-    MotrConfig mConfig;
-    m0_client* mClientInstance{nullptr};
-    m0_container mContainer;
-    m0_realm mRealm;
+    MotrConfig m_config;
+    m0_client* m_client_instance{nullptr};
+    m0_container m_container;
+    m0_realm m_realm;
 };

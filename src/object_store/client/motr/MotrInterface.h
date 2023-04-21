@@ -19,15 +19,15 @@ class MotrObject {
 
     ~MotrObject();
 
-    m0_uint128 getMotrFid() const;
+    m0_uint128 get_motr_fid() const;
 
-    m0_obj& getMotrObj() const;
+    m0_obj& get_motr_obj() const;
 
-    static m0_uint128 toMotrId(const ostk::Uuid& id);
+    static m0_uint128 to_motr_id(const ostk::Uuid& id);
 
   private:
-    ostk::Uuid mId;
-    std::unique_ptr<MotrObjImpl> mHandleImpl;
+    ostk::Uuid m_id;
+    std::unique_ptr<MotrObjImpl> m_handle_impl;
 };
 
 class MotrInterface {
@@ -52,11 +52,11 @@ class MotrInterface {
     void remove(const HsmObjectStoreRequest& request) const;
 
   private:
-    void validateConfig(MotrConfig& config);
+    void validate_config(MotrConfig& config);
 
-    void writeTierInfo(
+    void write_tier_info(
         const std::filesystem::path& path,
-        const std::vector<MotrHsmTierInfo>& tierInfo) const;
+        const std::vector<MotrHsmTierInfo>& tier_info) const;
 
-    std::unique_ptr<IMotrInterfaceImpl> mImpl;
+    std::unique_ptr<IMotrInterfaceImpl> m_impl;
 };

@@ -13,12 +13,12 @@ class BasicDataPlacementEngine : public DataPlacementEngine {
 
     ~BasicDataPlacementEngine() {}
 
-    std::uint8_t chooseTier(
+    std::uint8_t choose_tier(
         const std::size_t length, const std::uint8_t hint = 0);
 
     void reorganise() const {}
 
-    std::list<hestia::HsmTier> getTierInfo();
+    std::list<hestia::HsmTier> get_tier_info();
 
-    std::vector<uint8_t> listTiers();
+    std::vector<uint8_t> list_tiers();
 };

@@ -7,7 +7,7 @@ HsmServiceResponse::HsmServiceResponse(const HsmServiceRequest& request) :
 
 HsmServiceResponse::HsmServiceResponse(
     const HsmServiceRequest& request,
-    HsmObjectStoreResponse::Ptr objectStoreResponse) :
+    HsmObjectStoreResponse::Ptr object_store_response) :
     ostk::Response<HsmServiceErrorCode>(request),
     mObjectStoreResponse(std::move(objectStoreResponse))
 {
@@ -15,19 +15,19 @@ HsmServiceResponse::HsmServiceResponse(
 
 HsmServiceResponse::HsmServiceResponse(
     const HsmServiceRequest& request,
-    ostk::ObjectStoreResponse::Ptr kvStoreResponse) :
+    ostk::ObjectStoreResponse::Ptr kv_store_response) :
     ostk::Response<HsmServiceErrorCode>(request),
     mKeyValueStoreResponse(std::move(kvStoreResponse))
 {
 }
 
-HsmServiceResponse::Ptr HsmServiceResponse::Create(
+HsmServiceResponse::Ptr HsmServiceResponse::create(
     const HsmServiceRequest& request)
 {
     return std::make_unique<HsmServiceResponse>(request);
 }
 
-HsmServiceResponse::Ptr HsmServiceResponse::Create(
+HsmServiceResponse::Ptr HsmServiceResponse::create(
     const HsmServiceRequest& request,
     HsmObjectStoreResponse::Ptr objectStoreResponse)
 {
@@ -35,7 +35,7 @@ HsmServiceResponse::Ptr HsmServiceResponse::Create(
         request, std::move(objectStoreResponse));
 }
 
-HsmServiceResponse::Ptr HsmServiceResponse::Create(
+HsmServiceResponse::Ptr HsmServiceResponse::create(
     const HsmServiceRequest& request,
     ostk::ObjectStoreResponse::Ptr kvStoreResponse)
 {
@@ -43,7 +43,7 @@ HsmServiceResponse::Ptr HsmServiceResponse::Create(
         request, std::move(kvStoreResponse));
 }
 
-const std::string& HsmServiceResponse::queryResult() const
+const std::string& HsmServiceResponse::query_result() const
 {
     return mQueryResult;
 }

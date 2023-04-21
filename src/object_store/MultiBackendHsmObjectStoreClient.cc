@@ -5,7 +5,7 @@
 #include "HsmObjectStoreClientRegistry.h"
 
 MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
-    std::unique_ptr<HsmObjectStoreClientManager> clientManager) :
+    std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
     mClientManager(std::move(clientManager)),
     mCopyToolInterface(std::make_unique<CopyToolInterface>())
 {
@@ -14,14 +14,14 @@ MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
 MultiBackendHsmObjectStoreClient::~MultiBackendHsmObjectStoreClient() {}
 
 void MultiBackendHsmObjectStoreClient::initialize(
-    const TierBackendRegistry& tierBackendRegsitry,
-    const CopyToolConfig& copyToolConfig)
+    const TierBackendRegistry& tier_backend_regsitry,
+    const CopyToolConfig& copy_tool_config)
 {
     mClientManager->setupClients(tierBackendRegsitry);
     mCopyToolInterface->initialize(copyToolConfig);
 }
 
-HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::makeRequest(
+HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
 {
     if (request.isHsmOnlyRequest()) {

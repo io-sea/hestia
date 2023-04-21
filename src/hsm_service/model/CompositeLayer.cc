@@ -1,7 +1,7 @@
 #include "CompositeLayer.h"
 
-int CompositeLayer::addExtent(
-    const ostk::Extent& extentIn, bool write, bool overwrite)
+int CompositeLayer::add_extent(
+    const ostk::Extent& extent_in, bool write, bool overwrite)
 {
     auto extents = getExtents(write);
     if (auto iter = extents->find(extentIn.mOffset); iter != extents->end()) {
@@ -15,7 +15,7 @@ int CompositeLayer::addExtent(
     return 0;
 }
 
-int CompositeLayer::addMergeReadExtent(const ostk::Extent& extentIn)
+int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
 {
     ostk::Extent extent_merge;
     const auto match_code = matchExtent(
@@ -38,7 +38,7 @@ int CompositeLayer::addMergeReadExtent(const ostk::Extent& extentIn)
     return rc;
 }
 
-int CompositeLayer::markForDeletion(const ostk::Extent& extentIn, bool write)
+int CompositeLayer::mark_for_deletion(const ostk::Extent& extent_in, bool write)
 {
     auto extents = getExtents(write);
     if (auto iter = extents->find(extentIn.mOffset); iter != extents->end()) {
@@ -47,7 +47,7 @@ int CompositeLayer::markForDeletion(const ostk::Extent& extentIn, bool write)
     return 0;
 }
 
-void CompositeLayer::deleteMarkedExtents(bool isWrite)
+void CompositeLayer::delete_marked_extents(bool is_write)
 {
     auto extents = getExtents(isWrite);
     auto iter    = extents->begin();
@@ -61,7 +61,7 @@ void CompositeLayer::deleteMarkedExtents(bool isWrite)
     }
 }
 
-std::string CompositeLayer::dumpExtents(bool details, bool isWrite)
+std::string CompositeLayer::dump_extents(bool details, bool isWrite)
 {
     auto extents = getExtents(isWrite);
 
@@ -72,8 +72,8 @@ std::string CompositeLayer::dumpExtents(bool details, bool isWrite)
     return out;
 }
 
-int CompositeLayer::extentSubstract(
-    const ostk::Extent& extentIn, bool isWrite, bool* layerEmpty)
+int CompositeLayer::extent_substract(
+    const ostk::Extent& extent_in, bool is_write, bool* layer_empty)
 {
     int rc               = 0;
     int remaining_extent = 0;
@@ -122,36 +122,36 @@ int CompositeLayer::extentSubstract(
             remaining_extent++;
         }
     }
-    deleteMarkedExtents(isWrite);
-    *layerEmpty = (remaining_extent == 0);
+    delete_marked_extents(is_write);
+    *layer_empty = (remaining_extent == 0);
     return 0;
 }
 
-CompositeLayer::ExtentList* CompositeLayer::getExtents(bool isWrite)
+CompositeLayer::ExtentList* CompositeLayer::get_extents(bool isWrite)
 {
-    auto extents = &mWriteExtents;
+    auto extents = &m_write_extents;
     if (!isWrite) {
-        extents = &mReadExtents;
+        extents = &m_read_extents;
     }
     return extents;
 }
 
-bool CompositeLayer::hasWriteExtents() const
+bool CompositeLayer::has_write_extents() const
 {
-    return !mWriteExtents.empty();
+    return !m_write_extents.empty();
 }
 
-bool CompositeLayer::hasReadExtents() const
+bool CompositeLayer::has_read_extents() const
 {
-    return !mReadExtents.empty();
+    return !m_read_extents.empty();
 }
 
-ExtentMatchCode CompositeLayer::matchExtent(
-    const ostk::Extent& extentIn,
+ExtentMatchCode CompositeLayer::match_extent(
+    const ostk::Extent& extent_in,
     ostk::Extent* match,
     ExtentMatchType mode,
-    bool isWrite,
-    bool deletePrevious)
+    bool is_write,
+    bool delete_previous)
 {
     auto extents = getExtents(isWrite);
 
@@ -222,6 +222,6 @@ ExtentMatchCode CompositeLayer::matchExtent(
         }
     };
 
-    deleteMarkedExtents(isWrite);
+    delete_marked_extents(is_write);
     return is_merged ? ExtentMatchCode::EM_PARTIAL : ExtentMatchCode::EM_NONE;
 }

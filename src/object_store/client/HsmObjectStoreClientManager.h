@@ -9,25 +9,26 @@ class HsmObjectStoreClientManager {
     using Ptr = std::unique_ptr<HsmObjectStoreClientManager>;
 
     HsmObjectStoreClientManager(
-        HsmObjectStoreClientRegistry::Ptr clientRegistry);
+        HsmObjectStoreClientRegistry::Ptr client_registry);
 
-    void setupClients(const TierBackendRegistry& tierBackendRegsitry);
+    void setup_clients(const TierBackendRegistry& tier_backend_regsitry);
 
-    ostk::ObjectStoreClient* getClient(ObjectStoreClientType clientType) const;
+    ostk::ObjectStoreClient* get_client(ObjectStoreClientType clientType) const;
 
-    ostk::ObjectStoreClient* getClient(uint8_t tierId) const;
+    ostk::ObjectStoreClient* get_client(uint8_t tierId) const;
 
-    HsmObjectStoreClient* getHsmClient(ObjectStoreClientType clientType) const;
+    HsmObjectStoreClient* get_hsm_client(
+        ObjectStoreClientType client_type) const;
 
-    HsmObjectStoreClient* getHsmClient(uint8_t tierId) const;
+    HsmObjectStoreClient* get_hsm_client(uint8_t tier_id) const;
 
-    bool isHsmClient(uint8_t tierId) const;
+    bool is_hsm_client(uint8_t tier_id) const;
 
-    bool haveSameClientTypes(uint8_t tierId0, uint8_t tierId1) const;
+    bool have_same_client_types(uint8_t tier_id0, uint8_t tier_id1) const;
 
   private:
-    HsmObjectStoreClientRegistry::Ptr mClientRegistry;
-    TierBackendRegistry mTierBackendRegistry;
-    std::unordered_map<std::string, ostk::ObjectStoreClient::Ptr> mClients;
-    std::unordered_map<std::string, HsmObjectStoreClient::Ptr> mHsmClients;
+    HsmObjectStoreClientRegistry::Ptr m_client_registry;
+    TierBackendRegistry m_tier_backend_registry;
+    std::unordered_map<std::string, ostk::ObjectStoreClient::Ptr> m_clients;
+    std::unordered_map<std::string, HsmObjectStoreClient::Ptr> m_hsm_clients;
 };

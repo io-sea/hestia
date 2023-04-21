@@ -20,7 +20,7 @@ HsmObjectStoreError::HsmObjectStoreError(
 {
 }
 
-std::string HsmObjectStoreError::toString() const
+std::string HsmObjectStoreError::to_string() const
 {
     std::string msg = "# " + std::to_string(number()) + " | "
                       + codeToString(mCode) + " | " + mMessage;
@@ -30,12 +30,12 @@ std::string HsmObjectStoreError::toString() const
     return msg;
 }
 
-std::string HsmObjectStoreError::codeAsString() const
+std::string HsmObjectStoreError::code_as_string() const
 {
     return codeToString(mCode);
 }
 
-std::string HsmObjectStoreError::codeToString(HsmObjectStoreErrorCode code)
+std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)
 {
     switch (code) {
         case HsmObjectStoreErrorCode::NO_ERROR:

@@ -14,16 +14,16 @@ class CopyToolResponse : public HsmMiddlewareResponse {
     CopyToolResponse();
     virtual ~CopyToolResponse() = default;
 
-    static Ptr Create();
+    static Ptr create();
 
     bool ok() const;
 
-    void setError(const CopyToolError& error);
+    void set_error(const CopyToolError& error);
 
     void setObjectStoreRespose(
-        HsmObjectStoreResponse::Ptr objectStoreResponse) override;
+        HsmObjectStoreResponse::Ptr object_store_response) override;
 
   private:
-    Status mStatus{Status::OK};
-    CopyToolError mError;
+    Status m_status{Status::OK};
+    CopyToolError m_error;
 };

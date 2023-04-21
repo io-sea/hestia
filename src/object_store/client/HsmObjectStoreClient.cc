@@ -2,7 +2,7 @@
 
 #include <ostk/Logger.h>
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreClient::makeRequest(
+HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
 {
     auto response = HsmObjectStoreResponse::Create(request);
@@ -84,7 +84,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::makeRequest(
     return response;
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::makeRequest(
+ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const ostk::ObjectStoreRequest& request,
     ostk::Stream* stream) const noexcept
 {
@@ -157,7 +157,7 @@ void HsmObjectStoreClient::remove(const ostk::StorageObject& object) const
     }
 }
 
-void HsmObjectStoreClient::onException(
+void HsmObjectStoreClient::on_exception(
     const HsmObjectStoreRequest& request,
     HsmObjectStoreResponse* response,
     const std::string& message) const

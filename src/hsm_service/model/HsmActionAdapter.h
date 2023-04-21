@@ -8,7 +8,7 @@ class HsmActionAdapter {
   public:
     using Ptr = std::unique_ptr<HsmActionAdapter>;
 
-    static Ptr Create();
+    static Ptr create();
 
     void parse(const std::string& input, HsmAction& action);
 };

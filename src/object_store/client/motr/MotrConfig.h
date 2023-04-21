@@ -4,15 +4,15 @@
 #include <vector>
 
 struct MotrHsmTierInfo {
-    std::string mName;
-    std::string mIdentifier;
+    std::string m_name;
+    std::string m_identifier;
 };
 
 struct MotrConfig {
-    std::string mLocalAddress;
-    std::string mHaAddress;
-    std::string mProfile;
-    std::string mProcFid;
-    std::string mHsmConfigPath;
-    std::vector<MotrHsmTierInfo> mTierInfo;
+    std::string m_local_address;
+    std::string m_ha_address;
+    std::string m_profile;
+    std::string m_proc_fid;
+    std::string m_hsm_config_path;
+    std::vector<MotrHsmTierInfo> m_tier_info;
 };

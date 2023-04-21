@@ -24,7 +24,7 @@ int ok()
     return hestia::hestia_error_t::HESTIA_ERROR_OK;
 }
 
-int badStream()
+int bad_stream()
 {
     return hestia::hestia_error_t::HESTIA_ERROR_BAD_STREAM;
 }
@@ -33,15 +33,15 @@ int badStream()
 
 namespace hestia {
 int HestiaCppInterface::put(
-    const ostk::Uuid& objectId,
+    const ostk::Uuid& object_id,
     const ostk::Extent& extent,
     const ostk::ReadableBufferView& buffer,
-    uint8_t tierId,
+    uint8_t tier_id,
     bool overwrite)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::PUT);
     request.setExtent(extent);
-    request.setTargetTier(tierId);
+    request.setTargetTier(tier_id);
     request.setShouldPutOverwrite(overwrite);
 
     ostk::Stream stream;
@@ -55,20 +55,20 @@ int HestiaCppInterface::put(
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
-        return rc::badStream();
+        return rc::bad_stream();
     }
     return rc::ok();
 }
 
 int HestiaCppInterface::get(
-    const ostk::Uuid& objectId,
+    const ostk::Uuid& object_id,
     const ostk::Extent& extent,
     ostk::WriteableBufferView& buffer,
-    uint8_t tierId)
+    uint8_t tier_id)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::GET);
     request.setExtent(extent);
-    request.setSourceTier(tierId);
+    request.setSourceTier(tier_id);
 
     ostk::Stream stream;
     stream.setSink(ostk::InMemoryStreamSink::Create(buffer));
@@ -81,21 +81,21 @@ int HestiaCppInterface::get(
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
-        return rc::badStream();
+        return rc::bad_stream();
     }
     return rc::ok();
 }
 
 int HestiaCppInterface::copy(
-    const ostk::Uuid& objectId,
+    const ostk::Uuid& object_id,
     const ostk::Extent& extent,
-    uint8_t sourceTier,
-    uint8_t targetTier)
+    uint8_t source_tier,
+    uint8_t target_tier)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::COPY);
     request.setExtent(extent);
-    request.setSourceTier(sourceTier);
-    request.setTargetTier(targetTier);
+    request.setSourceTier(source_tier);
+    request.setTargetTier(target_tier);
 
     if (const auto response =
             ApplicationContext::get().getHsmService()->makeRequest(request);
@@ -106,15 +106,15 @@ int HestiaCppInterface::copy(
 }
 
 int HestiaCppInterface::move(
-    const ostk::Uuid& objectId,
+    const ostk::Uuid& object_id,
     const ostk::Extent& extent,
-    uint8_t sourceTier,
-    uint8_t targetTier)
+    uint8_t source_tier,
+    uint8_t target_tier)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::MOVE);
     request.setExtent(extent);
-    request.setSourceTier(sourceTier);
-    request.setTargetTier(targetTier);
+    request.setSourceTier(source_tier);
+    request.setTargetTier(target_tier);
 
     if (const auto response =
             ApplicationContext::get().getHsmService()->makeRequest(request);
@@ -124,8 +124,8 @@ int HestiaCppInterface::move(
     return rc::ok();
 }
 
-int HestiaCppInterface::getAttributes(
-    const ostk::Uuid& objectId,
+int HestiaCppInterface::get_attributes(
+    const ostk::Uuid& object_id,
     const std::string& keys,
     std::string& attributes)
 {
@@ -142,8 +142,8 @@ int HestiaCppInterface::getAttributes(
     return rc::ok();
 }
 
-int HestiaCppInterface::setAttributes(
-    const ostk::Uuid& objectId, const std::string& attributes)
+int HestiaCppInterface::set_attributes(
+    const ostk::Uuid& object_id, const std::string& attributes)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::GET);
     request.setQuery(attributes);
@@ -156,7 +156,7 @@ int HestiaCppInterface::setAttributes(
     return rc::ok();
 }
 
-int HestiaCppInterface::release(const ostk::Uuid& objectId)
+int HestiaCppInterface::release(const ostk::Uuid& object_id)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::REMOVE_ALL);
     if (const auto response =
@@ -168,10 +168,10 @@ int HestiaCppInterface::release(const ostk::Uuid& objectId)
 }
 
 int HestiaCppInterface::release(
-    const ostk::Uuid& objectId, uint8_t tierId, bool removeKey)
+    const ostk::Uuid& object_id, uint8_t tier_id, bool remove_key)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::REMOVE);
-    request.setSourceTier(tierId);
+    request.setSourceTier(tier_id);
     const auto response =
         ApplicationContext::get().getHsmService()->makeRequest(request);
     if (!response->ok()) {
@@ -180,7 +180,7 @@ int HestiaCppInterface::release(
     return rc::ok();
 }
 
-int HestiaCppInterface::listObjects(
+int HestiaCppInterface::list_objects(
     uint8_t tier, std::vector<ostk::Uuid> objects)
 {
     HsmServiceRequest request(HsmServiceRequestMethod::GET);
@@ -195,8 +195,8 @@ int HestiaCppInterface::listObjects(
     return rc::ok();
 }
 
-int HestiaCppInterface::listTiers(
-    const ostk::Uuid& objectId, std::vector<uint8_t>& tiers)
+int HestiaCppInterface::list_tiers(
+    const ostk::Uuid& object_id, std::vector<uint8_t>& tiers)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::GET_TIERS);
     const auto response =
@@ -208,8 +208,8 @@ int HestiaCppInterface::listTiers(
     return rc::ok();
 }
 
-int HestiaCppInterface::listAttributes(
-    const ostk::Uuid& objectId, std::string& attributes)
+int HestiaCppInterface::list_attributes(
+    const ostk::Uuid& object_id, std::string& attributes)
 {
     HsmServiceRequest request(objectId, HsmServiceRequestMethod::GET);
     const auto response =

@@ -3,7 +3,7 @@
 #include <sstream>
 
 HsmObjectStoreRequest::HsmObjectStoreRequest(
-    const std::string& objectId, HsmObjectStoreRequestMethod method) :
+    const std::string& object_id, HsmObjectStoreRequestMethod method) :
     ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
         objectId, method)
 {
@@ -16,7 +16,7 @@ HsmObjectStoreRequest::HsmObjectStoreRequest(
 }
 
 HsmObjectStoreRequest::HsmObjectStoreRequest(
-    const ostk::Uuid& objectId, HsmObjectStoreRequestMethod method) :
+    const ostk::Uuid& object_id, HsmObjectStoreRequestMethod method) :
     ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
         objectId.toString(), method)
 {
@@ -29,7 +29,7 @@ HsmObjectStoreRequest::HsmObjectStoreRequest(
 {
 }
 
-ostk::ObjectStoreRequest HsmObjectStoreRequest::toBaseRequest(
+ostk::ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
     const HsmObjectStoreRequest& reqeust)
 {
     if (reqeust.isHsmOnlyRequest()) {
@@ -43,7 +43,7 @@ ostk::ObjectStoreRequest HsmObjectStoreRequest::toBaseRequest(
     return base_request;
 }
 
-HsmObjectStoreRequestMethod HsmObjectStoreRequest::fromBaseMethod(
+HsmObjectStoreRequestMethod HsmObjectStoreRequest::from_base_method(
     ostk::ObjectStoreRequestMethod method)
 {
     switch (method) {
@@ -59,7 +59,7 @@ HsmObjectStoreRequestMethod HsmObjectStoreRequest::fromBaseMethod(
     }
 }
 
-ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::toBaseMethod(
+ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::to_base_method(
     HsmObjectStoreRequestMethod method)
 {
     switch (method) {
@@ -74,32 +74,32 @@ ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::toBaseMethod(
     }
 }
 
-bool HsmObjectStoreRequest::isCopyOrMoveRequest(
+bool HsmObjectStoreRequest::is_copy_or_move_request(
     HsmObjectStoreRequestMethod method)
 {
     return method == HsmObjectStoreRequestMethod::MOVE
            || method == HsmObjectStoreRequestMethod::COPY;
 }
 
-bool HsmObjectStoreRequest::isHsmSupportedMethod(
-    ostk::ObjectStoreRequestMethod opType)
+bool HsmObjectStoreRequest::is_hsm_supported_method(
+    ostk::ObjectStoreRequestMethod op_type)
 {
     return opType == ostk::ObjectStoreRequestMethod::GET
            || opType == ostk::ObjectStoreRequestMethod::PUT
            || opType == ostk::ObjectStoreRequestMethod::REMOVE;
 }
 
-bool HsmObjectStoreRequest::isHsmOnlyRequest() const
+bool HsmObjectStoreRequest::is_hsm_only_request() const
 {
     return isCopyOrMoveRequest(mMethod);
 }
 
-std::string HsmObjectStoreRequest::methodAsString() const
+std::string HsmObjectStoreRequest::method_as_string() const
 {
     return toString(mMethod);
 }
 
-std::string HsmObjectStoreRequest::toString() const
+std::string HsmObjectStoreRequest::to_string() const
 {
     std::stringstream sstr;
     sstr << "ObjectId: " << object().id() << " | ";
@@ -110,7 +110,8 @@ std::string HsmObjectStoreRequest::toString() const
     return sstr.str();
 }
 
-std::string HsmObjectStoreRequest::toString(HsmObjectStoreRequestMethod optType)
+std::string HsmObjectStoreRequest::to_string(
+    HsmObjectStoreRequestMethod optType)
 {
     switch (optType) {
         case HsmObjectStoreRequestMethod::PUT:
@@ -128,12 +129,12 @@ std::string HsmObjectStoreRequest::toString(HsmObjectStoreRequestMethod optType)
     }
 }
 
-uint8_t HsmObjectStoreRequest::sourceTier() const
+uint8_t HsmObjectStoreRequest::source_tier() const
 {
     return mSourceTier;
 }
 
-uint8_t HsmObjectStoreRequest::targetTier() const
+uint8_t HsmObjectStoreRequest::target_tier() const
 {
     return mTargetTier;
 }

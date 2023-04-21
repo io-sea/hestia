@@ -4,7 +4,7 @@
 
 HsmMiddlewareResponse::~HsmMiddlewareResponse() {}
 
-HsmObjectStoreResponse* HsmMiddlewareResponse::getObjectStoreResponse() const
+HsmObjectStoreResponse* HsmMiddlewareResponse::get_object_store_response() const
 {
-    return mObjectStoreResponse.get();
+    return m_object_store_response.get();
 }

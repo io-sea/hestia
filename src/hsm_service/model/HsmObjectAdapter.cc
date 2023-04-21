@@ -1,6 +1,6 @@
 #include "HsmObjectAdapter.h"
 
-HsmObjectAdapter::Ptr HsmObjectAdapter::Create()
+HsmObjectAdapter::Ptr HsmObjectAdapter::create()
 {
     return std::unique_ptr<HsmObjectAdapter>();
 }
@@ -25,14 +25,14 @@ void HsmObjectAdapter::serialize(HsmObject& hsm_object)
     addIfNotEmpty(md, TIERS_KEY, sstr.str());
 }
 
-void HsmObjectAdapter::parseTiers(HsmObject& hsm_object) {}
+void HsmObjectAdapter::parse_tiers(HsmObject& hsm_object) {}
 
 void HsmObjectAdapter::sync(
-    const HsmObject& hsmObject, ostk::StorageObject& storageObject)
+    const HsmObject& hsm_object, ostk::StorageObject& storage_object)
 {
 }
 
-void HsmObjectAdapter::addIfNotEmpty(
+void HsmObjectAdapter::add_if_not_empty(
     ostk::Metadata* md, const std::string& key, const std::string& value)
 {
     if (!value.empty()) {

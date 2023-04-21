@@ -9,19 +9,19 @@ class HsmObjectStoreClientPlugin : public ostk::PluginResource {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClientPlugin>;
     HsmObjectStoreClientPlugin(
-        const ostk::PluginHandle* pluginHandle, HsmObjectStoreClient* client);
+        const ostk::PluginHandle* plugin_handle, HsmObjectStoreClient* client);
 
     virtual ~HsmObjectStoreClientPlugin();
 
-    HsmObjectStoreClient* getClient() const;
+    HsmObjectStoreClient* get_client() const;
 
   private:
-    HsmObjectStoreClient* mClient{nullptr};
+    HsmObjectStoreClient* m_client{nullptr};
 };
 
 class HsmObjectStorePluginHandle : public ostk::PluginHandle {
   public:
-    HsmObjectStorePluginHandle(void* rawHandle, const std::string& name);
+    HsmObjectStorePluginHandle(void* raw_handle, const std::string& name);
 
     void destroyResource(ostk::PluginResource* resource) const override;
 

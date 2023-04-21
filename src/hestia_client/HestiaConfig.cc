@@ -14,7 +14,7 @@
 namespace hestia {
 int HestiaConfigurator::initialize(const HestiaConfig& config)
 {
-    mConfig = config;
+    m_config = config;
 
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store;
     try {
@@ -51,7 +51,7 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
 }
 
 std::unique_ptr<MultiBackendHsmObjectStoreClient>
-HestiaConfigurator::setUpObjectStore()
+HestiaConfigurator::set_up_object_store()
 {
     std::vector<std::filesystem::directory_entry> search_paths;
     auto plugin_handler =
@@ -64,13 +64,13 @@ HestiaConfigurator::setUpObjectStore()
     auto object_store = std::make_unique<MultiBackendHsmObjectStoreClient>(
         std::move(client_manager));
     object_store->initialize(
-        mConfig.mTierBackendRegistry, mConfig.mCopyToolConfig);
+        m_config.m_tier_backend_registry, mConfig.m_copy_tool_config);
     return object_store;
 }
 
-std::unique_ptr<KeyValueStore> HestiaConfigurator::setUpKeyValueStore()
+std::unique_ptr<KeyValueStore> HestiaConfigurator::set_up_key_value_store()
 {
-    const auto store_type = mConfig.mKeyValueStoreType;
+    const auto store_type = m_config.m_key_value_store_type;
     if (!KeyValueStoreRegistry::isStoreTypeAvailable(store_type)) {
         std::string msg = "Requested Key Value Store type: "
                           + KeyValueStoreRegistry::toString(store_type);
@@ -81,9 +81,9 @@ std::unique_ptr<KeyValueStore> HestiaConfigurator::setUpKeyValueStore()
 }
 
 std::unique_ptr<DataPlacementEngine>
-HestiaConfigurator::setUpDataPlacementEngine()
+HestiaConfigurator::set_up_data_placement_engine()
 {
-    const auto pe_type = mConfig.mPlacementEngineType;
+    const auto pe_type = m_config.m_placement_engine_type;
     if (!PlacementEngineRegistry::isPlacementEngineAvailable(pe_type)) {
         std::string msg = "Requested Placement engine type: "
                           + PlacementEngineRegistry::toString(pe_type);

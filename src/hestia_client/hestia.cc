@@ -86,7 +86,7 @@ int release(const struct hsm_uint& oid, const std::uint8_t src_tier)
 
 std::vector<struct hsm_uint> list(const std::uint8_t tier)
 {
-    std::vector<ostk::Uuid> objectIds;
+    std::vector<ostk::Uuid> object_ids;
     HestiaCppInterface::listObjects(tier, objectIds);
 
     std::vector<hsm_uint> hestia_ids;

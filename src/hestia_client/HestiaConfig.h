@@ -11,10 +11,10 @@ class DataPlacementEngine;
 
 namespace hestia {
 struct HestiaConfig {
-    TierBackendRegistry mTierBackendRegistry;
-    KeyValueStoreType mKeyValueStoreType;
-    PlacementEngineType mPlacementEngineType;
-    CopyToolConfig mCopyToolConfig;
+    TierBackendRegistry m_tier_backend_registry;
+    KeyValueStoreType m_key_value_store_type;
+    PlacementEngineType m_placement_engine_type;
+    CopyToolConfig m_copy_tool_config;
 };
 
 class HestiaConfigurator {
@@ -22,12 +22,12 @@ class HestiaConfigurator {
     int initialize(const HestiaConfig& config);
 
   private:
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> setUpObjectStore();
+    std::unique_ptr<MultiBackendHsmObjectStoreClient> set_up_object_store();
 
-    std::unique_ptr<KeyValueStore> setUpKeyValueStore();
+    std::unique_ptr<KeyValueStore> set_up_key_value_store();
 
-    std::unique_ptr<DataPlacementEngine> setUpDataPlacementEngine();
+    std::unique_ptr<DataPlacementEngine> set_up_data_placement_engine();
 
-    HestiaConfig mConfig;
+    HestiaConfig m_config;
 };
 }  // namespace hestia

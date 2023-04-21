@@ -4,15 +4,15 @@
 
 HsmAction::HsmAction() {}
 
-void HsmAction::setAction(const std::string& action)
+void HsmAction::set_action(const std::string& action)
 {
     if (action == "release") {
-        mAction = Action::RELEASE;
+        m_action = Action::RELEASE;
     }
     else if (action == "copy") {
-        mAction = Action::COPY;
+        m_action = Action::COPY;
     }
     else if (action == "move") {
-        mAction = Action::MOVE;
+        m_action = Action::MOVE;
     }
 }

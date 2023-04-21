@@ -1,7 +1,7 @@
 #include "CopyToolInterface.h"
 
 void CopyToolInterface::initialize(
-    const CopyToolConfig& config, CopyToolConnection::Type connectionType)
+    const CopyToolConfig& config, CopyToolConnection::Type connection_type)
 {
     if (mConnection) {
         return;
@@ -12,16 +12,16 @@ void CopyToolInterface::initialize(
     mConnection->connect();
 }
 
-bool CopyToolInterface::hasConnection() const
+bool CopyToolInterface::has_connection() const
 {
     return mConnection
            && mConnection->getState() == CopyToolConnection::State::CONNECTED;
 }
 
-HsmObjectStoreResponse::Ptr CopyToolInterface::makeRequest(
+HsmObjectStoreResponse::Ptr CopyToolInterface::make_request(
     const HsmObjectStoreRequest& request)
 {
-    if (!hasConnection()) {
+    if (!has_connection()) {
         const std::string msg =
             "Attempted copytool operation with no connection";
         auto copytool_response = CopyToolResponse::Create();

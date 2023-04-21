@@ -9,7 +9,7 @@ KeyValueStore::KeyValueStore(std::unique_ptr<KeyValueStoreClient> client) :
 
 KeyValueStore::~KeyValueStore() {}
 
-ostk::ObjectStoreResponse::Ptr KeyValueStore::makeRequest(
+ostk::ObjectStoreResponse::Ptr KeyValueStore::make_request(
     const ostk::ObjectStoreRequest& request) const noexcept
 {
     return mClient->makeRequest(request);

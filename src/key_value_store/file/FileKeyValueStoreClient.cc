@@ -50,7 +50,7 @@ void FileKeyValueStoreClient::list(
     }
 }
 
-std::filesystem::path FileKeyValueStoreClient::getFilename(
+std::filesystem::path FileKeyValueStoreClient::get_filename(
     const ostk::StorageObject& obj) const
 {
     const auto path = mStore.path() / (obj.mId + ".meta");

@@ -21,5 +21,5 @@ class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode> {
 
   private:
     std::string codeAsString() const override;
-    static std::string codeToString(HsmServiceErrorCode code);
+    static std::string code_to_string(HsmServiceErrorCode code);
 };

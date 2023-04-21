@@ -4,62 +4,62 @@
 
 CopyToolConnection::~CopyToolConnection()
 {
-    if (mType == Type::MANAGED) {
-        terminateExternal();
+    if (m_type == Type::MANAGED) {
+        terminate_external();
     }
-    else if (mType == Type::DAEMON) {
+    else if (m_type == Type::DAEMON) {
         disconnect();
     }
 }
 
 CopyToolConnection::State CopyToolConnection::initialize(
-    const CopyToolConfig& config, Type connectionType)
+    const CopyToolConfig& config, Type connection_type)
 {
-    mType = connectionType;
+    m_type = connection_type;
 
-    if (mType == Type::IN_PROCESS) {
+    if (m_type == Type::IN_PROCESS) {
         mInProcessCopyTool = std::make_unique<CopyTool>(nullptr);
         // mInProcessCopyTool->initialize(config);
-        mState = State::CONNECTED;
+        m_state = State::CONNECTED;
     }
-    else if (mType == Type::MANAGED) {
-        launchExternal();
+    else if (m_type == Type::MANAGED) {
+        launch_external();
     }
     else {
-        mState = State::INITIALIZED;
+        m_state = State::INITIALIZED;
     }
-    return mState;
+    return m_state;
 }
 
 CopyToolConnection::State CopyToolConnection::connect()
 {
-    if (mState != State::INITIALIZED) {
-        return mState;
+    if (m_state != State::INITIALIZED) {
+        return m_state;
     }
-    return mState;
+    return m_state;
 }
 
 CopyToolConnection::State CopyToolConnection::disconnect()
 {
-    if (mState != State::CONNECTED) {
-        return mState;
+    if (m_state != State::CONNECTED) {
+        return m_state;
     }
-    return mState;
+    return m_state;
 }
 
-CopyToolResponse::Ptr CopyToolConnection::makeRequest(
+CopyToolResponse::Ptr CopyToolConnection::make_request(
     const CopyToolRequest& request)
 {
     auto response = CopyToolResponse::Create();
 
-    if (mState != State::CONNECTED) {
+    if (m_state != State::CONNECTED) {
         response->setError(
             {CopyToolError::Code::ERROR_NO_CONNECTION,
              "Attempted copy with no connection"});
         return response;
     }
 
-    if (mType == Type::IN_PROCESS) {
+    if (m_type == Type::IN_PROCESS) {
         response->setObjectStoreRespose(
             mInProcessCopyTool->makeObjectStoreRequest(
                 request.getObjectStoreRequest()));
@@ -72,16 +72,16 @@ CopyToolResponse::Ptr CopyToolConnection::makeRequest(
     return response;
 }
 
-CopyToolConnection::Type CopyToolConnection::getType() const
+CopyToolConnection::Type CopyToolConnection::get_type() const
 {
-    return mType;
+    return m_type;
 }
 
-CopyToolConnection::State CopyToolConnection::getState() const
+CopyToolConnection::State CopyToolConnection::get_state() const
 {
-    return mState;
+    return m_state;
 }
 
-void CopyToolConnection::launchExternal() {}
+void CopyToolConnection::launch_external() {}
 
-void CopyToolConnection::terminateExternal() {}
+void CopyToolConnection::terminate_external() {}

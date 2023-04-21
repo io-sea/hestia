@@ -14,11 +14,11 @@ class CopyToolError {
     CopyToolError() = default;
 
     CopyToolError(Code code, const std::string& message) :
-        mCode(code), mMessage(message)
+        m_code(code), mMessage(message)
     {
     }
 
   private:
-    Code mCode{Code::NO_ERROR};
-    std::string mMessage;
+    Code m_code{Code::NO_ERROR};
+    std::string m_message;
 };

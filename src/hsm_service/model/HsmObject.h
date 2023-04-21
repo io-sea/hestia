@@ -11,13 +11,13 @@ class HsmObject {
 
     HsmObject(const ostk::StorageObject& object);
 
-    void addTier(uint8_t tierId);
+    void add_tier(uint8_t tier_id);
 
-    void removeTier(uint8_t tierId) {}
+    void remove_tier(uint8_t tier_id) {}
 
-    void removeAllButOneTiers() {}
+    void remove_all_but_one_tiers() {}
 
-    void replaceTier(uint8_t oldId, uint8_t newId);
+    void replace_tier(uint8_t old_id, uint8_t new_id);
 
     ostk::StorageObject& object() { return mStorageObject; }
 
@@ -26,8 +26,8 @@ class HsmObject {
     const std::vector<uint8_t>& tiers() const { return mTierIds; }
 
   private:
-    ostk::Uuid mId;
-    ostk::StorageObject mStorageObject;
-    std::vector<uint8_t> mTierIds;
-    std::string mDataset;
+    ostk::Uuid m_id;
+    ostk::StorageObject m_storage_object;
+    std::vector<uint8_t> m_tier_ids;
+    std::string m_dataset;
 };

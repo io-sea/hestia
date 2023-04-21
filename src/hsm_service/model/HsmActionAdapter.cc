@@ -2,7 +2,7 @@
 
 #include <ostk/JsonUtils.h>
 
-HsmActionAdapter::Ptr HsmActionAdapter::Create()
+HsmActionAdapter::Ptr HsmActionAdapter::create()
 {
     return std::unique_ptr<HsmActionAdapter>();
 }

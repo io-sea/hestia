@@ -2,7 +2,7 @@
 
 CopyToolResponse::CopyToolResponse() : HsmMiddlewareResponse() {}
 
-CopyToolResponse::Ptr CopyToolResponse::Create()
+CopyToolResponse::Ptr CopyToolResponse::create()
 {
     return std::make_unique<CopyToolResponse>();
 }
@@ -12,13 +12,13 @@ bool CopyToolResponse::ok() const
     return mStatus != Status::ERROR;
 };
 
-void CopyToolResponse::setError(const CopyToolError& error)
+void CopyToolResponse::set_error(const CopyToolError& error)
 {
     mError = error;
 }
 
-void CopyToolResponse::setObjectStoreRespose(
-    HsmObjectStoreResponse::Ptr objectStoreResponse)
+void CopyToolResponse::set_object_store_respose(
+    HsmObjectStoreResponse::Ptr object_store_response)
 {
     mObjectStoreResponse = std::move(objectStoreResponse);
     if (!mObjectStoreResponse->ok()) {

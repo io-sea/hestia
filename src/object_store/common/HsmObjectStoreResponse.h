@@ -14,31 +14,31 @@ class HsmObjectStoreResponse :
     HsmObjectStoreResponse(const ostk::BaseObjectStoreRequest& request);
     HsmObjectStoreResponse(
         const ostk::BaseObjectStoreRequest& request,
-        HsmMiddlewareResponse::Ptr middlewareResponse);
+        HsmMiddlewareResponse::Ptr middleware_response);
     HsmObjectStoreResponse(
         const ostk::BaseObjectStoreRequest& request,
-        HsmObjectStoreResponse::Ptr hsmChildResponse);
+        HsmObjectStoreResponse::Ptr hsm_child_response);
     HsmObjectStoreResponse(
+        const ostk::BaseObjectStoreRequest& request,
+        ostk::ObjectStoreResponse::Ptr child_response);
+
+    static Ptr create(const ostk::BaseObjectStoreRequest& request);
+    static Ptr create(
+        const ostk::BaseObjectStoreRequest& request,
+        HsmMiddlewareResponse::Ptr middlewareResponse);
+    static Ptr create(
+        const ostk::BaseObjectStoreRequest& request,
+        HsmObjectStoreResponse::Ptr hsmChildResponse);
+    static Ptr create(
         const ostk::BaseObjectStoreRequest& request,
         ostk::ObjectStoreResponse::Ptr childResponse);
 
-    static Ptr Create(const ostk::BaseObjectStoreRequest& request);
-    static Ptr Create(
-        const ostk::BaseObjectStoreRequest& request,
-        HsmMiddlewareResponse::Ptr middlewareResponse);
-    static Ptr Create(
-        const ostk::BaseObjectStoreRequest& request,
-        HsmObjectStoreResponse::Ptr hsmChildResponse);
-    static Ptr Create(
-        const ostk::BaseObjectStoreRequest& request,
-        ostk::ObjectStoreResponse::Ptr childResponse);
-
-    static ostk::ObjectStoreResponse::Ptr toBaseResponse(
+    static ostk::ObjectStoreResponse::Ptr to_base_response(
         const ostk::BaseObjectStoreRequest& request,
         const HsmObjectStoreResponse* response);
 
   private:
-    HsmMiddlewareResponse::Ptr mMiddlewareResponse;
-    HsmObjectStoreResponse::Ptr mHsmChildResponse;
-    ostk::ObjectStoreResponse::Ptr mChildResponse;
+    HsmMiddlewareResponse::Ptr m_middleware_response;
+    HsmObjectStoreResponse::Ptr m_hsm_child_response;
+    ostk::ObjectStoreResponse::Ptr m_child_response;
 };

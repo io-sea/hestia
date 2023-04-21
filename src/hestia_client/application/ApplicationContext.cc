@@ -8,12 +8,12 @@ ApplicationContext& ApplicationContext::get()
     return instance;
 }
 
-HsmService* ApplicationContext::getHsmService() const
+HsmService* ApplicationContext::get_hsm_service() const
 {
-    return mHsmService.get();
+    return m_hsm_service.get();
 }
 
-void ApplicationContext::setHsmService(HsmService::Ptr hsmService)
+void ApplicationContext::set_hsm_service(HsmService::Ptr hsm_service)
 {
-    mHsmService = std::move(hsmService);
+    m_hsm_service = std::move(hsmService);
 }

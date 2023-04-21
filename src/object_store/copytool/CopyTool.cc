@@ -5,7 +5,7 @@
 
 #include <ostk/Stream.h>
 
-CopyTool::CopyTool(HsmObjectStoreClientManager::Ptr clientManager) :
+CopyTool::CopyTool(HsmObjectStoreClientManager::Ptr client_manager) :
     mClientManager(std::move(clientManager))
 {
 }
@@ -14,7 +14,7 @@ CopyTool::~CopyTool() {}
 
 void CopyTool::initialize() {}
 
-HsmObjectStoreResponse::Ptr CopyTool::makeObjectStoreRequest(
+HsmObjectStoreResponse::Ptr CopyTool::make_object_store_request(
     const HsmObjectStoreRequest& request) noexcept
 {
     if (mClientManager->isHsmClient(request.sourceTier())) {
@@ -43,7 +43,7 @@ HsmObjectStoreResponse::Ptr CopyTool::makeObjectStoreRequest(
     }
 };
 
-HsmObjectStoreResponse::Ptr CopyTool::doHsmHsm(
+HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     const HsmObjectStoreRequest& request,
     HsmObjectStoreClient* sourceClient,
     HsmObjectStoreClient* targetClient) noexcept
@@ -75,7 +75,7 @@ HsmObjectStoreResponse::Ptr CopyTool::doHsmHsm(
     return response;
 }
 
-HsmObjectStoreResponse::Ptr CopyTool::doHsmBase(
+HsmObjectStoreResponse::Ptr CopyTool::do_hsm_base(
     const HsmObjectStoreRequest& op,
     HsmObjectStoreClient* sourceClient,
     ostk::ObjectStoreClient* targetClient) noexcept
@@ -83,7 +83,7 @@ HsmObjectStoreResponse::Ptr CopyTool::doHsmBase(
     return nullptr;
 }
 
-HsmObjectStoreResponse::Ptr CopyTool::doBaseHsm(
+HsmObjectStoreResponse::Ptr CopyTool::do_base_hsm(
     const HsmObjectStoreRequest& op,
     ostk::ObjectStoreClient* sourceClient,
     HsmObjectStoreClient* targetClient) noexcept
@@ -91,7 +91,7 @@ HsmObjectStoreResponse::Ptr CopyTool::doBaseHsm(
     return nullptr;
 }
 
-HsmObjectStoreResponse::Ptr CopyTool::doBaseBase(
+HsmObjectStoreResponse::Ptr CopyTool::do_base_base(
     const HsmObjectStoreRequest& op,
     ostk::ObjectStoreClient* sourceClient,
     ostk::ObjectStoreClient* targetClient) noexcept

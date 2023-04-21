@@ -8,7 +8,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
     const ostk::BaseObjectStoreRequest& request,
-    HsmMiddlewareResponse::Ptr middlewareResponse) :
+    HsmMiddlewareResponse::Ptr middleware_response) :
     ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request),
     mMiddlewareResponse(std::move(middlewareResponse))
 {
@@ -16,25 +16,25 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
     const ostk::BaseObjectStoreRequest& request,
-    HsmObjectStoreResponse::Ptr hsmChildResponse) :
+    HsmObjectStoreResponse::Ptr hsm_child_response) :
     ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
     const ostk::BaseObjectStoreRequest& request,
-    ostk::ObjectStoreResponse::Ptr childResponse) :
+    ostk::ObjectStoreResponse::Ptr child_response) :
     ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
 }
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
+HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request)
 {
     return std::make_unique<HsmObjectStoreResponse>(request);
 }
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
+HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
     HsmMiddlewareResponse::Ptr middlewareResponse)
 {
@@ -42,7 +42,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
         request, std::move(middlewareResponse));
 }
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
+HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
     HsmObjectStoreResponse::Ptr hsmChildResponse)
 {
@@ -50,7 +50,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
         request, std::move(hsmChildResponse));
 }
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
+HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
     ostk::ObjectStoreResponse::Ptr childResponse)
 {
@@ -58,7 +58,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::Create(
         request, std::move(childResponse));
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::toBaseResponse(
+ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
     const ostk::BaseObjectStoreRequest& request,
     const HsmObjectStoreResponse* response)
 {

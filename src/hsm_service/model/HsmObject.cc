@@ -6,12 +6,12 @@ HsmObject::HsmObject(const ostk::StorageObject& object) : mStorageObject(object)
 {
 }
 
-void HsmObject::addTier(uint8_t tierId)
+void HsmObject::add_tier(uint8_t tier_id)
 {
-    mTierIds.push_back(tierId);
+    m_tier_ids.push_back(tierId);
 }
 
-void HsmObject::replaceTier(uint8_t oldId, uint8_t newId)
+void HsmObject::replace_tier(uint8_t old_id, uint8_t new_id)
 {
-    mTierIds.push_back(newId);
+    m_tier_ids.push_back(newId);
 }

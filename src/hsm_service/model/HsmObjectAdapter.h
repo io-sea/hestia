@@ -9,20 +9,20 @@ class HsmObjectAdapter {
   public:
     using Ptr = std::unique_ptr<HsmObjectAdapter>;
 
-    static Ptr Create();
+    static Ptr create();
 
     void serialize(HsmObject& hsm_object);
 
-    void parseTiers(HsmObject& hsm_object);
+    void parse_tiers(HsmObject& hsm_object);
 
-    void sync(const HsmObject& hsmObject, ostk::StorageObject& storageObject);
+    void sync(const HsmObject& hsm_object, ostk::StorageObject& storage_object);
 
   private:
-    void addIfNotEmpty(
+    void add_if_not_empty(
         ostk::Metadata* md, const std::string& key, const std::string& value);
 
-    static constexpr char LAST_MODIFIED_KEY[] = "last_modified";
-    static constexpr char CREATED_KEY[]       = "creation_time";
-    static constexpr char DATASET_KEY[]       = "dataset";
-    static constexpr char TIERS_KEY[]         = "tiers";
+    static constexpr char last_modified_key[] = "last_modified";
+    static constexpr char created_key[]       = "creation_time";
+    static constexpr char dataset_key[]       = "dataset";
+    static constexpr char tiers_key[]         = "tiers";
 };

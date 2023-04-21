@@ -14,13 +14,13 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
     using Ptr = std::unique_ptr<MultiBackendHsmObjectStoreClient>;
 
     MultiBackendHsmObjectStoreClient(
-        std::unique_ptr<HsmObjectStoreClientManager> clientManager);
+        std::unique_ptr<HsmObjectStoreClientManager> client_manager);
 
     ~MultiBackendHsmObjectStoreClient();
 
     void initialize(
-        const TierBackendRegistry& tierBackendRegsitry,
-        const CopyToolConfig& copyToolConfig);
+        const TierBackendRegistry& tier_backend_regsitry,
+        const CopyToolConfig& copy_tool_config);
 
     [[nodiscard]] HsmObjectStoreResponse::Ptr makeRequest(
         const HsmObjectStoreRequest& request,
@@ -41,6 +41,6 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
 
     void remove(const HsmObjectStoreRequest& request) const override{};
 
-    std::unique_ptr<CopyToolInterface> mCopyToolInterface;
-    std::unique_ptr<HsmObjectStoreClientManager> mClientManager;
+    std::unique_ptr<CopyToolInterface> m_copy_tool_interface;
+    std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
 };

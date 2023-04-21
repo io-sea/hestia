@@ -20,13 +20,13 @@ class HsmService {
     using Ptr = std::unique_ptr<HsmService>;
 
     HsmService(
-        std::unique_ptr<KeyValueStore> kvStore,
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore,
-        std::unique_ptr<DataPlacementEngine> placementEngine);
+        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
+        std::unique_ptr<DataPlacementEngine> placement_engine);
 
     ~HsmService();
 
-    [[nodiscard]] HsmServiceResponse::Ptr makeRequest(
+    [[nodiscard]] HsmServiceResponse::Ptr make_request(
         const HsmServiceRequest& request,
         ostk::Stream* stream = nullptr) noexcept;
 
@@ -43,13 +43,13 @@ class HsmService {
     HsmServiceResponse::Ptr remove_all(
         const HsmServiceRequest& request) noexcept;
 
-    void listAttributes(HsmObject& object);
-    void listObjects(uint8_t tier, std::vector<HsmObject>& objects);
-    void listTiers(HsmObject& object, std::vector<uint8_t>& tiers);
+    void list_attributes(HsmObject& object);
+    void list_objects(uint8_t tier, std::vector<HsmObject>& objects);
+    void list_tiers(HsmObject& object, std::vector<uint8_t>& tiers);
 
-    std::unique_ptr<HsmStoreInterface> mStore;
-    std::unique_ptr<DataPlacementEngine> mDataPlacementEngine;
+    std::unique_ptr<HsmStoreInterface> m_store;
+    std::unique_ptr<DataPlacementEngine> m_data_placement_engine;
 
-    std::unique_ptr<HsmObjectAdapter> mObjectAdapter;
-    std::unique_ptr<HsmActionAdapter> mActionAdapter;
+    std::unique_ptr<HsmObjectAdapter> m_object_adapter;
+    std::unique_ptr<HsmActionAdapter> m_action_adapter;
 };

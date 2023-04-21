@@ -11,12 +11,12 @@ HsmServiceError::HsmServiceError(
 {
 }
 
-std::string HsmServiceError::codeAsString() const
+std::string HsmServiceError::code_as_string() const
 {
     return codeToString(mCode);
 }
 
-std::string HsmServiceError::codeToString(HsmServiceErrorCode code)
+std::string HsmServiceError::code_to_string(HsmServiceErrorCode code)
 {
     switch (code) {
         case HsmServiceErrorCode::NO_ERROR:

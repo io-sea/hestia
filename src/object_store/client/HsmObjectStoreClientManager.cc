@@ -1,12 +1,12 @@
 #include "HsmObjectStoreClientManager.h"
 
 HsmObjectStoreClientManager::HsmObjectStoreClientManager(
-    HsmObjectStoreClientRegistry::Ptr clientRegistry) :
+    HsmObjectStoreClientRegistry::Ptr client_registry) :
     mClientRegistry(std::move(clientRegistry))
 {
 }
 
-ostk::ObjectStoreClient* HsmObjectStoreClientManager::getClient(
+ostk::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     ObjectStoreClientType clientType) const
 {
     if (const auto iter = mHsmClients.find(clientType.mIdentifier);
@@ -24,10 +24,10 @@ ostk::ObjectStoreClient* HsmObjectStoreClientManager::getClient(
     }
 }
 
-HsmObjectStoreClient* HsmObjectStoreClientManager::getHsmClient(
-    ObjectStoreClientType clientType) const
+HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
+    ObjectStoreClientType client_type) const
 {
-    if (!clientType.isHsm()) {
+    if (!client_type.is_hsm()) {
         throw std::runtime_error(
             "Requested HSM client for non-hsm client type.");
     }
@@ -41,7 +41,7 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::getHsmClient(
     }
 }
 
-bool HsmObjectStoreClientManager::isHsmClient(uint8_t tierId) const
+bool HsmObjectStoreClientManager::is_hsm_client(uint8_t tier_id) const
 {
     if (const auto iter = mTierBackendRegistry.find(tierId);
         iter != mTierBackendRegistry.end()) {
@@ -50,7 +50,7 @@ bool HsmObjectStoreClientManager::isHsmClient(uint8_t tierId) const
     return false;
 }
 
-ostk::ObjectStoreClient* HsmObjectStoreClientManager::getClient(
+ostk::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     uint8_t tierId) const
 {
     if (const auto iter = mTierBackendRegistry.find(tierId);
@@ -62,8 +62,8 @@ ostk::ObjectStoreClient* HsmObjectStoreClientManager::getClient(
     }
 }
 
-HsmObjectStoreClient* HsmObjectStoreClientManager::getHsmClient(
-    uint8_t tierId) const
+HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
+    uint8_t tier_id) const
 {
     if (const auto iter = mTierBackendRegistry.find(tierId);
         iter != mTierBackendRegistry.end()) {
@@ -74,16 +74,16 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::getHsmClient(
     }
 }
 
-bool HsmObjectStoreClientManager::haveSameClientTypes(
-    uint8_t tierId0, uint8_t tierId1) const
+bool HsmObjectStoreClientManager::have_same_client_types(
+    uint8_t tier_id0, uint8_t tier_id1) const
 {
     auto type0 = mTierBackendRegistry.find(tierId0)->second;
     auto type1 = mTierBackendRegistry.find(tierId1)->second;
     return type0.mIdentifier == type1.mIdentifier;
 }
 
-void HsmObjectStoreClientManager::setupClients(
-    const TierBackendRegistry& tierBackendRegsitry)
+void HsmObjectStoreClientManager::setup_clients(
+    const TierBackendRegistry& tier_backend_regsitry)
 {
     mTierBackendRegistry = tierBackendRegsitry;
 
