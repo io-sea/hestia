@@ -5,18 +5,18 @@
 HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
 {
-    auto response = HsmObjectStoreResponse::Create(request);
+    auto response = HsmObjectStoreResponse::create(request);
     switch (request.method()) {
         case HsmObjectStoreRequestMethod::GET:
             try {
                 get(request, response->object(), stream);
             }
             catch (std::exception& e) {
-                onException(request, response.get(), e.what());
+                on_exception(request, response.get(), e.what());
                 return response;
             }
             catch (...) {
-                onException(request, response.get());
+                on_exception(request, response.get());
                 return response;
             }
             break;
@@ -25,11 +25,11 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 put(request, stream);
             }
             catch (std::exception& e) {
-                onException(request, response.get(), e.what());
+                on_exception(request, response.get(), e.what());
                 return response;
             }
             catch (...) {
-                onException(request, response.get());
+                on_exception(request, response.get());
                 return response;
             }
             break;
@@ -38,11 +38,11 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 move(request);
             }
             catch (std::exception& e) {
-                onException(request, response.get(), e.what());
+                on_exception(request, response.get(), e.what());
                 return response;
             }
             catch (...) {
-                onException(request, response.get());
+                on_exception(request, response.get());
                 return response;
             }
             break;
@@ -51,11 +51,11 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 copy(request);
             }
             catch (std::exception& e) {
-                onException(request, response.get(), e.what());
+                on_exception(request, response.get(), e.what());
                 return response;
             }
             catch (...) {
-                onException(request, response.get());
+                on_exception(request, response.get());
                 return response;
             }
             break;
@@ -64,11 +64,11 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 remove(request);
             }
             catch (std::exception& e) {
-                onException(request, response.get(), e.what());
+                on_exception(request, response.get(), e.what());
                 return response;
             }
             catch (...) {
-                onException(request, response.get());
+                on_exception(request, response.get());
                 return response;
             }
             break;
@@ -84,12 +84,12 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     return response;
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
+ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::makeRequest(
     const ostk::ObjectStoreRequest& request,
     ostk::Stream* stream) const noexcept
 {
     auto response = ostk::ObjectStoreResponse::Create(request);
-    if (!HsmObjectStoreRequest::isHsmSupportedMethod(request.method())) {
+    if (!HsmObjectStoreRequest::is_hsm_supported_method(request.method())) {
         const std::string msg =
             "Requested unsupported type for base object operation in HSM object store client.";
         response->onError(
@@ -98,8 +98,8 @@ ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     }
 
     HsmObjectStoreRequest hsm_request(request);
-    auto hsm_response = makeRequest(hsm_request, stream);
-    return HsmObjectStoreResponse::toBaseResponse(
+    auto hsm_response = make_request(hsm_request, stream);
+    return HsmObjectStoreResponse::to_base_response(
         hsm_request, hsm_response.get());
 }
 
@@ -122,7 +122,7 @@ void HsmObjectStoreClient::get(
 {
     HsmObjectStoreRequest request(object.mId, HsmObjectStoreRequestMethod::GET);
     request.setExtent(extent);
-    if (const auto response = makeRequest(request, stream); !response->ok()) {
+    if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
             "Error in single tier GET: " + response->getError().toString();
         throw ostk::ObjectStoreException(
@@ -137,7 +137,7 @@ void HsmObjectStoreClient::put(
 {
     HsmObjectStoreRequest request(object.mId, HsmObjectStoreRequestMethod::PUT);
     request.setExtent(extent);
-    if (const auto response = makeRequest(request, stream); !response->ok()) {
+    if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
             "Error in single tier PUT: " + response->getError().toString();
         throw ostk::ObjectStoreException(
@@ -149,7 +149,7 @@ void HsmObjectStoreClient::remove(const ostk::StorageObject& object) const
 {
     HsmObjectStoreRequest request(
         object.mId, HsmObjectStoreRequestMethod::REMOVE);
-    if (const auto response = makeRequest(request); !response->ok()) {
+    if (const auto response = make_request(request); !response->ok()) {
         const std::string msg =
             "Error in single tier REMOVE: " + response->getError().toString();
         throw ostk::ObjectStoreException(

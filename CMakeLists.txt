@@ -6,6 +6,9 @@ project(
     LANGUAGES C CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 #
 # Options for sections of Hestia project
 #

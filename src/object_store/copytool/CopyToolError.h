@@ -14,7 +14,7 @@ class CopyToolError {
     CopyToolError() = default;
 
     CopyToolError(Code code, const std::string& message) :
-        m_code(code), mMessage(message)
+        m_code(code), m_message(message)
     {
     }
 

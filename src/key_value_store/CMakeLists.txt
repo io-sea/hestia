@@ -1,7 +1,8 @@
-include(AddModule)
+include(ostk/AddModule)
 
 add_module(
     MODULE_NAME key_value_store 
+    WITH_FILESYSTEM
     HEADERS
         client/file/FileKeyValueStoreClient.h
         KeyValueStoreClient.h

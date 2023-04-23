@@ -3,18 +3,18 @@
 #include "MotrInterface.h"
 
 MotrHsmClient::MotrHsmClient() :
-    mMotrInterface(std::make_unique<MotrInterface>())
+    m_motr_interface(std::make_unique<MotrInterface>())
 {
 }
 
 void MotrHsmClient::intialize(const MotrConfig& config)
 {
-    mMotrInterface->initialize(config);
+    m_motr_interface->initialize(config);
 }
 
 void MotrHsmClient::copy(const HsmObjectStoreRequest& request) const
 {
-    mMotrInterface->copy(request);
+    m_motr_interface->copy(request);
 }
 
 void MotrHsmClient::get(
@@ -22,21 +22,21 @@ void MotrHsmClient::get(
     ostk::StorageObject& object,
     ostk::Stream* stream) const
 {
-    mMotrInterface->get(request, object, stream);
+    m_motr_interface->get(request, object, stream);
 }
 
 void MotrHsmClient::move(const HsmObjectStoreRequest& request) const
 {
-    mMotrInterface->move(request);
+    m_motr_interface->move(request);
 }
 
 void MotrHsmClient::put(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const
 {
-    mMotrInterface->put(request, stream);
+    m_motr_interface->put(request, stream);
 }
 
 void MotrHsmClient::remove(const HsmObjectStoreRequest& request) const
 {
-    mMotrInterface->remove(request);
+    m_motr_interface->remove(request);
 }

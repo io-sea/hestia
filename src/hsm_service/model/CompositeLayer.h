@@ -28,13 +28,13 @@ class CompositeLayer {
 
     void delete_marked_extents(bool is_write);
 
-    std::string dump_extents(bool details, bool isWrite);
+    std::string dump_extents(bool details, bool is_write);
 
     int extent_substract(
         const ostk::Extent& extent_in, bool is_write, bool* layer_empty);
 
     using ExtentList = std::map<std::size_t, MarkableExtent>;
-    ExtentList* get_extents(bool isWrite);
+    ExtentList* get_extents(bool is_write);
 
     bool has_read_extents() const;
 

@@ -22,7 +22,7 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
         const TierBackendRegistry& tier_backend_regsitry,
         const CopyToolConfig& copy_tool_config);
 
-    [[nodiscard]] HsmObjectStoreResponse::Ptr makeRequest(
+    [[nodiscard]] HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,
         ostk::Stream* stream = nullptr) const noexcept override;
 

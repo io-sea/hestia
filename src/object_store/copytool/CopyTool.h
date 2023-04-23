@@ -27,23 +27,23 @@ class CopyTool {
   private:
     HsmObjectStoreResponse::Ptr do_hsm_hsm(
         const HsmObjectStoreRequest& request,
-        HsmObjectStoreClient* sourceClient,
-        HsmObjectStoreClient* targetClient) noexcept;
+        HsmObjectStoreClient* source_client,
+        HsmObjectStoreClient* target_client) noexcept;
 
     HsmObjectStoreResponse::Ptr do_hsm_base(
         const HsmObjectStoreRequest& request,
-        HsmObjectStoreClient* sourceClient,
-        ostk::ObjectStoreClient* targetClient) noexcept;
+        HsmObjectStoreClient* source_client,
+        ostk::ObjectStoreClient* target_client) noexcept;
 
     HsmObjectStoreResponse::Ptr do_base_hsm(
         const HsmObjectStoreRequest& request,
-        ostk::ObjectStoreClient* sourceClient,
-        HsmObjectStoreClient* targetClient) noexcept;
+        ostk::ObjectStoreClient* source_client,
+        HsmObjectStoreClient* target_client) noexcept;
 
     HsmObjectStoreResponse::Ptr do_base_base(
         const HsmObjectStoreRequest& request,
-        ostk::ObjectStoreClient* sourceClient,
-        ostk::ObjectStoreClient* targetClient) noexcept;
+        ostk::ObjectStoreClient* source_client,
+        ostk::ObjectStoreClient* target_client) noexcept;
 
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
 };

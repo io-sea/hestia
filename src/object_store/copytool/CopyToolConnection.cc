@@ -18,7 +18,7 @@ CopyToolConnection::State CopyToolConnection::initialize(
     m_type = connection_type;
 
     if (m_type == Type::IN_PROCESS) {
-        mInProcessCopyTool = std::make_unique<CopyTool>(nullptr);
+        m_in_process_copy_tool = std::make_unique<CopyTool>(nullptr);
         // mInProcessCopyTool->initialize(config);
         m_state = State::CONNECTED;
     }
@@ -50,23 +50,23 @@ CopyToolConnection::State CopyToolConnection::disconnect()
 CopyToolResponse::Ptr CopyToolConnection::make_request(
     const CopyToolRequest& request)
 {
-    auto response = CopyToolResponse::Create();
+    auto response = CopyToolResponse::create();
 
     if (m_state != State::CONNECTED) {
-        response->setError(
+        response->set_error(
             {CopyToolError::Code::ERROR_NO_CONNECTION,
              "Attempted copy with no connection"});
         return response;
     }
 
     if (m_type == Type::IN_PROCESS) {
-        response->setObjectStoreRespose(
-            mInProcessCopyTool->makeObjectStoreRequest(
-                request.getObjectStoreRequest()));
+        response->set_object_store_respose(
+            m_in_process_copy_tool->make_object_store_request(
+                request.get_object_store_request()));
         return response;
     }
 
-    response->setError(
+    response->set_error(
         {CopyToolError::Code::ERROR_NO_CONNECTION,
          "Attempted copy with no connection"});
     return response;

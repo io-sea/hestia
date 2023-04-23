@@ -7,26 +7,26 @@ FileKeyValueStoreClient::FileKeyValueStoreClient() {}
 
 bool FileKeyValueStoreClient::exists(const ostk::StorageObject& obj) const
 {
-    return std::filesystem::exists(getFilename(obj));
+    return std::filesystem::exists(get_filename(obj));
 }
 
 void FileKeyValueStoreClient::put(
     const ostk::StorageObject& obj, const std::vector<std::string>& keys) const
 {
-    const auto path = getFilename(obj);
+    const auto path = get_filename(obj);
     ostk::JsonUtils::write(path, obj.mMetadata, exists(obj));
 }
 
 void FileKeyValueStoreClient::get(
     ostk::StorageObject& obj, const std::vector<std::string>& keys) const
 {
-    const auto path = getFilename(obj);
+    const auto path = get_filename(obj);
     ostk::JsonUtils::read(path, obj.mMetadata, keys);
 }
 
 void FileKeyValueStoreClient::remove(const ostk::StorageObject& obj) const
 {
-    std::filesystem::remove(getFilename(obj));
+    std::filesystem::remove(get_filename(obj));
 }
 
 void FileKeyValueStoreClient::list(
@@ -34,7 +34,7 @@ void FileKeyValueStoreClient::list(
     std::vector<ostk::StorageObject>& fetched) const
 {
     for (const auto& dir_entry :
-         std::filesystem::directory_iterator{mStore.path()}) {
+         std::filesystem::directory_iterator{m_store.path()}) {
         if (ostk::FileUtils::isFileWithExtension(dir_entry, ".meta")) {
             ostk::Metadata metadata;
             ostk::JsonUtils::read(dir_entry.path(), metadata);
@@ -53,6 +53,6 @@ void FileKeyValueStoreClient::list(
 std::filesystem::path FileKeyValueStoreClient::get_filename(
     const ostk::StorageObject& obj) const
 {
-    const auto path = mStore.path() / (obj.mId + ".meta");
+    const auto path = m_store.path() / (obj.mId + ".meta");
     return path.string();
 }

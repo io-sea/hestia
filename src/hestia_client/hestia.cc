@@ -53,14 +53,14 @@ int get(
 
 int set_attrs(const struct hsm_uint& oid, const char* attrs)
 {
-    return HestiaCppInterface::setAttributes(
+    return HestiaCppInterface::set_attributes(
         ostk::Uuid(oid.lower, oid.higher), attrs);
 }
 
 std::string get_attrs(const struct hsm_uint& oid, const char* attr_keys)
 {
     std::string result;
-    HestiaCppInterface::getAttributes(
+    HestiaCppInterface::get_attributes(
         ostk::Uuid(oid.lower, oid.higher), attr_keys, result);
     return result;
 }
@@ -68,7 +68,7 @@ std::string get_attrs(const struct hsm_uint& oid, const char* attr_keys)
 std::string list_attrs(const struct hsm_uint& oid)
 {
     std::string result;
-    HestiaCppInterface::listAttributes(
+    HestiaCppInterface::list_attributes(
         ostk::Uuid(oid.lower, oid.higher), result);
     return result;
 }
@@ -87,10 +87,10 @@ int release(const struct hsm_uint& oid, const std::uint8_t src_tier)
 std::vector<struct hsm_uint> list(const std::uint8_t tier)
 {
     std::vector<ostk::Uuid> object_ids;
-    HestiaCppInterface::listObjects(tier, objectIds);
+    HestiaCppInterface::list_objects(tier, object_ids);
 
     std::vector<hsm_uint> hestia_ids;
-    for (const auto& id : objectIds) {
+    for (const auto& id : object_ids) {
         hestia_ids.push_back({id.mLo, id.mHi});
     }
     return hestia_ids;
@@ -117,7 +117,7 @@ int move(
 std::vector<uint8_t> locate(const struct hsm_uint& oid)
 {
     std::vector<uint8_t> tiers;
-    HestiaCppInterface::listTiers(ostk::Uuid(oid.lower, oid.higher), tiers);
+    HestiaCppInterface::list_tiers(ostk::Uuid(oid.lower, oid.higher), tiers);
     return tiers;
 }
 }  // namespace hestia

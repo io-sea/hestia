@@ -10,7 +10,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
     const ostk::BaseObjectStoreRequest& request,
     HsmMiddlewareResponse::Ptr middleware_response) :
     ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request),
-    mMiddlewareResponse(std::move(middlewareResponse))
+    m_middleware_response(std::move(middleware_response))
 {
 }
 
@@ -36,26 +36,26 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
-    HsmMiddlewareResponse::Ptr middlewareResponse)
+    HsmMiddlewareResponse::Ptr middleware_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
-        request, std::move(middlewareResponse));
+        request, std::move(middleware_response));
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
-    HsmObjectStoreResponse::Ptr hsmChildResponse)
+    HsmObjectStoreResponse::Ptr hsm_child_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
-        request, std::move(hsmChildResponse));
+        request, std::move(hsm_child_response));
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
     const ostk::BaseObjectStoreRequest& request,
-    ostk::ObjectStoreResponse::Ptr childResponse)
+    ostk::ObjectStoreResponse::Ptr child_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
-        request, std::move(childResponse));
+        request, std::move(child_response));
 }
 
 ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(

@@ -1,6 +1,13 @@
+add_subdirectory(data_placement_engine)
+add_subdirectory(event_feed)
+add_subdirectory(object_store)
+add_subdirectory(key_value_store)
+add_subdirectory(hsm_service)
+add_subdirectory(hestia_client)
+
 add_subdirectory(../test/kv_store ${CMAKE_CURRENT_BINARY_DIR}/kv_store)
-add_subdirectory(../test/object_store ${CMAKE_CURRENT_BINARY_DIR}/object_store)
-add_subdirectory(../test/data_placement_engine ${CMAKE_CURRENT_BINARY_DIR}/data_placement_engine)
+add_subdirectory(../test/object_store ${CMAKE_CURRENT_BINARY_DIR}/ob_store)
+add_subdirectory(../test/data_placement_engine ${CMAKE_CURRENT_BINARY_DIR}/dpe)
 
 add_library(
     hestia_lib

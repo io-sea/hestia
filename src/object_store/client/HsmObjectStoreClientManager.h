@@ -13,9 +13,10 @@ class HsmObjectStoreClientManager {
 
     void setup_clients(const TierBackendRegistry& tier_backend_regsitry);
 
-    ostk::ObjectStoreClient* get_client(ObjectStoreClientType clientType) const;
+    ostk::ObjectStoreClient* get_client(
+        ObjectStoreClientType client_type) const;
 
-    ostk::ObjectStoreClient* get_client(uint8_t tierId) const;
+    ostk::ObjectStoreClient* get_client(uint8_t tier_id) const;
 
     HsmObjectStoreClient* get_hsm_client(
         ObjectStoreClientType client_type) const;

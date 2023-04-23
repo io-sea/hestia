@@ -6,7 +6,7 @@
 #include <ostk/Stream.h>
 
 CopyTool::CopyTool(HsmObjectStoreClientManager::Ptr client_manager) :
-    mClientManager(std::move(clientManager))
+    m_client_manager(std::move(client_manager))
 {
 }
 
@@ -17,55 +17,57 @@ void CopyTool::initialize() {}
 HsmObjectStoreResponse::Ptr CopyTool::make_object_store_request(
     const HsmObjectStoreRequest& request) noexcept
 {
-    if (mClientManager->isHsmClient(request.sourceTier())) {
-        if (mClientManager->isHsmClient(request.targetTier())) {
-            return doHsmHsm(
-                request, mClientManager->getHsmClient(request.sourceTier()),
-                mClientManager->getHsmClient(request.targetTier()));
+    if (m_client_manager->is_hsm_client(request.source_tier())) {
+        if (m_client_manager->is_hsm_client(request.target_tier())) {
+            return do_hsm_hsm(
+                request,
+                m_client_manager->get_hsm_client(request.source_tier()),
+                m_client_manager->get_hsm_client(request.target_tier()));
         }
         else {
-            return doHsmBase(
-                request, mClientManager->getHsmClient(request.sourceTier()),
-                mClientManager->getClient(request.targetTier()));
+            return do_hsm_base(
+                request,
+                m_client_manager->get_hsm_client(request.source_tier()),
+                m_client_manager->get_client(request.target_tier()));
         }
     }
     else {
-        if (mClientManager->isHsmClient(request.targetTier())) {
-            return doBaseHsm(
-                request, mClientManager->getClient(request.sourceTier()),
-                mClientManager->getHsmClient(request.targetTier()));
+        if (m_client_manager->is_hsm_client(request.target_tier())) {
+            return do_base_hsm(
+                request, m_client_manager->get_client(request.source_tier()),
+                m_client_manager->get_hsm_client(request.target_tier()));
         }
         else {
-            return doBaseBase(
-                request, mClientManager->getClient(request.sourceTier()),
-                mClientManager->getClient(request.targetTier()));
+            return do_base_base(
+                request, m_client_manager->get_client(request.source_tier()),
+                m_client_manager->get_client(request.target_tier()));
         }
     }
 };
 
 HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     const HsmObjectStoreRequest& request,
-    HsmObjectStoreClient* sourceClient,
-    HsmObjectStoreClient* targetClient) noexcept
+    HsmObjectStoreClient* source_client,
+    HsmObjectStoreClient* target_client) noexcept
 {
     std::size_t chunk_size{4000};
     ostk::Stream stream;
 
     HsmObjectStoreRequest get_request = request;
     get_request.resetMethod(HsmObjectStoreRequestMethod::GET);
-    if (auto get_response = sourceClient->makeRequest(get_request, &stream);
+    if (auto get_response = source_client->make_request(get_request, &stream);
         !get_response->ok()) {
         return get_response;
     }
 
     HsmObjectStoreRequest put_request = request;
     put_request.resetMethod(HsmObjectStoreRequestMethod::PUT);
-    if (auto put_response = targetClient->makeRequest(put_request, &stream);
+    if (auto put_response = target_client->make_request(put_request, &stream);
         !put_response->ok()) {
         return put_response;
     }
 
-    auto response           = HsmObjectStoreResponse::Create(request);
+    auto response           = HsmObjectStoreResponse::create(request);
     const auto stream_state = stream.flush();
     if (!stream_state.ok()) {
         response->onError(
@@ -77,24 +79,24 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
 
 HsmObjectStoreResponse::Ptr CopyTool::do_hsm_base(
     const HsmObjectStoreRequest& op,
-    HsmObjectStoreClient* sourceClient,
-    ostk::ObjectStoreClient* targetClient) noexcept
+    HsmObjectStoreClient* source_client,
+    ostk::ObjectStoreClient* target_client) noexcept
 {
     return nullptr;
 }
 
 HsmObjectStoreResponse::Ptr CopyTool::do_base_hsm(
     const HsmObjectStoreRequest& op,
-    ostk::ObjectStoreClient* sourceClient,
-    HsmObjectStoreClient* targetClient) noexcept
+    ostk::ObjectStoreClient* source_client,
+    HsmObjectStoreClient* target_client) noexcept
 {
     return nullptr;
 }
 
 HsmObjectStoreResponse::Ptr CopyTool::do_base_base(
     const HsmObjectStoreRequest& op,
-    ostk::ObjectStoreClient* sourceClient,
-    ostk::ObjectStoreClient* targetClient) noexcept
+    ostk::ObjectStoreClient* source_client,
+    ostk::ObjectStoreClient* target_client) noexcept
 {
     return nullptr;
 }

@@ -10,11 +10,11 @@
 
 #define ERROR_CHECK(response)                                                  \
     if (!response->ok()) {                                                     \
-        return HsmServiceResponse::Create(req, std::move(response));           \
+        return HsmServiceResponse::create(req, std::move(response));           \
     }
 
 #define ON_ERROR(code, message)                                                \
-    auto response = HsmServiceResponse::Create(req);                           \
+    auto response = HsmServiceResponse::create(req);                           \
     response->onError({HsmServiceErrorCode::code, msg});                       \
     return response;
 
@@ -22,11 +22,11 @@ HsmService::HsmService(
     std::unique_ptr<KeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine) :
-    mStore(
-        HsmStoreInterface::Create(std::move(kvStore), std::move(objectStore))),
-    mDataPlacementEngine(std::move(placementEngine)),
-    mObjectAdapter(HsmObjectAdapter::Create()),
-    mActionAdapter(HsmActionAdapter::Create())
+    m_store(HsmStoreInterface::create(
+        std::move(kv_store), std::move(object_store))),
+    m_data_placement_engine(std::move(placement_engine)),
+    m_object_adapter(HsmObjectAdapter::create()),
+    m_action_adapter(HsmActionAdapter::create())
 {
 }
 
@@ -56,38 +56,38 @@ HsmServiceResponse::Ptr HsmService::make_request(
 HsmServiceResponse::Ptr HsmService::put(
     const HsmServiceRequest& req, ostk::Stream* stream) noexcept
 {
-    auto exists = mStore->exists(req.object());
+    auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
-    if (exists->objectFound() != req.shouldOverwritePut()) {
+    if (exists->objectFound() != req.should_overwrite_put()) {
         const std::string msg =
             "Overwrite request not compatible with object existence.";
         ON_ERROR(BAD_PUT_OVERWRITE_COMBINATION, msg);
     }
 
-    if (stream) {
-        const auto chosen_tier = mDataPlacementEngine->chooseTier(
-            req.extent().mLength, req.targetTier());
-        auto data_put_response = mStore->putData(
-            req.object(), req.extent(), req.sourceTier(), chosen_tier,
-            req.shouldOverwritePut(), stream);
+    if (stream != nullptr) {
+        const auto chosen_tier = m_data_placement_engine->choose_tier(
+            req.extent().mLength, req.target_tier());
+        auto data_put_response = m_store->put_data(
+            req.object(), req.extent(), req.source_tier(), chosen_tier,
+            req.should_overwrite_put(), stream);
         ERROR_CHECK(data_put_response);
 
         // Update metadata
         auto obj = req.object();
         HsmObject hsm_object(obj);
-        hsm_object.addTier(chosen_tier);
+        hsm_object.add_tier(chosen_tier);
 
         m_object_adapter->sync(hsm_object, obj);
-        auto metadata_put_response = mStore->putMetadata(obj);
+        auto metadata_put_response = m_store->put_metadata(obj);
 
-        return HsmServiceResponse::Create(
+        return HsmServiceResponse::create(
             req, std::move(metadata_put_response));
     }
 
     if (!req.query().empty()) {
         HsmAction action;
         m_action_adapter->parse(req.query(), action);
-        if (action.hasAction()) {
+        if (action.has_action()) {
             // First finish this request and remove the metadata
             /*
             switch (action.mAction)
@@ -119,8 +119,8 @@ HsmServiceResponse::Ptr HsmService::put(
         }
     }
 
-    auto metadata_put_response = m_store->putMetadata(req.object());
-    return HsmServiceResponse::Create(req, std::move(metadata_put_response));
+    auto metadata_put_response = m_store->put_metadata(req.object());
+    return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::get(
@@ -133,14 +133,14 @@ HsmServiceResponse::Ptr HsmService::get(
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
-    if (stream) {
-        auto response = m_store->getData(
-            req.object(), req.extent(), req.sourceTier(), stream);
-        return HsmServiceResponse::Create(req, std::move(response));
+    if (stream != nullptr) {
+        auto response = m_store->get_data(
+            req.object(), req.extent(), req.source_tier(), stream);
+        return HsmServiceResponse::create(req, std::move(response));
     }
     else {
-        auto response = m_store->getMetadata(req.object());
-        return HsmServiceResponse::Create(req, std::move(response));
+        auto response = m_store->get_metadata(req.object());
+        return HsmServiceResponse::create(req, std::move(response));
     }
 }
 
@@ -160,17 +160,17 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     HsmObject hsm_object(obj);
 
-    mObjectAdapter->parseTiers(hsm_object);
+    m_object_adapter->parse_tiers(hsm_object);
 
-    auto copy_data_response = m_store->copyData(
-        req.object(), req.extent(), req.sourceTier(), req.targetTier());
+    auto copy_data_response = m_store->copy_data(
+        req.object(), req.extent(), req.source_tier(), req.target_tier());
     ERROR_CHECK(copy_data_response);
 
-    hsm_object.addTier(req.targetTier());
-    mObjectAdapter->serialize(hsm_object);
+    hsm_object.add_tier(req.target_tier());
+    m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = m_store->putMetadata(obj);
-    return HsmServiceResponse::Create(req, std::move(metadata_put_response));
+    auto metadata_put_response = m_store->put_metadata(obj);
+    return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
@@ -189,17 +189,17 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     HsmObject hsm_object(obj);
 
-    m_object_adapter->parseTiers(hsm_object);
+    m_object_adapter->parse_tiers(hsm_object);
 
-    auto move_data_response = m_store->moveData(
-        req.object(), req.extent(), req.sourceTier(), req.targetTier());
+    auto move_data_response = m_store->move_data(
+        req.object(), req.extent(), req.source_tier(), req.target_tier());
     ERROR_CHECK(move_data_response);
 
-    hsm_object.addTier(req.targetTier());
+    hsm_object.add_tier(req.target_tier());
     m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = m_store->putMetadata(obj);
-    return HsmServiceResponse::Create(req, std::move(metadata_put_response));
+    auto metadata_put_response = m_store->put_metadata(obj);
+    return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove(
@@ -212,18 +212,18 @@ HsmServiceResponse::Ptr HsmService::remove(
     */
 
     HsmObject hsm_object(obj);
-    m_object_adapter->parseTiers(hsm_object);
+    m_object_adapter->parse_tiers(hsm_object);
     m_object_adapter->serialize(hsm_object);
 
     auto remove_data_response =
-        mStore->releaseData(req.object(), req.extent(), req.sourceTier());
+        m_store->release_data(req.object(), req.extent(), req.source_tier());
     ERROR_CHECK(remove_data_response);
 
-    hsm_object.removeTier(req.sourceTier());
+    hsm_object.remove_tier(req.source_tier());
     m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = mStore->putMetadata(obj);
-    return HsmServiceResponse::Create(req, std::move(metadata_put_response));
+    auto metadata_put_response = m_store->put_metadata(obj);
+    return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove_all(
@@ -236,18 +236,18 @@ HsmServiceResponse::Ptr HsmService::remove_all(
     */
 
     HsmObject hsm_object(obj);
-    m_object_adapter->parseTiers(hsm_object);
+    m_object_adapter->parse_tiers(hsm_object);
     m_object_adapter->serialize(hsm_object);
 
     auto remove_data_response =
-        m_store->releaseData(req.object(), req.extent());
+        m_store->release_data(req.object(), req.extent());
     ERROR_CHECK(remove_data_response);
 
-    hsm_object.removeAllButOneTiers();
+    hsm_object.remove_all_but_one_tiers();
     m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = m_store->putMetadata(obj);
-    return HsmServiceResponse::Create(req, std::move(metadata_put_response));
+    auto metadata_put_response = m_store->put_metadata(obj);
+    return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
 void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
@@ -272,4 +272,4 @@ void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
     */
 }
 
-void HsmService::listAttributes(HsmObject& object) {}
+void HsmService::list_attributes(HsmObject& object) {}

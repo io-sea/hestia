@@ -24,10 +24,10 @@ class HsmServiceResponse : public ostk::Response<HsmServiceErrorCode> {
     static Ptr create(const HsmServiceRequest& request);
     static Ptr create(
         const HsmServiceRequest& request,
-        HsmObjectStoreResponse::Ptr objectStoreResponse);
+        HsmObjectStoreResponse::Ptr object_store_response);
     static Ptr create(
         const HsmServiceRequest& request,
-        ostk::ObjectStoreResponse::Ptr kvStoreResponse);
+        ostk::ObjectStoreResponse::Ptr kv_store_response);
 
     const std::string& query_result() const;
 

@@ -29,11 +29,11 @@ class HsmServiceRequest :
 
     HsmServiceRequest(HsmServiceRequestMethod method);
 
-    const ostk::Extent& extent() const { return mExtent; }
+    const ostk::Extent& extent() const { return m_extent; }
 
     const ostk::StorageObject& object() const;
 
-    const std::string& query() const { return mQuery; }
+    const std::string& query() const { return m_query; }
 
     std::string methodAsString() const override { return {}; }
 
@@ -49,9 +49,9 @@ class HsmServiceRequest :
 
     void set_query(const std::string& query);
 
-    uint8_t source_tier() const { return mSourceTier; }
+    uint8_t source_tier() const { return m_source_tier; }
 
-    uint8_t target_tier() const { return mTargetTier; }
+    uint8_t target_tier() const { return m_target_tier; }
 
   private:
     uint8_t m_target_tier{0};

@@ -16,23 +16,23 @@ HsmObjectStoreError::HsmObjectStoreError(
     const ostk::ObjectStoreError& error, const std::string& message) :
     ostk::RequestError<HsmObjectStoreErrorCode>(
         HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR, message),
-    mBaseObjectStoreError(error)
+    m_base_object_store_error(error)
 {
 }
 
-std::string HsmObjectStoreError::to_string() const
+std::string HsmObjectStoreError::toString() const
 {
     std::string msg = "# " + std::to_string(number()) + " | "
-                      + codeToString(mCode) + " | " + mMessage;
+                      + code_to_string(mCode) + " | " + mMessage;
     if (mCode == HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR) {
-        msg += "\n" + mBaseObjectStoreError.toString();
+        msg += "\n" + m_base_object_store_error.toString();
     }
     return msg;
 }
 
-std::string HsmObjectStoreError::code_as_string() const
+std::string HsmObjectStoreError::codeAsString() const
 {
-    return codeToString(mCode);
+    return code_to_string(mCode);
 }
 
 std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)

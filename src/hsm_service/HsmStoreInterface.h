@@ -17,8 +17,8 @@ class HsmStoreInterface {
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
     static Ptr create(
-        std::unique_ptr<KeyValueStore> kvStore,
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> objectStore);
+        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
     ostk::ObjectStoreResponse::Ptr exists(const ostk::StorageObject& object);
 
@@ -27,7 +27,7 @@ class HsmStoreInterface {
     HsmObjectStoreResponse::Ptr get_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
-        uint8_t sourceTier,
+        uint8_t source_tier,
         ostk::Stream* stream);
 
     ostk::ObjectStoreResponse::Ptr put_metadata(
@@ -35,30 +35,30 @@ class HsmStoreInterface {
     HsmObjectStoreResponse::Ptr put_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
-        uint8_t sourceTier,
-        uint8_t targetTier,
+        uint8_t source_tier,
+        uint8_t target_tier,
         bool overwrite,
         ostk::Stream* stream);
 
     HsmObjectStoreResponse::Ptr copy_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
-        uint8_t sourceTier,
-        uint8_t targetTier);
+        uint8_t source_tier,
+        uint8_t target_tier);
     HsmObjectStoreResponse::Ptr move_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
-        uint8_t sourceTier,
-        uint8_t targetTier);
+        uint8_t source_tier,
+        uint8_t target_tier);
 
     ostk::ObjectStoreResponse::Ptr release_metadata(
         const ostk::StorageObject& object);
     ostk::ObjectStoreResponse::Ptr release_metadata(
-        const ostk::StorageObject& object, uint8_t sourceTier);
+        const ostk::StorageObject& object, uint8_t source_tier);
     HsmObjectStoreResponse::Ptr release_data(
         const ostk::StorageObject& object,
         const ostk::Extent& extent,
-        uint8_t sourceTier);
+        uint8_t source_tier);
     HsmObjectStoreResponse::Ptr release_data(
         const ostk::StorageObject& object, const ostk::Extent& extent);
 

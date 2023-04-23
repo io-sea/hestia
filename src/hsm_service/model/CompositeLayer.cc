@@ -3,14 +3,14 @@
 int CompositeLayer::add_extent(
     const ostk::Extent& extent_in, bool write, bool overwrite)
 {
-    auto extents = getExtents(write);
-    if (auto iter = extents->find(extentIn.mOffset); iter != extents->end()) {
-        if (overwrite || iter->second.mMarkedForDelete) {
-            iter->second = extentIn;
+    auto extents = get_extents(write);
+    if (auto iter = extents->find(extent_in.mOffset); iter != extents->end()) {
+        if (overwrite || iter->second.m_marked_for_delete) {
+            iter->second = extent_in;
         }
     }
     else {
-        (*extents)[extentIn.mOffset] = extentIn;
+        (*extents)[extent_in.mOffset] = extent_in;
     }
     return 0;
 }
@@ -18,19 +18,19 @@ int CompositeLayer::add_extent(
 int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
 {
     ostk::Extent extent_merge;
-    const auto match_code = matchExtent(
-        extentIn, &extent_merge, ExtentMatchType::EMT_MERGE, false, true);
+    const auto match_code = match_extent(
+        extent_in, &extent_merge, ExtentMatchType::EMT_MERGE, false, true);
 
     int rc = 0;
     switch (match_code) {
         case ExtentMatchCode::EM_NONE:
-            rc = addExtent(extentIn, false, false);
+            rc = add_extent(extent_in, false, false);
             break;
         case ExtentMatchCode::EM_FULL:
             rc = 0;
             break;
         case ExtentMatchCode::EM_PARTIAL:
-            rc = addExtent(extent_merge, false, true);
+            rc = add_extent(extent_merge, false, true);
             break;
         default:
             rc = -EINVAL;
@@ -40,19 +40,19 @@ int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
 
 int CompositeLayer::mark_for_deletion(const ostk::Extent& extent_in, bool write)
 {
-    auto extents = getExtents(write);
-    if (auto iter = extents->find(extentIn.mOffset); iter != extents->end()) {
-        iter->second.mMarkedForDelete = true;
+    auto extents = get_extents(write);
+    if (auto iter = extents->find(extent_in.mOffset); iter != extents->end()) {
+        iter->second.m_marked_for_delete = true;
     }
     return 0;
 }
 
 void CompositeLayer::delete_marked_extents(bool is_write)
 {
-    auto extents = getExtents(isWrite);
+    auto extents = get_extents(is_write);
     auto iter    = extents->begin();
     for (; iter != extents->end();) {
-        if (iter->second.mMarkedForDelete) {
+        if (iter->second.m_marked_for_delete) {
             iter = extents->erase(iter);
         }
         else {
@@ -61,9 +61,9 @@ void CompositeLayer::delete_marked_extents(bool is_write)
     }
 }
 
-std::string CompositeLayer::dump_extents(bool details, bool isWrite)
+std::string CompositeLayer::dump_extents(bool details, bool is_write)
 {
-    auto extents = getExtents(isWrite);
+    auto extents = get_extents(is_write);
 
     std::string out;
     for (const auto& list_extent : *extents) {
@@ -78,26 +78,26 @@ int CompositeLayer::extent_substract(
     int rc               = 0;
     int remaining_extent = 0;
 
-    auto extents = getExtents(isWrite);
+    auto extents = get_extents(is_write);
 
     for (const auto& entry : *extents) {
         remaining_extent++;
         const auto list_extent = &entry.second;
 
-        if (!list_extent->includes(extentIn)) {
+        if (!list_extent->includes(extent_in)) {
             continue;
         }
 
-        if (list_extent->hasSameOffset(extentIn)) {
-            if (auto rc = markForDeletion(*list_extent, isWrite); rc) {
+        if (list_extent->hasSameOffset(extent_in)) {
+            if (auto rc = mark_for_deletion(*list_extent, is_write); rc) {
                 return rc;
             }
             remaining_extent--;
 
-            if (list_extent->endsAfter(extentIn)) {
-                const auto right_split = list_extent->getRightSplit(extentIn);
-                if (auto rc = addExtent(right_split, isWrite, false); rc) {
-                    deleteMarkedExtents(isWrite);
+            if (list_extent->endsAfter(extent_in)) {
+                const auto right_split = list_extent->getRightSplit(extent_in);
+                if (auto rc = add_extent(right_split, is_write, false); rc) {
+                    delete_marked_extents(is_write);
                     return rc;
                 }
                 remaining_extent++;
@@ -105,18 +105,18 @@ int CompositeLayer::extent_substract(
             continue;
         }
 
-        const auto left_split = list_extent->getLeftSplit(extentIn);
-        if (auto rc = addExtent(left_split, isWrite, true); rc) {
-            deleteMarkedExtents(isWrite);
+        const auto left_split = list_extent->getLeftSplit(extent_in);
+        if (auto rc = add_extent(left_split, is_write, true); rc) {
+            delete_marked_extents(is_write);
             return rc;
         }
         remaining_extent++;
 
-        if (list_extent->endsAfter(extentIn)) {
+        if (list_extent->endsAfter(extent_in)) {
             const auto right_remainder =
-                list_extent->getRightRemainder(extentIn);
-            if (auto rc = addExtent(right_remainder, isWrite, false); rc) {
-                deleteMarkedExtents(isWrite);
+                list_extent->getRightRemainder(extent_in);
+            if (auto rc = add_extent(right_remainder, is_write, false); rc) {
+                delete_marked_extents(is_write);
                 return rc;
             }
             remaining_extent++;
@@ -127,10 +127,10 @@ int CompositeLayer::extent_substract(
     return 0;
 }
 
-CompositeLayer::ExtentList* CompositeLayer::get_extents(bool isWrite)
+CompositeLayer::ExtentList* CompositeLayer::get_extents(bool is_write)
 {
     auto extents = &m_write_extents;
-    if (!isWrite) {
+    if (!is_write) {
         extents = &m_read_extents;
     }
     return extents;
@@ -153,46 +153,46 @@ ExtentMatchCode CompositeLayer::match_extent(
     bool is_write,
     bool delete_previous)
 {
-    auto extents = getExtents(isWrite);
+    auto extents = get_extents(is_write);
 
     bool is_merged = false;
     for (const auto& entry : *extents) {
         const auto list_extent = &entry.second;
 
-        if (list_extent->includes(extentIn)) {
+        if (list_extent->includes(extent_in)) {
             if (mode == ExtentMatchType::EMT_INTERSECT) {
-                *match = extentIn;
+                *match = extent_in;
             }
             else {
                 match->mOffset = list_extent->mOffset;
                 match->mLength = list_extent->mLength;
             }
-            deleteMarkedExtents(isWrite);
+            delete_marked_extents(is_write);
             return ExtentMatchCode::EM_FULL;
         }
 
-        if (list_extent->overlaps(extentIn)) {
+        if (list_extent->overlaps(extent_in)) {
             if (mode == ExtentMatchType::EMT_INTERSECT) {
                 match->mOffset =
-                    ostk::Extent::getRightMostOffset(extentIn, *list_extent);
+                    ostk::Extent::getRightMostOffset(extent_in, *list_extent);
                 auto left_end =
-                    ostk::Extent::getLeftMostEnd(extentIn, *list_extent) - 1;
+                    ostk::Extent::getLeftMostEnd(extent_in, *list_extent) - 1;
                 match->mLength = (left_end - match->mOffset) + 1;
-                deleteMarkedExtents(isWrite);
+                delete_marked_extents(is_write);
                 return ExtentMatchCode::EM_PARTIAL;
             }
             else {
                 if (!is_merged) {
-                    match->mOffset =
-                        ostk::Extent::getLeftMostOffset(extentIn, *list_extent);
+                    match->mOffset = ostk::Extent::getLeftMostOffset(
+                        extent_in, *list_extent);
                 }
 
                 const auto right_end =
-                    ostk::Extent::getRightMostEnd(extentIn, *list_extent) - 1;
+                    ostk::Extent::getRightMostEnd(extent_in, *list_extent) - 1;
                 match->mLength = (right_end - match->mOffset) + 1;
 
-                if (deletePrevious && list_extent->hasSameOffset(*match)) {
-                    markForDeletion(*list_extent, isWrite);
+                if (delete_previous && list_extent->hasSameOffset(*match)) {
+                    mark_for_deletion(*list_extent, is_write);
                 }
 
                 is_merged = true;
@@ -201,22 +201,22 @@ ExtentMatchCode CompositeLayer::match_extent(
         }
 
         if (mode == ExtentMatchType::EMT_MERGE) {
-            if (list_extent->joinedToStartOf(extentIn)) {
+            if (list_extent->joinedToStartOf(extent_in)) {
                 match->mOffset = list_extent->mOffset;
-                match->mLength = list_extent->mLength + extentIn.mLength;
+                match->mLength = list_extent->mLength + extent_in.mLength;
                 is_merged      = true;
             }
-            else if (extentIn.joinedToStartOf(*list_extent)) {
+            else if (extent_in.joinedToStartOf(*list_extent)) {
                 if (!is_merged) {
-                    match->mOffset = extentIn.mOffset;
-                    match->mLength = list_extent->mLength + extentIn.mLength;
+                    match->mOffset = extent_in.mOffset;
+                    match->mLength = list_extent->mLength + extent_in.mLength;
                     is_merged      = true;
                 }
                 else {
                     match->mLength += list_extent->mLength;
                 }
-                if (deletePrevious) {
-                    markForDeletion(*list_extent, isWrite);
+                if (delete_previous) {
+                    mark_for_deletion(*list_extent, is_write);
                 }
             }
         }

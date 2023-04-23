@@ -19,11 +19,11 @@ class HsmObject {
 
     void replace_tier(uint8_t old_id, uint8_t new_id);
 
-    ostk::StorageObject& object() { return mStorageObject; }
+    ostk::StorageObject& object() { return m_storage_object; }
 
-    const std::string& dataset() { return mDataset; }
+    const std::string& dataset() { return m_dataset; }
 
-    const std::vector<uint8_t>& tiers() const { return mTierIds; }
+    const std::vector<uint8_t>& tiers() const { return m_tier_ids; }
 
   private:
     ostk::Uuid m_id;

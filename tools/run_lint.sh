@@ -41,12 +41,12 @@ test_dir="test"
 cd "${source_dir}"
 
 find ${src_dir} \( \
-    -iname "*.cc" -maxdepth 1 -o -iname "*.c" \
+    -iname "*.cc" -o -iname "*.c" \
 \) -print0 \
     | xargs -0 -n 1 -P "${nprocs}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"
 
 find ${test_dir} \( \
-    -iname "*.cc" -maxdepth 5 -o -iname "*.c" \
+    -iname "*.cc" -o -iname "*.c" \
 \) -print0 \
     | xargs -0 -n 1 -P "${nprocs}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"
 

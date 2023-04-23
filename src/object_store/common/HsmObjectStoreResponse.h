@@ -25,13 +25,13 @@ class HsmObjectStoreResponse :
     static Ptr create(const ostk::BaseObjectStoreRequest& request);
     static Ptr create(
         const ostk::BaseObjectStoreRequest& request,
-        HsmMiddlewareResponse::Ptr middlewareResponse);
+        HsmMiddlewareResponse::Ptr middleware_response);
     static Ptr create(
         const ostk::BaseObjectStoreRequest& request,
-        HsmObjectStoreResponse::Ptr hsmChildResponse);
+        HsmObjectStoreResponse::Ptr hsm_child_response);
     static Ptr create(
         const ostk::BaseObjectStoreRequest& request,
-        ostk::ObjectStoreResponse::Ptr childResponse);
+        ostk::ObjectStoreResponse::Ptr child_response);
 
     static ostk::ObjectStoreResponse::Ptr to_base_response(
         const ostk::BaseObjectStoreRequest& request,

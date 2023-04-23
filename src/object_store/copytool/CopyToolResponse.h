@@ -20,7 +20,7 @@ class CopyToolResponse : public HsmMiddlewareResponse {
 
     void set_error(const CopyToolError& error);
 
-    void setObjectStoreRespose(
+    void set_object_store_respose(
         HsmObjectStoreResponse::Ptr object_store_response) override;
 
   private:

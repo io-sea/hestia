@@ -6,8 +6,8 @@
 
 MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
-    mClientManager(std::move(clientManager)),
-    mCopyToolInterface(std::make_unique<CopyToolInterface>())
+    m_client_manager(std::move(client_manager)),
+    m_copy_tool_interface(std::make_unique<CopyToolInterface>())
 {
 }
 
@@ -17,48 +17,49 @@ void MultiBackendHsmObjectStoreClient::initialize(
     const TierBackendRegistry& tier_backend_regsitry,
     const CopyToolConfig& copy_tool_config)
 {
-    mClientManager->setupClients(tierBackendRegsitry);
-    mCopyToolInterface->initialize(copyToolConfig);
+    m_client_manager->setup_clients(tier_backend_regsitry);
+    m_copy_tool_interface->initialize(copy_tool_config);
 }
 
 HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
 {
-    if (request.isHsmOnlyRequest()) {
-        if (mClientManager->haveSameClientTypes(
-                request.targetTier(), request.sourceTier())) {
-            if (mClientManager->isHsmClient(request.sourceTier())) {
+    if (request.is_hsm_only_request()) {
+        if (m_client_manager->have_same_client_types(
+                request.target_tier(), request.source_tier())) {
+            if (m_client_manager->is_hsm_client(request.source_tier())) {
                 auto client =
-                    mClientManager->getHsmClient(request.sourceTier());
-                return client->makeRequest(request);
+                    m_client_manager->get_hsm_client(request.source_tier());
+                return client->make_request(request);
             }
             else {
-                auto client   = mClientManager->getClient(request.sourceTier());
+                auto client =
+                    m_client_manager->get_client(request.source_tier());
                 auto response = client->makeRequest(
-                    HsmObjectStoreRequest::toBaseRequest(request));
-                return HsmObjectStoreResponse::Create(
+                    HsmObjectStoreRequest::to_base_request(request));
+                return HsmObjectStoreResponse::create(
                     request, std::move(response));
             }
         }
         else {
-            return HsmObjectStoreResponse::Create(
-                request, mCopyToolInterface->makeRequest(request));
+            return HsmObjectStoreResponse::create(
+                request, m_copy_tool_interface->make_request(request));
         }
     }
     else {
         const auto client_tier =
             request.method() == HsmObjectStoreRequestMethod::PUT ?
-                request.targetTier() :
-                request.sourceTier();
-        if (mClientManager->isHsmClient(client_tier)) {
-            auto client = mClientManager->getHsmClient(client_tier);
-            return client->makeRequest(request, stream);
+                request.target_tier() :
+                request.source_tier();
+        if (m_client_manager->is_hsm_client(client_tier)) {
+            auto client = m_client_manager->get_hsm_client(client_tier);
+            return client->make_request(request, stream);
         }
         else {
-            auto client   = mClientManager->getClient(client_tier);
+            auto client   = m_client_manager->get_client(client_tier);
             auto response = client->makeRequest(
-                HsmObjectStoreRequest::toBaseRequest(request));
-            return HsmObjectStoreResponse::Create(request, std::move(response));
+                HsmObjectStoreRequest::to_base_request(request));
+            return HsmObjectStoreResponse::create(request, std::move(response));
         }
     }
 }

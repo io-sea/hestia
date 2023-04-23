@@ -13,9 +13,9 @@ enum class KeyValueStoreType { FILE, KVSAL };
 
 namespace key_value_store_registry {
 
-static std::string to_string(KeyValueStoreType storeType)
+static std::string to_string(KeyValueStoreType store_type)
 {
-    switch (storeType) {
+    switch (store_type) {
         case KeyValueStoreType::FILE:
             return "FILE";
         case KeyValueStoreType::KVSAL:
@@ -41,9 +41,9 @@ static bool is_store_type_available(KeyValueStoreType store_type)
     }
 };
 
-static std::unique_ptr<KeyValueStore> get_store(KeyValueStoreType storeType)
+static std::unique_ptr<KeyValueStore> get_store(KeyValueStoreType store_type)
 {
-    switch (storeType) {
+    switch (store_type) {
         case KeyValueStoreType::FILE:
             // auto client = std::make_unique<FileKeyValueStoreClient>();
             return std::make_unique<KeyValueStore>(nullptr);

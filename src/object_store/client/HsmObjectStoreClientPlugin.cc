@@ -6,7 +6,7 @@
 
 HsmObjectStoreClientPlugin::HsmObjectStoreClientPlugin(
     const ostk::PluginHandle* plugin_handle, HsmObjectStoreClient* client) :
-    PluginResource(pluginHandle), m_client(client)
+    PluginResource(plugin_handle), m_client(client)
 {
 }
 
@@ -22,23 +22,23 @@ HsmObjectStoreClient* HsmObjectStoreClientPlugin::get_client() const
 
 HsmObjectStorePluginHandle::HsmObjectStorePluginHandle(
     void* raw_handle, const std::string& name) :
-    ostk::PluginHandle(rawHandle, name)
+    ostk::PluginHandle(raw_handle, name)
 {
 }
 
-void HsmObjectStorePluginHandle::destroy_resource(
+void HsmObjectStorePluginHandle::destroyResource(
     ostk::PluginResource* resource) const
 {
     LOG_INFO("Destroying resource from: " << mName);
     using func_t      = void(HsmObjectStoreClient*);
     auto destroy_func = reinterpret_cast<func_t*>(mDestroyFunc);
-    if (!destroy_func) {
+    if (destroy_func == nullptr) {
         throw std::runtime_error("Function to destory resource is invalid");
     }
 
     if (auto object_resource =
             dynamic_cast<HsmObjectStoreClientPlugin*>(resource)) {
-        destroy_func(object_resource->getClient());
+        destroy_func(object_resource->get_client());
     }
     else {
         LOG_ERROR("Failed to cast to ObjectStoreClientPlugin");
@@ -46,12 +46,12 @@ void HsmObjectStorePluginHandle::destroy_resource(
 }
 
 std::unique_ptr<ostk::PluginResource>
-HsmObjectStorePluginHandle::load_resource_with_factory_func() const
+HsmObjectStorePluginHandle::loadResourceWithFactoryFunc() const
 {
     using func_t     = HsmObjectStoreClient*();
     auto create_func = reinterpret_cast<func_t*>(mCreateFunc);
     auto client      = create_func();
-    if (!client) {
+    if (client == nullptr) {
         LOG_ERROR("Got invalid client from factory func.");
     }
 
@@ -66,8 +66,8 @@ HsmObjectStorePluginFactory::HsmObjectStorePluginFactory(
 {
 }
 
-std::unique_ptr<ostk::PluginHandle> HsmObjectStorePluginFactory::create_handle(
-    void* rawHandle) const
+std::unique_ptr<ostk::PluginHandle> HsmObjectStorePluginFactory::createHandle(
+    void* raw_handle) const
 {
-    return std::make_unique<HsmObjectStorePluginHandle>(rawHandle, mName);
+    return std::make_unique<HsmObjectStorePluginHandle>(raw_handle, mName);
 }

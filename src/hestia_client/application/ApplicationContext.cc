@@ -15,5 +15,5 @@ HsmService* ApplicationContext::get_hsm_service() const
 
 void ApplicationContext::set_hsm_service(HsmService::Ptr hsm_service)
 {
-    m_hsm_service = std::move(hsmService);
+    m_hsm_service = std::move(hsm_service);
 }

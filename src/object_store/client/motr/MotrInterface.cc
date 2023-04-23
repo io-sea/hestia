@@ -7,11 +7,11 @@
 #include <fstream>
 
 MotrInterface::MotrInterface(std::unique_ptr<IMotrInterfaceImpl> impl) :
-    mImpl(std::move(impl))
+    m_impl(std::move(impl))
 {
 #ifdef HAS_MOTR_IMPL
-    if (!mImpl) {
-        mImpl = std::make_unique<MotrInterfaceImpl>();
+    if (!m_impl) {
+        m_impl = std::make_unique<MotrInterfaceImpl>();
     }
 #endif
 }
@@ -21,23 +21,23 @@ MotrInterface::~MotrInterface() {}
 void MotrInterface::initialize(const MotrConfig& config)
 {
     MotrConfig working_config = config;
-    validateConfig(working_config);
-    mImpl->initialize(working_config);
+    validate_config(working_config);
+    m_impl->initialize(working_config);
 }
 
 void MotrInterface::validate_config(MotrConfig& config)
 {
-    auto working_path = config.mHsmConfigPath;
+    auto working_path = config.m_hsm_config_path;
     if (working_path.empty()) {
         working_path = std::filesystem::current_path() / "config";
-        writeTierInfo(working_path, config.mTierInfo);
+        write_tier_info(working_path, config.m_tier_info);
     }
-    config.mHsmConfigPath = working_path;
+    config.m_hsm_config_path = working_path;
 }
 
 void MotrInterface::copy(const HsmObjectStoreRequest& request) const
 {
-    mImpl->copy(request);
+    m_impl->copy(request);
 }
 
 void MotrInterface::get(
@@ -45,23 +45,23 @@ void MotrInterface::get(
     ostk::StorageObject& object,
     ostk::Stream* stream) const
 {
-    mImpl->get(request, object, stream);
+    m_impl->get(request, object, stream);
 }
 
 void MotrInterface::move(const HsmObjectStoreRequest& request) const
 {
-    mImpl->move(request);
+    m_impl->move(request);
 }
 
 void MotrInterface::put(
     const HsmObjectStoreRequest& request, ostk::Stream* stream) const
 {
-    mImpl->put(request, stream);
+    m_impl->put(request, stream);
 }
 
 void MotrInterface::remove(const HsmObjectStoreRequest& request) const
 {
-    mImpl->remove(request);
+    m_impl->remove(request);
 }
 
 void MotrInterface::write_tier_info(
@@ -70,8 +70,8 @@ void MotrInterface::write_tier_info(
 {
     std::ofstream f_out;
     f_out.open(path);
-    for (const auto& tier : tierInfo) {
-        f_out << tier.mName << " = <" << tier.mIdentifier << "> \n";
+    for (const auto& tier : tier_info) {
+        f_out << tier.m_name << " = <" << tier.m_identifier << "> \n";
     }
     f_out.close();
 }

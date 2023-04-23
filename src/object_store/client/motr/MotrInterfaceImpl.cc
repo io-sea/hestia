@@ -1,5 +1,6 @@
 #include "MotrInterfaceImpl.h"
 
+#ifdef HAS_MOTR
 void MotrInterfaceImpl::initialize(const MotrConfig& config)
 {
     mConfig = config;
@@ -103,3 +104,5 @@ int MotrInterfaceImpl::move(
 {
     return 0;
 }
+
+#endif

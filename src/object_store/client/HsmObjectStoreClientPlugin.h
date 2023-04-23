@@ -35,5 +35,5 @@ class HsmObjectStorePluginFactory : public ostk::PluginFactory {
     HsmObjectStorePluginFactory(const std::string& name);
 
     std::unique_ptr<ostk::PluginHandle> createHandle(
-        void* rawHandle) const override;
+        void* raw_handle) const override;
 };

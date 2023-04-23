@@ -1,4 +1,4 @@
-include(AddModule)
+include(ostk/AddModule)
 
 add_subdirectory(common)
 add_subdirectory(client)

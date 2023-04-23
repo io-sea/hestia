@@ -81,6 +81,7 @@ Lint:
     - apt-get install --no-install-recommends -y
       clang clang-tidy
     - *configure
+    - *build
   script: 
     - ./tools/run_lint.sh "${CMAKE_BUILD_DIR}"
 

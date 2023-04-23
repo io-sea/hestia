@@ -8,12 +8,12 @@ HsmObjectAdapter::Ptr HsmObjectAdapter::create()
 void HsmObjectAdapter::serialize(HsmObject& hsm_object)
 {
     auto md = &hsm_object.object().mMetadata;
-    addIfNotEmpty(
-        md, LAST_MODIFIED_KEY,
+    add_if_not_empty(
+        md, last_modified_key,
         std::to_string(hsm_object.object().mLastModifiedTime));
-    addIfNotEmpty(
-        md, CREATED_KEY, std::to_string(hsm_object.object().mCreationTime));
-    addIfNotEmpty(md, DATASET_KEY, hsm_object.dataset());
+    add_if_not_empty(
+        md, created_key, std::to_string(hsm_object.object().mCreationTime));
+    add_if_not_empty(md, dataset_key, hsm_object.dataset());
 
     std::stringstream sstr;
     for (std::size_t idx = 0; idx < hsm_object.tiers().size() - 1; idx++) {
@@ -22,7 +22,7 @@ void HsmObjectAdapter::serialize(HsmObject& hsm_object)
     if (!hsm_object.tiers().empty()) {
         sstr << hsm_object.tiers()[hsm_object.tiers().size() - 1];
     }
-    addIfNotEmpty(md, TIERS_KEY, sstr.str());
+    add_if_not_empty(md, tiers_key, sstr.str());
 }
 
 void HsmObjectAdapter::parse_tiers(HsmObject& hsm_object) {}

@@ -1,19 +1,19 @@
 #include "CopyToolRequest.h"
 
 CopyToolRequest::CopyToolRequest(const HsmObjectStoreRequest& request) :
-    mObjectStoreRequest(request)
+    m_object_store_request(request)
 {
 }
 
-CopyToolRequest::CopyToolRequest(const std::string& requestStr) :
-    mObjectStoreRequest("0", HsmObjectStoreRequestMethod::COPY)
+CopyToolRequest::CopyToolRequest(const std::string& request_str) :
+    m_object_store_request("0", HsmObjectStoreRequestMethod::COPY)
 {
-    deserialize(requestStr);
+    deserialize(request_str);
 }
 
-void CopyToolRequest::deserialize(const std::string& requestStr)
+void CopyToolRequest::deserialize(const std::string& request_str)
 {
-    std::stringstream sstr(requestStr);
+    std::stringstream sstr(request_str);
     std::string line;
 
     /*
@@ -55,15 +55,15 @@ void CopyToolRequest::deserialize(const std::string& requestStr)
 std::string CopyToolRequest::serialize() const
 {
     std::stringstream sstr;
-    sstr << OBJECT_TOKEN << mObjectStoreRequest.object().id() << "\n";
-    sstr << OFFSET_TOKEN << mObjectStoreRequest.extent().mOffset << "\n";
-    sstr << LENGTH_TOKEN << mObjectStoreRequest.extent().mLength << "\n";
-    sstr << SOURCE_TOKEN << mObjectStoreRequest.sourceTier() << "\n";
-    sstr << TARGET_TOKEN << mObjectStoreRequest.targetTier() << "\n";
+    sstr << object_token << m_object_store_request.object().id() << "\n";
+    sstr << offset_token << m_object_store_request.extent().mOffset << "\n";
+    sstr << length_token << m_object_store_request.extent().mLength << "\n";
+    sstr << source_token << m_object_store_request.source_tier() << "\n";
+    sstr << target_token << m_object_store_request.target_tier() << "\n";
     return sstr.str();
 }
 
-const HsmObjectStoreRequest& CopyToolRequest::getObjectStoreRequest() const
+const HsmObjectStoreRequest& CopyToolRequest::get_object_store_request() const
 {
-    return mObjectStoreRequest;
+    return m_object_store_request;
 }

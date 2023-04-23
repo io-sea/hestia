@@ -14,7 +14,7 @@ struct ObjectStoreClientType {
 
     ObjectStoreClientType(
         Type client_type, Source source, const std::string& identifier) :
-        m_type(client_type), m_source(source), mIdentifier(identifier)
+        m_type(client_type), m_source(source), m_identifier(identifier)
     {
     }
 
@@ -35,10 +35,10 @@ class ObjectStorePluginHandler {
     bool has_plugin(const std::string& identifier);
 
     ostk::ObjectStoreClient::Ptr get_client(
-        ObjectStoreClientType clientType) const;
+        ObjectStoreClientType client_type) const;
 
   private:
-    std::vector<std::filesystem::directory_entry> m_seach_paths;
+    std::vector<std::filesystem::directory_entry> m_search_paths;
 };
 
 class HsmObjectStoreClientRegistry {
@@ -49,7 +49,7 @@ class HsmObjectStoreClientRegistry {
     bool is_client_type_available(ObjectStoreClientType client_type) const;
 
     ostk::ObjectStoreClient::Ptr get_client(
-        ObjectStoreClientType clientType) const;
+        ObjectStoreClientType client_type) const;
 
   private:
     ObjectStorePluginHandler::Ptr m_plugin_handler;

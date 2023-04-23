@@ -1,4 +1,4 @@
-include(AddModule)
+include(ostk/AddModule)
 
 add_module(
     MODULE_NAME hsm_service 

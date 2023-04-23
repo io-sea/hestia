@@ -9,21 +9,23 @@ CopyToolResponse::Ptr CopyToolResponse::create()
 
 bool CopyToolResponse::ok() const
 {
-    return mStatus != Status::ERROR;
+    return m_status != Status::ERROR;
 };
 
 void CopyToolResponse::set_error(const CopyToolError& error)
 {
-    mError = error;
+    m_error = error;
 }
 
 void CopyToolResponse::set_object_store_respose(
     HsmObjectStoreResponse::Ptr object_store_response)
 {
-    mObjectStoreResponse = std::move(objectStoreResponse);
-    if (!mObjectStoreResponse->ok()) {
-        const std::string msg = "Object store failed with error: "
-                                + objectStoreResponse->getError().toString();
-        setError({CopyToolError::Code::ERROR_OBJECT_STORE, msg});
+    m_object_store_response = std::move(object_store_response);
+
+    if (!m_object_store_response->ok()) {
+        const std::string msg =
+            "Object store failed with error: "
+            + m_object_store_response->getError().toString();
+        set_error({CopyToolError::Code::ERROR_OBJECT_STORE, msg});
     }
 }

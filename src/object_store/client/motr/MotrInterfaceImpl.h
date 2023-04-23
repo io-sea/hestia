@@ -3,16 +3,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "hsm/m0hsm_api.h"
+//#include "hsm/m0hsm_api.h" // NOLINT
 #ifdef __cplusplus
 }
 #endif
 
 #include "IMotrInterfaceImpl.h"
 
-#include <filsystem>
+#include <filesystem>
 
 class MotrInterfaceImpl : public IMotrInterfaceImpl {
+#ifdef HAS_MOTR
   public:
     void initialize(const MotrConfig& config);
 
@@ -39,4 +40,5 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
     m0_client* m_client_instance{nullptr};
     m0_container m_container;
     m0_realm m_realm;
+#endif
 };

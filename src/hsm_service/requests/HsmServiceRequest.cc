@@ -19,17 +19,17 @@ HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
 
 void HsmServiceRequest::set_extent(const ostk::Extent& extent)
 {
-    mExtent = extent;
+    m_extent = extent;
 }
 
 void HsmServiceRequest::set_target_tier(uint8_t tier)
 {
-    mTargetTier = tier;
+    m_target_tier = tier;
 }
 
 void HsmServiceRequest::set_source_tier(uint8_t tier)
 {
-    mSourceTier = tier;
+    m_source_tier = tier;
 }
 
 void HsmServiceRequest::set_should_put_overwrite(bool overwrite)
@@ -44,10 +44,10 @@ bool HsmServiceRequest::should_overwrite_put() const
 
 void HsmServiceRequest::set_query(const std::string& query)
 {
-    mQuery = query;
+    m_query = query;
 }
 
 const ostk::StorageObject& HsmServiceRequest::object() const
 {
-    return mObject;
+    return m_object;
 }
