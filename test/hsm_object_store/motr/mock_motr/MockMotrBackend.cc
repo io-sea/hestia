@@ -67,11 +67,11 @@ static void advance_layer_cursors(
 {
     // Move through extents until they end after the offset
     for (auto& cursor : cursors) {
-        if (cursor.at_end() || cursor.item()->getEnd() > offset) {
+        if (cursor.at_end() || cursor.item()->get_end() > offset) {
             continue;
         }
         cursor.next();
-        while (!cursor.at_end() && cursor.item()->getEnd() <= offset) {
+        while (!cursor.at_end() && cursor.item()->get_end() <= offset) {
             cursor.next();
         }
     }
@@ -81,17 +81,17 @@ static std::size_t get_next_offset(
     const std::vector<ExtentCursor>& cursors, int start_idx)
 {
     int layer_idx{0};
-    auto next_offset = cursors[start_idx].item()->getEnd();
+    auto next_offset = cursors[start_idx].item()->get_end();
     for (layer_idx = start_idx - 1; layer_idx >= 0; layer_idx--) {
         if (cursors[layer_idx].at_end()) {
             continue;
         }
-        if (cursors[layer_idx].item()->mOffset <= next_offset) {
+        if (cursors[layer_idx].item()->m_offset <= next_offset) {
             break;
         }
     }
     if (layer_idx >= 0) {
-        next_offset = cursors[layer_idx].item()->mOffset;
+        next_offset = cursors[layer_idx].item()->m_offset;
     }
     return next_offset;
 }
@@ -115,7 +115,7 @@ static void build_layer_data(
 
         CompositeSubObject sub_object;
         sub_object.m_id        = layer->m_id;
-        sub_object.m_layout_id = layer->m_parent_id.mLo;
+        sub_object.m_layout_id = layer->m_parent_id.m_lo;
         sub_objects.push_back(sub_object);
     }
 }
@@ -137,7 +137,7 @@ static int build_layer_extents(
 
         std::size_t valid_layer_idx{0};
         for (const auto& cursor : extent_cursors) {
-            if (!cursor.at_end() && offset >= cursor.item()->mOffset) {
+            if (!cursor.at_end() && offset >= cursor.item()->m_offset) {
                 break;
             }
             valid_layer_idx++;
@@ -244,11 +244,11 @@ int MotrBackend::do_object_io(
         auto buf_loc = data.m_buffers[idx];
         if (io_type == IoType::READ) {
             ostk::WriteableBufferView buffer(buf_loc, length);
-            pool->read(obj.m_id.toString(), {offset, length}, buffer);
+            pool->read(obj.m_id.to_string(), {offset, length}, buffer);
         }
         else {
             ostk::ReadableBufferView buffer(buf_loc);
-            pool->write(obj.m_id.toString(), {offset, length}, buffer);
+            pool->write(obj.m_id.to_string(), {offset, length}, buffer);
         }
     }
     return 0;
@@ -256,7 +256,7 @@ int MotrBackend::do_object_io(
 
 ostk::Uuid MotrBackend::obj_id_to_fid(Id id)
 {
-    return ostk::Uuid(id.mLo, id.mHi);
+    return ostk::Uuid(id.m_lo, id.m_hi);
 }
 
 void MotrBackend::set_layout(Realm* realm, Id obj_id, Layout* layout)

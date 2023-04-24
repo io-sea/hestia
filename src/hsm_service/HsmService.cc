@@ -15,7 +15,7 @@
 
 #define ON_ERROR(code, message)                                                \
     auto response = HsmServiceResponse::create(req);                           \
-    response->onError({HsmServiceErrorCode::code, msg});                       \
+    response->on_error({HsmServiceErrorCode::code, msg});                      \
     return response;
 
 HsmService::HsmService(
@@ -58,7 +58,7 @@ HsmServiceResponse::Ptr HsmService::put(
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
-    if (exists->objectFound() != req.should_overwrite_put()) {
+    if (exists->object_found() != req.should_overwrite_put()) {
         const std::string msg =
             "Overwrite request not compatible with object existence.";
         ON_ERROR(BAD_PUT_OVERWRITE_COMBINATION, msg);
@@ -66,7 +66,7 @@ HsmServiceResponse::Ptr HsmService::put(
 
     if (stream != nullptr) {
         const auto chosen_tier = m_data_placement_engine->choose_tier(
-            req.extent().mLength, req.target_tier());
+            req.extent().m_length, req.target_tier());
         auto data_put_response = m_store->put_data(
             req.object(), req.extent(), req.source_tier(), chosen_tier,
             req.should_overwrite_put(), stream);
@@ -128,7 +128,7 @@ HsmServiceResponse::Ptr HsmService::get(
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
-    if (!exists->objectFound()) {
+    if (!exists->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
@@ -148,7 +148,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
-    if (!exists->objectFound()) {
+    if (!exists->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
@@ -177,7 +177,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
-    if (!exists->objectFound()) {
+    if (!exists->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }

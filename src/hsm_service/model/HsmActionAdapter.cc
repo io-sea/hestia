@@ -10,12 +10,12 @@ HsmActionAdapter::Ptr HsmActionAdapter::create()
 void HsmActionAdapter::parse(const std::string& input, HsmAction& action)
 {
     ostk::Metadata metadata;
-    ostk::JsonUtils::fromJson(input, metadata);
+    ostk::JsonUtils::from_json(input, metadata);
 
     if (const auto migration =
-            metadata.getItem(HsmAction::trigger_migration_key);
+            metadata.get_item(HsmAction::trigger_migration_key);
         !migration.empty()) {
-        auto parsed = ostk::JsonUtils::getValues(
+        auto parsed = ostk::JsonUtils::get_values(
             migration, {"operation", "src_tier", "tgt_tier"});
 
         if (parsed[0].empty() || parsed[1].empty()) {

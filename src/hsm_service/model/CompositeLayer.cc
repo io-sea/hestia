@@ -4,13 +4,13 @@ int CompositeLayer::add_extent(
     const ostk::Extent& extent_in, bool write, bool overwrite)
 {
     auto extents = get_extents(write);
-    if (auto iter = extents->find(extent_in.mOffset); iter != extents->end()) {
+    if (auto iter = extents->find(extent_in.m_offset); iter != extents->end()) {
         if (overwrite || iter->second.m_marked_for_delete) {
             iter->second = extent_in;
         }
     }
     else {
-        (*extents)[extent_in.mOffset] = extent_in;
+        (*extents)[extent_in.m_offset] = extent_in;
     }
     return 0;
 }
@@ -41,7 +41,7 @@ int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
 int CompositeLayer::mark_for_deletion(const ostk::Extent& extent_in, bool write)
 {
     auto extents = get_extents(write);
-    if (auto iter = extents->find(extent_in.mOffset); iter != extents->end()) {
+    if (auto iter = extents->find(extent_in.m_offset); iter != extents->end()) {
         iter->second.m_marked_for_delete = true;
     }
     return 0;
@@ -67,7 +67,7 @@ std::string CompositeLayer::dump_extents(bool details, bool is_write)
 
     std::string out;
     for (const auto& list_extent : *extents) {
-        out += list_extent.second.toString() + "\n";
+        out += list_extent.second.to_string() + "\n";
     }
     return out;
 }
@@ -88,14 +88,15 @@ int CompositeLayer::extent_substract(
             continue;
         }
 
-        if (list_extent->hasSameOffset(extent_in)) {
+        if (list_extent->has_same_offset(extent_in)) {
             if (auto rc = mark_for_deletion(*list_extent, is_write); rc) {
                 return rc;
             }
             remaining_extent--;
 
-            if (list_extent->endsAfter(extent_in)) {
-                const auto right_split = list_extent->getRightSplit(extent_in);
+            if (list_extent->ends_after(extent_in)) {
+                const auto right_split =
+                    list_extent->get_right_split(extent_in);
                 if (auto rc = add_extent(right_split, is_write, false); rc) {
                     delete_marked_extents(is_write);
                     return rc;
@@ -105,16 +106,16 @@ int CompositeLayer::extent_substract(
             continue;
         }
 
-        const auto left_split = list_extent->getLeftSplit(extent_in);
+        const auto left_split = list_extent->get_left_split(extent_in);
         if (auto rc = add_extent(left_split, is_write, true); rc) {
             delete_marked_extents(is_write);
             return rc;
         }
         remaining_extent++;
 
-        if (list_extent->endsAfter(extent_in)) {
+        if (list_extent->ends_after(extent_in)) {
             const auto right_remainder =
-                list_extent->getRightRemainder(extent_in);
+                list_extent->get_right_remainder(extent_in);
             if (auto rc = add_extent(right_remainder, is_write, false); rc) {
                 delete_marked_extents(is_write);
                 return rc;
@@ -164,8 +165,8 @@ ExtentMatchCode CompositeLayer::match_extent(
                 *match = extent_in;
             }
             else {
-                match->mOffset = list_extent->mOffset;
-                match->mLength = list_extent->mLength;
+                match->m_offset = list_extent->m_offset;
+                match->m_length = list_extent->m_length;
             }
             delete_marked_extents(is_write);
             return ExtentMatchCode::EM_FULL;
@@ -173,25 +174,27 @@ ExtentMatchCode CompositeLayer::match_extent(
 
         if (list_extent->overlaps(extent_in)) {
             if (mode == ExtentMatchType::EMT_INTERSECT) {
-                match->mOffset =
-                    ostk::Extent::getRightMostOffset(extent_in, *list_extent);
+                match->m_offset = ostk::Extent::get_right_most_offset(
+                    extent_in, *list_extent);
                 auto left_end =
-                    ostk::Extent::getLeftMostEnd(extent_in, *list_extent) - 1;
-                match->mLength = (left_end - match->mOffset) + 1;
+                    ostk::Extent::get_left_most_end(extent_in, *list_extent)
+                    - 1;
+                match->m_length = (left_end - match->m_offset) + 1;
                 delete_marked_extents(is_write);
                 return ExtentMatchCode::EM_PARTIAL;
             }
             else {
                 if (!is_merged) {
-                    match->mOffset = ostk::Extent::getLeftMostOffset(
+                    match->m_offset = ostk::Extent::get_left_most_offset(
                         extent_in, *list_extent);
                 }
 
                 const auto right_end =
-                    ostk::Extent::getRightMostEnd(extent_in, *list_extent) - 1;
-                match->mLength = (right_end - match->mOffset) + 1;
+                    ostk::Extent::get_right_most_end(extent_in, *list_extent)
+                    - 1;
+                match->m_length = (right_end - match->m_offset) + 1;
 
-                if (delete_previous && list_extent->hasSameOffset(*match)) {
+                if (delete_previous && list_extent->has_same_offset(*match)) {
                     mark_for_deletion(*list_extent, is_write);
                 }
 
@@ -201,19 +204,20 @@ ExtentMatchCode CompositeLayer::match_extent(
         }
 
         if (mode == ExtentMatchType::EMT_MERGE) {
-            if (list_extent->joinedToStartOf(extent_in)) {
-                match->mOffset = list_extent->mOffset;
-                match->mLength = list_extent->mLength + extent_in.mLength;
-                is_merged      = true;
+            if (list_extent->joined_to_start_of(extent_in)) {
+                match->m_offset = list_extent->m_offset;
+                match->m_length = list_extent->m_length + extent_in.m_length;
+                is_merged       = true;
             }
-            else if (extent_in.joinedToStartOf(*list_extent)) {
+            else if (extent_in.joined_to_start_of(*list_extent)) {
                 if (!is_merged) {
-                    match->mOffset = extent_in.mOffset;
-                    match->mLength = list_extent->mLength + extent_in.mLength;
-                    is_merged      = true;
+                    match->m_offset = extent_in.m_offset;
+                    match->m_length =
+                        list_extent->m_length + extent_in.m_length;
+                    is_merged = true;
                 }
                 else {
-                    match->mLength += list_extent->mLength;
+                    match->m_length += list_extent->m_length;
                 }
                 if (delete_previous) {
                     mark_for_deletion(*list_extent, is_write);

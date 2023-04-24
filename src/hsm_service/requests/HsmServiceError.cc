@@ -11,9 +11,9 @@ HsmServiceError::HsmServiceError(
 {
 }
 
-std::string HsmServiceError::codeAsString() const
+std::string HsmServiceError::code_as_string() const
 {
-    return code_to_string(mCode);
+    return code_to_string(m_code);
 }
 
 std::string HsmServiceError::code_to_string(HsmServiceErrorCode code)

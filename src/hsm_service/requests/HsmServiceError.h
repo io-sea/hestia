@@ -20,6 +20,6 @@ class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode> {
     virtual ~HsmServiceError() = default;
 
   private:
-    std::string codeAsString() const override;
+    std::string code_as_string() const override;
     static std::string code_to_string(HsmServiceErrorCode code);
 };

@@ -91,7 +91,7 @@ std::vector<struct hsm_uint> list(const std::uint8_t tier)
 
     std::vector<hsm_uint> hestia_ids;
     for (const auto& id : object_ids) {
-        hestia_ids.push_back({id.mLo, id.mHi});
+        hestia_ids.push_back({id.m_lo, id.m_hi});
     }
     return hestia_ids;
 }

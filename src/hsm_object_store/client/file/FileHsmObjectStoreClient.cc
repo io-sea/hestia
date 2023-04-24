@@ -38,11 +38,11 @@ void FileHsmObjectStoreClient::put(
 {
     ostk::FileObjectStoreClient file_client;
     file_client.initialize(get_tier_path(request.target_tier()));
-    if (const auto response = file_client.makeRequest(
+    if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
         const std::string msg =
-            "Error in file client PUT: " + response->getError().toString();
+            "Error in file client PUT: " + response->get_error().to_string();
         throw ostk::RequestException<HsmObjectStoreError>(
             {HsmObjectStoreErrorCode::ERROR, msg});
     }
@@ -55,11 +55,11 @@ void FileHsmObjectStoreClient::get(
 {
     ostk::FileObjectStoreClient file_client;
     file_client.initialize(get_tier_path(request.source_tier()));
-    if (const auto response = file_client.makeRequest(
+    if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
         const std::string msg =
-            "Error in file client GET: " + response->getError().toString();
+            "Error in file client GET: " + response->get_error().to_string();
         throw ostk::RequestException<HsmObjectStoreError>(
             {HsmObjectStoreErrorCode::ERROR, msg});
     }
@@ -73,11 +73,11 @@ void FileHsmObjectStoreClient::remove(
 {
     ostk::FileObjectStoreClient file_client;
     file_client.initialize(get_tier_path(request.source_tier()));
-    if (const auto response = file_client.makeRequest(
+    if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request));
         !response->ok()) {
         const std::string msg =
-            "Error in file client REMOVE: " + response->getError().toString();
+            "Error in file client REMOVE: " + response->get_error().to_string();
         throw ostk::RequestException<HsmObjectStoreError>(
             {HsmObjectStoreErrorCode::ERROR, msg});
     }

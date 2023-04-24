@@ -74,25 +74,25 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
             break;
         default:
             const std::string msg =
-                "Method: " + request.methodAsString() + " not supported";
+                "Method: " + request.method_as_string() + " not supported";
             const HsmObjectStoreError error(
                 HsmObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
             LOG_ERROR("Error: " << error);
-            response->onError(error);
+            response->on_error(error);
             return response;
     }
     return response;
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::makeRequest(
+ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const ostk::ObjectStoreRequest& request,
     ostk::Stream* stream) const noexcept
 {
-    auto response = ostk::ObjectStoreResponse::Create(request);
+    auto response = ostk::ObjectStoreResponse::create(request);
     if (!HsmObjectStoreRequest::is_hsm_supported_method(request.method())) {
         const std::string msg =
             "Requested unsupported type for base object operation in HSM object store client.";
-        response->onError(
+        response->on_error(
             {ostk::ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg});
         return response;
     }
@@ -120,11 +120,12 @@ void HsmObjectStoreClient::get(
     const ostk::Extent& extent,
     ostk::Stream* stream) const
 {
-    HsmObjectStoreRequest request(object.mId, HsmObjectStoreRequestMethod::GET);
-    request.setExtent(extent);
+    HsmObjectStoreRequest request(
+        object.m_id, HsmObjectStoreRequestMethod::GET);
+    request.set_extent(extent);
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
-            "Error in single tier GET: " + response->getError().toString();
+            "Error in single tier GET: " + response->get_error().to_string();
         throw ostk::ObjectStoreException(
             {ostk::ObjectStoreErrorCode::ERROR, msg});
     }
@@ -135,11 +136,12 @@ void HsmObjectStoreClient::put(
     const ostk::Extent& extent,
     ostk::Stream* stream) const
 {
-    HsmObjectStoreRequest request(object.mId, HsmObjectStoreRequestMethod::PUT);
-    request.setExtent(extent);
+    HsmObjectStoreRequest request(
+        object.m_id, HsmObjectStoreRequestMethod::PUT);
+    request.set_extent(extent);
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
-            "Error in single tier PUT: " + response->getError().toString();
+            "Error in single tier PUT: " + response->get_error().to_string();
         throw ostk::ObjectStoreException(
             {ostk::ObjectStoreErrorCode::ERROR, msg});
     }
@@ -148,10 +150,10 @@ void HsmObjectStoreClient::put(
 void HsmObjectStoreClient::remove(const ostk::StorageObject& object) const
 {
     HsmObjectStoreRequest request(
-        object.mId, HsmObjectStoreRequestMethod::REMOVE);
+        object.m_id, HsmObjectStoreRequestMethod::REMOVE);
     if (const auto response = make_request(request); !response->ok()) {
         const std::string msg =
-            "Error in single tier REMOVE: " + response->getError().toString();
+            "Error in single tier REMOVE: " + response->get_error().to_string();
         throw ostk::ObjectStoreException(
             {ostk::ObjectStoreErrorCode::ERROR, msg});
     }
@@ -163,19 +165,19 @@ void HsmObjectStoreClient::on_exception(
     const std::string& message) const
 {
     if (!message.empty()) {
-        const std::string msg =
-            "Exception in " + request.methodAsString() + " method: " + message;
+        const std::string msg = "Exception in " + request.method_as_string()
+                                + " method: " + message;
         const HsmObjectStoreError error(
             HsmObjectStoreErrorCode::STL_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
-        response->onError(error);
+        response->on_error(error);
     }
     else {
         const std::string msg =
-            "Uknown Exception in " + request.methodAsString() + " method";
+            "Uknown Exception in " + request.method_as_string() + " method";
         const HsmObjectStoreError error(
             HsmObjectStoreErrorCode::UNKNOWN_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
-        response->onError(error);
+        response->on_error(error);
     }
 }

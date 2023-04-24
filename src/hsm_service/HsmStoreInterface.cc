@@ -26,7 +26,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::copy_data(
     uint8_t target_tier)
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::COPY);
-    request.setExtent(request.extent());
+    request.set_extent(request.extent());
     request.set_source_tier(request.source_tier());
     request.set_target_tier(request.target_tier());
     return m_object_store->make_request(request);
@@ -39,7 +39,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::move_data(
     uint8_t target_tier)
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::MOVE);
-    request.setExtent(request.extent());
+    request.set_extent(request.extent());
     request.set_source_tier(request.source_tier());
     request.set_target_tier(request.target_tier());
     return m_object_store->make_request(request);
@@ -69,7 +69,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::get_data(
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::GET);
     request.set_source_tier(source_tier);
-    request.setExtent(extent);
+    request.set_extent(extent);
     return m_object_store->make_request(request, stream);
 }
 
@@ -84,10 +84,10 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::put_data(
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::PUT);
     request.set_target_tier(target_tier);
     if (overwrite) {
-        request.object().updateModifiedTime();
+        request.object().update_modified_time();
     }
     else {
-        request.object().initializeTimestamps();
+        request.object().initialize_timestamps();
     }
     return m_object_store->make_request(request, stream);
 }
@@ -107,7 +107,7 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::release_data(
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::REMOVE);
     request.set_source_tier(source_tier);
-    request.setExtent(extent);
+    request.set_extent(extent);
     return m_object_store->make_request(request);
 }
 
@@ -132,6 +132,6 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::release_data(
 {
     HsmObjectStoreRequest request(
         object, HsmObjectStoreRequestMethod::REMOVE_ALL);
-    request.setExtent(extent);
+    request.set_extent(extent);
     return m_object_store->make_request(request);
 }

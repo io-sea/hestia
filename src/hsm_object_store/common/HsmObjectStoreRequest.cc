@@ -18,7 +18,7 @@ HsmObjectStoreRequest::HsmObjectStoreRequest(
 HsmObjectStoreRequest::HsmObjectStoreRequest(
     const ostk::Uuid& object_id, HsmObjectStoreRequestMethod method) :
     ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
-        object_id.toString(), method)
+        object_id.to_string(), method)
 {
 }
 
@@ -39,7 +39,7 @@ ostk::ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
 
     ostk::ObjectStoreRequest base_request(
         reqeust.object(), to_base_method(reqeust.method()));
-    base_request.setExtent(reqeust.extent());
+    base_request.set_extent(reqeust.extent());
     return base_request;
 }
 
@@ -91,20 +91,20 @@ bool HsmObjectStoreRequest::is_hsm_supported_method(
 
 bool HsmObjectStoreRequest::is_hsm_only_request() const
 {
-    return is_copy_or_move_request(mMethod);
+    return is_copy_or_move_request(m_method);
 }
 
-std::string HsmObjectStoreRequest::methodAsString() const
+std::string HsmObjectStoreRequest::method_as_string() const
 {
-    return to_string(mMethod);
+    return to_string(m_method);
 }
 
 std::string HsmObjectStoreRequest::to_string() const
 {
     std::stringstream sstr;
     sstr << "ObjectId: " << object().id() << " | ";
-    sstr << "Operation: " << to_string(mMethod) << " | ";
-    sstr << "Extent: " << extent().toString() << " | ";
+    sstr << "Operation: " << to_string(m_method) << " | ";
+    sstr << "Extent: " << extent().to_string() << " | ";
     sstr << "Source Tier: " << m_source_tier << " | ";
     sstr << "mTargetTier Tier: " << m_target_tier;
     return sstr.str();

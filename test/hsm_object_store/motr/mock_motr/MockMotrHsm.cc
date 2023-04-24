@@ -30,7 +30,7 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
     auto priority = HsmInternal::hsm_priority(0, tier);
     Motr::m0_composite_layer_add(layout, &sub_object, priority);
 
-    const auto full_ext = ostk::Extent::getFullRangeExtent();
+    const auto full_ext = ostk::Extent::get_full_range_extent();
     impl()->layer_extent_add(sub_object.m_id, full_ext, true, false);
 
     rc = impl()->create_obj(id, obj, false, HsmInternal::hsm_any_tier);
@@ -44,8 +44,8 @@ int Hsm::m0hsm_pwrite(
     Obj* obj, void* buffer, std::size_t length, std::size_t offset)
 {
     ostk::Extent write_extent;
-    write_extent.mOffset = offset;
-    write_extent.mLength = length;
+    write_extent.m_offset = offset;
+    write_extent.m_length = length;
 
     IoContext ctx;
     char* char_buf = static_cast<char*>(buffer);
@@ -64,7 +64,7 @@ int Hsm::m0hsm_pwrite(
             }
             ::memcpy(pad_buf, char_buf, rest);
             char_buf = pad_buf;
-            write_extent.mLength += m_io_block_size - rest;
+            write_extent.m_length += m_io_block_size - rest;
             length += m_io_block_size - rest;
         }
         if (num_blocks > max_block_count) {
@@ -172,8 +172,8 @@ int Hsm::m0hsm_copy(
     }
 
     ostk::Extent source_ext;
-    source_ext.mOffset = offset;
-    source_ext.mLength = length;
+    source_ext.m_offset = offset;
+    source_ext.m_length = length;
 
     CopyContext ctx;
     ctx.obj_id   = obj_id;
@@ -302,8 +302,8 @@ int Hsm::on_release_post_copy(
     return 0;
     if (((ctx->flags & HSM_KEEP_OLD_VERS) == 0) && gen > 0) {
         auto rc = impl()->m0hsm_release_maxgen(
-            ctx->obj_id, ctx->tgt_tier, gen - 1, match->mOffset, match->mLength,
-            hsm_rls_flags::HSM_KEEP_LATEST, false);
+            ctx->obj_id, ctx->tgt_tier, gen - 1, match->m_offset,
+            match->m_length, hsm_rls_flags::HSM_KEEP_LATEST, false);
         if (rc != 0) {
             return rc;
         }
@@ -349,8 +349,8 @@ int Hsm::m0hsm_stage(
     }
 
     ostk::Extent source_ext;
-    source_ext.mOffset = offset;
-    source_ext.mLength = length;
+    source_ext.m_offset = offset;
+    source_ext.m_length = length;
 
     CopyContext ctx;
     ctx.obj_id   = obj_id;
@@ -404,8 +404,8 @@ int Hsm::m0hsm_archive(
     }
 
     ostk::Extent source_ext;
-    source_ext.mOffset = offset;
-    source_ext.mLength = length;
+    source_ext.m_offset = offset;
+    source_ext.m_length = length;
 
     CopyContext ctx;
     ctx.obj_id   = obj_id;
@@ -441,8 +441,8 @@ int Hsm::m0hsm_multi_release(
     }
 
     ostk::Extent ext;
-    ext.mOffset = offset;
-    ext.mLength = length;
+    ext.m_offset = offset;
+    ext.m_length = length;
 
     HsmInternal::ReleaseContext ctx;
     ctx.obj_id   = obj_id;

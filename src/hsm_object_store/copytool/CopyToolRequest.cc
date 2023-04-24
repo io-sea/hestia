@@ -56,8 +56,8 @@ std::string CopyToolRequest::serialize() const
 {
     std::stringstream sstr;
     sstr << object_token << m_object_store_request.object().id() << "\n";
-    sstr << offset_token << m_object_store_request.extent().mOffset << "\n";
-    sstr << length_token << m_object_store_request.extent().mLength << "\n";
+    sstr << offset_token << m_object_store_request.extent().m_offset << "\n";
+    sstr << length_token << m_object_store_request.extent().m_length << "\n";
     sstr << source_token << m_object_store_request.source_tier() << "\n";
     sstr << target_token << m_object_store_request.target_tier() << "\n";
     return sstr.str();

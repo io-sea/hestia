@@ -18,8 +18,8 @@ class MotrObject {
     static mock::motr::Id to_motr_id(const ostk::Uuid& id)
     {
         mock::motr::Id motr_id;
-        motr_id.mLo = id.mLo;
-        motr_id.mHi = id.mHi;
+        motr_id.m_lo = id.m_lo;
+        motr_id.m_hi = id.m_hi;
         return motr_id;
     }
 

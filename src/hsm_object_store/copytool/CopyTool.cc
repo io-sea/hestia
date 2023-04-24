@@ -54,14 +54,14 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     ostk::Stream stream;
 
     HsmObjectStoreRequest get_request = request;
-    get_request.resetMethod(HsmObjectStoreRequestMethod::GET);
+    get_request.reset_method(HsmObjectStoreRequestMethod::GET);
     if (auto get_response = source_client->make_request(get_request, &stream);
         !get_response->ok()) {
         return get_response;
     }
 
     HsmObjectStoreRequest put_request = request;
-    put_request.resetMethod(HsmObjectStoreRequestMethod::PUT);
+    put_request.reset_method(HsmObjectStoreRequestMethod::PUT);
     if (auto put_response = target_client->make_request(put_request, &stream);
         !put_response->ok()) {
         return put_response;
@@ -70,7 +70,7 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     auto response           = HsmObjectStoreResponse::create(request);
     const auto stream_state = stream.flush();
     if (!stream_state.ok()) {
-        response->onError(
+        response->on_error(
             {HsmObjectStoreErrorCode::ERROR,
              "Error flushing stream: " + stream_state.message()});
     }

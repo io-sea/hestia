@@ -35,7 +35,7 @@ class HsmServiceRequest :
 
     const std::string& query() const { return m_query; }
 
-    std::string methodAsString() const override { return {}; }
+    std::string method_as_string() const override { return {}; }
 
     void set_extent(const ostk::Extent& extent);
 

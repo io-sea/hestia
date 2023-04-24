@@ -35,7 +35,7 @@ HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
             else {
                 auto client =
                     m_client_manager->get_client(request.source_tier());
-                auto response = client->makeRequest(
+                auto response = client->make_request(
                     HsmObjectStoreRequest::to_base_request(request));
                 return HsmObjectStoreResponse::create(
                     request, std::move(response));
@@ -57,7 +57,7 @@ HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
         }
         else {
             auto client   = m_client_manager->get_client(client_tier);
-            auto response = client->makeRequest(
+            auto response = client->make_request(
                 HsmObjectStoreRequest::to_base_request(request));
             return HsmObjectStoreResponse::create(request, std::move(response));
         }

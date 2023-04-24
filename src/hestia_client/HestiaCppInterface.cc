@@ -45,13 +45,13 @@ int HestiaCppInterface::put(
     request.set_should_put_overwrite(overwrite);
 
     ostk::Stream stream;
-    stream.setSource(ostk::InMemoryStreamSource::Create(buffer));
+    stream.set_source(ostk::InMemoryStreamSource::create(buffer));
 
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(
                 request, &stream);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
@@ -71,13 +71,13 @@ int HestiaCppInterface::get(
     request.set_source_tier(tier_id);
 
     ostk::Stream stream;
-    stream.setSink(ostk::InMemoryStreamSink::Create(buffer));
+    stream.set_sink(ostk::InMemoryStreamSink::create(buffer));
 
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(
                 request, &stream);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
@@ -100,7 +100,7 @@ int HestiaCppInterface::copy(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     return rc::ok();
 }
@@ -119,7 +119,7 @@ int HestiaCppInterface::move(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     return rc::ok();
 }
@@ -135,7 +135,7 @@ int HestiaCppInterface::get_attributes(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
 
     attributes = response->query_result();
@@ -151,7 +151,7 @@ int HestiaCppInterface::set_attributes(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     return rc::ok();
 }
@@ -162,7 +162,7 @@ int HestiaCppInterface::release(const ostk::Uuid& object_id)
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     return rc::ok();
 }
@@ -175,7 +175,7 @@ int HestiaCppInterface::release(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     return rc::ok();
 }
@@ -188,7 +188,7 @@ int HestiaCppInterface::list_objects(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     objects = response->objects();
 
@@ -202,7 +202,7 @@ int HestiaCppInterface::list_tiers(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     tiers = response->tiers();
     return rc::ok();
@@ -215,7 +215,7 @@ int HestiaCppInterface::list_attributes(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
-        return rc::error(response->getError());
+        return rc::error(response->get_error());
     }
     attributes = response->query_result();
     return rc::ok();

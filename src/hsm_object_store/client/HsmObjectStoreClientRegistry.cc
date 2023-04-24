@@ -46,8 +46,8 @@ ostk::ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
         }
         else if (
             client_type.m_identifier
-            == ostk::FileObjectStoreClient::getRegistryIdentifier()) {
-            return ostk::FileObjectStoreClient::Create();
+            == ostk::FileObjectStoreClient::get_registry_identifier()) {
+            return ostk::FileObjectStoreClient::create();
         }
     }
     else {

@@ -10,9 +10,9 @@ uint32_t HsmInternal::hsm_priority(uint32_t generation, uint8_t tier_idx)
 Id HsmInternal::hsm_subobj_id(Id id, uint32_t gen, uint8_t tier)
 {
     Id newid = id;
-    newid.mHi <<= 32;
-    newid.mHi |= (1LL << 31);
-    newid.mHi |= hsm_priority(gen, tier);
+    newid.m_hi <<= 32;
+    newid.m_hi |= (1LL << 31);
+    newid.m_hi |= hsm_priority(gen, tier);
     return newid;
 }
 
@@ -165,7 +165,7 @@ int HsmInternal::top_layer_add_read_extent(Obj* obj, const ostk::Extent& extent)
         /* clean older versions of data in the write tier */
         rc = m0hsm_release_maxgen(
             obj->m_id, hsm_prio2tier(layer->m_priority), gen - 1,
-            extent.mOffset, extent.mLength, hsm_rls_flags::HSM_KEEP_LATEST,
+            extent.m_offset, extent.m_length, hsm_rls_flags::HSM_KEEP_LATEST,
             false);
     }
     return rc;
@@ -189,7 +189,7 @@ int HsmInternal::layer_extent_del(Id subobjid, off_t offset, bool write)
     }
 
     ostk::Extent ext;
-    ext.mOffset = offset;
+    ext.m_offset = offset;
     layer->mark_for_deletion(ext, write);
     layer->delete_marked_extents(write);
     return 0;
@@ -260,7 +260,7 @@ int HsmInternal::layout_add_top_layer(Id id, Layout* layout, uint8_t tier)
     const auto priority = HsmInternal::hsm_priority(gen, tier);
     Motr::m0_composite_layer_add(layout, &subobj, priority);
 
-    const auto full_ext = ostk::Extent::getFullRangeExtent();
+    const auto full_ext = ostk::Extent::get_full_range_extent();
     if (auto rc = layer_extent_add(subobj.m_id, full_ext, true, false); rc) {
         return rc;
     }
@@ -315,8 +315,8 @@ int HsmInternal::match_layer_foreach(
             }
 
             if (m == ExtentMatchCode::EM_PARTIAL) {
-                current_extents.mOffset = match.mOffset + match.mLength;
-                current_extents.mLength -= match.mLength;
+                current_extents.m_offset = match.m_offset + match.m_length;
+                current_extents.m_length -= match.m_length;
             }
 
         } while (!stop && m == ExtentMatchCode::EM_PARTIAL);
@@ -403,8 +403,8 @@ void HsmInternal::print_layer(
     auto tier = hsm_prio2tier(layer->m_priority);
 
     if (details) {
-        sink += "subobj=" + layer->m_id.toString() + "\n";
-        sink += "lid=" + layer->m_parent_id.toString() + "\n";
+        sink += "subobj=" + layer->m_id.to_string() + "\n";
+        sink += "lid=" + layer->m_parent_id.to_string() + "\n";
         sink += "priority=" + std::to_string(layer->m_priority);
         sink += " (gen=" + std::to_string(gen)
                 + ", tier=" + std::to_string(tier) + ")\n";
@@ -443,8 +443,8 @@ int HsmInternal::m0hsm_release_maxgen(
     }
 
     ostk::Extent ext;
-    ext.mOffset = offset;
-    ext.mLength = len;
+    ext.m_offset = offset;
+    ext.m_length = len;
 
     ReleaseContext ctx;
     ctx.obj_id   = id;
@@ -571,8 +571,8 @@ int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, ostk::Extent* range)
     Motr::m0_entity_open(&src_obj);
     Motr::m0_entity_open(&tgt_obj);
 
-    std::intmax_t rest = range->mLength;
-    auto start         = range->mOffset;
+    std::intmax_t rest = range->m_length;
+    auto start         = range->m_offset;
     auto block_size    = m_io_block_size;
 
     IoContext ctx;

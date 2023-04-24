@@ -25,7 +25,7 @@ void CopyToolResponse::set_object_store_respose(
     if (!m_object_store_response->ok()) {
         const std::string msg =
             "Object store failed with error: "
-            + m_object_store_response->getError().toString();
+            + m_object_store_response->get_error().to_string();
         set_error({CopyToolError::Code::ERROR_OBJECT_STORE, msg});
     }
 }

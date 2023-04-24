@@ -14,7 +14,7 @@ class HsmObjectStoreClient : public ostk::ObjectStoreClient {
         ostk::Stream* stream = nullptr) const noexcept;
 
   protected:
-    [[nodiscard]] ostk::ObjectStoreResponse::Ptr makeRequest(
+    [[nodiscard]] ostk::ObjectStoreResponse::Ptr make_request(
         const ostk::ObjectStoreRequest& request,
         ostk::Stream* stream = nullptr) const noexcept override;
 

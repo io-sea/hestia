@@ -45,7 +45,7 @@ macro(fetch_ostk)
     FetchContent_Declare(
     ostk
     GIT_REPOSITORY https://git.ichec.ie/io-sea-internal/objectstore-toolkit
-    GIT_TAG        61bea7f6c06240d1365e6238fa783660a9c56a70
+    GIT_TAG        7cbd972776668623f5196555d2569c877cf7fedb
     SYSTEM
     FIND_PACKAGE_ARGS
     )

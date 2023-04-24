@@ -12,7 +12,7 @@ HsmObjectStoreClientPlugin::HsmObjectStoreClientPlugin(
 
 HsmObjectStoreClientPlugin::~HsmObjectStoreClientPlugin()
 {
-    mPluginHandle->destroyResource(this);
+    m_plugin_handle->destroy_resource(this);
 }
 
 HsmObjectStoreClient* HsmObjectStoreClientPlugin::get_client() const
@@ -26,12 +26,12 @@ HsmObjectStorePluginHandle::HsmObjectStorePluginHandle(
 {
 }
 
-void HsmObjectStorePluginHandle::destroyResource(
+void HsmObjectStorePluginHandle::destroy_resource(
     ostk::PluginResource* resource) const
 {
-    LOG_INFO("Destroying resource from: " << mName);
+    LOG_INFO("Destroying resource from: " << m_name);
     using func_t      = void(HsmObjectStoreClient*);
-    auto destroy_func = reinterpret_cast<func_t*>(mDestroyFunc);
+    auto destroy_func = reinterpret_cast<func_t*>(m_destroy_func);
     if (destroy_func == nullptr) {
         throw std::runtime_error("Function to destory resource is invalid");
     }
@@ -46,10 +46,10 @@ void HsmObjectStorePluginHandle::destroyResource(
 }
 
 std::unique_ptr<ostk::PluginResource>
-HsmObjectStorePluginHandle::loadResourceWithFactoryFunc() const
+HsmObjectStorePluginHandle::load_resource_with_factory_func() const
 {
     using func_t     = HsmObjectStoreClient*();
-    auto create_func = reinterpret_cast<func_t*>(mCreateFunc);
+    auto create_func = reinterpret_cast<func_t*>(m_create_func);
     auto client      = create_func();
     if (client == nullptr) {
         LOG_ERROR("Got invalid client from factory func.");
@@ -66,8 +66,8 @@ HsmObjectStorePluginFactory::HsmObjectStorePluginFactory(
 {
 }
 
-std::unique_ptr<ostk::PluginHandle> HsmObjectStorePluginFactory::createHandle(
+std::unique_ptr<ostk::PluginHandle> HsmObjectStorePluginFactory::create_handle(
     void* raw_handle) const
 {
-    return std::make_unique<HsmObjectStorePluginHandle>(raw_handle, mName);
+    return std::make_unique<HsmObjectStorePluginHandle>(raw_handle, m_name);
 }

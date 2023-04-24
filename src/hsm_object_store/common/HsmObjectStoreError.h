@@ -20,10 +20,10 @@ class HsmObjectStoreError : public ostk::RequestError<HsmObjectStoreErrorCode> {
     HsmObjectStoreError(
         const ostk::ObjectStoreError& error, const std::string& message);
 
-    std::string toString() const override;
+    std::string to_string() const override;
 
   private:
-    std::string codeAsString() const override;
+    std::string code_as_string() const override;
     static std::string code_to_string(HsmObjectStoreErrorCode code);
     ostk::ObjectStoreError m_base_object_store_error;
 };

@@ -1,6 +1,6 @@
 #include "HsmObject.h"
 
-HsmObject::HsmObject(const ostk::Uuid& id) : m_storage_object(id.toString()) {}
+HsmObject::HsmObject(const ostk::Uuid& id) : m_storage_object(id.to_string()) {}
 
 HsmObject::HsmObject(const ostk::StorageObject& object) :
     m_storage_object(object)

@@ -20,19 +20,19 @@ HsmObjectStoreError::HsmObjectStoreError(
 {
 }
 
-std::string HsmObjectStoreError::toString() const
+std::string HsmObjectStoreError::to_string() const
 {
     std::string msg = "# " + std::to_string(number()) + " | "
-                      + code_to_string(mCode) + " | " + mMessage;
-    if (mCode == HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR) {
-        msg += "\n" + m_base_object_store_error.toString();
+                      + code_to_string(m_code) + " | " + m_message;
+    if (m_code == HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR) {
+        msg += "\n" + m_base_object_store_error.to_string();
     }
     return msg;
 }
 
-std::string HsmObjectStoreError::codeAsString() const
+std::string HsmObjectStoreError::code_as_string() const
 {
-    return code_to_string(mCode);
+    return code_to_string(m_code);
 }
 
 std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)

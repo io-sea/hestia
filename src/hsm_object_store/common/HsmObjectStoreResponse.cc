@@ -62,15 +62,15 @@ ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
     const ostk::BaseObjectStoreRequest& request,
     const HsmObjectStoreResponse* response)
 {
-    auto base_response = ostk::ObjectStoreResponse::Create(request);
+    auto base_response = ostk::ObjectStoreResponse::create(request);
     if (!response->ok()) {
-        base_response->onError(
+        base_response->on_error(
             {ostk::ObjectStoreErrorCode::ERROR,
-             response->getError().toString()});
+             response->get_error().to_string()});
     }
     else {
-        base_response->object() = response->mObject;
-        base_response->setObjectFound(response->objectFound());
+        base_response->object() = response->m_object;
+        base_response->set_object_found(response->object_found());
     }
     return base_response;
 }

@@ -7,12 +7,12 @@ HsmObjectAdapter::Ptr HsmObjectAdapter::create()
 
 void HsmObjectAdapter::serialize(HsmObject& hsm_object)
 {
-    auto md = &hsm_object.object().mMetadata;
+    auto md = &hsm_object.object().m_metadata;
     add_if_not_empty(
         md, last_modified_key,
-        std::to_string(hsm_object.object().mLastModifiedTime));
+        std::to_string(hsm_object.object().m_last_modified_time));
     add_if_not_empty(
-        md, created_key, std::to_string(hsm_object.object().mCreationTime));
+        md, created_key, std::to_string(hsm_object.object().m_creation_time));
     add_if_not_empty(md, dataset_key, hsm_object.dataset());
 
     std::stringstream sstr;
@@ -36,6 +36,6 @@ void HsmObjectAdapter::add_if_not_empty(
     ostk::Metadata* md, const std::string& key, const std::string& value)
 {
     if (!value.empty()) {
-        md->setItem(key, value);
+        md->set_item(key, value);
     }
 }

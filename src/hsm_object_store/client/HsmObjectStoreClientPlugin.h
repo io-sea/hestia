@@ -23,10 +23,10 @@ class HsmObjectStorePluginHandle : public ostk::PluginHandle {
   public:
     HsmObjectStorePluginHandle(void* raw_handle, const std::string& name);
 
-    void destroyResource(ostk::PluginResource* resource) const override;
+    void destroy_resource(ostk::PluginResource* resource) const override;
 
   protected:
-    std::unique_ptr<ostk::PluginResource> loadResourceWithFactoryFunc()
+    std::unique_ptr<ostk::PluginResource> load_resource_with_factory_func()
         const override;
 };
 
@@ -34,6 +34,6 @@ class HsmObjectStorePluginFactory : public ostk::PluginFactory {
   public:
     HsmObjectStorePluginFactory(const std::string& name);
 
-    std::unique_ptr<ostk::PluginHandle> createHandle(
+    std::unique_ptr<ostk::PluginHandle> create_handle(
         void* raw_handle) const override;
 };
