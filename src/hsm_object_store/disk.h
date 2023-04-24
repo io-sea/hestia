@@ -1,4 +1,4 @@
-#include "../../src/object_store.h"
+#include "object_store.h"
 #include <filesystem>
 
 namespace hestia {
@@ -11,7 +11,7 @@ class Disk : Object_store {
     Disk()
     {
         if (!m_store.exists()) {
-            std::filesystem::create_directory(m_store.path());
+            std::filesystem::create_directories(m_store.path());
         }
     };
     /// @copydoc Object_store::Object_store

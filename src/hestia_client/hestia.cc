@@ -1,10 +1,10 @@
-#include "hestia.h"
+#include "hestia_old.h"
 
 #include "HestiaCppInterface.h"
 
 #include <fstream>
 
-namespace hestia {
+namespace hestia::old {
 
 int put(
     const struct hsm_uint oid,
@@ -120,4 +120,4 @@ std::vector<uint8_t> locate(const struct hsm_uint& oid)
     HestiaCppInterface::list_tiers(ostk::Uuid(oid.lower, oid.higher), tiers);
     return tiers;
 }
-}  // namespace hestia
+}  // namespace hestia::old

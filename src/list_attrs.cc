@@ -1,5 +1,5 @@
-#include "../test/kv_store/disk.h"
 #include "hestia.h"
+#include "key_value_store/disk.h"
 
 std::string hestia::list_attrs(const struct hsm_uint& oid)
 {

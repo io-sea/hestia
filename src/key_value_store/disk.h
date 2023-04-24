@@ -1,4 +1,4 @@
-#include "../../src/kv_store.h"
+#include "kv_store.h"
 #include <filesystem>
 
 namespace hestia {
@@ -11,7 +11,7 @@ class Disk : Kv_store {
     Disk()
     {
         if (!m_store.exists()) {
-            std::filesystem::create_directory(m_store.path());
+            std::filesystem::create_directories(m_store.path());
         }
     };
 

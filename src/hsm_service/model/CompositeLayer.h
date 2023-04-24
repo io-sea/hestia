@@ -13,7 +13,10 @@ class MarkableExtent : public ostk::Extent {
   public:
     MarkableExtent() : ostk::Extent() {}
 
-    MarkableExtent(std::size_t offset, std::size_t length) : ostk::Extent() {}
+    MarkableExtent(std::size_t offset, std::size_t length) :
+        ostk::Extent(offset, length)
+    {
+    }
 
     MarkableExtent(const ostk::Extent& extent) : ostk::Extent(extent) {}
     bool m_marked_for_delete{false};

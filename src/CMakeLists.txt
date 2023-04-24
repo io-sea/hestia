@@ -1,19 +1,26 @@
 add_subdirectory(data_placement_engine)
 add_subdirectory(event_feed)
-add_subdirectory(object_store)
 add_subdirectory(key_value_store)
+add_subdirectory(hsm_object_store)
 add_subdirectory(hsm_service)
 add_subdirectory(hestia_client)
 
-add_subdirectory(../test/kv_store ${CMAKE_CURRENT_BINARY_DIR}/kv_store)
-add_subdirectory(../test/object_store ${CMAKE_CURRENT_BINARY_DIR}/ob_store)
-add_subdirectory(../test/data_placement_engine ${CMAKE_CURRENT_BINARY_DIR}/dpe)
+include(ostk/FetchDependencies)
+fetch_nlohmann_json()
 
-add_library(
-    hestia_lib
+add_library(dpe data_placement_engine/eejit.cc)
+target_link_libraries(dpe PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(dpe PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-    SHARED 
+add_library(kv_disk key_value_store/disk.cc)
+target_link_libraries(kv_disk PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(kv_disk PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
+add_library(obj_disk hsm_object_store/disk.cc)
+target_link_libraries(obj_disk PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(obj_disk PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+
+add_library(hestia_lib SHARED 
     put.cc
     get.cc
     set_attrs.cc
@@ -29,12 +36,9 @@ add_library(
     locate.cc
 )
 
-target_compile_features(hestia_lib PUBLIC cxx_std_17)
-
-if(APPLE)
-    target_link_libraries(hestia_lib PUBLIC nlohmann_json::nlohmann_json)
-else()
-    target_link_libraries(hestia_lib PUBLIC nlohmann_json::nlohmann_json stdc++fs)
+target_link_libraries(hestia_lib PUBLIC dpe kv_disk obj_disk)
+if(NOT APPLE)
+    target_link_libraries(hestia_lib PUBLIC stdc++fs)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -42,25 +46,15 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_link_libraries(hestia_lib PUBLIC development_flags)
 endif()
 
-target_link_libraries(hestia_lib PRIVATE kv_disk obj_disk dpe)
-
-add_executable(
-    hestia
-
-    main.cc
-)
+add_executable(hestia main.cc)
 
 target_link_libraries(hestia hestia_lib)
 
 set(HESTIA_PUBLIC_HEADERS
-    "hestia.h"
-    "types.h"
+    hestia.h
+    types.h
     )
-
-
-set_target_properties(hestia_lib PROPERTIES
-                      PUBLIC_HEADER "${HESTIA_PUBLIC_HEADERS}"
-                      POSITION_INDEPENDENT_CODE ON)
+set_target_properties(hestia_lib PROPERTIES PUBLIC_HEADER "${HESTIA_PUBLIC_HEADERS}")
 install(TARGETS hestia_lib
         LIBRARY DESTINATION lib64
         PUBLIC_HEADER DESTINATION include)

@@ -3,7 +3,7 @@ include(ostk/AddModule)
 add_module(
     MODULE_NAME client
     HEADERS
-        hestia.h
+        hestia_old.h
         HestiaConfig.h
         HestiaCppInterface.h
         application/ApplicationContext.h
@@ -17,5 +17,7 @@ add_module(
     INTERNAL_INCLUDE_DIRS
         application
     INTERNAL_DEPENDENCIES 
-        hsm_service    
+        hsm_service
+    DEPENDENCIES  
+        nlohmann_json::nlohmann_json       
 )

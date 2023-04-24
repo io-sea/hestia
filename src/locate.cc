@@ -1,5 +1,5 @@
-#include "../test/kv_store/disk.h"
 #include "hestia.h"
+#include "key_value_store/disk.h"
 
 std::vector<uint8_t> hestia::locate(const struct hsm_uint& oid)
 {

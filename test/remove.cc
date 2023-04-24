@@ -4,8 +4,8 @@
 #include <string>
 
 #include "common.h"
-#include "kv_store/disk.h"
-#include "object_store/disk.h"
+#include "hsm_object_store/disk.h"
+#include "key_value_store/disk.h"
 
 SCENARIO(
     "Remove erases the object from the KV store and the object store",

@@ -1,29 +1,31 @@
 include(ostk/FetchDependencies)
 fetch_catch2()
 
-include(CTest)
+add_subdirectory(hsm_object_store)
 
-#
-# Set test files to be added to the test executable
-#
-set(
-    tests
-        
+set(UNIT_TEST_SOURCES
     put_get.cc
     set_get_attrs.cc
     list_attrs.cc
-    remove.cc
     copy.cc
+    remove.cc
     move.cc
     release.cc
     locate.cc
     list.cc
     get_tiers_info.cc
     list_tiers.cc
+    hsm_object_store/motr/TestMockMotrBackend.cc
+    hsm_object_store/motr/TestMockMotrHsm.cc
+    hsm_object_store/motr/TestMotrHsmClient.cc
 )
 
-set(sources catch_main.cc ${tests})
+add_executable(unit_tests ${UNIT_TEST_SOURCES})
+target_compile_options(unit_tests PRIVATE -Wunused-parameter)
 
-add_executable(all_tests ${sources})
-target_link_libraries(all_tests PRIVATE hestia_lib Catch2::Catch2WithMain)
-catch_discover_tests(all_tests)
+target_link_libraries(unit_tests PRIVATE 
+    hestia_client 
+    hestia_motr_plugin_mock
+    hestia_lib 
+    Catch2::Catch2WithMain)
+catch_discover_tests(unit_tests)

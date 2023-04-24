@@ -40,10 +40,12 @@ macro(fetch_ostk)
 
     set(OSTK_WITH_PHOBOS OFF CACHE INTERNAL "")
     set(OSTK_WITH_S3_CLIENT OFF CACHE INTERNAL "")
+    set(OSTK_BUILD_TESTS OFF CACHE INTERNAL "")
+    
     FetchContent_Declare(
     ostk
     GIT_REPOSITORY https://git.ichec.ie/io-sea-internal/objectstore-toolkit
-    GIT_TAG        c152435d0d22fe8e286980b54c5e58cb11077d40
+    GIT_TAG        61bea7f6c06240d1365e6238fa783660a9c56a70
     SYSTEM
     FIND_PACKAGE_ARGS
     )

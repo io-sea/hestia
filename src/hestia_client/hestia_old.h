@@ -4,24 +4,9 @@
 #include <list>
 #include <vector>
 
-namespace hestia {
+#include "../types.h"
 
-struct hsm_uint {
-    std::uint64_t higher = 0;
-    std::uint64_t lower  = 0;
-
-    hsm_uint() {}
-    hsm_uint(std::uint64_t val) : lower(val) {}
-    hsm_uint(std::uint64_t higher, std::uint64_t lower) :
-        higher(higher), lower(lower)
-    {
-    }
-
-    bool operator==(const hsm_uint& other) const
-    {
-        return other.higher == higher && other.lower == lower;
-    }
-};
+namespace hestia::old {
 
 typedef enum hestia_error_e {
     /// No error
@@ -180,4 +165,4 @@ std::vector<uint8_t> list_tiers();
 /// @returns a vector of all the tier IDs where the object is located
 std::vector<uint8_t> locate(const struct hsm_uint& oid);
 
-}  // namespace hestia
+}  // namespace hestia::old

@@ -1,6 +1,6 @@
-#include "../test/kv_store/disk.h"
-#include "../test/object_store/disk.h"
 #include "hestia.h"
+#include "hsm_object_store/disk.h"
+#include "key_value_store/disk.h"
 // #include "tiers.h"
 
 int hestia::release(const struct hsm_uint& oid, const std::uint8_t src_tier)

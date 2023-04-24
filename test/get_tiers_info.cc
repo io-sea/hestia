@@ -1,5 +1,5 @@
-#include "./data_placement_engine/eejit.h"
 #include "common.h"
+#include "data_placement_engine/eejit.h"
 #include "tiers.h"
 #include <catch2/catch_all.hpp>
 #include <hestia.h>

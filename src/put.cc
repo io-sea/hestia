@@ -1,7 +1,7 @@
-#include "../test/data_placement_engine/eejit.h"
-#include "../test/kv_store/disk.h"
-#include "../test/object_store/disk.h"
+#include "data_placement_engine/eejit.h"
 #include "hestia.h"
+#include "hsm_object_store/disk.h"
+#include "key_value_store/disk.h"
 #include "tiers.h"
 #include <chrono>
 #include <cstdio>

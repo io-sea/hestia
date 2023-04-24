@@ -1,6 +1,6 @@
-#include "../test/kv_store/disk.h"
-#include "../test/object_store/disk.h"
 #include "hestia.h"
+#include "hsm_object_store/disk.h"
+#include "key_value_store/disk.h"
 
 int hestia::get(
     struct hsm_uint oid,

@@ -28,6 +28,7 @@ SCENARIO(
             const int dest_tier = 0;
             auto rc =
                 hestia::put(oid, false, data.data(), 0, data.size(), dest_tier);
+
             REQUIRE(rc == 0);
             /*
                         const auto json_attrs =

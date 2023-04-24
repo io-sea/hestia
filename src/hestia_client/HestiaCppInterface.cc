@@ -1,6 +1,6 @@
 #include "HestiaCppInterface.h"
 
-#include "hestia.h"
+#include "hestia_old.h"
 
 #include "ApplicationContext.h"
 #include "HsmService.h"
@@ -13,20 +13,20 @@ int error(const ostk::RequestError<HsmServiceErrorCode>& error)
 {
     switch (error.code()) {
         case HsmServiceErrorCode::NO_ERROR:
-            return hestia::hestia_error_t::HESTIA_ERROR_OK;
+            return hestia::old::hestia_error_t::HESTIA_ERROR_OK;
         default:
-            return hestia::hestia_error_t::HESTIA_ERROR_UNKOWN;
+            return hestia::old::hestia_error_t::HESTIA_ERROR_UNKOWN;
     }
 }
 
 int ok()
 {
-    return hestia::hestia_error_t::HESTIA_ERROR_OK;
+    return hestia::old::hestia_error_t::HESTIA_ERROR_OK;
 }
 
 int bad_stream()
 {
-    return hestia::hestia_error_t::HESTIA_ERROR_BAD_STREAM;
+    return hestia::old::hestia_error_t::HESTIA_ERROR_BAD_STREAM;
 }
 
 }  // namespace rc
