@@ -84,7 +84,7 @@ TEST_CASE_METHOD(
 
     std::string recontstructed_content(sink.begin(), sink.end());
     REQUIRE(recontstructed_content == content);
-};
+}
 
 TEST_CASE_METHOD(
     MotrHsmTestFixture, "Test Mock Motr HSM - Copy", "[mock-motr-hsm]")
@@ -134,4 +134,4 @@ TEST_CASE_METHOD(
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
     std::cerr << "m0hsm_copy: \n" << dump_target;
-};
+}

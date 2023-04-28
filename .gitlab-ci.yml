@@ -113,6 +113,7 @@ Debug:
   variables:
     <<: *default_cmake_variables
     CMAKE_BUILD_TYPE: Debug
+    HESTIA_BUILD_TESTS: "ON" # Ensure all code is seen by Debug build (tests not run)
       #  artifacts:
       #name: debug 
       #paths:
