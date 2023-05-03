@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 # Set number of processes to use
-nprocs=1
+HESTIA_LINTER_THREADS=4
+if [ $HESTIA_BUILD_THREADS -ge $HESTIA_LINTER_THREADS ]
+then
+    HESTIA_LINTER_THREADS=$HESTIA_BUILD_THREADS
+fi
 
 # Exit on first error
 set -o errexit
@@ -15,7 +19,6 @@ then
     shift
     echo
     echo "BUILD_DIRECTORY: ${build_dir}"
-    echo
 else
     echo
     echo "Error: wrong number of arguments"
@@ -26,9 +29,13 @@ else
     exit 1
 fi
 
-
+# Assume this file is in hestia/infra/scripts.
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source_dir="$( cd "${script_dir}/.." && pwd)"
+echo "SCRIPT DIRECTORY: ${script_dir}"
+source_dir="$( cd "${script_dir}/../.." && pwd)"
+echo "SOURCE DIRECTORY: ${source_dir}"
+echo 
+
 
 # All the directories containing source files
 source_dirs="src test"
@@ -42,4 +49,4 @@ cd "${source_dir}"
 find ${source_dirs} \( \
     -iname "*.cc" -o -iname "*.c" \
 \) -print0 \
-    | xargs -0 -n 1 -P "${nprocs}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"
+    |  xargs -0 -P "${HESTIA_LINTER_THREADS}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"

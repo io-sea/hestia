@@ -3,9 +3,19 @@
 # Exit on first error
 set -o errexit
 
+HESTIA_FORMATTER_THREADS=4
+if [ $HESTIA_BUILD_THREADS -ge $HESTIA_FORMATTER_THREADS ]
+then
+    HESTIA_FORMATTER_THREADS=$HESTIA_BUILD_THREADS
+fi
+
 # Assume current script is in hestia/tools 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source_dir=${script_dir}/..
+echo "SCRIPT DIRECTORY: ${script_dir}"
+source_dir="$( cd "${script_dir}/../.." && pwd)"
+echo "SOURCE DIRECTORY: ${source_dir}"
+echo 
+
 
 # Get the format script
 FORMAT_EXECUTABLE="${script_dir}/format.sh"
@@ -19,7 +29,7 @@ source_dirs="src test"
 source_exts="cc c hh h"
 
 # Number of processes to run in parallel
-nprocs=1
+nprocs=$HESTIA_FORMATTER_THREADS
 
 for dir in $source_dirs
 do

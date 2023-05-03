@@ -1,12 +1,13 @@
-image: debian:latest
+image: debian:bullseye-slim
 
 stages: 
   - static analysis 
   - build
   - test
 
-.cmake_vriables:
-  default_cmake_variables: &default_cmake_variables 
+.variables:
+  default_variables: &default_variables 
+    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/cmake"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: Release 
     CXX: g++
@@ -14,54 +15,64 @@ stages:
     HESTIA_BUILD_TESTS: "OFF" 
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_DOC_DIR: ""
-    HESTIA_DEPENDENCIES: "ca-certificates wget build-essential cmake libssl-dev libcurl4-openssl-dev libxml2-dev git" 
-
+    HESTIA_BUILD_THREADS: "4"
+    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/hestia-deps-debian-11"
 .snippets: 
   - &install_dependencies
-    apt-get update -y
-    && [[ "${HESTIA_BUILD_TESTS}" = "ON" ]] && HESTIA_DEPENDENCIES="${HESTIA_DEPENDENCIES}" || true
-    && apt-get install --no-install-recommends -y ${HESTIA_DEPENDENCIES}
+    apt-get update -qqy
+    && apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.dev)
+    && ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
-    && ${CI_PROJECT_DIR}/infra/cmake/bootstrap_cmake.sh
     && (
       set -x;
-      ${CMAKE_BUILD_DIR}/cmake ..
-      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
-      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
-      -DCMAKE_CXX_COMPILER="${CXX}"
+      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR} 
+      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
+      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
+      -DCMAKE_CXX_COMPILER="${CXX}" 
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
     )
     && popd
   - &build 
-    make -C "${CMAKE_BUILD_DIR}" -j 4 
+    make -C "${CMAKE_BUILD_DIR}" -j $HESTIA_BUILD_THREADS
   - &test
-    make -C "${CMAKE_BUILD_DIR}" test
+    make -C "${CMAKE_BUILD_DIR}" test -j $HESTIA_BUILD_THREADS
+
+.cache:
+  cmake_install_cache: &cmake_install_cache
+    key: "cmake_3.26.3"
+    paths:
+      - .cache/cmake/
+
+.artifacts:
+  build_artifacts: &build_artifacts
+    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - build/
+    expire_in: 30 min
 
 .default_job: &default_job 
   tags: 
     - docker
   variables:
-    <<: *default_cmake_variables 
+    <<: *default_variables 
   before_script: 
     - *install_dependencies
   script: 
     - *configure 
     - *build 
+  cache:
+    <<: *cmake_install_cache
 
 Format: 
   <<: *default_job
   stage: static analysis
-  variables: 
-    <<: *default_cmake_variables 
   before_script: 
-    - apt-get update -y
-    - apt-get install --no-install-recommends -y
-      git
-      clang clang-format
+    - apt-get update -qqy 
+      && apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.format)
   script: 
-    - ./tools/run_format.sh
+    - ./infra/scripts/run_format.sh
       && git status 
       && git diff-index --quiet HEAD 
       || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
@@ -70,26 +81,27 @@ Lint:
   <<: *default_job
   stage: static analysis
   variables:
-    <<: *default_cmake_variables
+    <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
-    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    CXX: clang++
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
     - *install_dependencies
-    - apt-get update -y && apt-get upgrade -y
-    - apt-get install --no-install-recommends -y
-      clang clang-tidy
+    - apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.lint)
+  script:
     - *configure
-    - *build
-  script: 
-    - ./tools/run_lint.sh "${CMAKE_BUILD_DIR}"
+    # OSTK library structure setup
+    - make -C "${CMAKE_BUILD_DIR}" -j $HESTIA_BUILD_THREADS 
+      $(cat ${CI_PROJECT_DIR}/infra/deps/ostk-include-make-targets) 
+    - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}" 
+  artifacts:
+    <<: *build_artifacts
+
 
 #Documentation:
 #   <<: *default_job
 #   stage: build 
 #   variables:
-#       <<: *default_cmake_variables
+#       <<: *default_variables
 #       HESTIA_BUILD_DOCUMENTATION: "ON"
 #        HESTIA_DOC_DIR: ../../doc/parser/src
 #    script:
@@ -109,39 +121,33 @@ Lint:
 Debug:
   <<: *default_job
   stage: build
-  dependencies: []
   variables:
-    <<: *default_cmake_variables
+    <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
-    HESTIA_BUILD_TESTS: "ON" # Ensure all code is seen by Debug build (tests not run)
-      #  artifacts:
-      #name: debug 
-      #paths:
-      #- "${CMAKE_BUILD_DIR}"
+    HESTIA_BUILD_TESTS: "ON" # Ensure all code is seen by Debug build
+  artifacts:
+    <<: *build_artifacts
+    exclude:
+      - build/**/*.a
+      - build/**/*.so
+      - build/**/*.cc.o
 
 Release:
   <<: *default_job
   stage: build
-  variables:
-    <<: *default_cmake_variables
-      #  artifacts:
-      #name: release 
-      #paths:
-      #- "${CMAKE_BUILD_DIR}"
+  artifacts:
+    <<: *build_artifacts
+
 
 Unit_test:
   <<: *default_job
   stage: test
+  dependencies: 
+    - Release
   variables:
-    <<: *default_cmake_variables
-    CMAKE_BUILD_TYPE: Release 
+    <<: *default_variables
+    CMAKE_BUILD_TYPE: Release
     HESTIA_BUILD_TESTS: "ON"
-      #  artifacts:
-      # name: release 
-      #paths:
-      #- "${CMAKE_BUILD_DIR}"
-        #  dependencies:
-        #- Release
   script:
     - *configure
     - *build
