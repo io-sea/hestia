@@ -3,6 +3,7 @@
 #include "KeyValueStore.h"
 #include "MultiBackendHsmObjectStoreClient.h"
 
+namespace hestia {
 HsmStoreInterface::HsmStoreInterface(
     std::unique_ptr<KeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store) :
@@ -20,8 +21,8 @@ HsmStoreInterface::Ptr HsmStoreInterface::create(
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::copy_data(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
+    const hestia::StorageObject& object,
+    const hestia::Extent& extent,
     uint8_t source_tier,
     uint8_t target_tier)
 {
@@ -33,8 +34,8 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::copy_data(
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::move_data(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
+    const hestia::StorageObject& object,
+    const hestia::Extent& extent,
     uint8_t source_tier,
     uint8_t target_tier)
 {
@@ -45,27 +46,27 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::move_data(
     return m_object_store->make_request(request);
 }
 
-ostk::ObjectStoreResponse::Ptr HsmStoreInterface::exists(
-    const ostk::StorageObject& object)
+hestia::ObjectStoreResponse::Ptr HsmStoreInterface::exists(
+    const hestia::StorageObject& object)
 {
-    ostk::ObjectStoreRequest request(
-        object, ostk::ObjectStoreRequestMethod::EXISTS);
+    hestia::ObjectStoreRequest request(
+        object, hestia::ObjectStoreRequestMethod::EXISTS);
     return m_key_value_store->make_request(request);
 }
 
-ostk::ObjectStoreResponse::Ptr HsmStoreInterface::get_metadata(
-    const ostk::StorageObject& object)
+hestia::ObjectStoreResponse::Ptr HsmStoreInterface::get_metadata(
+    const hestia::StorageObject& object)
 {
-    ostk::ObjectStoreRequest request(
-        object, ostk::ObjectStoreRequestMethod::GET);
+    hestia::ObjectStoreRequest request(
+        object, hestia::ObjectStoreRequestMethod::GET);
     return m_key_value_store->make_request(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::get_data(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
+    const hestia::StorageObject& object,
+    const hestia::Extent& extent,
     uint8_t source_tier,
-    ostk::Stream* stream)
+    hestia::Stream* stream)
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::GET);
     request.set_source_tier(source_tier);
@@ -74,12 +75,12 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::get_data(
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::put_data(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
+    const hestia::StorageObject& object,
+    const hestia::Extent& extent,
     uint8_t source_tier,
     uint8_t target_tier,
     bool overwrite,
-    ostk::Stream* stream)
+    hestia::Stream* stream)
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::PUT);
     request.set_target_tier(target_tier);
@@ -92,17 +93,17 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::put_data(
     return m_object_store->make_request(request, stream);
 }
 
-ostk::ObjectStoreResponse::Ptr HsmStoreInterface::put_metadata(
-    const ostk::StorageObject& object)
+hestia::ObjectStoreResponse::Ptr HsmStoreInterface::put_metadata(
+    const hestia::StorageObject& object)
 {
-    ostk::ObjectStoreRequest request(
-        object, ostk::ObjectStoreRequestMethod::PUT);
+    hestia::ObjectStoreRequest request(
+        object, hestia::ObjectStoreRequestMethod::PUT);
     return m_key_value_store->make_request(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::release_data(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
+    const hestia::StorageObject& object,
+    const hestia::Extent& extent,
     uint8_t source_tier)
 {
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::REMOVE);
@@ -111,27 +112,28 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::release_data(
     return m_object_store->make_request(request);
 }
 
-ostk::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
-    const ostk::StorageObject& object)
+hestia::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
+    const hestia::StorageObject& object)
 {
-    ostk::ObjectStoreRequest request(
-        object, ostk::ObjectStoreRequestMethod::REMOVE);
+    hestia::ObjectStoreRequest request(
+        object, hestia::ObjectStoreRequestMethod::REMOVE);
     return m_key_value_store->make_request(request);
 }
 
-ostk::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
-    const ostk::StorageObject& object, uint8_t source_tier)
+hestia::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
+    const hestia::StorageObject& object, uint8_t source_tier)
 {
-    ostk::ObjectStoreRequest request(
-        object, ostk::ObjectStoreRequestMethod::REMOVE);
+    hestia::ObjectStoreRequest request(
+        object, hestia::ObjectStoreRequestMethod::REMOVE);
     return m_key_value_store->make_request(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmStoreInterface::release_data(
-    const ostk::StorageObject& object, const ostk::Extent& extent)
+    const hestia::StorageObject& object, const hestia::Extent& extent)
 {
     HsmObjectStoreRequest request(
         object, HsmObjectStoreRequestMethod::REMOVE_ALL);
     request.set_extent(extent);
     return m_object_store->make_request(request);
 }
+}  // namespace hestia

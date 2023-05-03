@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ostk/BlockStore.h>
+#include "BlockStore.h"
 
 #include <map>
 #include <memory>
@@ -9,11 +9,14 @@
 #include <string>
 #include <vector>
 
+namespace hestia {
 class CompositeLayer;
+}
 
-namespace mock::motr {
-using Id          = ostk::Uuid;
-using PoolVersion = ostk::Uuid;
+namespace hestia::mock::motr {
+
+using Id          = hestia::Uuid;
+using PoolVersion = hestia::Uuid;
 
 struct Layout {
     enum class Type { DEFAULT, COMPOSITE };
@@ -64,8 +67,8 @@ struct Obj {
     Id m_id;
     Id m_layout_id;
 
-    ostk::Uuid m_pool;
-    ostk::Uuid m_pool_version;
+    hestia::Uuid m_pool;
+    hestia::Uuid m_pool_version;
 
     Realm* m_realm{nullptr};
 };
@@ -91,17 +94,17 @@ struct RequestHandler {
 };
 
 struct Client {
-    std::optional<PoolVersion> get_pool_version(ostk::Uuid id);
+    std::optional<PoolVersion> get_pool_version(hestia::Uuid id);
 
-    void add_pool(ostk::Uuid pool_version);
+    void add_pool(hestia::Uuid pool_version);
 
-    ostk::BlockStore* get_pool(ostk::Uuid pool_version) const;
+    hestia::BlockStore* get_pool(hestia::Uuid pool_version) const;
 
-    ostk::BlockStore* get_default_pool() const;
+    hestia::BlockStore* get_default_pool() const;
 
     RequestHandler m_request_handler;
-    std::vector<std::unique_ptr<ostk::BlockStore>> m_pools;
+    std::vector<std::unique_ptr<hestia::BlockStore>> m_pools;
     bool m_is_initialized{false};
     bool m_is_hsm_initialized{false};
 };
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

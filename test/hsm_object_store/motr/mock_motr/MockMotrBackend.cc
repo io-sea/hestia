@@ -2,7 +2,7 @@
 
 #include "MockMotr.h"
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 void MotrBackend::add_object(Obj* object)
 {
     auto obj_ptr            = std::make_unique<Obj>(*object);
@@ -48,7 +48,7 @@ struct CompositeSubObject {
 struct ExtentCursor {
     bool at_end() const { return m_iter == m_extents->end(); }
 
-    ostk::Extent* item() const { return &(m_iter->second); }
+    hestia::Extent* item() const { return &(m_iter->second); }
 
     void next() { m_iter++; }
 
@@ -243,20 +243,20 @@ int MotrBackend::do_object_io(
         auto length  = extents.m_counts[idx];
         auto buf_loc = data.m_buffers[idx];
         if (io_type == IoType::READ) {
-            ostk::WriteableBufferView buffer(buf_loc, length);
+            hestia::WriteableBufferView buffer(buf_loc, length);
             pool->read(obj.m_id.to_string(), {offset, length}, buffer);
         }
         else {
-            ostk::ReadableBufferView buffer(buf_loc);
+            hestia::ReadableBufferView buffer(buf_loc);
             pool->write(obj.m_id.to_string(), {offset, length}, buffer);
         }
     }
     return 0;
 }
 
-ostk::Uuid MotrBackend::obj_id_to_fid(Id id)
+hestia::Uuid MotrBackend::obj_id_to_fid(Id id)
 {
-    return ostk::Uuid(id.m_lo, id.m_hi);
+    return hestia::Uuid(id.m_lo, id.m_hi);
 }
 
 void MotrBackend::set_layout(Realm* realm, Id obj_id, Layout* layout)
@@ -301,4 +301,4 @@ void MotrBackend::set_client(Client* client)
 {
     m_client = client;
 }
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

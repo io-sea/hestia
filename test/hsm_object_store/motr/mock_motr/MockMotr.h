@@ -3,7 +3,7 @@
 #include "IMotrInterfaceImpl.h"
 #include "MockMotrBackend.h"
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 class Motr {
   public:
     int m0_client_init(Client* client, MotrConfig* config, bool init_motr);
@@ -22,7 +22,7 @@ class Motr {
 
     static int m0_entity_open(Obj* obj);
 
-    static int m0_entity_create(ostk::Uuid* pool, Obj* obj);
+    static int m0_entity_create(hestia::Uuid* pool, Obj* obj);
 
     static int m0_entity_delete(Obj* obj);
 
@@ -41,4 +41,4 @@ class Motr {
 
     MotrBackend m_backend;
 };
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

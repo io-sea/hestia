@@ -2,6 +2,7 @@
 
 #include <memory>
 
+namespace hestia {
 class HsmObjectStoreResponse;
 
 class HsmMiddlewareResponse {
@@ -17,3 +18,4 @@ class HsmMiddlewareResponse {
   protected:
     std::unique_ptr<HsmObjectStoreResponse> m_object_store_response;
 };
+}  // namespace hestia

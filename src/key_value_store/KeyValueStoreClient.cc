@@ -1,7 +1,9 @@
 #include "KeyValueStoreClient.h"
 
-ostk::ObjectStoreResponse::Ptr KeyValueStoreClient::make_request(
-    const ostk::ObjectStoreRequest& request) const noexcept
+namespace hestia {
+ObjectStoreResponse::Ptr KeyValueStoreClient::make_request(
+    const ObjectStoreRequest& request) const noexcept
 {
     return nullptr;
 }
+}  // namespace hestia

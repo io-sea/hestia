@@ -1,6 +1,6 @@
 #include "MockMotrHsmInternal.h"
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 uint32_t HsmInternal::hsm_priority(uint32_t generation, uint8_t tier_idx)
 {
     uint32_t gen_prio = 0x00FFFFFF - generation;
@@ -26,7 +26,7 @@ uint8_t HsmInternal::hsm_prio2tier(uint32_t priority)
     return priority & 0xFF;
 }
 
-ostk::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx)
+hestia::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx)
 {
     if (m_hsm_pools.size() < tier_idx) {
         return nullptr;
@@ -44,7 +44,7 @@ int HsmInternal::create_obj(
     Motr::m0_obj_init(
         obj, m_uber_realm, &id, Motr::m0_client_layout_id(m_client));
 
-    ostk::Uuid* pool{nullptr};
+    hestia::Uuid* pool{nullptr};
     if (tier_idx != hsm_any_tier) {
         pool = hsm_tier2pool(tier_idx);
         if (pool == nullptr) {
@@ -145,7 +145,8 @@ int HsmInternal::obj_layout_set(Obj* obj, Layout* layout)
     return 0;
 }
 
-int HsmInternal::top_layer_add_read_extent(Obj* obj, const ostk::Extent& extent)
+int HsmInternal::top_layer_add_read_extent(
+    Obj* obj, const hestia::Extent& extent)
 {
     Layout* layout{nullptr};
     obj_layout_get(obj, &layout);
@@ -172,7 +173,7 @@ int HsmInternal::top_layer_add_read_extent(Obj* obj, const ostk::Extent& extent)
 }
 
 int HsmInternal::layer_extent_add(
-    Id subobjid, const ostk::Extent& ext, bool write, bool overwrite)
+    Id subobjid, const hestia::Extent& ext, bool write, bool overwrite)
 {
     auto layer = motr()->backend()->get_layer(subobjid);
     if (layer == nullptr) {
@@ -188,7 +189,7 @@ int HsmInternal::layer_extent_del(Id subobjid, off_t offset, bool write)
         return -1;
     }
 
-    ostk::Extent ext;
+    hestia::Extent ext;
     ext.m_offset = offset;
     layer->mark_for_deletion(ext, write);
     layer->delete_marked_extents(write);
@@ -260,7 +261,7 @@ int HsmInternal::layout_add_top_layer(Id id, Layout* layout, uint8_t tier)
     const auto priority = HsmInternal::hsm_priority(gen, tier);
     Motr::m0_composite_layer_add(layout, &subobj, priority);
 
-    const auto full_ext = ostk::Extent::get_full_range_extent();
+    const auto full_ext = hestia::Extent::get_full_range_extent();
     if (auto rc = layer_extent_add(subobj.m_id, full_ext, true, false); rc) {
         return rc;
     }
@@ -283,14 +284,14 @@ int HsmInternal::layout_add_top_layer(Id id, Layout* layout, uint8_t tier)
 int HsmInternal::match_layer_foreach(
     Layout* layout,
     uint8_t tier,
-    ostk::Extent* ext,
+    hestia::Extent* ext,
     layer_match_callback cb,
     void* cb_arg,
     bool stop_on_error)
 
 {
     bool stop = false;
-    ostk::Extent match;
+    hestia::Extent match;
     int rc = 0;
 
     for (auto& layer : layout->m_layers) {
@@ -300,7 +301,7 @@ int HsmInternal::match_layer_foreach(
         }
 
         ExtentMatchCode m;
-        ostk::Extent current_extents = *ext;
+        hestia::Extent current_extents = *ext;
         do {
             m = layer->match_extent(
                 current_extents, &match, ExtentMatchType::EMT_INTERSECT, false,
@@ -331,12 +332,12 @@ int HsmInternal::match_layer_foreach(
 struct min_gen_check_arg {
     int min_gen;
     Id except_subobj;
-    ostk::Extent* orig_extent;
+    hestia::Extent* orig_extent;
     bool found;
 };
 
 int HsmInternal::check_min_gen_exists(
-    Layout* layout, ostk::Extent* ext, int gen, CompositeLayer* except_layer)
+    Layout* layout, hestia::Extent* ext, int gen, CompositeLayer* except_layer)
 {
     min_gen_check_arg cb_arg;
     cb_arg.min_gen       = gen;
@@ -345,7 +346,7 @@ int HsmInternal::check_min_gen_exists(
     cb_arg.found         = false;
 
     auto min_gen_check_cb = [](void* cb_arg, Layout* layout,
-                               CompositeLayer* layer, ostk::Extent* match,
+                               CompositeLayer* layer, hestia::Extent* match,
                                bool* stop) -> int {
         min_gen_check_arg* arg = static_cast<min_gen_check_arg*>(cb_arg);
 
@@ -357,7 +358,7 @@ int HsmInternal::check_min_gen_exists(
             return 0;
         }
 
-        ostk::Extent dummy;
+        hestia::Extent dummy;
         if (layer->match_extent(
                 *arg->orig_extent, &dummy, ExtentMatchType::EMT_INTERSECT,
                 false, false)
@@ -442,7 +443,7 @@ int HsmInternal::m0hsm_release_maxgen(
         return rc;
     }
 
-    ostk::Extent ext;
+    hestia::Extent ext;
     ext.m_offset = offset;
     ext.m_length = len;
 
@@ -454,7 +455,7 @@ int HsmInternal::m0hsm_release_maxgen(
 
     auto on_layer_matched = [this](
                                 void* cb_arg, Layout* layout,
-                                CompositeLayer* layer, ostk::Extent* match,
+                                CompositeLayer* layer, hestia::Extent* match,
                                 bool* stop) {
         auto ctx = static_cast<ReleaseContext*>(cb_arg);
         return this->on_layer_match_for_release(
@@ -470,7 +471,7 @@ int HsmInternal::on_layer_match_for_release(
     ReleaseContext* ctx,
     Layout* layout,
     CompositeLayer* layer,
-    ostk::Extent* match,
+    hestia::Extent* match,
     bool* stop)
 {
     auto gen = HsmInternal::hsm_prio2gen(layer->m_priority);
@@ -559,7 +560,7 @@ int HsmInternal::read_blocks(const Obj& obj, const IoContext& ctx)
     return motr()->backend()->read_object(obj, ctx.m_extents, ctx.m_data);
 }
 
-int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, ostk::Extent* range)
+int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, hestia::Extent* range)
 {
     Obj src_obj;
     Obj tgt_obj;
@@ -600,4 +601,4 @@ int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, ostk::Extent* range)
     return 0;
 }
 
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

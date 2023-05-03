@@ -1,5 +1,11 @@
 find_package(Doxygen REQUIRED)
 
+doxygen_add_docs(
+    doxygen
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+if(FALSE)
 # Write a Doxyfile including the main doc/Doxyfile.
 # This sets the @INCLUDE_PATH variable to the project root.
 configure_file(
@@ -54,5 +60,6 @@ else(CUSTOM_DOCU_PATH)
     )
 
 endif(CUSTOM_DOCU_PATH)
+endif()
 
 

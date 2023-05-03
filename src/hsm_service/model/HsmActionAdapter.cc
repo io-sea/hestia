@@ -1,7 +1,8 @@
 #include "HsmActionAdapter.h"
 
-#include <ostk/JsonUtils.h>
+#include "JsonUtils.h"
 
+namespace hestia {
 HsmActionAdapter::Ptr HsmActionAdapter::create()
 {
     return std::unique_ptr<HsmActionAdapter>();
@@ -9,13 +10,13 @@ HsmActionAdapter::Ptr HsmActionAdapter::create()
 
 void HsmActionAdapter::parse(const std::string& input, HsmAction& action)
 {
-    ostk::Metadata metadata;
-    ostk::JsonUtils::from_json(input, metadata);
+    hestia::Metadata metadata;
+    hestia::JsonUtils::from_json(input, metadata);
 
     if (const auto migration =
             metadata.get_item(HsmAction::trigger_migration_key);
         !migration.empty()) {
-        auto parsed = ostk::JsonUtils::get_values(
+        auto parsed = hestia::JsonUtils::get_values(
             migration, {"operation", "src_tier", "tgt_tier"});
 
         if (parsed[0].empty() || parsed[1].empty()) {
@@ -32,3 +33,4 @@ void HsmActionAdapter::parse(const std::string& input, HsmAction& action)
         action.m_target_tier = std::stoi(parsed[2]);
     }
 }
+}  // namespace hestia

@@ -5,11 +5,12 @@
 #include "HsmServiceError.h"
 #include "HsmServiceRequest.h"
 
-#include <ostk/Response.h>
+#include "Response.h"
 
 #include <memory>
 
-class HsmServiceResponse : public ostk::Response<HsmServiceErrorCode> {
+namespace hestia {
+class HsmServiceResponse : public hestia::Response<HsmServiceErrorCode> {
   public:
     using Ptr = std::unique_ptr<HsmServiceResponse>;
 
@@ -19,7 +20,7 @@ class HsmServiceResponse : public ostk::Response<HsmServiceErrorCode> {
         HsmObjectStoreResponse::Ptr object_store_response);
     HsmServiceResponse(
         const HsmServiceRequest& request,
-        ostk::ObjectStoreResponse::Ptr kv_store_response);
+        hestia::ObjectStoreResponse::Ptr kv_store_response);
 
     static Ptr create(const HsmServiceRequest& request);
     static Ptr create(
@@ -27,19 +28,20 @@ class HsmServiceResponse : public ostk::Response<HsmServiceErrorCode> {
         HsmObjectStoreResponse::Ptr object_store_response);
     static Ptr create(
         const HsmServiceRequest& request,
-        ostk::ObjectStoreResponse::Ptr kv_store_response);
+        hestia::ObjectStoreResponse::Ptr kv_store_response);
 
     const std::string& query_result() const;
 
-    const std::vector<ostk::Uuid>& objects() const;
+    const std::vector<hestia::Uuid>& objects() const;
 
     const std::vector<uint8_t>& tiers() const;
 
   private:
     std::string m_query_result;
-    std::vector<ostk::Uuid> m_object_ids;
+    std::vector<hestia::Uuid> m_object_ids;
     std::vector<uint8_t> m_tiers;
 
     HsmObjectStoreResponse::Ptr m_object_store_response;
-    ostk::ObjectStoreResponse::Ptr m_key_value_store_response;
+    hestia::ObjectStoreResponse::Ptr m_key_value_store_response;
 };
+}  // namespace hestia

@@ -2,34 +2,34 @@
 
 #include <sstream>
 
+namespace hestia {
 HsmObjectStoreRequest::HsmObjectStoreRequest(
     const std::string& object_id, HsmObjectStoreRequestMethod method) :
-    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
-        object_id, method)
+    MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(object_id, method)
 {
 }
 
 HsmObjectStoreRequest::HsmObjectStoreRequest(
-    const ostk::StorageObject& object, HsmObjectStoreRequestMethod method) :
-    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(object, method)
+    const StorageObject& object, HsmObjectStoreRequestMethod method) :
+    MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(object, method)
 {
 }
 
 HsmObjectStoreRequest::HsmObjectStoreRequest(
-    const ostk::Uuid& object_id, HsmObjectStoreRequestMethod method) :
-    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
+    const Uuid& object_id, HsmObjectStoreRequestMethod method) :
+    MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
         object_id.to_string(), method)
 {
 }
 
 HsmObjectStoreRequest::HsmObjectStoreRequest(
-    const ostk::ObjectStoreRequest& request) :
-    ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
+    const ObjectStoreRequest& request) :
+    MethodObjectStoreRequest<HsmObjectStoreRequestMethod>(
         request, from_base_method(request.method()))
 {
 }
 
-ostk::ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
+ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
     const HsmObjectStoreRequest& reqeust)
 {
     if (reqeust.is_hsm_only_request()) {
@@ -37,21 +37,21 @@ ostk::ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
             "Attempted to convert a HSM operation to base type.");
     }
 
-    ostk::ObjectStoreRequest base_request(
+    ObjectStoreRequest base_request(
         reqeust.object(), to_base_method(reqeust.method()));
     base_request.set_extent(reqeust.extent());
     return base_request;
 }
 
 HsmObjectStoreRequestMethod HsmObjectStoreRequest::from_base_method(
-    ostk::ObjectStoreRequestMethod method)
+    ObjectStoreRequestMethod method)
 {
     switch (method) {
-        case ostk::ObjectStoreRequestMethod::GET:
+        case ObjectStoreRequestMethod::GET:
             return HsmObjectStoreRequestMethod::GET;
-        case ostk::ObjectStoreRequestMethod::PUT:
+        case ObjectStoreRequestMethod::PUT:
             return HsmObjectStoreRequestMethod::PUT;
-        case ostk::ObjectStoreRequestMethod::REMOVE:
+        case ObjectStoreRequestMethod::REMOVE:
             return HsmObjectStoreRequestMethod::REMOVE;
         default:
             throw std::runtime_error(
@@ -59,18 +59,18 @@ HsmObjectStoreRequestMethod HsmObjectStoreRequest::from_base_method(
     }
 }
 
-ostk::ObjectStoreRequestMethod HsmObjectStoreRequest::to_base_method(
+ObjectStoreRequestMethod HsmObjectStoreRequest::to_base_method(
     HsmObjectStoreRequestMethod method)
 {
     switch (method) {
         case HsmObjectStoreRequestMethod::GET:
-            return ostk::ObjectStoreRequestMethod::GET;
+            return ObjectStoreRequestMethod::GET;
         case HsmObjectStoreRequestMethod::PUT:
-            return ostk::ObjectStoreRequestMethod::PUT;
+            return ObjectStoreRequestMethod::PUT;
         case HsmObjectStoreRequestMethod::REMOVE:
-            return ostk::ObjectStoreRequestMethod::REMOVE;
+            return ObjectStoreRequestMethod::REMOVE;
         default:
-            return ostk::ObjectStoreRequestMethod::CUSTOM;
+            return ObjectStoreRequestMethod::CUSTOM;
     }
 }
 
@@ -82,11 +82,11 @@ bool HsmObjectStoreRequest::is_copy_or_move_request(
 }
 
 bool HsmObjectStoreRequest::is_hsm_supported_method(
-    ostk::ObjectStoreRequestMethod op_type)
+    ObjectStoreRequestMethod op_type)
 {
-    return op_type == ostk::ObjectStoreRequestMethod::GET
-           || op_type == ostk::ObjectStoreRequestMethod::PUT
-           || op_type == ostk::ObjectStoreRequestMethod::REMOVE;
+    return op_type == ObjectStoreRequestMethod::GET
+           || op_type == ObjectStoreRequestMethod::PUT
+           || op_type == ObjectStoreRequestMethod::REMOVE;
 }
 
 bool HsmObjectStoreRequest::is_hsm_only_request() const
@@ -138,3 +138,4 @@ uint8_t HsmObjectStoreRequest::target_tier() const
 {
     return m_target_tier;
 }
+}  // namespace hestia

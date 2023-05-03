@@ -9,6 +9,7 @@
 
 #include <string>
 
+namespace hestia {
 enum class KeyValueStoreType { FILE, KVSAL };
 
 namespace key_value_store_registry {
@@ -59,3 +60,4 @@ static std::unique_ptr<KeyValueStore> get_store(KeyValueStoreType store_type)
 };
 
 }  // namespace key_value_store_registry
+}  // namespace hestia

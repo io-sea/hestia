@@ -11,29 +11,29 @@ macro(hestia_fetch_openssl)
 endmacro()
 
 # https://git.ichec.ie/io-sea-internal/objectstore-toolkit
-macro(fetch_ostk)
+macro(fetch_hestia)
     hestia_fetch_openssl()
 
-    set(OSTK_WITH_PHOBOS OFF CACHE INTERNAL "")
-    set(OSTK_WITH_S3_CLIENT OFF CACHE INTERNAL "")
-    set(OSTK_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(hestia_WITH_PHOBOS OFF CACHE INTERNAL "")
+    set(hestia_WITH_S3_CLIENT OFF CACHE INTERNAL "")
+    set(hestia_BUILD_TESTS OFF CACHE INTERNAL "")
     
     FetchContent_Declare(
-    ostk
+    hestia
     GIT_REPOSITORY https://git.ichec.ie/io-sea-internal/objectstore-toolkit
     GIT_TAG        7cbd972776668623f5196555d2569c877cf7fedb
     SYSTEM
     FIND_PACKAGE_ARGS
     )
-    FetchContent_MakeAvailable(ostk)
-    if(NOT TARGET ostk::ostk)
-        add_library(ostk::ostk ALIAS ostk)
+    FetchContent_MakeAvailable(hestia)
+    if(NOT TARGET hestia::hestia)
+        add_library(hestia::hestia ALIAS hestia)
     endif()
 
-    if(TARGET ostk::ostk_cmake_modules)
-        get_property(OSTK_MODULES_DIR TARGET ostk::ostk_cmake_modules PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+    if(TARGET hestia::hestia_cmake_modules)
+        get_property(hestia_MODULES_DIR TARGET hestia::hestia_cmake_modules PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
     else()
-        set(OSTK_MODULES_DIR ${ostk_SOURCE_DIR}/infra/cmake)
+        set(hestia_MODULES_DIR ${hestia_SOURCE_DIR}/infra/cmake)
     endif()
-    list(APPEND CMAKE_MODULE_PATH ${OSTK_MODULES_DIR})
+    list(APPEND CMAKE_MODULE_PATH ${hestia_MODULES_DIR})
 endmacro()

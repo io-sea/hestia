@@ -2,6 +2,7 @@
 
 #include <string>
 
+namespace hestia {
 class HsmAction {
   public:
     enum class Action { MOVE, COPY, RELEASE, NONE };
@@ -18,3 +19,4 @@ class HsmAction {
 
     static constexpr char trigger_migration_key[] = "trigger_migration";
 };
+}  // namespace hestia

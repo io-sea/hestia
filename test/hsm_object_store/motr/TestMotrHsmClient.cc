@@ -34,13 +34,13 @@ TEST_CASE("Motr client write and read", "[motr]")
     put_op.mType = ObjectOperation::Type::PUT;
     put_op.mExtent = {0, content.size()};
 
-    ostk::ReadableBuffer read_buffer(content);
+    hestia::ReadableBuffer read_buffer(content);
 
     auto rc = motr_client.doObjectOperation(put_op, &read_buffer);
     REQUIRE_FALSE(rc);
 
     std::vector<char> sink(content.length());
-    ostk::WriteableBuffer write_buffer(sink);
+    hestia::WriteableBuffer write_buffer(sink);
 
     ObjectOperation get_op({0, 0});
     get_op.mType = ObjectOperation::Type::GET;

@@ -2,8 +2,9 @@
 
 #include "FileHsmObjectStoreClient.h"
 
-#include <ostk/FileObjectStoreClient.h>
+#include "FileObjectStoreClient.h"
 
+namespace hestia {
 ObjectStorePluginHandler::ObjectStorePluginHandler(
     const std::vector<std::filesystem::directory_entry>& search_paths) :
     m_search_paths(search_paths)
@@ -15,7 +16,7 @@ bool ObjectStorePluginHandler::has_plugin(const std::string& identifier)
     return false;
 };
 
-ostk::ObjectStoreClient::Ptr ObjectStorePluginHandler::get_client(
+ObjectStoreClient::Ptr ObjectStorePluginHandler::get_client(
     ObjectStoreClientType client_type) const
 {
     return nullptr;
@@ -36,7 +37,7 @@ bool HsmObjectStoreClientRegistry::is_client_type_available(
     return m_plugin_handler->has_plugin(client_type.m_identifier);
 }
 
-ostk::ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
+ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
     ObjectStoreClientType client_type) const
 {
     if (client_type.m_source == ObjectStoreClientType::Source::BUILT_IN) {
@@ -46,8 +47,8 @@ ostk::ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
         }
         else if (
             client_type.m_identifier
-            == ostk::FileObjectStoreClient::get_registry_identifier()) {
-            return ostk::FileObjectStoreClient::create();
+            == hestia::FileObjectStoreClient::get_registry_identifier()) {
+            return hestia::FileObjectStoreClient::create();
         }
     }
     else {
@@ -55,3 +56,4 @@ ostk::ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
     }
     return nullptr;
 }
+}  // namespace hestia

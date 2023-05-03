@@ -2,6 +2,7 @@
 
 #include "HsmObjectStoreClientManager.h"
 
+namespace hestia {
 CopyToolConnection::~CopyToolConnection()
 {
     if (m_type == Type::MANAGED) {
@@ -85,3 +86,4 @@ CopyToolConnection::State CopyToolConnection::get_state() const
 void CopyToolConnection::launch_external() {}
 
 void CopyToolConnection::terminate_external() {}
+}  // namespace hestia

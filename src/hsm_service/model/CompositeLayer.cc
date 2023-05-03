@@ -1,7 +1,8 @@
 #include "CompositeLayer.h"
 
+namespace hestia {
 int CompositeLayer::add_extent(
-    const ostk::Extent& extent_in, bool write, bool overwrite)
+    const hestia::Extent& extent_in, bool write, bool overwrite)
 {
     auto extents = get_extents(write);
     if (auto iter = extents->find(extent_in.m_offset); iter != extents->end()) {
@@ -15,9 +16,9 @@ int CompositeLayer::add_extent(
     return 0;
 }
 
-int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
+int CompositeLayer::add_merge_read_extent(const hestia::Extent& extent_in)
 {
-    ostk::Extent extent_merge;
+    hestia::Extent extent_merge;
     const auto match_code = match_extent(
         extent_in, &extent_merge, ExtentMatchType::EMT_MERGE, false, true);
 
@@ -38,7 +39,8 @@ int CompositeLayer::add_merge_read_extent(const ostk::Extent& extent_in)
     return rc;
 }
 
-int CompositeLayer::mark_for_deletion(const ostk::Extent& extent_in, bool write)
+int CompositeLayer::mark_for_deletion(
+    const hestia::Extent& extent_in, bool write)
 {
     auto extents = get_extents(write);
     if (auto iter = extents->find(extent_in.m_offset); iter != extents->end()) {
@@ -73,7 +75,7 @@ std::string CompositeLayer::dump_extents(bool details, bool is_write)
 }
 
 int CompositeLayer::extent_substract(
-    const ostk::Extent& extent_in, bool is_write, bool* layer_empty)
+    const hestia::Extent& extent_in, bool is_write, bool* layer_empty)
 {
     int rc               = 0;
     int remaining_extent = 0;
@@ -148,8 +150,8 @@ bool CompositeLayer::has_read_extents() const
 }
 
 ExtentMatchCode CompositeLayer::match_extent(
-    const ostk::Extent& extent_in,
-    ostk::Extent* match,
+    const hestia::Extent& extent_in,
+    hestia::Extent* match,
     ExtentMatchType mode,
     bool is_write,
     bool delete_previous)
@@ -174,10 +176,10 @@ ExtentMatchCode CompositeLayer::match_extent(
 
         if (list_extent->overlaps(extent_in)) {
             if (mode == ExtentMatchType::EMT_INTERSECT) {
-                match->m_offset = ostk::Extent::get_right_most_offset(
+                match->m_offset = hestia::Extent::get_right_most_offset(
                     extent_in, *list_extent);
                 auto left_end =
-                    ostk::Extent::get_left_most_end(extent_in, *list_extent)
+                    hestia::Extent::get_left_most_end(extent_in, *list_extent)
                     - 1;
                 match->m_length = (left_end - match->m_offset) + 1;
                 delete_marked_extents(is_write);
@@ -185,12 +187,12 @@ ExtentMatchCode CompositeLayer::match_extent(
             }
             else {
                 if (!is_merged) {
-                    match->m_offset = ostk::Extent::get_left_most_offset(
+                    match->m_offset = hestia::Extent::get_left_most_offset(
                         extent_in, *list_extent);
                 }
 
                 const auto right_end =
-                    ostk::Extent::get_right_most_end(extent_in, *list_extent)
+                    hestia::Extent::get_right_most_end(extent_in, *list_extent)
                     - 1;
                 match->m_length = (right_end - match->m_offset) + 1;
 
@@ -229,3 +231,4 @@ ExtentMatchCode CompositeLayer::match_extent(
     delete_marked_extents(is_write);
     return is_merged ? ExtentMatchCode::EM_PARTIAL : ExtentMatchCode::EM_NONE;
 }
+}  // namespace hestia

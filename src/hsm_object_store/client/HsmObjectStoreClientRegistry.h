@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 
+namespace hestia {
 struct ObjectStoreClientType {
     enum class Type { HSM, BASIC };
 
@@ -34,8 +35,7 @@ class ObjectStorePluginHandler {
 
     bool has_plugin(const std::string& identifier);
 
-    ostk::ObjectStoreClient::Ptr get_client(
-        ObjectStoreClientType client_type) const;
+    ObjectStoreClient::Ptr get_client(ObjectStoreClientType client_type) const;
 
   private:
     std::vector<std::filesystem::directory_entry> m_search_paths;
@@ -48,11 +48,11 @@ class HsmObjectStoreClientRegistry {
 
     bool is_client_type_available(ObjectStoreClientType client_type) const;
 
-    ostk::ObjectStoreClient::Ptr get_client(
-        ObjectStoreClientType client_type) const;
+    ObjectStoreClient::Ptr get_client(ObjectStoreClientType client_type) const;
 
   private:
     ObjectStorePluginHandler::Ptr m_plugin_handler;
 };
 
 using TierBackendRegistry = std::unordered_map<uint8_t, ObjectStoreClientType>;
+}  // namespace hestia

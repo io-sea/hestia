@@ -1,5 +1,6 @@
 #include "CopyToolRequest.h"
 
+namespace hestia {
 CopyToolRequest::CopyToolRequest(const HsmObjectStoreRequest& request) :
     m_object_store_request(request)
 {
@@ -67,3 +68,4 @@ const HsmObjectStoreRequest& CopyToolRequest::get_object_store_request() const
 {
     return m_object_store_request;
 }
+}  // namespace hestia

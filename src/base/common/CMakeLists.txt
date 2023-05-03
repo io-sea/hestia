@@ -1,0 +1,86 @@
+include(AddModule)
+include(FetchDependencies)
+
+fetch_openssl()
+fetch_spdlog()
+fetch_nlohmann_json()
+
+add_module(
+    MODULE_NAME common 
+    HEADERS
+        File.h
+        Logger.h
+        base_types/Extent.h 
+        base_types/Metadata.h 
+        base_types/StorageObject.h
+        base_types/Uuid.h
+        buffer/BufferView.h
+        buffer/ReadableBufferView.h
+        buffer/WriteableBufferView.h
+        plugins/PluginHandle.h 
+        plugins/PluginLoader.h
+        streams/Stream.h
+        streams/StreamIO.h
+        streams/StreamSource.h
+        streams/StreamSink.h
+        streams/StreamState.h
+        streams/impls/FifoStreamSink.h 
+        streams/impls/FifoStreamSource.h
+        streams/impls/FileStreamSink.h 
+        streams/impls/FileStreamSource.h
+        streams/impls/InMemoryStreamSink.h 
+        streams/impls/InMemoryStreamSource.h
+        threads/ThreadCollection.h 
+        utils/StringUtils.h
+        utils/FileUtils.h
+        utils/XmlUtils.h
+        utils/HashUtils.h
+        utils/SystemUtils.h 
+        utils/JsonUtils.h
+        utils/ErrorUtils.h
+    SOURCES  
+        File.cc
+        Logger.cc
+        base_types/Extent.cc
+        base_types/Metadata.cc
+        base_types/StorageObject.cc
+        base_types/Uuid.cc
+        buffer/ReadableBufferView.cc
+        buffer/WriteableBufferView.cc
+        plugins/PluginHandle.cc
+        plugins/PluginLoader.cc
+        streams/Stream.cc
+        streams/StreamIO.cc
+        streams/StreamState.cc
+        streams/impls/FifoStreamSink.cc 
+        streams/impls/FifoStreamSource.cc
+        streams/impls/FileStreamSink.cc 
+        streams/impls/FileStreamSource.cc
+        streams/impls/InMemoryStreamSink.cc 
+        streams/impls/InMemoryStreamSource.cc 
+        threads/ThreadCollection.cc
+        utils/ErrorUtils.cc
+        utils/FileUtils.cc
+        utils/HashUtils.cc
+        utils/JsonUtils.cc
+        utils/SystemUtils.cc
+        utils/StringUtils.cc
+        utils/XmlUtils.cc
+    INTERNAL_INCLUDE_DIRS 
+        base_types
+        buffer
+        plugins
+        streams
+        streams/impls
+        threads
+        utils
+    PRIVATE_DEPENDENCIES
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
+        OpenSSL::SSL 
+        OpenSSL::Crypto
+        ${CMAKE_DL_LIBS}
+    WITH_FILESYSTEM
+)
+
+target_include_directories(${PROJECT_NAME}_common PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>")

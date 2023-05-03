@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 
+namespace hestia {
 class HsmObjectStoreClientManager {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClientManager>;
@@ -13,10 +14,9 @@ class HsmObjectStoreClientManager {
 
     void setup_clients(const TierBackendRegistry& tier_backend_regsitry);
 
-    ostk::ObjectStoreClient* get_client(
-        ObjectStoreClientType client_type) const;
+    ObjectStoreClient* get_client(ObjectStoreClientType client_type) const;
 
-    ostk::ObjectStoreClient* get_client(uint8_t tier_id) const;
+    ObjectStoreClient* get_client(uint8_t tier_id) const;
 
     HsmObjectStoreClient* get_hsm_client(
         ObjectStoreClientType client_type) const;
@@ -30,6 +30,7 @@ class HsmObjectStoreClientManager {
   private:
     HsmObjectStoreClientRegistry::Ptr m_client_registry;
     TierBackendRegistry m_tier_backend_registry;
-    std::unordered_map<std::string, ostk::ObjectStoreClient::Ptr> m_clients;
+    std::unordered_map<std::string, ObjectStoreClient::Ptr> m_clients;
     std::unordered_map<std::string, HsmObjectStoreClient::Ptr> m_hsm_clients;
 };
+}  // namespace hestia

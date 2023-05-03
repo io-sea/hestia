@@ -1,4 +1,4 @@
-include(ostk/AddModule)
+include(AddModule)
 
 add_module(
     MODULE_NAME event_feed 
@@ -7,5 +7,5 @@ add_module(
     SOURCES
         EventFeed.cc
     DEPENDENCIES
-        ostk::ostk
+        hestia::hestia
 )

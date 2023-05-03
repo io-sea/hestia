@@ -1,5 +1,6 @@
 #include "HsmObjectAdapter.h"
 
+namespace hestia {
 HsmObjectAdapter::Ptr HsmObjectAdapter::create()
 {
     return std::unique_ptr<HsmObjectAdapter>();
@@ -28,14 +29,15 @@ void HsmObjectAdapter::serialize(HsmObject& hsm_object)
 void HsmObjectAdapter::parse_tiers(HsmObject& hsm_object) {}
 
 void HsmObjectAdapter::sync(
-    const HsmObject& hsm_object, ostk::StorageObject& storage_object)
+    const HsmObject& hsm_object, hestia::StorageObject& storage_object)
 {
 }
 
 void HsmObjectAdapter::add_if_not_empty(
-    ostk::Metadata* md, const std::string& key, const std::string& value)
+    hestia::Metadata* md, const std::string& key, const std::string& value)
 {
     if (!value.empty()) {
         md->set_item(key, value);
     }
 }
+}  // namespace hestia

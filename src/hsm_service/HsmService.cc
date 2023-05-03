@@ -10,14 +10,15 @@
 
 #define ERROR_CHECK(response)                                                  \
     if (!response->ok()) {                                                     \
-        return HsmServiceResponse::create(req, std::move(response));           \
+        return hestia::HsmServiceResponse::create(req, std::move(response));   \
     }
 
 #define ON_ERROR(code, message)                                                \
-    auto response = HsmServiceResponse::create(req);                           \
-    response->on_error({HsmServiceErrorCode::code, msg});                      \
+    auto response = hestia::HsmServiceResponse::create(req);                   \
+    response->on_error({hestia::HsmServiceErrorCode::code, msg});              \
     return response;
 
+namespace hestia {
 HsmService::HsmService(
     std::unique_ptr<KeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
@@ -33,7 +34,7 @@ HsmService::HsmService(
 HsmService::~HsmService() {}
 
 HsmServiceResponse::Ptr HsmService::make_request(
-    const HsmServiceRequest& req, ostk::Stream* stream) noexcept
+    const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
     switch (req.method()) {
         case HsmServiceRequestMethod::GET:
@@ -54,7 +55,7 @@ HsmServiceResponse::Ptr HsmService::make_request(
 }
 
 HsmServiceResponse::Ptr HsmService::put(
-    const HsmServiceRequest& req, ostk::Stream* stream) noexcept
+    const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
@@ -124,7 +125,7 @@ HsmServiceResponse::Ptr HsmService::put(
 }
 
 HsmServiceResponse::Ptr HsmService::get(
-    const HsmServiceRequest& req, ostk::Stream* stream) noexcept
+    const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
@@ -253,7 +254,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
 void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
 {
     /*
-    std::vector<ostk::StorageObject> objs;
+    std::vector<hestia::StorageObject> objs;
     m_key_value_store->list(tier, objs);
     /*/
 }
@@ -273,3 +274,5 @@ void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
 }
 
 void HsmService::list_attributes(HsmObject& object) {}
+
+}  // namespace hestia

@@ -5,6 +5,7 @@
 #include "HsmMiddlewareResponse.h"
 #include "HsmObjectStoreResponse.h"
 
+namespace hestia {
 class CopyToolResponse : public HsmMiddlewareResponse {
   public:
     using Ptr = std::unique_ptr<CopyToolResponse>;
@@ -27,3 +28,4 @@ class CopyToolResponse : public HsmMiddlewareResponse {
     Status m_status{Status::OK};
     CopyToolError m_error;
 };
+}  // namespace hestia

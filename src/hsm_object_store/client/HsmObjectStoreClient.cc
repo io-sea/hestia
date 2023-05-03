@@ -1,9 +1,10 @@
 #include "HsmObjectStoreClient.h"
 
-#include <ostk/Logger.h>
+#include "Logger.h"
 
+namespace hestia {
 HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
-    const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
+    const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {
     auto response = HsmObjectStoreResponse::create(request);
     switch (request.method()) {
@@ -84,16 +85,15 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     return response;
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
-    const ostk::ObjectStoreRequest& request,
-    ostk::Stream* stream) const noexcept
+ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
+    const ObjectStoreRequest& request, Stream* stream) const noexcept
 {
-    auto response = ostk::ObjectStoreResponse::create(request);
+    auto response = ObjectStoreResponse::create(request);
     if (!HsmObjectStoreRequest::is_hsm_supported_method(request.method())) {
         const std::string msg =
             "Requested unsupported type for base object operation in HSM object store client.";
         response->on_error(
-            {ostk::ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg});
+            {ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg});
         return response;
     }
 
@@ -103,22 +103,19 @@ ostk::ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
         hsm_request, hsm_response.get());
 }
 
-bool HsmObjectStoreClient::exists(const ostk::StorageObject& object) const
+bool HsmObjectStoreClient::exists(const StorageObject& object) const
 {
     throw std::runtime_error("Exists operation not supported for hsm objects");
 }
 
 void HsmObjectStoreClient::list(
-    const ostk::Metadata::Query& query,
-    std::vector<ostk::StorageObject>& fetched) const
+    const Metadata::Query& query, std::vector<StorageObject>& fetched) const
 {
     throw std::runtime_error("List operation not supported for hsm objects");
 }
 
 void HsmObjectStoreClient::get(
-    ostk::StorageObject& object,
-    const ostk::Extent& extent,
-    ostk::Stream* stream) const
+    StorageObject& object, const Extent& extent, Stream* stream) const
 {
     HsmObjectStoreRequest request(
         object.m_id, HsmObjectStoreRequestMethod::GET);
@@ -126,15 +123,12 @@ void HsmObjectStoreClient::get(
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
             "Error in single tier GET: " + response->get_error().to_string();
-        throw ostk::ObjectStoreException(
-            {ostk::ObjectStoreErrorCode::ERROR, msg});
+        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
 }
 
 void HsmObjectStoreClient::put(
-    const ostk::StorageObject& object,
-    const ostk::Extent& extent,
-    ostk::Stream* stream) const
+    const StorageObject& object, const Extent& extent, Stream* stream) const
 {
     HsmObjectStoreRequest request(
         object.m_id, HsmObjectStoreRequestMethod::PUT);
@@ -142,20 +136,18 @@ void HsmObjectStoreClient::put(
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
             "Error in single tier PUT: " + response->get_error().to_string();
-        throw ostk::ObjectStoreException(
-            {ostk::ObjectStoreErrorCode::ERROR, msg});
+        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
 }
 
-void HsmObjectStoreClient::remove(const ostk::StorageObject& object) const
+void HsmObjectStoreClient::remove(const StorageObject& object) const
 {
     HsmObjectStoreRequest request(
         object.m_id, HsmObjectStoreRequestMethod::REMOVE);
     if (const auto response = make_request(request); !response->ok()) {
         const std::string msg =
             "Error in single tier REMOVE: " + response->get_error().to_string();
-        throw ostk::ObjectStoreException(
-            {ostk::ObjectStoreErrorCode::ERROR, msg});
+        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
 }
 
@@ -181,3 +173,4 @@ void HsmObjectStoreClient::on_exception(
         response->on_error(error);
     }
 }
+}  // namespace hestia

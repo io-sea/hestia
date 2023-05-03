@@ -2,6 +2,7 @@
 
 #include "HsmService.h"
 
+namespace hestia {
 ApplicationContext& ApplicationContext::get()
 {
     static ApplicationContext instance;
@@ -17,3 +18,4 @@ void ApplicationContext::set_hsm_service(HsmService::Ptr hsm_service)
 {
     m_hsm_service = std::move(hsm_service);
 }
+}  // namespace hestia

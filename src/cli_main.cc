@@ -2,7 +2,7 @@
 
 //#include "HestiaConfig.h"
 
-//#include <ostk/CommandLineArgs.h>
+//#include <hestia/CommandLineArgs.h>
 
 #include <iostream>
 
@@ -24,7 +24,7 @@ TierBackendRegistry gFileS3BackendExample = {
 
 int main(int argc, char** argv)
 {
-        ostk::CommandLineArgs arg_parser;
+        hestia::CommandLineArgs arg_parser;
         arg_parser.parseArgs(argc, argv);
 
         const auto args = arg_parser.getArgs();

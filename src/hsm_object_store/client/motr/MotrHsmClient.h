@@ -5,6 +5,7 @@
 
 #include <memory>
 
+namespace hestia {
 class MotrInterface;
 
 class MotrHsmClient : public HsmObjectStoreClient {
@@ -19,16 +20,17 @@ class MotrHsmClient : public HsmObjectStoreClient {
 
     void get(
         const HsmObjectStoreRequest& request,
-        ostk::StorageObject& object,
-        ostk::Stream* stream) const override;
+        StorageObject& object,
+        Stream* stream) const override;
 
     void move(const HsmObjectStoreRequest& request) const override;
 
-    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream)
-        const override;
+    void put(
+        const HsmObjectStoreRequest& request, Stream* stream) const override;
 
     void remove(const HsmObjectStoreRequest& request) const override;
 
   protected:
     std::unique_ptr<MotrInterface> m_motr_interface;
 };
+}  // namespace hestia

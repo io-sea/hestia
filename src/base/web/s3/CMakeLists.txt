@@ -1,0 +1,30 @@
+include(AddModule)
+
+add_module(
+    MODULE_NAME s3app 
+    HEADERS
+        S3WebApp.h 
+        S3UrlRouter.h
+        S3Service.h
+        middleware/S3AuthenticationMiddleware.h 
+        middleware/S3AuthorisationSession.h
+        middleware/S3AuthorisationObject.h 
+        views/S3ContainerView.h 
+        views/S3ObjectView.h
+        views/S3ContainerListView.h
+    SOURCES
+        S3WebApp.cc
+        S3UrlRouter.cc
+        S3Service.cc 
+        middleware/S3AuthenticationMiddleware.cc 
+        middleware/S3AuthorisationSession.cc 
+        middleware/S3AuthorisationObject.cc
+        views/S3ContainerView.cc 
+        views/S3ObjectView.cc 
+        views/S3ContainerListView.cc 
+    INTERNAL_DEPENDENCIES 
+        web
+    INTERNAL_INCLUDE_DIRS
+        middleware
+        views
+)

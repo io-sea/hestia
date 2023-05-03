@@ -1,58 +1,58 @@
 #pragma once
 
-#include <ostk/Extent.h>
-#include <ostk/ReadableBufferView.h>
-#include <ostk/Uuid.h>
-#include <ostk/WriteableBufferView.h>
+#include "Extent.h"
+#include "ReadableBufferView.h"
+#include "Uuid.h"
+#include "WriteableBufferView.h"
 
 namespace hestia {
 
 class HestiaCppInterface {
   public:
     static int copy(
-        const ostk::Uuid& object_id,
-        const ostk::Extent& extent,
+        const hestia::Uuid& object_id,
+        const hestia::Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier);
 
     static int get(
-        const ostk::Uuid& object_id,
-        const ostk::Extent& extent,
-        ostk::WriteableBufferView& buffer,
+        const hestia::Uuid& object_id,
+        const hestia::Extent& extent,
+        hestia::WriteableBufferView& buffer,
         uint8_t tier);
 
     static int get_attributes(
-        const ostk::Uuid& object_id,
+        const hestia::Uuid& object_id,
         const std::string& keys,
         std::string& attributes);
 
     static int list_attributes(
-        const ostk::Uuid& object_id, std::string& attributes);
+        const hestia::Uuid& object_id, std::string& attributes);
 
-    static int list_objects(uint8_t tier, std::vector<ostk::Uuid> objects);
+    static int list_objects(uint8_t tier, std::vector<hestia::Uuid> objects);
 
     static int list_tiers(
-        const ostk::Uuid& object_id, std::vector<uint8_t>& tiers);
+        const hestia::Uuid& object_id, std::vector<uint8_t>& tiers);
 
     static int move(
-        const ostk::Uuid& object_id,
-        const ostk::Extent& extent,
+        const hestia::Uuid& object_id,
+        const hestia::Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier);
 
     static int put(
-        const ostk::Uuid& object_id,
-        const ostk::Extent& extent,
-        const ostk::ReadableBufferView& buffer,
+        const hestia::Uuid& object_id,
+        const hestia::Extent& extent,
+        const hestia::ReadableBufferView& buffer,
         uint8_t tier_id,
         bool overwrite);
 
-    static int release(const ostk::Uuid& object_id);
+    static int release(const hestia::Uuid& object_id);
 
     static int release(
-        const ostk::Uuid& object_id, uint8_t tier_id, bool remove_key = true);
+        const hestia::Uuid& object_id, uint8_t tier_id, bool remove_key = true);
 
     static int set_attributes(
-        const ostk::Uuid& object_id, const std::string& attributes);
+        const hestia::Uuid& object_id, const std::string& attributes);
 };
 }  // namespace hestia

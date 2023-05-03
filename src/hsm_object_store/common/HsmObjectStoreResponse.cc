@@ -1,41 +1,42 @@
 #include "HsmObjectStoreResponse.h"
 
+namespace hestia {
 HsmObjectStoreResponse::HsmObjectStoreResponse(
-    const ostk::BaseObjectStoreRequest& request) :
-    ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    const BaseObjectStoreRequest& request) :
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
-    const ostk::BaseObjectStoreRequest& request,
+    const BaseObjectStoreRequest& request,
     HsmMiddlewareResponse::Ptr middleware_response) :
-    ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request),
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request),
     m_middleware_response(std::move(middleware_response))
 {
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
-    const ostk::BaseObjectStoreRequest& request,
+    const BaseObjectStoreRequest& request,
     HsmObjectStoreResponse::Ptr hsm_child_response) :
-    ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
-    const ostk::BaseObjectStoreRequest& request,
-    ostk::ObjectStoreResponse::Ptr child_response) :
-    ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    const BaseObjectStoreRequest& request,
+    ObjectStoreResponse::Ptr child_response) :
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
-    const ostk::BaseObjectStoreRequest& request)
+    const BaseObjectStoreRequest& request)
 {
     return std::make_unique<HsmObjectStoreResponse>(request);
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
-    const ostk::BaseObjectStoreRequest& request,
+    const BaseObjectStoreRequest& request,
     HsmMiddlewareResponse::Ptr middleware_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
@@ -43,7 +44,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
-    const ostk::BaseObjectStoreRequest& request,
+    const BaseObjectStoreRequest& request,
     HsmObjectStoreResponse::Ptr hsm_child_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
@@ -51,22 +52,21 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
-    const ostk::BaseObjectStoreRequest& request,
-    ostk::ObjectStoreResponse::Ptr child_response)
+    const BaseObjectStoreRequest& request,
+    ObjectStoreResponse::Ptr child_response)
 {
     return std::make_unique<HsmObjectStoreResponse>(
         request, std::move(child_response));
 }
 
-ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
-    const ostk::BaseObjectStoreRequest& request,
+ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
+    const BaseObjectStoreRequest& request,
     const HsmObjectStoreResponse* response)
 {
-    auto base_response = ostk::ObjectStoreResponse::create(request);
+    auto base_response = ObjectStoreResponse::create(request);
     if (!response->ok()) {
         base_response->on_error(
-            {ostk::ObjectStoreErrorCode::ERROR,
-             response->get_error().to_string()});
+            {ObjectStoreErrorCode::ERROR, response->get_error().to_string()});
     }
     else {
         base_response->object() = response->m_object;
@@ -74,3 +74,4 @@ ostk::ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
     }
     return base_response;
 }
+}  // namespace hestia

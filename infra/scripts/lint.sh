@@ -24,8 +24,6 @@ case $(uname) in
         ;;
 esac
 
-
-# Assume this file is in hestia/infra/scripts.
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source_dir="$( cd "${script_dir}/../.." && pwd)"
 

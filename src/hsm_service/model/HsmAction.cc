@@ -1,7 +1,8 @@
 #include "HsmAction.h"
 
-#include <ostk/JsonUtils.h>
+#include "JsonUtils.h"
 
+namespace hestia {
 HsmAction::HsmAction() {}
 
 void HsmAction::set_action(const std::string& action)
@@ -16,3 +17,4 @@ void HsmAction::set_action(const std::string& action)
         m_action = Action::MOVE;
     }
 }
+}  // namespace hestia

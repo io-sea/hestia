@@ -1,3 +1,4 @@
+add_subdirectory(base)
 add_subdirectory(data_placement_engine)
 add_subdirectory(event_feed)
 add_subdirectory(key_value_store)
@@ -5,7 +6,7 @@ add_subdirectory(hsm_object_store)
 add_subdirectory(hsm_service)
 add_subdirectory(hestia_client)
 
-include(ostk/FetchDependencies)
+include(FetchDependencies)
 fetch_nlohmann_json()
 
 add_library(dpe data_placement_engine/eejit.cc)
@@ -46,9 +47,9 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_link_libraries(hestia_lib PUBLIC development_flags)
 endif()
 
-add_executable(hestia main.cc)
+add_executable(hestia_main main.cc)
 
-target_link_libraries(hestia hestia_lib)
+target_link_libraries(hestia_main hestia_lib)
 
 set(HESTIA_PUBLIC_HEADERS
     hestia.h

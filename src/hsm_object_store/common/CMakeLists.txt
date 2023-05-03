@@ -1,4 +1,4 @@
-include(ostk/AddModule)
+include(AddModule)
 
 add_module(
     MODULE_NAME hsm_object_store_common 
@@ -12,6 +12,6 @@ add_module(
         HsmObjectStoreResponse.cc
         HsmMiddlewareResponse.cc
         HsmObjectStoreError.cc
-    DEPENDENCIES
-        ostk::ostk
+    INTERNAL_DEPENDENCIES
+        storage
 )

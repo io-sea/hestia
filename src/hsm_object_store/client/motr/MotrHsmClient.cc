@@ -2,6 +2,7 @@
 
 #include "MotrInterface.h"
 
+namespace hestia {
 MotrHsmClient::MotrHsmClient() :
     m_motr_interface(std::make_unique<MotrInterface>())
 {
@@ -19,8 +20,8 @@ void MotrHsmClient::copy(const HsmObjectStoreRequest& request) const
 
 void MotrHsmClient::get(
     const HsmObjectStoreRequest& request,
-    ostk::StorageObject& object,
-    ostk::Stream* stream) const
+    StorageObject& object,
+    Stream* stream) const
 {
     m_motr_interface->get(request, object, stream);
 }
@@ -31,7 +32,7 @@ void MotrHsmClient::move(const HsmObjectStoreRequest& request) const
 }
 
 void MotrHsmClient::put(
-    const HsmObjectStoreRequest& request, ostk::Stream* stream) const
+    const HsmObjectStoreRequest& request, Stream* stream) const
 {
     m_motr_interface->put(request, stream);
 }
@@ -40,3 +41,4 @@ void MotrHsmClient::remove(const HsmObjectStoreRequest& request) const
 {
     m_motr_interface->remove(request);
 }
+}  // namespace hestia

@@ -1,6 +1,6 @@
 #include "MockMotr.h"
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 
 int Motr::m0_composite_layer_add(Layout* layout, Obj* sub_obj, int priority)
 {
@@ -65,7 +65,7 @@ int Motr::m0_entity_delete(Obj* obj)
     return 0;
 }
 
-int Motr::m0_entity_create(ostk::Uuid* pool, Obj* obj)
+int Motr::m0_entity_create(hestia::Uuid* pool, Obj* obj)
 {
     if (pool != nullptr) {
         obj->m_pool = *pool;
@@ -94,4 +94,4 @@ Client* Motr::m0__obj_instance(const Obj* obj)
     return obj->m_realm->m_client;
 }
 
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

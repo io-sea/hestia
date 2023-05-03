@@ -2,6 +2,7 @@
 
 #include <memory>
 
+namespace hestia {
 class HsmService;
 
 class ApplicationContext {
@@ -15,3 +16,4 @@ class ApplicationContext {
   private:
     std::unique_ptr<HsmService> m_hsm_service;
 };
+}  // namespace hestia

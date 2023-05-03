@@ -4,6 +4,7 @@
 
 #include <memory>
 
+namespace hestia {
 class HsmActionAdapter {
   public:
     using Ptr = std::unique_ptr<HsmActionAdapter>;
@@ -12,3 +13,4 @@ class HsmActionAdapter {
 
     void parse(const std::string& input, HsmAction& action);
 };
+}  // namespace hestia

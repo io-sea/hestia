@@ -12,6 +12,7 @@ extern "C" {
 
 #include <filesystem>
 
+namespace hestia {
 class MotrInterfaceImpl : public IMotrInterfaceImpl {
 #ifdef HAS_MOTR
   public:
@@ -21,12 +22,12 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
 
     void get(
         const HsmObjectStoreRequest& request,
-        ostk::StorageObject& object,
-        ostk::Stream* stream) const override;
+        hestia::StorageObject& object,
+        hestia::Stream* stream) const override;
 
     void move(const HsmObjectStoreRequest& request) const override;
 
-    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream)
+    void put(const HsmObjectStoreRequest& request, hestia::Stream* stream)
         const override;
 
     void remove(const HsmObjectStoreRequest& request) const override;
@@ -42,3 +43,4 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
     m0_realm m_realm;
 #endif
 };
+}  // namespace hestia

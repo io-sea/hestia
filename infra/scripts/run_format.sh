@@ -16,7 +16,6 @@ source_dir="$( cd "${script_dir}/../.." && pwd)"
 echo "SOURCE DIRECTORY: ${source_dir}"
 echo 
 
-
 # Get the format script
 FORMAT_EXECUTABLE="${script_dir}/format.sh"
 
@@ -26,7 +25,7 @@ cd ${source_dir}
 source_dirs="src test"
 
 # All the extensions of source files
-source_exts="cc c hh h"
+source_exts="cc hh h"
 
 # Number of processes to run in parallel
 nprocs=$HESTIA_FORMATTER_THREADS
@@ -43,9 +42,9 @@ do
                 | xargs -n 1 -0 -P "${nprocs}" ${FORMAT_EXECUTABLE}
         fi
     done
-    if [ ! -z "$(find $dir -iname "*.py")" ]
-    then
-        yapf -ir $dir
-    fi
+    #if [ ! -z "$(find $dir -iname "*.py")" ]
+    #then
+    #    yapf -ir $dir
+    #fi
 done
 

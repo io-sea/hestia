@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 
 void Layout::add_layer(std::unique_ptr<CompositeLayer> layer)
 {
@@ -42,7 +42,7 @@ CompositeLayer* Layout::get_layer(Id sub_object_id) const
     return nullptr;
 }
 
-std::optional<PoolVersion> Client::get_pool_version(ostk::Uuid id)
+std::optional<PoolVersion> Client::get_pool_version(hestia::Uuid id)
 {
     for (const auto& pool : m_pools) {
         if (pool->id() == id) {
@@ -52,13 +52,13 @@ std::optional<PoolVersion> Client::get_pool_version(ostk::Uuid id)
     return std::nullopt;
 }
 
-void Client::add_pool(ostk::Uuid pool_version)
+void Client::add_pool(hestia::Uuid pool_version)
 {
-    auto pool = std::make_unique<ostk::BlockStore>(pool_version);
+    auto pool = std::make_unique<hestia::BlockStore>(pool_version);
     m_pools.push_back(std::move(pool));
 }
 
-ostk::BlockStore* Client::get_pool(ostk::Uuid pool_version) const
+hestia::BlockStore* Client::get_pool(hestia::Uuid pool_version) const
 {
     for (const auto& pool : m_pools) {
         if (pool->id() == pool_version) {
@@ -68,11 +68,11 @@ ostk::BlockStore* Client::get_pool(ostk::Uuid pool_version) const
     return nullptr;
 }
 
-ostk::BlockStore* Client::get_default_pool() const
+hestia::BlockStore* Client::get_default_pool() const
 {
     if (m_pools.empty()) {
         return nullptr;
     }
     return m_pools[0].get();
 }
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

@@ -4,6 +4,7 @@
 
 #include <vector>
 
+namespace hestia {
 class CopyToolInterface {
   public:
     bool has_connection() const;
@@ -19,3 +20,4 @@ class CopyToolInterface {
   private:
     std::unique_ptr<CopyToolConnection> m_connection;
 };
+}  // namespace hestia

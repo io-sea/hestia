@@ -1,5 +1,6 @@
 #include "CopyToolInterface.h"
 
+namespace hestia {
 void CopyToolInterface::initialize(
     const CopyToolConfig& config, CopyToolConnection::Type connection_type)
 {
@@ -36,3 +37,4 @@ HsmObjectStoreResponse::Ptr CopyToolInterface::make_request(
     return HsmObjectStoreResponse::create(
         request, std::move(copytool_response));
 }
+}  // namespace hestia

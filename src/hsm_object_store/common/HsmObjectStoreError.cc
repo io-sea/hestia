@@ -1,20 +1,20 @@
 #include "HsmObjectStoreError.h"
 
+namespace hestia {
 HsmObjectStoreError::HsmObjectStoreError() :
-    ostk::RequestError<HsmObjectStoreErrorCode>(
-        HsmObjectStoreErrorCode::NO_ERROR, {})
+    RequestError<HsmObjectStoreErrorCode>(HsmObjectStoreErrorCode::NO_ERROR, {})
 {
 }
 
 HsmObjectStoreError::HsmObjectStoreError(
     HsmObjectStoreErrorCode code, const std::string& message) :
-    ostk::RequestError<HsmObjectStoreErrorCode>(code, message)
+    RequestError<HsmObjectStoreErrorCode>(code, message)
 {
 }
 
 HsmObjectStoreError::HsmObjectStoreError(
-    const ostk::ObjectStoreError& error, const std::string& message) :
-    ostk::RequestError<HsmObjectStoreErrorCode>(
+    const ObjectStoreError& error, const std::string& message) :
+    RequestError<HsmObjectStoreErrorCode>(
         HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR, message),
     m_base_object_store_error(error)
 {
@@ -54,3 +54,4 @@ std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)
             return "UNKOWN ERROR";
     }
 }
+}  // namespace hestia

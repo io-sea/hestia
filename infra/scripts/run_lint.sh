@@ -36,7 +36,6 @@ source_dir="$( cd "${script_dir}/../.." && pwd)"
 echo "SOURCE DIRECTORY: ${source_dir}"
 echo 
 
-
 # All the directories containing source files
 source_dirs="src test"
 
@@ -47,6 +46,6 @@ source_dirs="src test"
 #
 cd "${source_dir}"
 find ${source_dirs} \( \
-    -iname "*.cc" -o -iname "*.c" \
+    -iname "*.cc" \
 \) -print0 \
     |  xargs -0 -P "${HESTIA_LINTER_THREADS}" -I TARGET_FILE "${script_dir}/lint.sh" "${build_dir}" TARGET_FILE "$@"

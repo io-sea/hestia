@@ -1,8 +1,9 @@
 #pragma once
 
-#include <ostk/ObjectStoreRequest.h>
-#include <ostk/Uuid.h>
+#include "ObjectStoreRequest.h"
+#include "Uuid.h"
 
+namespace hestia {
 enum class HsmObjectStoreRequestMethod {
     PUT,
     GET,
@@ -13,15 +14,15 @@ enum class HsmObjectStoreRequestMethod {
 };
 
 class HsmObjectStoreRequest :
-    public ostk::MethodObjectStoreRequest<HsmObjectStoreRequestMethod> {
+    public MethodObjectStoreRequest<HsmObjectStoreRequestMethod> {
   public:
     HsmObjectStoreRequest(
         const std::string& object_id, HsmObjectStoreRequestMethod method);
     HsmObjectStoreRequest(
-        const ostk::StorageObject& object, HsmObjectStoreRequestMethod method);
+        const StorageObject& object, HsmObjectStoreRequestMethod method);
     HsmObjectStoreRequest(
-        const ostk::Uuid& object_id, HsmObjectStoreRequestMethod method);
-    HsmObjectStoreRequest(const ostk::ObjectStoreRequest& request);
+        const Uuid& object_id, HsmObjectStoreRequestMethod method);
+    HsmObjectStoreRequest(const ObjectStoreRequest& request);
 
     bool is_hsm_only_request() const;
 
@@ -36,19 +37,20 @@ class HsmObjectStoreRequest :
 
     std::string to_string() const;
 
-    static ostk::ObjectStoreRequest to_base_request(
+    static ObjectStoreRequest to_base_request(
         const HsmObjectStoreRequest& reqeust);
-    static bool is_hsm_supported_method(ostk::ObjectStoreRequestMethod method);
+    static bool is_hsm_supported_method(ObjectStoreRequestMethod method);
     static std::string to_string(HsmObjectStoreRequestMethod method);
 
   private:
     static bool is_copy_or_move_request(HsmObjectStoreRequestMethod method);
 
     static HsmObjectStoreRequestMethod from_base_method(
-        ostk::ObjectStoreRequestMethod method);
-    static ostk::ObjectStoreRequestMethod to_base_method(
+        ObjectStoreRequestMethod method);
+    static ObjectStoreRequestMethod to_base_method(
         HsmObjectStoreRequestMethod method);
 
     uint8_t m_target_tier{0};
     uint8_t m_source_tier{0};
 };
+}  // namespace hestia

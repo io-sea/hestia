@@ -3,8 +3,9 @@
 #include "HsmObjectStoreClient.h"
 #include "HsmObjectStoreClientManager.h"
 
-#include <ostk/Stream.h>
+#include "Stream.h"
 
+namespace hestia {
 CopyTool::CopyTool(HsmObjectStoreClientManager::Ptr client_manager) :
     m_client_manager(std::move(client_manager))
 {
@@ -51,7 +52,7 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     HsmObjectStoreClient* target_client) noexcept
 {
     std::size_t chunk_size{4000};
-    ostk::Stream stream;
+    Stream stream;
 
     HsmObjectStoreRequest get_request = request;
     get_request.reset_method(HsmObjectStoreRequestMethod::GET);
@@ -80,14 +81,14 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
 HsmObjectStoreResponse::Ptr CopyTool::do_hsm_base(
     const HsmObjectStoreRequest& op,
     HsmObjectStoreClient* source_client,
-    ostk::ObjectStoreClient* target_client) noexcept
+    ObjectStoreClient* target_client) noexcept
 {
     return nullptr;
 }
 
 HsmObjectStoreResponse::Ptr CopyTool::do_base_hsm(
     const HsmObjectStoreRequest& op,
-    ostk::ObjectStoreClient* source_client,
+    ObjectStoreClient* source_client,
     HsmObjectStoreClient* target_client) noexcept
 {
     return nullptr;
@@ -95,8 +96,9 @@ HsmObjectStoreResponse::Ptr CopyTool::do_base_hsm(
 
 HsmObjectStoreResponse::Ptr CopyTool::do_base_base(
     const HsmObjectStoreRequest& op,
-    ostk::ObjectStoreClient* source_client,
-    ostk::ObjectStoreClient* target_client) noexcept
+    ObjectStoreClient* source_client,
+    ObjectStoreClient* target_client) noexcept
 {
     return nullptr;
 }
+}  // namespace hestia

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ostk/RequestError.h>
+#include "RequestError.h"
 
+namespace hestia {
 enum class HsmServiceErrorCode {
     NO_ERROR,
     ERROR,
@@ -13,7 +14,7 @@ enum class HsmServiceErrorCode {
     MAX_ERROR
 };
 
-class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode> {
+class HsmServiceError : public hestia::RequestError<HsmServiceErrorCode> {
   public:
     HsmServiceError();
     HsmServiceError(HsmServiceErrorCode code, const std::string& message);
@@ -23,3 +24,4 @@ class HsmServiceError : public ostk::RequestError<HsmServiceErrorCode> {
     std::string code_as_string() const override;
     static std::string code_to_string(HsmServiceErrorCode code);
 };
+}  // namespace hestia

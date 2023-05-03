@@ -1,30 +1,32 @@
 #pragma once
 
-#include <ostk/ObjectStoreResponse.h>
+#include "ObjectStoreResponse.h"
 
 #include <vector>
 
+namespace hestia {
 class KeyValueStoreClient {
   public:
     virtual ~KeyValueStoreClient() = default;
 
-    [[nodiscard]] ostk::ObjectStoreResponse::Ptr make_request(
-        const ostk::ObjectStoreRequest& request) const noexcept;
+    [[nodiscard]] ObjectStoreResponse::Ptr make_request(
+        const ObjectStoreRequest& request) const noexcept;
 
   private:
-    virtual bool exists(const ostk::StorageObject& obj) const = 0;
+    virtual bool exists(const StorageObject& obj) const = 0;
 
     virtual void get(
-        ostk::StorageObject& obj,
+        StorageObject& obj,
         const std::vector<std::string>& keys = {}) const = 0;
 
     virtual void put(
-        const ostk::StorageObject& obj,
+        const StorageObject& obj,
         const std::vector<std::string>& keys = {}) const = 0;
 
-    virtual void remove(const ostk::StorageObject& obj) const = 0;
+    virtual void remove(const StorageObject& obj) const = 0;
 
     virtual void list(
-        const ostk::Metadata::Query& query,
-        std::vector<ostk::StorageObject>& fetched) const;
+        const Metadata::Query& query,
+        std::vector<StorageObject>& fetched) const;
 };
+}  // namespace hestia

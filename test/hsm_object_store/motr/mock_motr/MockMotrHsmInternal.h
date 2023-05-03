@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 
 enum class hsm_rls_flags { HSM_KEEP_LATEST };
 
@@ -27,7 +27,7 @@ class HsmInternal {
 
     static uint8_t hsm_prio2tier(uint32_t priority);
 
-    ostk::Uuid* hsm_tier2pool(uint8_t tier_idx);
+    hestia::Uuid* hsm_tier2pool(uint8_t tier_idx);
 
     int create_obj(Id id, Obj* obj, bool close_entity, uint8_t tier_idx);
 
@@ -62,12 +62,12 @@ class HsmInternal {
 
     CompositeLayer* layer_get_by_prio(Layout* layout, int prio);
 
-    int top_layer_add_read_extent(Obj* obj, const ostk::Extent& ext);
+    int top_layer_add_read_extent(Obj* obj, const hestia::Extent& ext);
 
-    int copy_extent_data(Id src_id, Id tgt_id, ostk::Extent* range);
+    int copy_extent_data(Id src_id, Id tgt_id, hestia::Extent* range);
 
     int layer_extent_add(
-        Id subobjid, const ostk::Extent& ext, bool write, bool overwrite);
+        Id subobjid, const hestia::Extent& ext, bool write, bool overwrite);
 
     int layer_extent_del(Id subobjid, off_t off, bool write);
 
@@ -75,19 +75,19 @@ class HsmInternal {
         void* cb_arg,
         Layout* layout,
         CompositeLayer* layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         bool* stop)>;
     static int match_layer_foreach(
         Layout* layout,
         uint8_t tier,
-        ostk::Extent* ext,
+        hestia::Extent* ext,
         layer_match_callback cb,
         void* cb_arg,
         bool stop_on_error);
 
     static int check_min_gen_exists(
         Layout* layout,
-        ostk::Extent* ext,
+        hestia::Extent* ext,
         int gen,
         CompositeLayer* except_layer);
 
@@ -107,7 +107,7 @@ class HsmInternal {
 
     Motr* motr() { return &m_motr_context; }
 
-    void set_pools(const std::vector<ostk::Uuid>& pools)
+    void set_pools(const std::vector<hestia::Uuid>& pools)
     {
         m_hsm_pools = pools;
     }
@@ -132,7 +132,7 @@ class HsmInternal {
         ReleaseContext* ctx,
         Layout* layout,
         CompositeLayer* layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         bool* stop);
 
     static constexpr int hsm_any_tier{UINT8_MAX};
@@ -147,6 +147,6 @@ class HsmInternal {
     Client* m_client{nullptr};
     Realm* m_uber_realm{nullptr};
     Motr m_motr_context;
-    std::vector<ostk::Uuid> m_hsm_pools;
+    std::vector<hestia::Uuid> m_hsm_pools;
 };
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

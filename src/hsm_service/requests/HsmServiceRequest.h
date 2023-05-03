@@ -1,10 +1,11 @@
 #pragma once
 
-#include <ostk/Extent.h>
-#include <ostk/Request.h>
-#include <ostk/StorageObject.h>
-#include <ostk/Uuid.h>
+#include "Extent.h"
+#include "Request.h"
+#include "StorageObject.h"
+#include "Uuid.h"
 
+namespace hestia {
 enum class HsmServiceRequestMethod {
     PUT,
     GET,
@@ -18,26 +19,26 @@ enum class HsmServiceRequestMethod {
 };
 
 class HsmServiceRequest :
-    public ostk::BaseRequest,
-    public ostk::MethodRequest<HsmServiceRequestMethod> {
+    public hestia::BaseRequest,
+    public hestia::MethodRequest<HsmServiceRequestMethod> {
   public:
     HsmServiceRequest(
-        const ostk::Uuid& object_id, HsmServiceRequestMethod method);
+        const hestia::Uuid& object_id, HsmServiceRequestMethod method);
 
     HsmServiceRequest(
-        const ostk::StorageObject& object, HsmServiceRequestMethod method);
+        const hestia::StorageObject& object, HsmServiceRequestMethod method);
 
     HsmServiceRequest(HsmServiceRequestMethod method);
 
-    const ostk::Extent& extent() const { return m_extent; }
+    const hestia::Extent& extent() const { return m_extent; }
 
-    const ostk::StorageObject& object() const;
+    const hestia::StorageObject& object() const;
 
     const std::string& query() const { return m_query; }
 
     std::string method_as_string() const override { return {}; }
 
-    void set_extent(const ostk::Extent& extent);
+    void set_extent(const hestia::Extent& extent);
 
     void set_target_tier(uint8_t tier);
 
@@ -56,9 +57,10 @@ class HsmServiceRequest :
   private:
     uint8_t m_target_tier{0};
     uint8_t m_source_tier{0};
-    ostk::Extent m_extent;
-    ostk::StorageObject m_object;
+    hestia::Extent m_extent;
+    hestia::StorageObject m_object;
 
     std::string m_query;
     bool m_overwrite_if_existing{false};
 };
+}  // namespace hestia

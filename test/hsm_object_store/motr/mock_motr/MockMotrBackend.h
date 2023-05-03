@@ -3,7 +3,7 @@
 #include "CompositeLayer.h"
 #include "MockMotrTypes.h"
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 class MotrBackend {
   public:
     static void add_object(Obj* object);
@@ -43,7 +43,7 @@ class MotrBackend {
         const BufferVec& data,
         IoType io_type);
 
-    static ostk::Uuid obj_id_to_fid(Id id);
+    static hestia::Uuid obj_id_to_fid(Id id);
     Client* m_client{nullptr};
 };
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

@@ -1,5 +1,6 @@
 #include "CopyToolResponse.h"
 
+namespace hestia {
 CopyToolResponse::CopyToolResponse() : HsmMiddlewareResponse() {}
 
 CopyToolResponse::Ptr CopyToolResponse::create()
@@ -29,3 +30,4 @@ void CopyToolResponse::set_object_store_respose(
         set_error({CopyToolError::Code::ERROR_OBJECT_STORE, msg});
     }
 }
+}  // namespace hestia

@@ -5,10 +5,10 @@
 
 #include <string>
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 
 struct HsmOptions {
-    std::vector<ostk::Uuid> m_pool_fids;
+    std::vector<hestia::Uuid> m_pool_fids;
 };
 
 class Hsm {
@@ -86,26 +86,26 @@ class Hsm {
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         bool* stop);
     int on_layer_match_for_stage(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         bool* stop);
     int on_layer_match_for_archive(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         bool* stop);
 
     int on_release_post_copy(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
-        ostk::Extent* match,
+        hestia::Extent* match,
         int gen);
 
     HsmInternal m_impl;
@@ -113,4 +113,4 @@ class Hsm {
     std::size_t m_io_block_size{HsmInternal::default_block_size};
 };
 
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

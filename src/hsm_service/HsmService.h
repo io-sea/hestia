@@ -4,13 +4,14 @@
 #include "HsmServiceRequest.h"
 #include "HsmServiceResponse.h"
 
-#include <ostk/Stream.h>
+#include "Stream.h"
 
+class DataPlacementEngine;
+
+namespace hestia {
 class MultiBackendHsmObjectStoreClient;
 class KeyValueStore;
 class HsmStoreInterface;
-
-class DataPlacementEngine;
 
 class HsmObjectAdapter;
 class HsmActionAdapter;
@@ -27,16 +28,13 @@ class HsmService {
     ~HsmService();
 
     [[nodiscard]] HsmServiceResponse::Ptr make_request(
-        const HsmServiceRequest& request,
-        ostk::Stream* stream = nullptr) noexcept;
+        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
 
   private:
     HsmServiceResponse::Ptr get(
-        const HsmServiceRequest& request,
-        ostk::Stream* stream = nullptr) noexcept;
+        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
     HsmServiceResponse::Ptr put(
-        const HsmServiceRequest& request,
-        ostk::Stream* stream = nullptr) noexcept;
+        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
     HsmServiceResponse::Ptr copy(const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr move(const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr remove(const HsmServiceRequest& request) noexcept;
@@ -53,3 +51,4 @@ class HsmService {
     std::unique_ptr<HsmObjectAdapter> m_object_adapter;
     std::unique_ptr<HsmActionAdapter> m_action_adapter;
 };
+}  // namespace hestia

@@ -1,12 +1,13 @@
 #include "HsmObjectStoreClientManager.h"
 
+namespace hestia {
 HsmObjectStoreClientManager::HsmObjectStoreClientManager(
     HsmObjectStoreClientRegistry::Ptr client_registry) :
     m_client_registry(std::move(client_registry))
 {
 }
 
-ostk::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
+hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     ObjectStoreClientType client_type) const
 {
     if (const auto iter = m_hsm_clients.find(client_type.m_identifier);
@@ -50,7 +51,7 @@ bool HsmObjectStoreClientManager::is_hsm_client(uint8_t tier_id) const
     return false;
 }
 
-ostk::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
+ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     uint8_t tier_id) const
 {
     if (const auto iter = m_tier_backend_registry.find(tier_id);
@@ -120,3 +121,4 @@ void HsmObjectStoreClientManager::setup_clients(
         }
     }
 }
+}  // namespace hestia

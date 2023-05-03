@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ostk/ObjectStoreError.h>
+#include "ObjectStoreError.h"
 
+namespace hestia {
 enum class HsmObjectStoreErrorCode {
     NO_ERROR,
     ERROR,
@@ -12,18 +13,19 @@ enum class HsmObjectStoreErrorCode {
     MAX_ERROR
 };
 
-class HsmObjectStoreError : public ostk::RequestError<HsmObjectStoreErrorCode> {
+class HsmObjectStoreError : public RequestError<HsmObjectStoreErrorCode> {
   public:
     HsmObjectStoreError();
     HsmObjectStoreError(
         HsmObjectStoreErrorCode code, const std::string& message);
     HsmObjectStoreError(
-        const ostk::ObjectStoreError& error, const std::string& message);
+        const ObjectStoreError& error, const std::string& message);
 
     std::string to_string() const override;
 
   private:
     std::string code_as_string() const override;
     static std::string code_to_string(HsmObjectStoreErrorCode code);
-    ostk::ObjectStoreError m_base_object_store_error;
+    ObjectStoreError m_base_object_store_error;
 };
+}  // namespace hestia

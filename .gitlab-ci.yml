@@ -31,6 +31,7 @@ stages:
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
       -DCMAKE_CXX_COMPILER="${CXX}" 
+      -DHESTIA_WITH_PHOBOS=OFF
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
     )
     && popd
@@ -83,18 +84,16 @@ Lint:
   variables:
     <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
+    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    CXX: clang++
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
     - *install_dependencies
-    - apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.lint)
-  script:
+    - apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.lint) clang clang-tidy
     - *configure
-    # OSTK library structure setup
-    - make -C "${CMAKE_BUILD_DIR}" -j $HESTIA_BUILD_THREADS 
-      $(cat ${CI_PROJECT_DIR}/infra/deps/ostk-include-make-targets) 
-    - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}" 
-  artifacts:
-    <<: *build_artifacts
+    - *build 
+  script:
+    - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}"
 
 
 #Documentation:
@@ -125,18 +124,10 @@ Debug:
     <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
     HESTIA_BUILD_TESTS: "ON" # Ensure all code is seen by Debug build
-  artifacts:
-    <<: *build_artifacts
-    exclude:
-      - build/**/*.a
-      - build/**/*.so
-      - build/**/*.cc.o
 
 Release:
   <<: *default_job
   stage: build
-  artifacts:
-    <<: *build_artifacts
 
 
 Unit_test:

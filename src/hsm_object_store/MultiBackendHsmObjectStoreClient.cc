@@ -4,6 +4,7 @@
 #include "HsmObjectStoreClientManager.h"
 #include "HsmObjectStoreClientRegistry.h"
 
+namespace hestia {
 MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
     m_client_manager(std::move(client_manager)),
@@ -22,7 +23,7 @@ void MultiBackendHsmObjectStoreClient::initialize(
 }
 
 HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
-    const HsmObjectStoreRequest& request, ostk::Stream* stream) const noexcept
+    const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {
     if (request.is_hsm_only_request()) {
         if (m_client_manager->have_same_client_types(
@@ -63,3 +64,4 @@ HsmObjectStoreResponse::Ptr MultiBackendHsmObjectStoreClient::make_request(
         }
     }
 }
+}  // namespace hestia

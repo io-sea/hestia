@@ -1,5 +1,6 @@
 #include "HsmServiceError.h"
 
+namespace hestia {
 HsmServiceError::HsmServiceError() :
     RequestError<HsmServiceErrorCode>(HsmServiceErrorCode::NO_ERROR, {})
 {
@@ -35,3 +36,4 @@ std::string HsmServiceError::code_to_string(HsmServiceErrorCode code)
             return "UNKOWN ERROR";
     }
 }
+}  // namespace hestia

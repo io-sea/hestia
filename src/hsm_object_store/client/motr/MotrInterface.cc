@@ -6,6 +6,7 @@
 
 #include <fstream>
 
+namespace hestia {
 MotrInterface::MotrInterface(std::unique_ptr<IMotrInterfaceImpl> impl) :
     m_impl(std::move(impl))
 {
@@ -42,8 +43,8 @@ void MotrInterface::copy(const HsmObjectStoreRequest& request) const
 
 void MotrInterface::get(
     const HsmObjectStoreRequest& request,
-    ostk::StorageObject& object,
-    ostk::Stream* stream) const
+    hestia::StorageObject& object,
+    hestia::Stream* stream) const
 {
     m_impl->get(request, object, stream);
 }
@@ -54,7 +55,7 @@ void MotrInterface::move(const HsmObjectStoreRequest& request) const
 }
 
 void MotrInterface::put(
-    const HsmObjectStoreRequest& request, ostk::Stream* stream) const
+    const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
     m_impl->put(request, stream);
 }
@@ -75,3 +76,4 @@ void MotrInterface::write_tier_info(
     }
     f_out.close();
 }
+}  // namespace hestia

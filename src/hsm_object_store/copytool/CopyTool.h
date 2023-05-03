@@ -6,9 +6,8 @@
 #include <memory>
 #include <string>
 
-namespace ostk {
+namespace hestia {
 class ObjectStoreClient;
-}
 
 class HsmObjectStoreClientManager;
 class HsmObjectStoreClient;
@@ -33,17 +32,18 @@ class CopyTool {
     HsmObjectStoreResponse::Ptr do_hsm_base(
         const HsmObjectStoreRequest& request,
         HsmObjectStoreClient* source_client,
-        ostk::ObjectStoreClient* target_client) noexcept;
+        ObjectStoreClient* target_client) noexcept;
 
     HsmObjectStoreResponse::Ptr do_base_hsm(
         const HsmObjectStoreRequest& request,
-        ostk::ObjectStoreClient* source_client,
+        ObjectStoreClient* source_client,
         HsmObjectStoreClient* target_client) noexcept;
 
     HsmObjectStoreResponse::Ptr do_base_base(
         const HsmObjectStoreRequest& request,
-        ostk::ObjectStoreClient* source_client,
-        ostk::ObjectStoreClient* target_client) noexcept;
+        ObjectStoreClient* source_client,
+        ObjectStoreClient* target_client) noexcept;
 
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
 };
+}  // namespace hestia

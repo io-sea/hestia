@@ -3,8 +3,9 @@
 #include "HsmServiceRequest.h"
 #include "HsmServiceResponse.h"
 
-#include <ostk/Stream.h>
+#include "Stream.h"
 
+namespace hestia {
 class MultiBackendHsmObjectStoreClient;
 class KeyValueStore;
 
@@ -20,50 +21,52 @@ class HsmStoreInterface {
         std::unique_ptr<KeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
-    ostk::ObjectStoreResponse::Ptr exists(const ostk::StorageObject& object);
+    hestia::ObjectStoreResponse::Ptr exists(
+        const hestia::StorageObject& object);
 
-    ostk::ObjectStoreResponse::Ptr get_metadata(
-        const ostk::StorageObject& object);
+    hestia::ObjectStoreResponse::Ptr get_metadata(
+        const hestia::StorageObject& object);
     HsmObjectStoreResponse::Ptr get_data(
-        const ostk::StorageObject& object,
-        const ostk::Extent& extent,
+        const hestia::StorageObject& object,
+        const hestia::Extent& extent,
         uint8_t source_tier,
-        ostk::Stream* stream);
+        hestia::Stream* stream);
 
-    ostk::ObjectStoreResponse::Ptr put_metadata(
-        const ostk::StorageObject& object);
+    hestia::ObjectStoreResponse::Ptr put_metadata(
+        const hestia::StorageObject& object);
     HsmObjectStoreResponse::Ptr put_data(
-        const ostk::StorageObject& object,
-        const ostk::Extent& extent,
+        const hestia::StorageObject& object,
+        const hestia::Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier,
         bool overwrite,
-        ostk::Stream* stream);
+        hestia::Stream* stream);
 
     HsmObjectStoreResponse::Ptr copy_data(
-        const ostk::StorageObject& object,
-        const ostk::Extent& extent,
+        const hestia::StorageObject& object,
+        const hestia::Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier);
     HsmObjectStoreResponse::Ptr move_data(
-        const ostk::StorageObject& object,
-        const ostk::Extent& extent,
+        const hestia::StorageObject& object,
+        const hestia::Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier);
 
-    ostk::ObjectStoreResponse::Ptr release_metadata(
-        const ostk::StorageObject& object);
-    ostk::ObjectStoreResponse::Ptr release_metadata(
-        const ostk::StorageObject& object, uint8_t source_tier);
+    hestia::ObjectStoreResponse::Ptr release_metadata(
+        const hestia::StorageObject& object);
+    hestia::ObjectStoreResponse::Ptr release_metadata(
+        const hestia::StorageObject& object, uint8_t source_tier);
     HsmObjectStoreResponse::Ptr release_data(
-        const ostk::StorageObject& object,
-        const ostk::Extent& extent,
+        const hestia::StorageObject& object,
+        const hestia::Extent& extent,
         uint8_t source_tier);
     HsmObjectStoreResponse::Ptr release_data(
-        const ostk::StorageObject& object, const ostk::Extent& extent);
+        const hestia::StorageObject& object, const hestia::Extent& extent);
 
 
   private:
     std::unique_ptr<KeyValueStore> m_key_value_store;
     std::unique_ptr<MultiBackendHsmObjectStoreClient> m_object_store;
 };
+}  // namespace hestia

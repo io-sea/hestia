@@ -5,7 +5,7 @@
 
 #include <cstring>
 
-namespace mock::motr {
+namespace hestia::mock::motr {
 
 int Hsm::m0hsm_init(Client* client, Realm* realm, HsmOptions* options)
 {
@@ -30,7 +30,7 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
     auto priority = HsmInternal::hsm_priority(0, tier);
     Motr::m0_composite_layer_add(layout, &sub_object, priority);
 
-    const auto full_ext = ostk::Extent::get_full_range_extent();
+    const auto full_ext = hestia::Extent::get_full_range_extent();
     impl()->layer_extent_add(sub_object.m_id, full_ext, true, false);
 
     rc = impl()->create_obj(id, obj, false, HsmInternal::hsm_any_tier);
@@ -43,7 +43,7 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
 int Hsm::m0hsm_pwrite(
     Obj* obj, void* buffer, std::size_t length, std::size_t offset)
 {
-    ostk::Extent write_extent;
+    hestia::Extent write_extent;
     write_extent.m_offset = offset;
     write_extent.m_length = length;
 
@@ -171,7 +171,7 @@ int Hsm::m0hsm_copy(
         return rc;
     }
 
-    ostk::Extent source_ext;
+    hestia::Extent source_ext;
     source_ext.m_offset = offset;
     source_ext.m_length = length;
 
@@ -183,8 +183,8 @@ int Hsm::m0hsm_copy(
 
     auto on_layer_matched = [this](
                                 void* cb_arg, Layout* layout,
-                                CompositeLayer* src_layer, ostk::Extent* match,
-                                bool* stop) {
+                                CompositeLayer* src_layer,
+                                hestia::Extent* match, bool* stop) {
         auto ctx = static_cast<CopyContext*>(cb_arg);
         return this->on_layer_match_for_copy(
             ctx, layout, src_layer, match, stop);
@@ -199,7 +199,7 @@ int Hsm::on_layer_match_for_copy(
     CopyContext* ctx,
     Layout* layout,
     CompositeLayer* src_layer,
-    ostk::Extent* match,
+    hestia::Extent* match,
     bool* stop)
 {
     ctx->found++;
@@ -241,7 +241,7 @@ int Hsm::on_layer_match_for_copy(
         }
     }
     else {
-        ostk::Extent already_ext;
+        hestia::Extent already_ext;
 
         subobj_id = tgt_layer->m_id;
         auto mc   = tgt_layer->match_extent(
@@ -281,7 +281,7 @@ int Hsm::on_release_post_copy(
     CopyContext* ctx,
     Layout* layout,
     CompositeLayer* src_layer,
-    ostk::Extent* match,
+    hestia::Extent* match,
     int gen)
 {
     if ((ctx->flags & HSM_MOVE) != 0) {
@@ -322,7 +322,7 @@ int Hsm::on_layer_match_for_stage(
     CopyContext* ctx,
     Layout* layout,
     CompositeLayer* src_layer,
-    ostk::Extent* match,
+    hestia::Extent* match,
     bool* stop)
 {
     const auto tier = HsmInternal::hsm_prio2tier(src_layer->m_priority);
@@ -348,7 +348,7 @@ int Hsm::m0hsm_stage(
         return rc;
     }
 
-    ostk::Extent source_ext;
+    hestia::Extent source_ext;
     source_ext.m_offset = offset;
     source_ext.m_length = length;
 
@@ -360,8 +360,8 @@ int Hsm::m0hsm_stage(
 
     auto on_layer_matched = [this](
                                 void* cb_arg, Layout* layout,
-                                CompositeLayer* src_layer, ostk::Extent* match,
-                                bool* stop) {
+                                CompositeLayer* src_layer,
+                                hestia::Extent* match, bool* stop) {
         auto ctx = static_cast<CopyContext*>(cb_arg);
         return this->on_layer_match_for_stage(
             ctx, layout, src_layer, match, stop);
@@ -377,7 +377,7 @@ int Hsm::on_layer_match_for_archive(
     CopyContext* ctx,
     Layout* layout,
     CompositeLayer* src_layer,
-    ostk::Extent* match,
+    hestia::Extent* match,
     bool* stop)
 {
     const auto tier = HsmInternal::hsm_prio2tier(src_layer->m_priority);
@@ -403,7 +403,7 @@ int Hsm::m0hsm_archive(
         return rc;
     }
 
-    ostk::Extent source_ext;
+    hestia::Extent source_ext;
     source_ext.m_offset = offset;
     source_ext.m_length = length;
 
@@ -415,8 +415,8 @@ int Hsm::m0hsm_archive(
 
     auto on_layer_matched = [this](
                                 void* cb_arg, Layout* layout,
-                                CompositeLayer* src_layer, ostk::Extent* match,
-                                bool* stop) {
+                                CompositeLayer* src_layer,
+                                hestia::Extent* match, bool* stop) {
         auto ctx = static_cast<CopyContext*>(cb_arg);
         return this->on_layer_match_for_archive(
             ctx, layout, src_layer, match, stop);
@@ -440,7 +440,7 @@ int Hsm::m0hsm_multi_release(
         return rc;
     }
 
-    ostk::Extent ext;
+    hestia::Extent ext;
     ext.m_offset = offset;
     ext.m_length = length;
 
@@ -452,8 +452,8 @@ int Hsm::m0hsm_multi_release(
 
     auto on_layer_matched = [this](
                                 void* cb_arg, Layout* layout,
-                                CompositeLayer* src_layer, ostk::Extent* match,
-                                bool* stop) {
+                                CompositeLayer* src_layer,
+                                hestia::Extent* match, bool* stop) {
         auto ctx = static_cast<HsmInternal::ReleaseContext*>(cb_arg);
         return this->impl()->on_layer_match_for_release(
             ctx, layout, src_layer, match, stop);
@@ -475,4 +475,4 @@ int Hsm::m0hsm_dump(std::string& sink, Id obj_id, bool details)
     return 0;
 }
 
-}  // namespace mock::motr
+}  // namespace hestia::mock::motr

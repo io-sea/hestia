@@ -6,6 +6,7 @@
 
 #include <memory>
 
+namespace hestia {
 class CopyToolConnection {
   public:
     enum class Type { IN_PROCESS, MANAGED, DAEMON };
@@ -34,3 +35,4 @@ class CopyToolConnection {
     Type m_type{Type::IN_PROCESS};
     std::unique_ptr<CopyTool> m_in_process_copy_tool;
 };
+}  // namespace hestia

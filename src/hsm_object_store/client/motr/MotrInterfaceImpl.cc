@@ -1,6 +1,7 @@
 #include "MotrInterfaceImpl.h"
 
 #ifdef HAS_MOTR
+namespace hestia {
 void MotrInterfaceImpl::initialize(const MotrConfig& config)
 {
     mConfig = config;
@@ -104,5 +105,5 @@ int MotrInterfaceImpl::move(
 {
     return 0;
 }
-
+}  // namespace hestia
 #endif

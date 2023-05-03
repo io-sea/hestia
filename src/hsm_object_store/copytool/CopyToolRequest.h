@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 
+namespace hestia {
 class CopyToolRequest {
   public:
     CopyToolRequest(const HsmObjectStoreRequest& request);
@@ -26,3 +27,4 @@ class CopyToolRequest {
 
     HsmObjectStoreRequest m_object_store_request;
 };
+}  // namespace hestia

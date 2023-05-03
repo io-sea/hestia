@@ -4,41 +4,43 @@
 #include "HsmObjectStoreError.h"
 #include "HsmObjectStoreRequest.h"
 
-#include <ostk/ObjectStoreResponse.h>
+#include "ObjectStoreResponse.h"
 
+namespace hestia {
 class HsmObjectStoreResponse :
-    public ostk::BaseObjectStoreResponse<HsmObjectStoreErrorCode> {
+    public hestia::BaseObjectStoreResponse<HsmObjectStoreErrorCode> {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreResponse>;
 
-    HsmObjectStoreResponse(const ostk::BaseObjectStoreRequest& request);
+    HsmObjectStoreResponse(const BaseObjectStoreRequest& request);
     HsmObjectStoreResponse(
-        const ostk::BaseObjectStoreRequest& request,
+        const BaseObjectStoreRequest& request,
         HsmMiddlewareResponse::Ptr middleware_response);
     HsmObjectStoreResponse(
-        const ostk::BaseObjectStoreRequest& request,
+        const BaseObjectStoreRequest& request,
         HsmObjectStoreResponse::Ptr hsm_child_response);
     HsmObjectStoreResponse(
-        const ostk::BaseObjectStoreRequest& request,
-        ostk::ObjectStoreResponse::Ptr child_response);
+        const BaseObjectStoreRequest& request,
+        ObjectStoreResponse::Ptr child_response);
 
-    static Ptr create(const ostk::BaseObjectStoreRequest& request);
+    static Ptr create(const BaseObjectStoreRequest& request);
     static Ptr create(
-        const ostk::BaseObjectStoreRequest& request,
+        const BaseObjectStoreRequest& request,
         HsmMiddlewareResponse::Ptr middleware_response);
     static Ptr create(
-        const ostk::BaseObjectStoreRequest& request,
+        const BaseObjectStoreRequest& request,
         HsmObjectStoreResponse::Ptr hsm_child_response);
     static Ptr create(
-        const ostk::BaseObjectStoreRequest& request,
-        ostk::ObjectStoreResponse::Ptr child_response);
+        const BaseObjectStoreRequest& request,
+        ObjectStoreResponse::Ptr child_response);
 
-    static ostk::ObjectStoreResponse::Ptr to_base_response(
-        const ostk::BaseObjectStoreRequest& request,
+    static ObjectStoreResponse::Ptr to_base_response(
+        const BaseObjectStoreRequest& request,
         const HsmObjectStoreResponse* response);
 
   private:
     HsmMiddlewareResponse::Ptr m_middleware_response;
     HsmObjectStoreResponse::Ptr m_hsm_child_response;
-    ostk::ObjectStoreResponse::Ptr m_child_response;
+    ObjectStoreResponse::Ptr m_child_response;
 };
+}  // namespace hestia

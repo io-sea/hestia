@@ -1,4 +1,4 @@
-include(ostk/AddModule)
+include(AddModule)
 
 add_module(
     MODULE_NAME key_value_store 
@@ -14,6 +14,6 @@ add_module(
         KeyValueStoreClient.cc
     INTERNAL_INCLUDE_DIRS
         client/file/
-    DEPENDENCIES
-        ostk::ostk
+    INTERNAL_DEPENDENCIES
+        storage
 )

@@ -2,14 +2,15 @@
 
 #include "HsmObjectStoreClient.h"
 
-#include <ostk/PluginHandle.h>
-#include <ostk/PluginLoader.h>
+#include "PluginHandle.h"
+#include "PluginLoader.h"
 
-class HsmObjectStoreClientPlugin : public ostk::PluginResource {
+namespace hestia {
+class HsmObjectStoreClientPlugin : public PluginResource {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClientPlugin>;
     HsmObjectStoreClientPlugin(
-        const ostk::PluginHandle* plugin_handle, HsmObjectStoreClient* client);
+        const PluginHandle* plugin_handle, HsmObjectStoreClient* client);
 
     virtual ~HsmObjectStoreClientPlugin();
 
@@ -19,21 +20,22 @@ class HsmObjectStoreClientPlugin : public ostk::PluginResource {
     HsmObjectStoreClient* m_client{nullptr};
 };
 
-class HsmObjectStorePluginHandle : public ostk::PluginHandle {
+class HsmObjectStorePluginHandle : public PluginHandle {
   public:
     HsmObjectStorePluginHandle(void* raw_handle, const std::string& name);
 
-    void destroy_resource(ostk::PluginResource* resource) const override;
+    void destroy_resource(PluginResource* resource) const override;
 
   protected:
-    std::unique_ptr<ostk::PluginResource> load_resource_with_factory_func()
+    std::unique_ptr<PluginResource> load_resource_with_factory_func()
         const override;
 };
 
-class HsmObjectStorePluginFactory : public ostk::PluginFactory {
+class HsmObjectStorePluginFactory : public PluginFactory {
   public:
     HsmObjectStorePluginFactory(const std::string& name);
 
-    std::unique_ptr<ostk::PluginHandle> create_handle(
+    std::unique_ptr<PluginHandle> create_handle(
         void* raw_handle) const override;
 };
+}  // namespace hestia

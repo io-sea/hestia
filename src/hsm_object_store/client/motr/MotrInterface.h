@@ -2,7 +2,7 @@
 
 #include "IMotrInterfaceImpl.h"
 
-#include <ostk/Uuid.h>
+#include "Uuid.h"
 
 #include <filesystem>
 #include <memory>
@@ -13,9 +13,10 @@ struct m0_uint128;
 
 class MotrObjImpl;
 
+namespace hestia {
 class MotrObject {
   public:
-    MotrObject(const ostk::Uuid& oid);
+    MotrObject(const hestia::Uuid& oid);
 
     ~MotrObject();
 
@@ -23,10 +24,10 @@ class MotrObject {
 
     m0_obj& get_motr_obj() const;
 
-    static m0_uint128 to_motr_id(const ostk::Uuid& id);
+    static m0_uint128 to_motr_id(const hestia::Uuid& id);
 
   private:
-    ostk::Uuid m_id;
+    hestia::Uuid m_id;
     std::unique_ptr<MotrObjImpl> m_handle_impl;
 };
 
@@ -42,12 +43,12 @@ class MotrInterface {
 
     void get(
         const HsmObjectStoreRequest& request,
-        ostk::StorageObject& object,
-        ostk::Stream* stream) const;
+        StorageObject& object,
+        Stream* stream) const;
 
     void move(const HsmObjectStoreRequest& request) const;
 
-    void put(const HsmObjectStoreRequest& request, ostk::Stream* stream) const;
+    void put(const HsmObjectStoreRequest& request, Stream* stream) const;
 
     void remove(const HsmObjectStoreRequest& request) const;
 
@@ -60,3 +61,4 @@ class MotrInterface {
 
     std::unique_ptr<IMotrInterfaceImpl> m_impl;
 };
+}  // namespace hestia

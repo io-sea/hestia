@@ -4,6 +4,7 @@
 
 #include <filesystem>
 
+namespace hestia {
 class FileKeyValueStoreClient : public KeyValueStoreClient {
   public:
     FileKeyValueStoreClient();
@@ -11,24 +12,23 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
     ~FileKeyValueStoreClient() = default;
 
   private:
-    bool exists(const ostk::StorageObject& obj) const override;
+    bool exists(const StorageObject& obj) const override;
 
-    void get(
-        ostk::StorageObject& obj,
-        const std::vector<std::string>& keys = {}) const override;
+    void get(StorageObject& obj, const std::vector<std::string>& keys = {})
+        const override;
 
     void put(
-        const ostk::StorageObject& obj,
+        const StorageObject& obj,
         const std::vector<std::string>& keys = {}) const override;
 
-    void remove(const ostk::StorageObject& obj) const override;
+    void remove(const StorageObject& obj) const override;
 
-    void list(
-        const ostk::Metadata::Query& query,
-        std::vector<ostk::StorageObject>& fetched) const override;
+    void list(const Metadata::Query& query, std::vector<StorageObject>& fetched)
+        const override;
 
-    std::filesystem::path get_filename(const ostk::StorageObject& obj) const;
+    std::filesystem::path get_filename(const StorageObject& obj) const;
 
     // const char mDelimiter = ';';
     const std::filesystem::directory_entry m_store{"kv_store"};
 };
+}  // namespace hestia

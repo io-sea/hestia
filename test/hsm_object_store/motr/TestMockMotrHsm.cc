@@ -9,23 +9,23 @@ class MotrHsmTestFixture {
     MotrHsmTestFixture()
     {
         m_hsm.motr()->m0_client_init(&m_client, nullptr, true);
-        mock::motr::Id realm_id{mo_uber_realm};
+        hestia::mock::motr::Id realm_id{mo_uber_realm};
         m_hsm.motr()->m0_container_init(
             &m_container, nullptr, &realm_id, &m_client);
     }
 
-    void set_up_pools(const std::vector<ostk::Uuid> pool_fids)
+    void set_up_pools(const std::vector<hestia::Uuid> pool_fids)
     {
         for (auto id : pool_fids) {
-            ostk::Uuid pool_version_fid{id};
+            hestia::Uuid pool_version_fid{id};
             m_client.add_pool(pool_version_fid);
         }
     }
 
     static constexpr int mo_uber_realm = 0;
-    mock::motr::Hsm m_hsm;
-    mock::motr::Client m_client;
-    mock::motr::Container m_container;
+    hestia::mock::motr::Hsm m_hsm;
+    hestia::mock::motr::Client m_client;
+    hestia::mock::motr::Container m_container;
 };
 
 static void* to_buffer(std::string& content)
@@ -45,17 +45,17 @@ TEST_CASE_METHOD(
 {
     return;
 
-    std::vector<ostk::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
+    std::vector<hestia::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
     set_up_pools(pool_fids);
 
-    mock::motr::HsmOptions hsm_options;
+    hestia::mock::motr::HsmOptions hsm_options;
     hsm_options.m_pool_fids = pool_fids;
 
     m_hsm.m0hsm_init(&m_client, &m_container.m_co_realm, &hsm_options);
 
-    mock::motr::Id obj_id(0x1000000);
+    hestia::mock::motr::Id obj_id(0x1000000);
 
-    mock::motr::Obj obj;
+    hestia::mock::motr::Obj obj;
     int tier = 2;
     auto rc  = m_hsm.m0hsm_create(obj_id, &obj, tier, true);
     REQUIRE_FALSE(rc);
@@ -91,17 +91,17 @@ TEST_CASE_METHOD(
 {
     return;
 
-    std::vector<ostk::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
+    std::vector<hestia::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
     set_up_pools(pool_fids);
 
-    mock::motr::HsmOptions hsm_options;
+    hestia::mock::motr::HsmOptions hsm_options;
     hsm_options.m_pool_fids = pool_fids;
 
     m_hsm.m0hsm_init(&m_client, &m_container.m_co_realm, &hsm_options);
 
-    mock::motr::Id obj_id(0x1000000);
+    hestia::mock::motr::Id obj_id(0x1000000);
 
-    mock::motr::Obj obj;
+    hestia::mock::motr::Obj obj;
     int tier = 2;
     auto rc  = m_hsm.m0hsm_create(obj_id, &obj, tier, true);
     REQUIRE_FALSE(rc);
@@ -125,7 +125,7 @@ TEST_CASE_METHOD(
 
     int src_tier    = 2;
     int tgt_tier    = 3;
-    auto copy_flags = mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
+    auto copy_flags = hestia::mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     rc              = m_hsm.m0hsm_copy(
         obj_id, src_tier, tgt_tier, 0, content.size(), copy_flags);
     REQUIRE_FALSE(rc);

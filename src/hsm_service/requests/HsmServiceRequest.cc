@@ -1,23 +1,24 @@
 #include "HsmServiceRequest.h"
 
+namespace hestia {
 HsmServiceRequest::HsmServiceRequest(
-    const ostk::Uuid& object_id, HsmServiceRequestMethod method) :
-    ostk::MethodRequest<HsmServiceRequestMethod>(method)
+    const hestia::Uuid& object_id, HsmServiceRequestMethod method) :
+    hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
 
 HsmServiceRequest::HsmServiceRequest(
-    const ostk::StorageObject& object, HsmServiceRequestMethod method) :
-    ostk::MethodRequest<HsmServiceRequestMethod>(method)
+    const hestia::StorageObject& object, HsmServiceRequestMethod method) :
+    hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
 
 HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
-    ostk::MethodRequest<HsmServiceRequestMethod>(method)
+    hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
 }
 
-void HsmServiceRequest::set_extent(const ostk::Extent& extent)
+void HsmServiceRequest::set_extent(const hestia::Extent& extent)
 {
     m_extent = extent;
 }
@@ -47,7 +48,8 @@ void HsmServiceRequest::set_query(const std::string& query)
     m_query = query;
 }
 
-const ostk::StorageObject& HsmServiceRequest::object() const
+const hestia::StorageObject& HsmServiceRequest::object() const
 {
     return m_object;
 }
+}  // namespace hestia

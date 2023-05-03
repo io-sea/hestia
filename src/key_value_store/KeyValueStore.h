@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ostk/ObjectStoreResponse.h>
+#include "ObjectStoreResponse.h"
 
+namespace hestia {
 class KeyValueStoreClient;
 
 class KeyValueStore {
@@ -10,9 +11,10 @@ class KeyValueStore {
 
     virtual ~KeyValueStore();
 
-    [[nodiscard]] ostk::ObjectStoreResponse::Ptr make_request(
-        const ostk::ObjectStoreRequest& request) const noexcept;
+    [[nodiscard]] ObjectStoreResponse::Ptr make_request(
+        const ObjectStoreRequest& request) const noexcept;
 
   private:
     std::unique_ptr<KeyValueStoreClient> m_client;
 };
+}  // namespace hestia

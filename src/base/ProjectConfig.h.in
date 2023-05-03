@@ -1,0 +1,9 @@
+#pragma once
+
+namespace hestia::project_config
+{
+    static std::string get_project_name()
+    {
+        return "@PROJECT_NAME@";
+    }
+}

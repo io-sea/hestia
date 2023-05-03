@@ -5,11 +5,12 @@
 #include "HsmObjectStoreClientRegistry.h"
 #include "KeyValueStoreClientRegistry.h"
 
-class MultiBackendHsmObjectStoreClient;
-class KeyValueStore;
 class DataPlacementEngine;
 
 namespace hestia {
+class MultiBackendHsmObjectStoreClient;
+class KeyValueStore;
+
 struct HestiaConfig {
     TierBackendRegistry m_tier_backend_registry;
     KeyValueStoreType m_key_value_store_type;

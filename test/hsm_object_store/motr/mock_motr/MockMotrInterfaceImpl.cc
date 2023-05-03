@@ -1,13 +1,14 @@
 #include "MockMotrInterfaceImpl.h"
 
-#include <ostk/InMemoryStreamSink.h>
-#include <ostk/InMemoryStreamSource.h>
+#include "InMemoryStreamSink.h"
+#include "InMemoryStreamSource.h"
 
 #include <iostream>
 
+namespace hestia {
 class MotrObject {
   public:
-    MotrObject(const ostk::Uuid& oid) : m_id(oid) {}
+    MotrObject(const hestia::Uuid& oid) : m_id(oid) {}
 
     ~MotrObject() = default;
 
@@ -15,7 +16,7 @@ class MotrObject {
 
     mock::motr::Obj* get_motr_obj() const { return m_handle; }
 
-    static mock::motr::Id to_motr_id(const ostk::Uuid& id)
+    static mock::motr::Id to_motr_id(const hestia::Uuid& id)
     {
         mock::motr::Id motr_id;
         motr_id.m_lo = id.m_lo;
@@ -24,9 +25,10 @@ class MotrObject {
     }
 
   private:
-    ostk::Uuid m_id;
+    hestia::Uuid m_id;
     mock::motr::Obj* m_handle;
 };
+
 
 void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
 {
@@ -49,7 +51,7 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
 void MockMotrInterfaceImpl::initialize_hsm(
     const std::vector<MotrHsmTierInfo>& tier_info)
 {
-    std::vector<ostk::Uuid> pool_fids;
+    std::vector<hestia::Uuid> pool_fids;
     std::size_t pool_count{0};
     for (const auto& entry : tier_info) {
         pool_fids.push_back({pool_count});
@@ -63,7 +65,7 @@ void MockMotrInterfaceImpl::initialize_hsm(
 }
 
 void MockMotrInterfaceImpl::put(
-    const HsmObjectStoreRequest& request, ostk::Stream* stream) const
+    const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
     /*
     MotrObject motr_obj(request.object().id());
@@ -82,7 +84,7 @@ void MockMotrInterfaceImpl::put(
         return rc;
     }
 
-    auto sink = ostk::InMemoryStreamSink::Create();
+    auto sink = hestia::InMemoryStreamSink::Create();
 
     rc = mHsm.m0hsm_pwrite(motr_obj.getMotrObj(), buffer->asVoid(),
     buffer->length(), request.extent().mOffset);
@@ -92,8 +94,8 @@ void MockMotrInterfaceImpl::put(
 
 void MockMotrInterfaceImpl::get(
     const HsmObjectStoreRequest& request,
-    ostk::StorageObject& object,
-    ostk::Stream* stream) const
+    hestia::StorageObject& object,
+    hestia::Stream* stream) const
 {
     /*
     MotrObject motr_obj(request.object().id());
@@ -105,7 +107,7 @@ void MockMotrInterfaceImpl::get(
         return rc;
     }
 
-    auto source = ostk::InMemoryStreamSource::Create();
+    auto source = hestia::InMemoryStreamSource::Create();
 
     rc = mHsm.m0hsm_read(motr_obj.getMotrId(),
     const_cast<void*>(buffer->asVoid()), buffer->length(),
@@ -157,3 +159,4 @@ void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
     flags);
     */
 }
+}  // namespace hestia

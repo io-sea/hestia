@@ -1,4 +1,4 @@
-include(ostk/AddModule)
+include(AddModule)
 
 add_module(
     MODULE_NAME data_placement_engine 
@@ -10,5 +10,5 @@ add_module(
     SOURCES
         BasicDataPlacementEngine.cc
     DEPENDENCIES
-        ostk::ostk
+        hestia::hestia
 )

@@ -1,0 +1,19 @@
+diff --git a/src/lrs/Makefile.am b/src/lrs/Makefile.am
+index b44331e..a5fae78 100644
+--- a/src/lrs/Makefile.am
++++ b/src/lrs/Makefile.am
+@@ -4,10 +4,10 @@ sbin_PROGRAMS=phobosd
+
+ noinst_LTLIBRARIES=libpho_lrs.la
+
+-unitdir=`pkg-config systemd --variable=systemdsystemunitdir`
+-unit_files=phobosd.service
+-unit_DATA=$(unit_files)
+-EXTRA_DIST=$(unit_files)
++#unitdir=`pkg-config systemd --variable=systemdsystemunitdir`
++#unit_files=phobosd.service
++#unit_DATA=$(unit_files)
++#EXTRA_DIST=$(unit_files)
+
+ phobosd_SOURCES=lrs.c \
+ 	lrs_cfg.h lrs_cfg.c \

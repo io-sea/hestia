@@ -3,11 +3,12 @@
 #include "HsmObjectStoreRequest.h"
 #include "MotrConfig.h"
 
-#include <ostk/Stream.h>
+#include "Stream.h"
 
 #include <string>
 #include <vector>
 
+namespace hestia {
 class IMotrInterfaceImpl {
   public:
     virtual ~IMotrInterfaceImpl()                     = default;
@@ -17,13 +18,13 @@ class IMotrInterfaceImpl {
 
     virtual void get(
         const HsmObjectStoreRequest& request,
-        ostk::StorageObject& object,
-        ostk::Stream* stream) const = 0;
+        StorageObject& object,
+        Stream* stream) const = 0;
 
     virtual void move(const HsmObjectStoreRequest& request) const = 0;
 
     virtual void put(
-        const HsmObjectStoreRequest& request, ostk::Stream* stream) const = 0;
+        const HsmObjectStoreRequest& request, Stream* stream) const = 0;
 
     virtual void remove(const HsmObjectStoreRequest& request) const = 0;
 
@@ -32,3 +33,4 @@ class IMotrInterfaceImpl {
   protected:
     virtual void initialize_hsm(const std::vector<MotrHsmTierInfo>&) = 0;
 };
+}  // namespace hestia

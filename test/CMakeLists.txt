@@ -1,4 +1,7 @@
-include(ostk/FetchDependencies)
+add_subdirectory(base)
+
+if(HESTIA_BUILD_TESTS)
+include(FetchDependencies)
 fetch_catch2()
 
 add_subdirectory(hsm_object_store)
@@ -29,3 +32,4 @@ target_link_libraries(unit_tests PRIVATE
     hestia_lib 
     Catch2::Catch2WithMain)
 catch_discover_tests(unit_tests)
+endif()

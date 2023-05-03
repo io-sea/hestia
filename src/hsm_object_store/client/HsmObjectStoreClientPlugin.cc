@@ -1,11 +1,12 @@
 #include "HsmObjectStoreClientPlugin.h"
 
-#include <ostk/Logger.h>
+#include "Logger.h"
 
-#include <exception>
+#include <stdexcept>
 
+namespace hestia {
 HsmObjectStoreClientPlugin::HsmObjectStoreClientPlugin(
-    const ostk::PluginHandle* plugin_handle, HsmObjectStoreClient* client) :
+    const PluginHandle* plugin_handle, HsmObjectStoreClient* client) :
     PluginResource(plugin_handle), m_client(client)
 {
 }
@@ -22,12 +23,12 @@ HsmObjectStoreClient* HsmObjectStoreClientPlugin::get_client() const
 
 HsmObjectStorePluginHandle::HsmObjectStorePluginHandle(
     void* raw_handle, const std::string& name) :
-    ostk::PluginHandle(raw_handle, name)
+    PluginHandle(raw_handle, name)
 {
 }
 
 void HsmObjectStorePluginHandle::destroy_resource(
-    ostk::PluginResource* resource) const
+    PluginResource* resource) const
 {
     LOG_INFO("Destroying resource from: " << m_name);
     using func_t      = void(HsmObjectStoreClient*);
@@ -45,7 +46,7 @@ void HsmObjectStorePluginHandle::destroy_resource(
     }
 }
 
-std::unique_ptr<ostk::PluginResource>
+std::unique_ptr<PluginResource>
 HsmObjectStorePluginHandle::load_resource_with_factory_func() const
 {
     using func_t     = HsmObjectStoreClient*();
@@ -62,12 +63,13 @@ HsmObjectStorePluginHandle::load_resource_with_factory_func() const
 
 HsmObjectStorePluginFactory::HsmObjectStorePluginFactory(
     const std::string& name) :
-    ostk::PluginFactory(name)
+    PluginFactory(name)
 {
 }
 
-std::unique_ptr<ostk::PluginHandle> HsmObjectStorePluginFactory::create_handle(
+std::unique_ptr<PluginHandle> HsmObjectStorePluginFactory::create_handle(
     void* raw_handle) const
 {
     return std::make_unique<HsmObjectStorePluginHandle>(raw_handle, m_name);
 }
+}  // namespace hestia
