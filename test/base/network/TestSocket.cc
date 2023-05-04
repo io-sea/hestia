@@ -13,6 +13,8 @@ class TestSocket : public Socket {
     {
     }
 
+    virtual ~TestSocket() = default;
+
     void do_bind() override
     {
         m_state.set_bound();
@@ -42,11 +44,9 @@ TEST_CASE("Test Socket", "[socket]")
     auto socket = std::make_unique<TestSocket>("0.0.0.0", 8080);
 
     auto socket_loop = [&socket]() {
-        auto connect_func = [](int handle) {};
+        auto connect_func = [](int handle) { (void)handle; };
 
-        auto bound_func = [](bool status) {
-
-        };
+        auto bound_func = [](bool status) { (void)status; };
 
         socket->do_listen(connect_func, bound_func);
         return 0;

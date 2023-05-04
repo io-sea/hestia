@@ -59,4 +59,4 @@ struct OpStatus {
     int m_error_code{0};
     std::string m_error_message;
 };
-};  // namespace hestia
+}  // namespace hestia

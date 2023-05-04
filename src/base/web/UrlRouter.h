@@ -11,6 +11,9 @@ class UrlRouter {
   public:
     using Ptr     = std::unique_ptr<UrlRouter>;
     using Pattern = std::pair<std::string, std::unique_ptr<WebView>>;
+
+    virtual ~UrlRouter() = default;
+
     void add_pattern(const std::string& pattern, std::unique_ptr<WebView> view)
     {
         m_views.push_back({pattern, std::move(view)});

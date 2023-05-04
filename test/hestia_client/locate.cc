@@ -3,6 +3,7 @@
 #include <catch2/catch_all.hpp>
 #include <hestia.h>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 

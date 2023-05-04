@@ -3,8 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <nlohmann/json.hpp>
-
 namespace hestia {
 
 struct hsm_uint {

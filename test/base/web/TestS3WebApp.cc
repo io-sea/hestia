@@ -78,6 +78,7 @@ class WebAppTestFixture {
         m_working_context->set_output_chunk_handler(
             [&working_buffer](
                 const hestia::ReadableBufferView& buffer, bool finished) {
+                (void)finished;
                 for (std::size_t idx = 0; idx < buffer.length(); idx++) {
                     working_buffer.push_back(buffer.data()[idx]);
                 }

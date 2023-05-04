@@ -13,6 +13,8 @@ class TestWebApp : public hestia::WebApp {
             "/", std::make_unique<hestia::mock::MockWebView>(&m_service));
     }
 
+    virtual ~TestWebApp() = default;
+
   private:
     hestia::mock::MockWebService m_service;
 };

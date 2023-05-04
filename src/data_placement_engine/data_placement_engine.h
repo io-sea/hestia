@@ -1,5 +1,6 @@
 #include "types.h"
 #include <list>
+#include <vector>
 
 namespace hestia {
 namespace dpe {

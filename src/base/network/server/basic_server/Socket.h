@@ -159,4 +159,6 @@ class Socket {
 class SocketFactory {
   public:
     virtual Socket::Ptr create(const std::string& address, unsigned port);
+
+    virtual ~SocketFactory() = default;
 };
