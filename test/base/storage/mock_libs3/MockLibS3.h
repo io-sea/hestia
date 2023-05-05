@@ -9,23 +9,17 @@ namespace hestia::mock::libs3 {
 
 enum class S3Status { OK, NOT_FOUND, UNKNOWN_ERROR };
 
-struct S3ErrorDetails {
-};
+struct S3ErrorDetails {};
 
-struct S3BucketContext {
-};
+struct S3BucketContext {};
 
-struct S3GetConditions {
-};
+struct S3GetConditions {};
 
-struct S3PutProperties {
-};
+struct S3PutProperties {};
 
-struct S3RequestContext {
-};
+struct S3RequestContext {};
 
-struct S3ResponseProperties {
-};
+struct S3ResponseProperties {};
 
 using S3ResponseCompleteCallback   = std::function<void(
     S3Status status, const S3ErrorDetails* error_details, void* callback_data)>;

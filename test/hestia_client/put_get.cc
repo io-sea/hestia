@@ -104,7 +104,7 @@ SCENARIO(
             auto offset = GENERATE(
                 take(1, random(0, static_cast<int>(max_data_size) - 1)));
             auto end_offset    = GENERATE_REF(take(
-                1, filter(  // NOLINT
+                   1, filter(  // NOLINT
                        [&offset](auto var) { return var > offset; },
                        random(1, static_cast<int>(max_data_size)))));
             auto length        = end_offset - offset;

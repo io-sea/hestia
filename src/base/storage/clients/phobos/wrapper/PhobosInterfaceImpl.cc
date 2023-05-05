@@ -132,7 +132,7 @@ void PhobosInterfaceImpl::list(
 
     const char* pattern = "";
     int rc              = phobos_store_object_list_cpp(
-        &pattern, 1, true, &key, query_count, false, &obj_info, &num_objects);
+                     &pattern, 1, true, &key, query_count, false, &obj_info, &num_objects);
     if (rc != 0) {
         throw std::runtime_error("Phobos_file::get_object_list");
     }

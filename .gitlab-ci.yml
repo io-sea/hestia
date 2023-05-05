@@ -1,4 +1,4 @@
-image: debian:bullseye-slim
+image: rockylinux:8
 
 stages: 
   - static analysis 
@@ -7,21 +7,24 @@ stages:
 
 .variables:
   default_variables: &default_variables 
-    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/cmake"
+    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: Release 
     CXX: g++
+    C: gcc
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     HESTIA_BUILD_TESTS: "OFF" 
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_DOC_DIR: ""
-    HESTIA_BUILD_THREADS: "4"
-    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/hestia-deps-debian-11"
+    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
 .snippets: 
   - &install_dependencies
-    apt-get update -qqy
-    && apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.dev)
-    && ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR
+    yum check-update -q || true;
+    yum update -qy;
+    yum install -qy epel-release;
+    yum config-manager -q --set-enabled powertools;
+    yum install -qy $(cat ${HESTIA_DEPS}/base);
+    ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -36,9 +39,9 @@ stages:
     )
     && popd
   - &build 
-    make -C "${CMAKE_BUILD_DIR}" -j $HESTIA_BUILD_THREADS
+    make -C "${CMAKE_BUILD_DIR}" -j$(nproc)
   - &test
-    make -C "${CMAKE_BUILD_DIR}" test -j $HESTIA_BUILD_THREADS
+    make -C "${CMAKE_BUILD_DIR}" test -j$(nproc)
 
 .cache:
   cmake_install_cache: &cmake_install_cache
@@ -70,8 +73,11 @@ Format:
   <<: *default_job
   stage: static analysis
   before_script: 
-    - apt-get update -qqy 
-      && apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.format)
+    - yum -q check-update || true # Returns exit code 100 if updates exist
+    - yum update -qy
+    - yum install -qy epel-release
+    - yum config-manager -q --set-enabled powertools
+    - yum install -qy $(cat ${HESTIA_DEPS}/format)
   script: 
     - ./infra/scripts/run_format.sh
       && git status 
@@ -86,10 +92,11 @@ Lint:
     CMAKE_BUILD_TYPE: Debug
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     CXX: clang++
+    C: clang
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
     - *install_dependencies
-    - apt-get install --no-install-recommends -qqy $(cat ${HESTIA_DEPS}.lint) clang clang-tidy
+    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
     - *build 
   script:

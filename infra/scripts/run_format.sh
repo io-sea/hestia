@@ -4,9 +4,10 @@
 set -o errexit
 
 HESTIA_FORMATTER_THREADS=4
-if [ $HESTIA_BUILD_THREADS -ge $HESTIA_FORMATTER_THREADS ]
-then
-    HESTIA_FORMATTER_THREADS=$HESTIA_BUILD_THREADS
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    HESTIA_FORMATTER_THREADS=$(nproc)
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    HESTIA_FORMATTER_THREADS=$(sysctl -n hw.logicalcpu)
 fi
 
 # Assume current script is in hestia/tools 

@@ -23,14 +23,20 @@ TEST_CASE_METHOD(
 
     WHEN("There is no existing object")
     {
-        THEN("The exist check is false") { exists(obj, false); }
+        THEN("The exist check is false")
+        {
+            exists(obj, false);
+        }
     }
 
     WHEN("We PUT an object")
     {
         put(obj);
 
-        THEN("The exist check is true") { exists(obj, true); }
+        THEN("The exist check is true")
+        {
+            exists(obj, true);
+        }
 
         WHEN("We GET the same object")
         {
@@ -59,7 +65,10 @@ TEST_CASE_METHOD(
         {
             remove(obj);
 
-            THEN("It no longer exists") { exists(obj, false); }
+            THEN("It no longer exists")
+            {
+                exists(obj, false);
+            }
         }
     }
 }

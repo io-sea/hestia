@@ -1,0 +1,12 @@
+ca-certificates 
+wget 
+gcc
+gcc-c++
+glibc-devel
+make
+git
+openssl-devel
+libcurl-devel 
+libxml2-devel
+libasan
+libubsan

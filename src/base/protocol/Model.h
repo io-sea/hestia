@@ -1,6 +1,5 @@
 #pragma once
 
 namespace hestia {
-class Model {
-};
+class Model {};
 }  // namespace hestia

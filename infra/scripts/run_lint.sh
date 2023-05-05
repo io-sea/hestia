@@ -2,9 +2,10 @@
 
 # Set number of processes to use
 HESTIA_LINTER_THREADS=4
-if [ $HESTIA_BUILD_THREADS -ge $HESTIA_LINTER_THREADS ]
-then
-    HESTIA_LINTER_THREADS=$HESTIA_BUILD_THREADS
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    HESTIA_LINTER_THREADS=$(nproc)
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    HESTIA_LINTER_THREADS=$(sysctl -n hw.logicalcpu)
 fi
 
 # Exit on first error

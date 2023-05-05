@@ -1,6 +1,5 @@
 #pragma once
 
 namespace hestia {
-class AuthenticationSession {
-};
+class AuthenticationSession {};
 }  // namespace hestia

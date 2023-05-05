@@ -10,8 +10,7 @@
 #include <memory>
 
 namespace hestia {
-struct S3Config {
-};
+struct S3Config {};
 
 class IS3InterfaceImpl {
   public:

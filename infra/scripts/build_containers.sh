@@ -10,4 +10,4 @@ cp $SOURCE_DIR/infra/scripts/build_boost.sh .
 cp $SOURCE_DIR/infra/scripts/build_phobos.sh .
 cp -r $SOURCE_DIR/infra/containers/$CONTAINER_NAME/Dockerfile .
 
-docker build -t deimos_$CONTAINER_NAME .
+docker build -t hestia_$CONTAINER_NAME .
