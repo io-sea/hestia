@@ -65,7 +65,7 @@ class Disk : Object_store {
             m_store.path() / ("tier" + std::to_string(tier))};
 
         if (!tier_dir.exists()) {
-            std::filesystem::create_directory(tier_dir.path());
+            std::filesystem::create_directories(tier_dir.path());
         }
 
         const std::string filename{

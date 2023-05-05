@@ -9,7 +9,7 @@
 #include "ApplicationContext.h"
 #include "HsmService.h"
 
-#include <iostream>
+#include "Logger.h"
 
 namespace hestia {
 int HestiaConfigurator::initialize(const HestiaConfig& config)
@@ -21,7 +21,7 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
         object_store = set_up_object_store();
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << '\n';
+        LOG_ERROR(e.what());
         return -1;
     }
 
@@ -30,7 +30,7 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
         kv_store = set_up_key_value_store();
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << '\n';
+        LOG_ERROR(e.what());
         return -1;
     }
 
@@ -39,7 +39,7 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
         dpe = set_up_data_placement_engine();
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << '\n';
+        LOG_ERROR(e.what());
         return -1;
     }
 

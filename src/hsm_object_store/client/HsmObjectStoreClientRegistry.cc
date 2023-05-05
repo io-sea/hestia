@@ -4,6 +4,8 @@
 
 #include "FileObjectStoreClient.h"
 
+#include "Logger.h"
+
 namespace hestia {
 ObjectStorePluginHandler::ObjectStorePluginHandler(
     const std::vector<std::filesystem::directory_entry>& search_paths) :
@@ -43,11 +45,13 @@ ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
     if (client_type.m_source == ObjectStoreClientType::Source::BUILT_IN) {
         if (client_type.m_identifier
             == FileHsmObjectStoreClient::get_registry_identifier()) {
+            LOG_INFO("Setting up FileHsmObjectStoreClient");
             return FileHsmObjectStoreClient::create();
         }
         else if (
             client_type.m_identifier
             == hestia::FileObjectStoreClient::get_registry_identifier()) {
+            LOG_INFO("Setting up FileObjectStoreClient");
             return hestia::FileObjectStoreClient::create();
         }
     }

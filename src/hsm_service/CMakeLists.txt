@@ -34,6 +34,27 @@ add_module(
         event_feed
 )
 
+include(FetchDependencies)
+fetch_nlohmann_json()
+
+add_library(dpe ${PROJECT_SOURCE_DIR}/src/data_placement_engine/eejit.cc)
+target_link_libraries(dpe PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(dpe PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+
+add_library(kv_disk ${PROJECT_SOURCE_DIR}/src/key_value_store/disk.cc)
+target_link_libraries(kv_disk PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(kv_disk PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+
+add_library(obj_disk ${PROJECT_SOURCE_DIR}/src/hsm_object_store/disk.cc)
+target_link_libraries(obj_disk PUBLIC nlohmann_json::nlohmann_json)
+target_include_directories(obj_disk PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+
 add_library(hestia_lib SHARED 
     put.cc
     get.cc

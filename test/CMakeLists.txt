@@ -9,11 +9,6 @@ fetch_catch2()
 
 add_subdirectory(base/utils)
 
-set(PLATFORM_LIBS)
-if(NOT APPLE)
-    list(APPEND PLATFORM_LIBS stdc++fs)
-endif()
-
 include(external/code-coverage)
 
 set(UNIT_TEST_MODULE ${PROJECT_NAME}_unit_tests)
@@ -51,6 +46,7 @@ set(UNIT_TEST_SOURCES
     hestia_client/list.cc
     hestia_client/get_tiers_info.cc
     hestia_client/list_tiers.cc
+    hestia_client/main_tests.cc
     hsm_object_store/motr/TestMockMotrBackend.cc
     hsm_object_store/motr/TestMockMotrHsm.cc
     hsm_object_store/motr/TestMotrHsmClient.cc
@@ -60,6 +56,10 @@ add_executable(${UNIT_TEST_MODULE}
     main.cc
     ${UNIT_TEST_SOURCES})
 
+set(PLATFORM_LIBS)
+if(NOT APPLE)
+    list(APPEND PLATFORM_LIBS stdc++fs)
+endif()
 
 target_link_libraries(${UNIT_TEST_MODULE} PRIVATE 
     hestia_client 
@@ -69,8 +69,8 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     hestia_storage
     hestia_s3app
     hestia_test_utils
-    Catch2::Catch2
     ${PLATFORM_LIBS}
+    Catch2::Catch2
 )
 
 # There is an inconsistency in clang/gcc application of this - make it explicit

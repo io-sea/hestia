@@ -5,6 +5,7 @@
 #include "tiers.h"
 #include <chrono>
 #include <cstdio>
+#include <iostream>
 
 void hestia::create_dataset(
     const struct hsm_uint oid, std::vector<hsm_uint>& members)
@@ -60,6 +61,7 @@ int hestia::put(
      * stop here and return an error (TODO: appropriate error code)
      */
     if (kv_store.object_exists(oid) != is_overwrite) {
+        std::cerr << "object extis" << std::endl;
         return 1;
     }
 

@@ -5,12 +5,14 @@ add_module(
     HEADERS
         hestia_old.h
         HestiaConfig.h
+        HestiaCli.h
         HestiaCppInterface.h
         application/ApplicationContext.h
         application/ConfigParser.h
     SOURCES
         hestia.cc
         HestiaConfig.cc
+        HestiaCli.cc
         HestiaCppInterface.cc
         application/ApplicationContext.cc
         application/ConfigParser.cc
@@ -21,3 +23,5 @@ add_module(
     DEPENDENCIES  
         nlohmann_json::nlohmann_json       
 )
+
+target_include_directories(hestia_client SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/external)

@@ -1,138 +1,79 @@
 #include "hestia.h"
+
+#include "ApplicationContext.h"
+#include "CommandLineArgs.h"
+#include "HestiaCli.h"
+#include "HestiaConfig.h"
+#include "HsmService.h"
+
+#include "Logger.h"
+
 #include <iostream>
-#include <string>
 
-int main()
+hestia::TierBackendRegistry g_all_file_backend_example = {
+    {000, hestia::ObjectStoreClientType(
+              hestia::ObjectStoreClientType::Type::HSM,
+              hestia::ObjectStoreClientType::Source::BUILT_IN,
+              "file")},
+    {100, hestia::ObjectStoreClientType(
+              hestia::ObjectStoreClientType::Type::HSM,
+              hestia::ObjectStoreClientType::Source::BUILT_IN,
+              "file")},
+    {200, hestia::ObjectStoreClientType(
+              hestia::ObjectStoreClientType::Type::HSM,
+              hestia::ObjectStoreClientType::Source::BUILT_IN,
+              "file")},
+    {300, hestia::ObjectStoreClientType(
+              hestia::ObjectStoreClientType::Type::HSM,
+              hestia::ObjectStoreClientType::Source::BUILT_IN,
+              "file")},
+};
+
+int main(int argc, char** argv)
 {
-    struct hestia::hsm_uint oid(23905702934);
-    struct hestia::hsm_uint oid2(34016813045);
-    struct hestia::hsm_uint set(12894691823);
+    hestia::HestiaCli hestia_cli;
+    hestia_cli.parse(argc, argv);
 
-    std::vector<hestia::hsm_uint> members = {oid, oid2};
+    hestia::HestiaConfig config;
+    config.m_key_value_store_type  = hestia::KeyValueStoreType::FILE;
+    config.m_placement_engine_type = PlacementEngineType::BASIC;
 
-    hestia::create_dataset(set, members);
+    hestia::Logger::Config logger_config;
+    logger_config.m_active       = true;
+    logger_config.m_level        = hestia::Logger::Level::INFO;
+    logger_config.m_console_only = false;
+    logger_config.m_log_prefix   = "hestia";
+    logger_config.m_log_file_path =
+        std::filesystem::current_path() / "hestia_log.txt";
 
-    std::string write_data = "Buffer testing data 123";
-    /*    std::ofstream testfile("testfile.txt");
-        testfile.write(write_data.data(), write_data.size());
-        testfile.close();
+    hestia::Logger::get_instance().initialize(logger_config);
 
-        int offset = 0;
+    LOG_INFO("Starting Hestia");
 
-        std::ifstream writefile("testfile.txt");
-    */
-    int offset = 0;
-    if (hestia::put(oid, false, write_data.data(), offset, write_data.size(), 0)
-        != 0) {
-        std::cout << "put error!" << std::endl;
-        exit(1);
-    }
-    //    writefile.close();
-
-
-    if (hestia::put(
-            oid2, false, write_data.data(), offset, write_data.size(), 0)
-        != 0) {
-        std::cout << "put error!" << std::endl;
-        exit(1);
+    hestia::HestiaConfigurator configurator;
+    auto result = configurator.initialize(config);
+    if (result != 0) {
+        LOG_ERROR("Error configuring Hestia");
+        return -1;
     }
 
-    if (hestia::set_attrs(
-            set,
-            R"({"trigger_migration": {"operation":"copy","src_tier" : 0,
-       "tgt_tier":1}})")
-        != 0) {
-        std::cout << "set_attrs error!" << std::endl;
-        exit(1);
-    }
-    std::cout << "Copied dataset from tier 0 to tier 1\n";
-    /*
-        if (hestia::set_attrs(
-                set,
-                R"({"trigger_migration": {"operation":"release","src_tier" : 0,
-           "tgt_tier":1}})")
-            != 0) {
-            std::cout << "set_attrs error!" << std::endl;
-            exit(1);
+    if (hestia_cli.m_method == hestia::HestiaCli::Method::GET) {
+        LOG_INFO("Handling GET CLI option");
+        hestia::HsmServiceRequest request(
+            hestia::StorageObject(hestia_cli.m_object_id),
+            hestia::HsmServiceRequestMethod::GET);
+
+        auto stream = hestia::Stream::create();
+        auto response =
+            hestia::ApplicationContext::get().get_hsm_service()->make_request(
+                request, stream.get());
+
+        if (!response->ok()) {
+            LOG_ERROR("Failed GET request");
+            return -1;
         }
-
-        if (hestia::set_attrs(
-                set,
-                R"({"trigger_migration": {"operation":"move","src_tier" : 1,
-           "tgt_tier":0}})")
-            != 0) {
-            std::cout << "set_attrs error!" << std::endl;
-            exit(1);
-        }
-        */
-    std::string read_data;
-    read_data.resize(write_data.size() - offset);
-    std::string overwrite_data{"Overwriting data 123"};
-    offset = 7;
-
-    if (hestia::put(
-            oid, true, overwrite_data.data(), offset, overwrite_data.size(), 0)
-        != 0) {
-        std::cout << "put error!" << std::endl;
-        exit(1);
-    }
-    if (hestia::get(oid, &read_data[0], 7, read_data.size(), 0, 0) != 0) {
-        std::cout << "get error!" << std::endl;
-        exit(1);
     }
 
-    std::cout << read_data << '\n';
-
-    auto location  = hestia::locate(oid);
-    auto location2 = hestia::locate(oid2);
-
-    std::cout << "Object " << oid.higher << oid.lower << " is located on "
-              << location.size() << " tiers\n";
-    std::cout << "Object " << oid.higher << oid.lower
-              << " Location tiers: " << std::endl;
-    for (const auto& it : location) {
-        std::cout << +it << std::endl;
-    }
-    std::cout << "Object " << oid2.higher << oid2.lower << " is located on "
-              << location2.size() << " tiers\n";
-    std::cout << "Object " << oid2.higher << oid2.lower
-              << " Location tiers: " << std::endl;
-    for (const auto& it : location2) {
-        std::cout << +it << std::endl;
-    }
-    auto oids = hestia::list();
-
-    const std::string test_key = "key";
-
-    auto get_att = hestia::get_attrs(oid, test_key.data());
-
-    std::cout << get_att << std::endl;
-
-    std::cout << "Object list: \n";
-    for (const auto& id : oids) {
-        std::cout << id.higher << id.lower << std::endl;
-    }
-
-    auto tier_ids = hestia::list_tiers();
-    for (auto i : tier_ids) {
-        std::cout << unsigned(i) << std::endl;
-    }
-
-    std::vector<int> tids = {1};
-    auto tiers_info       = hestia::get_tiers_info(tids);
-    for (const auto& it : tiers_info) {
-        std::cout << " " << +it.id << " " << it.store << " " << it.capacity
-                  << " " << it.bandwith << std::endl;
-    }
-
-    auto member_list = hestia::get_dataset_members(set);
-
-    std::cout << "Dataset members:\n";
-    for (const auto& it : member_list) {
-        std::cout << it.higher << '-' << it.lower << std::endl;
-    }
-    //        hestia::remove(set);
-
-
+    LOG_INFO("Hestia Finished - OK");
     return 0;
 }

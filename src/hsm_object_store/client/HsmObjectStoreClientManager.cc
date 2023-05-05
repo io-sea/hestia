@@ -1,5 +1,7 @@
 #include "HsmObjectStoreClientManager.h"
 
+#include "Logger.h"
+
 namespace hestia {
 HsmObjectStoreClientManager::HsmObjectStoreClientManager(
     HsmObjectStoreClientRegistry::Ptr client_registry) :
