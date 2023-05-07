@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "S3Container.h"
 
+#include <array>
 #include <unordered_map>
 #include <vector>
 
@@ -27,7 +28,7 @@ class S3ContainerModel : public Model {
     static std::string without_prefix(
         const std::string& key, const std::string& prefix);
 
-    static const std::vector<std::string> internal_keys;
+    static const std::array<std::string, 4> internal_keys;
     std::vector<S3Container> m_container;
 };
 }  // namespace hestia

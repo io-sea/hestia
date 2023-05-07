@@ -20,6 +20,8 @@ class S3WebApp : public WebApp {
         const S3WebAppConfig& config          = {},
         std::unique_ptr<S3Service> s3_service = nullptr);
 
+    virtual ~S3WebApp() = default;
+
   protected:
     void set_up_routing();
 

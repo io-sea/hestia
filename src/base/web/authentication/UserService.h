@@ -13,6 +13,8 @@ class UserService {
 
     UserService(Database* db);
 
+    virtual ~UserService() = default;
+
     static Ptr create(Database* db);
 
     void add(const User& user) const;

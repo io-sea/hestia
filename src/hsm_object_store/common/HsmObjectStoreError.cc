@@ -50,6 +50,8 @@ std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)
             return "UNSUPPORTED_REQUEST_METHOD";
         case HsmObjectStoreErrorCode::MAX_ERROR:
             return "MAX_ERROR";
+        case HsmObjectStoreErrorCode::BASE_OBJECT_STORE_ERROR:
+            return "BASE_OBJECT_STORE_ERROR";
         default:
             return "UNKOWN ERROR";
     }

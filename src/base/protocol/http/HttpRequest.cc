@@ -99,6 +99,8 @@ std::string HttpRequest::get_method_as_string() const
             return "DELETE";
         case Method::HEAD:
             return "HEAD";
+        case Method::UNSET:
+            return "UNSET";
         default:
             return "UNKNOWN";
     }

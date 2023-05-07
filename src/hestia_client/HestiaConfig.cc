@@ -71,26 +71,28 @@ HestiaConfigurator::set_up_object_store()
 std::unique_ptr<KeyValueStore> HestiaConfigurator::set_up_key_value_store()
 {
     const auto store_type = m_config.m_key_value_store_type;
-    if (!key_value_store_registry::is_store_type_available(store_type)) {
+    if (!KeyValueStoreClientRegistry::is_store_type_available(store_type)) {
         std::string msg = "Requested Key Value Store type: "
-                          + key_value_store_registry::to_string(store_type);
+                          + KeyValueStoreClientRegistry::to_string(store_type);
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
-    return key_value_store_registry::get_store(store_type);
+    return KeyValueStoreClientRegistry::get_store(store_type);
 }
 
 std::unique_ptr<DataPlacementEngine>
 HestiaConfigurator::set_up_data_placement_engine()
 {
-    const auto pe_type = m_config.m_placement_engine_type;
+    // const auto pe_type = m_config.m_placement_engine_type;
+    /*
     if (!placement_engine_registry::is_placement_engine_available(pe_type)) {
-        std::string msg = "Requested Placement engine type: "
-                          + placement_engine_registry::to_string(pe_type);
+        std::string msg = "Requested Placement engine type: ";
+        //                  + placement_engine_registry::to_string(pe_type);
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
-
-    return placement_engine_registry::get_engine(pe_type);
+*/
+    // return placement_engine_registry::get_engine(pe_type);
+    return nullptr;
 }
 }  // namespace hestia

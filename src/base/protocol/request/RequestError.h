@@ -9,7 +9,7 @@ class RequestError {
     RequestError() = default;
 
     RequestError(ErrorCode code, const std::string& message) :
-        m_code(code), m_message(message)
+        m_message(message), m_code(code)
     {
     }
 

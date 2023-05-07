@@ -11,7 +11,7 @@ CopyToolResponse::Ptr CopyToolResponse::create()
 bool CopyToolResponse::ok() const
 {
     return m_status != Status::ERROR;
-};
+}
 
 void CopyToolResponse::set_error(const CopyToolError& error)
 {

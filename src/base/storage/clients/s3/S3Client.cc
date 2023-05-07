@@ -44,27 +44,38 @@ void S3Client::initialize(const S3Config& config)
 void S3Client::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)object;
+    (void)extent;
+    (void)stream;
+
     // m_impl->put(object, extent, stream);
 }
 
 void S3Client::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)object;
+    (void)extent;
+    (void)stream;
     // m_impl->get(object, extent, stream);
 }
 
 void S3Client::remove(const StorageObject& obj) const
 {
+    (void)obj;
     // m_impl->remove(obj);
 }
 
 void S3Client::list(
     const Metadata::Query& query, std::vector<StorageObject>& found) const
 {
+    (void)query;
+    (void)found;
 }
 
 bool S3Client::exists(const StorageObject& object) const
 {
+    (void)object;
     return false;
 }
 }  // namespace hestia

@@ -20,7 +20,7 @@ HttpResponse::Ptr HttpResponse::create(
 
 HttpHeader& HttpResponse::header()
 {
-    return header();
+    return m_header;
 }
 
 const HttpHeader& HttpResponse::header() const
@@ -35,7 +35,7 @@ int HttpResponse::code() const
 
 const std::string& HttpResponse::message() const
 {
-    return message();
+    return m_message;
 }
 
 const std::string& HttpResponse::body() const

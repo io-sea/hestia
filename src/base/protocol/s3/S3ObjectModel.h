@@ -6,6 +6,7 @@
 #include "S3Container.h"
 #include "S3Object.h"
 
+#include <array>
 #include <vector>
 
 namespace hestia {
@@ -30,7 +31,7 @@ class S3ObjectModel : public Model {
     static bool is_internal_key(const std::string& key);
     static std::string without_prefix(
         const std::string& key, const std::string& prefix);
-    static const std::vector<std::string> internal_keys;
+    static const std::array<std::string, 5> internal_keys;
 
     std::vector<S3Object> m_objects;
 };

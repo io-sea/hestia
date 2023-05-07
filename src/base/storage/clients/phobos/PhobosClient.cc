@@ -36,6 +36,8 @@ std::string PhobosClient::get_registry_identifier()
 void PhobosClient::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)extent;
+
     if (stream != nullptr) {
         auto fifo     = FifoStreamSink::create();
         auto fifo_ptr = fifo.get();
@@ -57,6 +59,8 @@ void PhobosClient::put(
 void PhobosClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)extent;
+
     m_phobos_interface->get_metadata(object);
 
     if (stream != nullptr) {

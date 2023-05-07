@@ -29,7 +29,7 @@ int phobos_delete_cpp(struct pho_xfer_desc* xfers, size_t num_xfers)
 
 void pho_xfer_desc_destroy_cpp(struct pho_xfer_desc* xfer)
 {
-    return pho_xfer_desc_clean(xfer);
+    pho_xfer_desc_clean(xfer);
 }
 
 int phobos_store_object_list_cpp(const char** res,int n_res, bool is_pattern, const char** metadata,
@@ -40,7 +40,7 @@ int phobos_store_object_list_cpp(const char** res,int n_res, bool is_pattern, co
 
 void phobos_store_object_list_free_cpp(struct object_info* objs, int n_objs)
 {
-    return phobos_store_object_list_free(objs, n_objs);
+    phobos_store_object_list_free(objs, n_objs);
 }
 
 #endif

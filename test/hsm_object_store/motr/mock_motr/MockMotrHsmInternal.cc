@@ -41,6 +41,8 @@ hestia::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx)
 int HsmInternal::create_obj(
     Id id, Obj* obj, bool close_entity, uint8_t tier_idx)
 {
+    (void)close_entity;
+
     Motr::m0_obj_init(
         obj, m_uber_realm, &id, Motr::m0_client_layout_id(m_client));
 
@@ -78,7 +80,7 @@ void HsmInternal::layout_top_prio(
 CompositeLayer* HsmInternal::layer_get_by_prio(Layout* layout, int prio)
 {
     for (const auto& layer : layout->m_layers) {
-        if (layer->m_priority == prio) {
+        if (layer->m_priority == static_cast<uint32_t>(prio)) {
             return layer.get();
         }
     }
@@ -93,7 +95,7 @@ int HsmInternal::check_top_layer_writable(
         return -2;
     }
 
-    if (top_layer->m_priority >= max_priority) {
+    if (top_layer->m_priority >= static_cast<uint32_t>(max_priority)) {
         return -2;
     }
 
@@ -348,13 +350,16 @@ int HsmInternal::check_min_gen_exists(
     auto min_gen_check_cb = [](void* cb_arg, Layout* layout,
                                CompositeLayer* layer, hestia::Extent* match,
                                bool* stop) -> int {
+        (void)layout;
+        (void)match;
         min_gen_check_arg* arg = static_cast<min_gen_check_arg*>(cb_arg);
 
         if (layer->m_id == arg->except_subobj) {
             return 0;
         }
 
-        if (hsm_prio2gen(layer->m_priority) < arg->min_gen) {
+        if (hsm_prio2gen(layer->m_priority)
+            < static_cast<uint32_t>(arg->min_gen)) {
             return 0;
         }
 
@@ -438,6 +443,9 @@ int HsmInternal::m0hsm_release_maxgen(
     hsm_rls_flags flags,
     bool user_display)
 {
+    (void)flags;
+    (void)user_display;
+
     Layout* layout{nullptr};
     if (auto rc = layout_get(id, &layout); rc) {
         return rc;
@@ -474,9 +482,11 @@ int HsmInternal::on_layer_match_for_release(
     hestia::Extent* match,
     bool* stop)
 {
+    (void)stop;
+
     auto gen = HsmInternal::hsm_prio2gen(layer->m_priority);
     if (ctx->max_gen != -1) {
-        if (gen > ctx->max_gen) {
+        if (gen > static_cast<uint32_t>(ctx->max_gen)) {
             return 0;
         }
     }
@@ -526,7 +536,7 @@ int HsmInternal::prepare_io_ctx(
 
     if (alloc_io_buff) {
         ctx.m_stage = std::vector<char>(num_blocks * block_size);
-        for (std::size_t idx = 0; idx < num_blocks; idx++) {
+        for (int idx = 0; idx < num_blocks; idx++) {
             ctx.m_data.m_buffers.push_back(
                 ctx.m_stage.data() + idx * block_size);
         }
@@ -538,7 +548,7 @@ int HsmInternal::prepare_io_ctx(
 int HsmInternal::map_io_ctx(
     IoContext& ctx, int num_blocks, size_t b_size, off_t offset, char* buff)
 {
-    for (std::size_t idx = 0; idx < num_blocks; idx++) {
+    for (int idx = 0; idx < num_blocks; idx++) {
         ctx.m_extents.m_indices.push_back(offset + idx * b_size);
         ctx.m_extents.m_counts.push_back(b_size);
 
@@ -578,7 +588,7 @@ int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, hestia::Extent* range)
 
     IoContext ctx;
     for (; rest > 0; rest -= block_size, start += block_size) {
-        if (rest < block_size) {
+        if (rest < static_cast<std::intmax_t>(block_size)) {
             block_size = rest;
         }
 

@@ -17,6 +17,8 @@ int Hsm::m0hsm_init(Client* client, Realm* realm, HsmOptions* options)
 
 int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
 {
+    (void)keep_open;
+
     Obj sub_object;
 
     auto rc = impl()->create_obj(
@@ -95,6 +97,8 @@ int Hsm::m0hsm_pwrite(
 
 int Hsm::m0hsm_set_read_tier(Id obj_id, uint8_t tier_idx)
 {
+    (void)obj_id;
+    (void)tier_idx;
     return 0;
 }
 
@@ -202,6 +206,8 @@ int Hsm::on_layer_match_for_copy(
     hestia::Extent* match,
     bool* stop)
 {
+    (void)stop;
+
     ctx->found++;
 
     auto gen          = HsmInternal::hsm_prio2gen(src_layer->m_priority);
@@ -435,6 +441,8 @@ int Hsm::m0hsm_multi_release(
     size_t length,
     hsm_rls_flags flags)
 {
+    (void)flags;
+
     Layout* layout{nullptr};
     if (auto rc = impl()->layout_get(obj_id, &layout); rc) {
         return rc;

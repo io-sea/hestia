@@ -37,7 +37,10 @@ void BlockStore::dump(const std::filesystem::path& directory)
     }
 }
 
-void BlockStore::load(const std::filesystem::path& directory) {}
+void BlockStore::load(const std::filesystem::path& directory)
+{
+    (void)directory;
+}
 
 BlockStore::ReturnCode BlockStore::write(
     const std::string& key,
@@ -62,16 +65,14 @@ BlockStore::ReturnCode BlockStore::read(
     auto iter = m_data.find(key);
     if (iter == m_data.end()) {
         const auto msg = "Key " + key + " not found during read";
-        return ReturnCode{
-            .m_status = ReturnCode::Status::ID_NOT_FOUND, .m_message = msg};
+        return ReturnCode{ReturnCode::Status::ID_NOT_FOUND, msg};
     }
 
     const auto& [found, bytes_read] = iter->second.read(extent, buffer);
     if (!found) {
         const auto msg = "Read Failed to find extent: " + extent.to_string();
-        return ReturnCode{
-            .m_status = ReturnCode::Status::EXTENT_NOT_FOUND, .m_message = msg};
+        return ReturnCode{ReturnCode::Status::EXTENT_NOT_FOUND, msg};
     }
-    return BlockStore::ReturnCode{.m_bytes_read = bytes_read};
+    return BlockStore::ReturnCode{bytes_read};
 }
 }  // namespace hestia

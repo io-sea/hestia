@@ -3,6 +3,9 @@
 std::uint8_t BasicDataPlacementEngine::choose_tier(
     const std::size_t length, const std::uint8_t hint)
 {
+    (void)length;
+    (void)hint;
+
     // std::uniform_int_distribution<> distrib(0, m_tiers.size() - 1);
 
     //    const auto tier  = distrib(m_gen);

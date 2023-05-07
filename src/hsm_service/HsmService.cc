@@ -49,6 +49,9 @@ HsmServiceResponse::Ptr HsmService::make_request(
             return remove(req);
         case HsmServiceRequestMethod::REMOVE_ALL:
             return remove_all(req);
+        case HsmServiceRequestMethod::GET_TIERS:
+        case HsmServiceRequestMethod::LIST:
+        case HsmServiceRequestMethod::LIST_TIERS:
         default:
             return nullptr;
     }
@@ -253,6 +256,8 @@ HsmServiceResponse::Ptr HsmService::remove_all(
 
 void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
 {
+    (void)tier;
+    (void)objects;
     /*
     std::vector<hestia::StorageObject> objs;
     m_key_value_store->list(tier, objs);
@@ -261,6 +266,8 @@ void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
 
 void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
 {
+    (void)tiers;
+    (void)object;
     /*
     if (!m_key_value_store->exists(object.mStorageObject))
     {
@@ -273,6 +280,9 @@ void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
     */
 }
 
-void HsmService::list_attributes(HsmObject& object) {}
+void HsmService::list_attributes(HsmObject& object)
+{
+    (void)object;
+}
 
 }  // namespace hestia

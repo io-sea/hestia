@@ -7,7 +7,7 @@
 namespace hestia {
 class KeyValueStoreClient {
   public:
-    virtual ~KeyValueStoreClient() = default;
+    virtual ~KeyValueStoreClient();
 
     [[nodiscard]] ObjectStoreResponse::Ptr make_request(
         const ObjectStoreRequest& request) const noexcept;
@@ -27,6 +27,6 @@ class KeyValueStoreClient {
 
     virtual void list(
         const Metadata::Query& query,
-        std::vector<StorageObject>& fetched) const;
+        std::vector<StorageObject>& fetched) const = 0;
 };
 }  // namespace hestia

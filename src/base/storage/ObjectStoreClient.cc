@@ -57,6 +57,8 @@ ObjectStoreResponse::Ptr ObjectStoreClient::make_request(
             }
             CATCH_FLOW();
             break;
+        case ObjectStoreRequestMethod::CUSTOM:
+            break;
         default:
             const std::string msg =
                 "Method: " + request.method_as_string() + " not supported";

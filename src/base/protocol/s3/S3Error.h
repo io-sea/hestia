@@ -32,7 +32,6 @@ class S3Error : public HttpError {
     std::string to_string() const override;
 
   private:
-    Code m_s3_code;
     std::string m_identifier;
     std::string m_request;
 };

@@ -126,8 +126,8 @@ static int build_layer_extents(
     std::vector<CompositeSubObject>& sub_objects,
     std::vector<ExtentCursor>& extent_cursors)
 {
-    auto index_cursor = 0;
-    auto offset       = input_extents.m_indices[index_cursor];
+    std::size_t index_cursor = 0;
+    auto offset              = input_extents.m_indices[index_cursor];
     auto length{0};
     advance_layer_cursors(extent_cursors, offset);
 

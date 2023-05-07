@@ -13,6 +13,8 @@ S3ContainerListView::S3ContainerListView(S3Service* service) :
 
 HttpResponse::Ptr S3ContainerListView::on_get(const HttpRequest& request)
 {
+    (void)request;
+
     std::stringstream sstr;
     sstr << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     sstr << "<ListAllMyBucketsResult>\n";

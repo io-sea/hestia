@@ -12,6 +12,7 @@ HttpResponse::Ptr WebView::get_response(const HttpRequest& request)
             return on_delete(request);
         case HttpRequest::Method::HEAD:
             return on_head(request);
+        case HttpRequest::Method::UNSET:
         default:
             return on_not_supported(request);
     }

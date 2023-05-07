@@ -33,6 +33,7 @@ int CompositeLayer::add_merge_read_extent(const hestia::Extent& extent_in)
         case ExtentMatchCode::EM_PARTIAL:
             rc = add_extent(extent_merge, false, true);
             break;
+        case ExtentMatchCode::EM_ERROR:
         default:
             rc = -EINVAL;
     }
@@ -65,6 +66,8 @@ void CompositeLayer::delete_marked_extents(bool is_write)
 
 std::string CompositeLayer::dump_extents(bool details, bool is_write)
 {
+    (void)details;
+
     auto extents = get_extents(is_write);
 
     std::string out;
@@ -77,7 +80,6 @@ std::string CompositeLayer::dump_extents(bool details, bool is_write)
 int CompositeLayer::extent_substract(
     const hestia::Extent& extent_in, bool is_write, bool* layer_empty)
 {
-    int rc               = 0;
     int remaining_extent = 0;
 
     auto extents = get_extents(is_write);

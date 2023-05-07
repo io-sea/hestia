@@ -3,7 +3,7 @@
 #include <iostream>
 
 namespace hestia {
-const std::vector<std::string> S3ObjectModel::internal_keys{
+const std::array<std::string, 5> S3ObjectModel::internal_keys{
     "key", "creation_time", "content_length", "bucket", "protocol"};
 
 Metadata S3ObjectModel::serialize(

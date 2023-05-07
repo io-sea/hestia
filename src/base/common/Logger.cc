@@ -23,6 +23,10 @@ void Logger::initialize(const Config& config)
 {
     m_config = config;
 
+    if (m_config.m_active == false) {
+        return;
+    }
+
     if (!m_config.m_console_only) {
         auto max_logfile_size = 1048576 * 5;
         auto max_logfiles     = 3;

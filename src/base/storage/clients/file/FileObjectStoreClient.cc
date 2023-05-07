@@ -84,6 +84,8 @@ bool FileObjectStoreClient::exists(const StorageObject& object) const
 void FileObjectStoreClient::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)extent;
+
     auto path = get_metadata_path(object.m_id);
     FileUtils::create_if_not_existing(path);
 
@@ -104,6 +106,8 @@ void FileObjectStoreClient::put(
 void FileObjectStoreClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    (void)extent;
+
     if (!exists(object)) {
         const std::string msg =
             "Requested object: " + object.m_id + " not found.";

@@ -91,6 +91,7 @@ void ProxygenRequestHandler::on_output_chunk(
 
 void ProxygenRequestHandler::on_output_finished(const HttpResponse* response)
 {
+    (void)response;
     LOG_INFO("On Output finished");
     // ProxygenMessage::buildResponse(downstream_, response, true);
 }

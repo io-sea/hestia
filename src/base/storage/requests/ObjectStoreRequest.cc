@@ -38,6 +38,8 @@ std::string ObjectStoreRequest::to_string(ObjectStoreRequestMethod method)
             return "REMOVE";
         case ObjectStoreRequestMethod::LIST:
             return "LIST";
+        case ObjectStoreRequestMethod::CUSTOM:
+            return "CUSTOM";
         default:
             return "UNKNOWN";
     }

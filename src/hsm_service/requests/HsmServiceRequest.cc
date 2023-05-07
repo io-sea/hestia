@@ -5,12 +5,14 @@ HsmServiceRequest::HsmServiceRequest(
     const hestia::Uuid& object_id, HsmServiceRequestMethod method) :
     hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
+    (void)object_id;
 }
 
 HsmServiceRequest::HsmServiceRequest(
     const hestia::StorageObject& object, HsmServiceRequestMethod method) :
     hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
+    (void)object;
 }
 
 HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :

@@ -16,6 +16,8 @@ CopyToolConnection::~CopyToolConnection()
 CopyToolConnection::State CopyToolConnection::initialize(
     const CopyToolConfig& config, Type connection_type)
 {
+    (void)config;
+
     m_type = connection_type;
 
     if (m_type == Type::IN_PROCESS) {

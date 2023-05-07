@@ -48,6 +48,8 @@ class TestWebView : public hestia::WebView {
     hestia::HttpResponse::Ptr on_get(
         const hestia::HttpRequest& request) override
     {
+        (void)request;
+
         // auto buffer_size =
         // mService->getData(request.getContext()->getStream());
         // LOG_INFO("Buffer size is: " + std::to_string(buffer_size));

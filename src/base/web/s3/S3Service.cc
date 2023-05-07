@@ -7,11 +7,11 @@
 
 namespace hestia {
 S3Service::S3Service(const S3ServiceConfig& config) :
-    m_object_store_client(config.m_object_store_client),
     m_object_adapter(
         std::make_unique<S3ObjectAdapter>(config.m_metadata_prefix)),
     m_container_adapter(
-        std::make_unique<S3ContainerAdapter>(config.m_metadata_prefix))
+        std::make_unique<S3ContainerAdapter>(config.m_metadata_prefix)),
+    m_object_store_client(config.m_object_store_client)
 {
 }
 

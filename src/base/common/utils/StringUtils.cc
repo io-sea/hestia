@@ -31,8 +31,6 @@ std::pair<uint64_t, uint64_t> StringUtils::string_to_id(
     const std::string& input, char delimiter, bool as_hex)
 {
     std::stringstream ss;
-    uint64_t lo = 0;
-    uint64_t hi = 0;
 
     const auto loc = input.find(delimiter);
     if (loc == std::string::npos) {
@@ -41,7 +39,7 @@ std::pair<uint64_t, uint64_t> StringUtils::string_to_id(
     else {
         const auto lo_str = input.substr(0, loc);
         const auto hi_st  = input.substr(loc, input.size() - loc);
-        return {to_int(lo_str), to_int(hi_st)};
+        return {to_int(lo_str, as_hex), to_int(hi_st, as_hex)};
     }
 }
 

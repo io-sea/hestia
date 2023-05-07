@@ -17,6 +17,7 @@ void HsmObject::add_tier(uint8_t tier_id)
 
 void HsmObject::replace_tier(uint8_t old_id, uint8_t new_id)
 {
+    (void)old_id;
     m_tier_ids.push_back(new_id);
 }
 }  // namespace hestia

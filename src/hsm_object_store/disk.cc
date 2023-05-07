@@ -20,7 +20,7 @@ int hestia::obj::Disk::put(
     std::ifstream original(get_filename_from_oid(oid, target_tier));
 
     original.seekg(0, original.end);
-    int size = original.tellg();
+    std::size_t size = original.tellg();
     std::cout << "Original file siez is " << size << std::endl;
     original.seekg(0, original.beg);
 

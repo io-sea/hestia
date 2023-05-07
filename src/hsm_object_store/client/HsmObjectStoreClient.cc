@@ -73,6 +73,9 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 return response;
             }
             break;
+        case HsmObjectStoreRequestMethod::REMOVE_ALL:
+            LOG_ERROR("Not implemented yet: ");
+            break;
         default:
             const std::string msg =
                 "Method: " + request.method_as_string() + " not supported";
@@ -105,12 +108,15 @@ ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
 
 bool HsmObjectStoreClient::exists(const StorageObject& object) const
 {
+    (void)object;
     throw std::runtime_error("Exists operation not supported for hsm objects");
 }
 
 void HsmObjectStoreClient::list(
     const Metadata::Query& query, std::vector<StorageObject>& fetched) const
 {
+    (void)query;
+    (void)fetched;
     throw std::runtime_error("List operation not supported for hsm objects");
 }
 

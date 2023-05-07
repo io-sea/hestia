@@ -14,6 +14,7 @@ bool FileKeyValueStoreClient::exists(const StorageObject& obj) const
 void FileKeyValueStoreClient::put(
     const StorageObject& obj, const std::vector<std::string>& keys) const
 {
+    (void)keys;
     const auto path = get_filename(obj);
     JsonUtils::write(path, obj.m_metadata, exists(obj));
 }
@@ -33,6 +34,9 @@ void FileKeyValueStoreClient::remove(const StorageObject& obj) const
 void FileKeyValueStoreClient::list(
     const Metadata::Query& query, std::vector<StorageObject>& fetched) const
 {
+    (void)query;
+    (void)fetched;
+
     for (const auto& dir_entry :
          std::filesystem::directory_iterator{m_store.path()}) {
         if (FileUtils::is_file_with_extension(dir_entry, ".meta")) {

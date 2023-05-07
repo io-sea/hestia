@@ -49,7 +49,7 @@ std::string HashUtils::do_sha256(const std::string& input)
 
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
-    for (int i = 0; i < result_size; i++) {
+    for (unsigned int i = 0; i < result_size; i++) {
         ss << std::hex << std::setw(2) << (unsigned int)hash[i];
     }
     delete[] hash;
@@ -65,7 +65,7 @@ std::string HashUtils::do_h_mac(const std::string& key, const std::string& msg)
 
     std::stringstream ss;
     ss << std::setfill('0');
-    for (int i = 0; i < result_size; i++) {
+    for (unsigned int i = 0; i < result_size; i++) {
         ss << hash[i];
     }
     return ss.str();
@@ -81,7 +81,7 @@ std::string HashUtils::do_h_mac_hex(
 
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
-    for (int i = 0; i < result_size; i++) {
+    for (unsigned int i = 0; i < result_size; i++) {
         ss << std::hex << std::setw(2) << (unsigned int)hash[i];
     }
     return ss.str();

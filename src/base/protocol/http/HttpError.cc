@@ -42,5 +42,5 @@ std::string HttpError::to_string() const
     const auto& [code, identifier] = get_code_and_id();
     return "Code: " + std::to_string(code) + " Id: " + identifier + " | "
            + m_message;
-};
+}
 }  // namespace hestia

@@ -3,6 +3,7 @@
 #include <catch2/catch_all.hpp>
 #include <hestia.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 SCENARIO("List functions correctly", "[kv][store]")

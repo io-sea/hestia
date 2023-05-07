@@ -1,7 +1,6 @@
 #include <catch2/catch_all.hpp>
 
 #include "BlockList.h"
-#include <iostream>
 
 TEST_CASE("Test BlockList Operations - Chunk Write", "[blocklist]")
 {
@@ -94,12 +93,8 @@ TEST_CASE("Test Block List Read Operations - Multiple Write", "[blocklist]")
             {block0.length(), block1_2.length()},
             hestia::ReadableBufferView(block1_2));
 
-        std::cerr << block_list.dump() << std::endl;
-
         block_list.write(
             {1, block3.length()}, hestia::ReadableBufferView(block3));
-
-        std::cerr << block_list.dump() << std::endl;
 
         std::vector<char> sink(block0.length() + block1_2.length());
         hestia::WriteableBufferView write_buffer(sink);

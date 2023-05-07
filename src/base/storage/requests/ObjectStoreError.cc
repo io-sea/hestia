@@ -33,6 +33,8 @@ std::string ObjectStoreError::code_to_string(ObjectStoreErrorCode code)
             return "UNSUPPORTED_REQUEST_METHOD";
         case ObjectStoreErrorCode::MAX_ERROR:
             return "MAX_ERROR";
+        case ObjectStoreErrorCode::OBJECT_NOT_FOUND:
+            return "OBJECT_NOT_FOUND";
         default:
             return "UNKOWN ERROR";
     }

@@ -12,11 +12,13 @@
 #include <filesystem>
 
 namespace hestia {
+
 S3WebApp::S3WebApp(
     ObjectStoreClient* object_store,
     const S3WebAppConfig& config,
     S3Service::Ptr s3_service)
 {
+    (void)config;
     m_object_store_client = object_store;
 
     if (s3_service) {

@@ -6,17 +6,26 @@
 #include <stdexcept>
 
 namespace hestia {
-UserService::UserService(Database* db) : m_db(db) {}
+UserService::UserService(Database* db) : m_db(db)
+{
+
+    (void)m_db;
+}
 
 UserService::Ptr UserService::create(Database* db)
 {
     return std::make_unique<UserService>(db);
 }
 
-void UserService::add(const User& user) const {}
+void UserService::add(const User& user) const
+{
+
+    (void)user;
+}
 
 bool UserService::exists(const User& user) const
 {
+    (void)user;
     return false;
 }
 
@@ -28,7 +37,7 @@ void UserService::fetch_token(User& user) const
     }
     std::string user_str;
     while (user_database >> user_str) {
-        int colon = user_str.find(':');
+        auto colon = user_str.find(':');
         if (colon == std::string::npos) {
             throw std::runtime_error("db is corrupted");
         }

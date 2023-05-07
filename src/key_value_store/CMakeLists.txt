@@ -12,6 +12,7 @@ add_module(
         client/file/FileKeyValueStoreClient.cc
         KeyValueStore.cc
         KeyValueStoreClient.cc
+        KeyValueStoreClientRegistry.cc
     INTERNAL_INCLUDE_DIRS
         client/file/
     INTERNAL_DEPENDENCIES

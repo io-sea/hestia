@@ -75,6 +75,7 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
             request_context->set_output_chunk_handler(
                 [response = response.get()](
                     const hestia::ReadableBufferView& buffer, bool finished) {
+                    (void)finished;
                     response->append_to_body(buffer.data());
                     return buffer.length();
                 });
@@ -93,6 +94,7 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
 
 HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& request) const
 {
+    (void)request;
     return HttpResponse::create(404, "Not Found");
 }
 

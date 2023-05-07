@@ -53,6 +53,9 @@ HsmObjectStoreRequestMethod HsmObjectStoreRequest::from_base_method(
             return HsmObjectStoreRequestMethod::PUT;
         case ObjectStoreRequestMethod::REMOVE:
             return HsmObjectStoreRequestMethod::REMOVE;
+        case ObjectStoreRequestMethod::LIST:
+        case ObjectStoreRequestMethod::EXISTS:
+        case ObjectStoreRequestMethod::CUSTOM:
         default:
             throw std::runtime_error(
                 "Given unsupported base request type for hsm request type conversion.");
@@ -69,6 +72,9 @@ ObjectStoreRequestMethod HsmObjectStoreRequest::to_base_method(
             return ObjectStoreRequestMethod::PUT;
         case HsmObjectStoreRequestMethod::REMOVE:
             return ObjectStoreRequestMethod::REMOVE;
+        case HsmObjectStoreRequestMethod::REMOVE_ALL:
+        case HsmObjectStoreRequestMethod::COPY:
+        case HsmObjectStoreRequestMethod::MOVE:
         default:
             return ObjectStoreRequestMethod::CUSTOM;
     }
@@ -124,6 +130,8 @@ std::string HsmObjectStoreRequest::to_string(
             return "COPY";
         case HsmObjectStoreRequestMethod::MOVE:
             return "MOVE";
+        case HsmObjectStoreRequestMethod::REMOVE_ALL:
+            return "REMOVE_ALL";
         default:
             return "UNKNOWN";
     }

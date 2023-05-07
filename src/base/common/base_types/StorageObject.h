@@ -63,7 +63,7 @@ class StorageObject {
      */
     bool valid() const;
 
-    bool operator==(const StorageObject& other)
+    bool operator==(const StorageObject& other) const
     {
         return m_id == other.m_id && m_metadata == other.m_metadata;
     }

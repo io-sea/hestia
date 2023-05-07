@@ -24,7 +24,7 @@ std::string S3Object::to_string() const
     return ret;
 }
 
-bool S3Object::is_equal(const S3Object& other)
+bool S3Object::is_equal(const S3Object& other) const
 {
     return m_key == other.m_key && m_creation_time == other.m_creation_time
            && m_content_length == other.m_content_length

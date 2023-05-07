@@ -20,7 +20,10 @@ Layout* Motr::m0_client_layout_alloc(Layout::Type layout_type)
 
 int Motr::m0_client_init(Client* client, MotrConfig* config, bool init_motr)
 {
-    client = client;
+    (void)config;
+    (void)init_motr;
+
+    m_client = client;
     backend()->set_client(client);
 
     backend()->allocate_layout(Layout::Type::DEFAULT);
@@ -30,6 +33,9 @@ int Motr::m0_client_init(Client* client, MotrConfig* config, bool init_motr)
 int Motr::m0_container_init(
     Container* container, Realm* parent, Id* id, Client* client)
 {
+    (void)parent;
+    (void)id;
+
     container->m_co_realm.m_client = client;
     m_realm                        = &(container->m_co_realm);
     return 0;
@@ -37,6 +43,7 @@ int Motr::m0_container_init(
 
 int Motr::m0_client_fini(Client* client, bool fini_motr)
 {
+    (void)fini_motr;
     client->m_is_initialized = false;
     return 0;
 }
@@ -76,6 +83,7 @@ int Motr::m0_entity_create(hestia::Uuid* pool, Obj* obj)
 
 uint64_t Motr::m0_client_layout_id(Client* instance)
 {
+    (void)instance;
     return 1;
 }
 

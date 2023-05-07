@@ -13,6 +13,15 @@ class PhobosDescriptor {
     enum class Operation { GET, PUT, GET_MD, DEL };
 
     struct Info {
+        Info(
+            const std::string& object_id,
+            Operation op,
+            int fd           = -1,
+            std::size_t size = 0) :
+            m_object_id(object_id), m_op(op), m_fd(fd), m_size(size)
+        {
+        }
+
         std::string m_object_id;
         Operation m_op{Operation::GET};
         int m_fd{-1};

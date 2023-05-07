@@ -32,6 +32,10 @@ std::string HsmServiceError::code_to_string(HsmServiceErrorCode code)
             return "UNSUPPORTED_REQUEST_METHOD";
         case HsmServiceErrorCode::MAX_ERROR:
             return "MAX_ERROR";
+        case HsmServiceErrorCode::OBJECT_NOT_FOUND:
+            return "BAD_PUT_OVERWRITE_COMBINATION";
+        case HsmServiceErrorCode::BAD_PUT_OVERWRITE_COMBINATION:
+            return "MAX_ERROR";
         default:
             return "UNKOWN ERROR";
     }

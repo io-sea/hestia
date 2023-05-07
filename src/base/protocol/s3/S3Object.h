@@ -9,11 +9,11 @@ class S3Object {
 
     bool empty() const;
 
-    bool is_equal(const S3Object& other);
+    bool is_equal(const S3Object& other) const;
 
     std::string to_string() const;
 
-    bool operator==(const S3Object& other) { return is_equal(other); }
+    bool operator==(const S3Object& other) const { return is_equal(other); }
 
     friend std::ostream& operator<<(std::ostream& os, S3Object const& value)
     {

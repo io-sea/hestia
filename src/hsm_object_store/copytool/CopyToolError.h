@@ -16,6 +16,7 @@ class CopyToolError {
     CopyToolError(Code code, const std::string& message) :
         m_code(code), m_message(message)
     {
+        (void)m_code;
     }
 
   private:

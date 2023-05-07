@@ -13,6 +13,7 @@ MockLibS3InterfaceImpl::Ptr MockLibS3InterfaceImpl::create()
 
 void MockLibS3InterfaceImpl::initialize(const S3Config& config)
 {
+    (void)config;
     std::string user_agent;
     std::string default_host;
     int flags{0};
@@ -24,20 +25,28 @@ int MockLibS3InterfaceImpl::put(
     const Extent& extent,
     const ReadableBufferView* read_buffer)
 {
+    (void)extent;
+
     libs3::S3BucketContext bucket;
 
     libs3::S3Status response_status{libs3::S3Status::OK};
 
-    auto on_response_complete =
-        [&response_status](
-            libs3::S3Status status, const libs3::S3ErrorDetails* error_details,
-            void* callback_data) { response_status = status; };
+    auto on_response_complete = [&response_status](
+                                    libs3::S3Status status,
+                                    const libs3::S3ErrorDetails* error_details,
+                                    void* callback_data) {
+        response_status = status;
+        (void)status;
+        (void)error_details;
+        (void)callback_data;
+    };
 
     std::size_t buffer_loc{0};
     auto on_put_data = [&buffer_loc, read_buffer](
                            int buffer_size, char* buffer, void* callback_data) {
+        (void)callback_data;
         int bytes_written = 0;
-        for (std::size_t idx = 0; idx < buffer_size; idx++) {
+        for (int idx = 0; idx < buffer_size; idx++) {
             if (buffer_loc == read_buffer->length()) {
                 break;
             }
@@ -64,19 +73,27 @@ int MockLibS3InterfaceImpl::get(
     const Extent& extent,
     WriteableBufferView* write_buffer)
 {
+    (void)extent;
+
     libs3::S3BucketContext bucket;
 
     libs3::S3Status response_status;
 
-    auto on_response_complete =
-        [&response_status](
-            libs3::S3Status status, const libs3::S3ErrorDetails* error_details,
-            void* callback_data) { response_status = status; };
+    auto on_response_complete = [&response_status](
+                                    libs3::S3Status status,
+                                    const libs3::S3ErrorDetails* error_details,
+                                    void* callback_data) {
+        response_status = status;
+        (void)status;
+        (void)error_details;
+        (void)callback_data;
+    };
 
     std::size_t buffer_loc{0};
     auto on_get_data = [write_buffer, &buffer_loc](
                            int buffer_size, const char* buffer,
                            void* callback_data) {
+        (void)callback_data;
         for (int idx = 0; idx < buffer_size; idx++) {
             *(write_buffer->data() + buffer_loc) = buffer[idx];
             buffer_loc++;
@@ -102,10 +119,15 @@ int MockLibS3InterfaceImpl::remove(const S3Object& obj)
 
     libs3::S3Status response_status;
 
-    auto on_response_complete =
-        [&response_status](
-            libs3::S3Status status, const libs3::S3ErrorDetails* error_details,
-            void* callback_data) { response_status = status; };
+    auto on_response_complete = [&response_status](
+                                    libs3::S3Status status,
+                                    const libs3::S3ErrorDetails* error_details,
+                                    void* callback_data) {
+        response_status = status;
+        (void)status;
+        (void)error_details;
+        (void)callback_data;
+    };
 
     libs3::S3ResponseHandler response_handler;
     response_handler.m_response_complete_callback = on_response_complete;

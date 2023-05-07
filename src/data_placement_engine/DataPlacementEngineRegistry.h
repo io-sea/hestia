@@ -12,6 +12,7 @@ enum class PlacementEngineType { BASIC, ROBINHOOD };
 
 namespace placement_engine_registry {
 
+/*
 static std::string to_string(PlacementEngineType placement_engine_type)
 {
     switch (placement_engine_type) {
@@ -23,6 +24,7 @@ static std::string to_string(PlacementEngineType placement_engine_type)
             return "UNKNOWN";
     }
 };
+
 
 static bool is_placement_engine_available(
     PlacementEngineType placement_engine_type)
@@ -41,6 +43,7 @@ static bool is_placement_engine_available(
     }
 };
 
+
 static std::unique_ptr<DataPlacementEngine> get_engine(
     PlacementEngineType placement_engine_type)
 {
@@ -57,5 +60,7 @@ static std::unique_ptr<DataPlacementEngine> get_engine(
             return nullptr;
     }
 };
+
+*/
 
 }  // namespace placement_engine_registry

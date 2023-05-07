@@ -18,7 +18,7 @@ class IS3InterfaceImpl {
 
     virtual ~IS3InterfaceImpl() = default;
 
-    virtual void initialize(const S3Config& config){};
+    virtual void initialize(const S3Config& config) { (void)config; };
 
     virtual int put(
         const S3Object& obj,

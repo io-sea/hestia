@@ -44,14 +44,13 @@ HsmObjectStoreResponse::Ptr CopyTool::make_object_store_request(
                 m_client_manager->get_client(request.target_tier()));
         }
     }
-};
+}
 
 HsmObjectStoreResponse::Ptr CopyTool::do_hsm_hsm(
     const HsmObjectStoreRequest& request,
     HsmObjectStoreClient* source_client,
     HsmObjectStoreClient* target_client) noexcept
 {
-    std::size_t chunk_size{4000};
     Stream stream;
 
     HsmObjectStoreRequest get_request = request;
@@ -83,6 +82,10 @@ HsmObjectStoreResponse::Ptr CopyTool::do_hsm_base(
     HsmObjectStoreClient* source_client,
     ObjectStoreClient* target_client) noexcept
 {
+    (void)op;
+    (void)source_client;
+    (void)target_client;
+
     return nullptr;
 }
 
@@ -91,6 +94,9 @@ HsmObjectStoreResponse::Ptr CopyTool::do_base_hsm(
     ObjectStoreClient* source_client,
     HsmObjectStoreClient* target_client) noexcept
 {
+    (void)op;
+    (void)source_client;
+    (void)target_client;
     return nullptr;
 }
 
@@ -99,6 +105,9 @@ HsmObjectStoreResponse::Ptr CopyTool::do_base_base(
     ObjectStoreClient* source_client,
     ObjectStoreClient* target_client) noexcept
 {
+    (void)op;
+    (void)source_client;
+    (void)target_client;
     return nullptr;
 }
 }  // namespace hestia

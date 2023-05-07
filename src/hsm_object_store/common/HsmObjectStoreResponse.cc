@@ -20,6 +20,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
     HsmObjectStoreResponse::Ptr hsm_child_response) :
     BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
+    (void)hsm_child_response;
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
@@ -27,6 +28,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
     ObjectStoreResponse::Ptr child_response) :
     BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
 {
+    (void)child_response;
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(

@@ -6,7 +6,7 @@
 namespace hestia {
 
 PluginHandle::PluginHandle(void* handle, const std::string& name) :
-    m_handle(handle), m_name(name)
+    m_name(name), m_handle(handle)
 {
 }
 

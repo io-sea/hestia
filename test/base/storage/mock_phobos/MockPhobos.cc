@@ -7,6 +7,10 @@
 int MockPhobos::phobos_put(
     pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
 {
+    (void)n;
+    (void)cb;
+    (void)udata;
+
     auto fd   = xfers[0].xd_fd;
     auto size = xfers[0].xd_put_params.size;
     auto id   = xfers[0].xd_objid;
@@ -31,6 +35,10 @@ int MockPhobos::phobos_put(
 int MockPhobos::phobos_get(
     pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
 {
+    (void)n;
+    (void)cb;
+    (void)udata;
+
     auto id   = xfers[0].xd_objid;
     auto iter = m_data_cache.find(id);
     if (iter == m_data_cache.end()) {
@@ -42,7 +50,7 @@ int MockPhobos::phobos_get(
     auto size   = iter->second.size();
 
     ssize_t rc = ::write(fd, buffer, size);
-    if (rc < size) {
+    if (static_cast<std::size_t>(rc) < size) {
         return -2;
     }
     return 0;
@@ -51,6 +59,10 @@ int MockPhobos::phobos_get(
 int MockPhobos::phobos_getmd(
     pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
 {
+    (void)n;
+    (void)cb;
+    (void)udata;
+
     auto id   = xfers[0].xd_objid;
     auto iter = m_metadata_cache.find(id);
     if (iter == m_metadata_cache.end()) {
@@ -63,6 +75,8 @@ int MockPhobos::phobos_getmd(
 
 int MockPhobos::phobos_delete(pho_xfer_desc* xfers, size_t num_xfers)
 {
+    (void)num_xfers;
+
     auto id = xfers[0].xd_objid;
 
     auto meta_iter = m_metadata_cache.find(id);
@@ -91,7 +105,13 @@ int MockPhobos::phobos_attrs_foreach(
 
 void MockPhobos::pho_xfer_desc_destroy(pho_xfer_desc*) {}
 
-void MockPhobos::phobos_store_object_list_free(object_info* objs, int n_objs) {}
+void MockPhobos::phobos_store_object_list_free(object_info* objs, int n_objs)
+{
+    (void)objs;
+    (void)n_objs;
+
+    delete objs;
+}
 
 int MockPhobos::phobos_store_object_list(
     const char** res,
@@ -103,10 +123,15 @@ int MockPhobos::phobos_store_object_list(
     object_info** objs,
     int* n_objs)
 {
+    (void)res;
+    (void)n_res;
+    (void)is_pattern;
+    (void)deprecated;
+
     *n_objs = 0;
 
     for (const auto& entry : m_metadata_cache) {
-        for (std::size_t idx = 0; idx < n_metadata; idx++) {
+        for (int idx = 0; idx < n_metadata; idx++) {
             auto md_item = std::string(*(metadata + idx));
             if (auto val = entry.second.get_item(md_item); !val.empty()) {
                 auto obj_info     = new object_info;

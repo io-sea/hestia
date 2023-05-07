@@ -28,7 +28,11 @@ DaemonManager::Status DaemonManager::start()
     }
 
     ::umask(0);
-    ::chdir("/");
+    const auto chdir_result = ::chdir("/");
+    if (chdir_result != 0) {
+        m_status = Status::EXIT_FAILED;
+        return m_status;
+    }
     const auto sid = ::setsid();
     if (sid < 0) {
         m_status = Status::EXIT_FAILED;

@@ -41,6 +41,7 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
 
     std::size_t pool_count{0};
     for (const auto& entry : config.m_tier_info) {
+        (void)entry;
         m_client.add_pool({pool_count});
         pool_count++;
     }
@@ -54,6 +55,7 @@ void MockMotrInterfaceImpl::initialize_hsm(
     std::vector<hestia::Uuid> pool_fids;
     std::size_t pool_count{0};
     for (const auto& entry : tier_info) {
+        (void)entry;
         pool_fids.push_back({pool_count});
         pool_count++;
     }
@@ -67,6 +69,8 @@ void MockMotrInterfaceImpl::initialize_hsm(
 void MockMotrInterfaceImpl::put(
     const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
+    (void)request;
+    (void)stream;
     /*
     MotrObject motr_obj(request.object().id());
 
@@ -97,6 +101,9 @@ void MockMotrInterfaceImpl::get(
     hestia::StorageObject& object,
     hestia::Stream* stream) const
 {
+    (void)request;
+    (void)object;
+    (void)stream;
     /*
     MotrObject motr_obj(request.object().id());
 
@@ -117,6 +124,7 @@ void MockMotrInterfaceImpl::get(
 
 void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
+    (void)request;
     /*
     MotrObject motr_obj(request.object().id());
 
@@ -133,6 +141,7 @@ void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
+    (void)request;
     /*
     MotrObject motr_obj(request.object().id());
     // std::size_t length{IMotrInterfaceImpl::MAX_OBJ_LENGTH};
@@ -147,6 +156,7 @@ void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
+    (void)request;
     /*
     MotrObject motr_obj(request.object().id());
 

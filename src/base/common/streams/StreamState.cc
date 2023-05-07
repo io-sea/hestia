@@ -37,6 +37,6 @@ std::string StreamState::to_string(State state)
 
 const std::string& StreamState::message() const
 {
-    return message();
+    return m_message;
 }
 }  // namespace hestia

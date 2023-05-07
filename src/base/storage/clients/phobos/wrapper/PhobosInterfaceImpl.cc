@@ -11,10 +11,7 @@
 namespace hestia {
 void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{
-        .m_object_id = obj.m_id,
-        .m_op        = PhobosDescriptor::Operation::GET,
-        .m_fd        = fd};
+    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET, fd};
 
     PhobosDescriptor desc(info);
     ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
@@ -29,10 +26,7 @@ void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{
-        .m_object_id = obj.m_id,
-        .m_op        = PhobosDescriptor::Operation::PUT,
-    };
+    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::PUT};
 
     if (fd > -1) {
         info.m_fd   = fd;
@@ -62,8 +56,7 @@ void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 {
-    PhobosDescriptor::Info info{
-        .m_object_id = obj.m_id, .m_op = PhobosDescriptor::Operation::GET_MD};
+    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET_MD};
 
     PhobosDescriptor descriptor(info);
 
@@ -87,10 +80,7 @@ void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 
 bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{
-        .m_object_id = obj.m_id,
-        .m_op        = PhobosDescriptor::Operation::GET_MD,
-    };
+    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET_MD};
 
     PhobosDescriptor descriptor(info);
     bool exists =

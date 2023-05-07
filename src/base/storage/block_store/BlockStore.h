@@ -20,6 +20,15 @@ class BlockStore {
     struct ReturnCode {
         enum class Status { ID_NOT_FOUND, EXTENT_NOT_FOUND, OK };
 
+        ReturnCode() = default;
+
+        ReturnCode(Status status, const std::string& message) :
+            m_status(status), m_message(message)
+        {
+        }
+
+        ReturnCode(std::size_t bytes_read) : m_bytes_read(bytes_read) {}
+
         bool is_ok() const { return m_status == Status::OK; }
 
         Status m_status{Status::OK};

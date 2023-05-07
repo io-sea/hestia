@@ -38,8 +38,8 @@ set(UNIT_TEST_SOURCES
     hestia_client/put_get.cc
     hestia_client/set_get_attrs.cc
     hestia_client/list_attrs.cc
-    hestia_client/copy.cc
     hestia_client/remove.cc
+    hestia_client/copy.cc
     hestia_client/move.cc
     hestia_client/release.cc
     hestia_client/locate.cc
@@ -93,6 +93,7 @@ set(INTEGRATION_TEST_SOURCES
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
     base/storage/TestS3Client_Integration.cc
+    main.cc
     )
 
 if(${HESTIA_WITH_PROXYGEN})
@@ -110,7 +111,7 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_web
     hestia_s3app
     hestia_test_utils
-    Catch2::Catch2WithMain
+    Catch2::Catch2
     ${PLATFORM_LIBS})
 
 if(${HESTIA_WITH_PROXYGEN})

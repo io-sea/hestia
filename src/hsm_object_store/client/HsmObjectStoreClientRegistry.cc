@@ -15,12 +15,14 @@ ObjectStorePluginHandler::ObjectStorePluginHandler(
 
 bool ObjectStorePluginHandler::has_plugin(const std::string& identifier)
 {
+    (void)identifier;
     return false;
-};
+}
 
 ObjectStoreClient::Ptr ObjectStorePluginHandler::get_client(
     ObjectStoreClientType client_type) const
 {
+    (void)client_type;
     return nullptr;
 }
 

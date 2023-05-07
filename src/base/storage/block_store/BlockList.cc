@@ -1,5 +1,7 @@
 #include "BlockList.h"
 
+#include <iostream>
+
 namespace hestia {
 void BlockList::add_block(
     const hestia::Extent& extent,
@@ -111,6 +113,10 @@ std::pair<bool, std::size_t> BlockList::read(
             return {true, bytes_read};
         }
         else if (block.overlaps(working_ext)) {
+            if (block.extent().m_offset > working_ext.m_offset) {
+                return {false, bytes_read};
+            }
+
             const auto left_offset =
                 working_ext.m_offset - block.extent().m_offset;
             const auto overlap_length =

@@ -32,6 +32,7 @@ void TcpServer::listen(
         };
 
         auto on_bound = [this](bool bound) {
+            (void)bound;
             LOG_INFO("Socket bound");
             std::unique_lock<std::mutex> lck(m_working_socket_bind_mutex);
             m_working_socket_bound_cv.notify_one();
@@ -78,7 +79,7 @@ void TcpServer::on_connection(Socket::Ptr client_connection)
     auto worker = std::make_unique<std::thread>(
         worker_func, std::move(client_connection));
     m_threads.add(std::move(worker));
-};
+}
 
 void TcpServer::on_thread_complete(std::thread::id id)
 {

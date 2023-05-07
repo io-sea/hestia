@@ -28,19 +28,36 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
         Stream* stream = nullptr) const noexcept override;
 
   private:
-    void copy(const HsmObjectStoreRequest& request) const override{};
+    void copy(const HsmObjectStoreRequest& request) const override
+    {
+        (void)request;
+    };
 
     void get(
         const HsmObjectStoreRequest& request,
         StorageObject& object,
-        Stream* stream) const override{};
+        Stream* stream) const override
+    {
+        (void)request;
+        (void)object, (void)stream;
+    };
 
-    void move(const HsmObjectStoreRequest& request) const override{};
+    void move(const HsmObjectStoreRequest& request) const override
+    {
+        (void)request;
+    };
 
     void put(
-        const HsmObjectStoreRequest& request, Stream* stream) const override{};
+        const HsmObjectStoreRequest& request, Stream* stream) const override
+    {
+        (void)request;
+        (void)stream;
+    };
 
-    void remove(const HsmObjectStoreRequest& request) const override{};
+    void remove(const HsmObjectStoreRequest& request) const override
+    {
+        (void)request;
+    };
 
     std::unique_ptr<CopyToolInterface> m_copy_tool_interface;
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;

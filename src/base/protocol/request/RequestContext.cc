@@ -4,7 +4,7 @@
 
 namespace hestia {
 RequestContext::RequestContext(const HttpRequest& request) :
-    m_stream(Stream::create()), m_response(HttpResponse::create())
+    m_response(HttpResponse::create()), m_stream(Stream::create())
 {
     m_request = request;
     m_request.set_context(this);

@@ -14,7 +14,7 @@ class HsmObject {
 
     void add_tier(uint8_t tier_id);
 
-    void remove_tier(uint8_t tier_id) {}
+    void remove_tier(uint8_t tier_id) { (void)tier_id; }
 
     void remove_all_but_one_tiers() {}
 

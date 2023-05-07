@@ -5,6 +5,10 @@ namespace hestia::mock::libs3 {
 S3Status LibS3::s3_initialize(
     const char* user_agent_info, int flags, const char* default_s3_host_name)
 {
+    (void)user_agent_info;
+    (void)flags;
+    (void)default_s3_host_name;
+
     return {};
 }
 
@@ -21,6 +25,13 @@ void LibS3::s3_get_object(
     const S3GetObjectHandler* handler,
     void* callback_data)
 {
+    (void)bucket_context;
+    (void)get_conditions;
+    (void)start_byte;
+    (void)byte_count;
+    (void)timeout_ms;
+    (void)request_context;
+
     auto response = m_server.get(key);
 
     S3Status status = S3Status::OK;
@@ -28,6 +39,8 @@ void LibS3::s3_get_object(
         switch (response.m_status) {
             case Server::S3Status::NOT_FOUND:
                 status = S3Status::NOT_FOUND;
+                break;
+            case Server::S3Status::OK:
                 break;
             default:
                 status = S3Status::UNKNOWN_ERROR;
@@ -57,6 +70,12 @@ void LibS3::s3_put_object(
     const S3PutObjectHandler* handler,
     void* callback_data)
 {
+    (void)bucket_context;
+    (void)timeout_ms;
+    (void)request_context;
+    (void)content_length;
+    (void)put_properties;
+
     std::vector<char> buffer;
 
     std::size_t block_size(100);
@@ -89,6 +108,10 @@ void LibS3::s3_delete_object(
     const S3ResponseHandler* handler,
     void* callback_data)
 {
+    (void)bucket_context;
+    (void)timeout_ms;
+    (void)request_context;
+
     auto response = m_server.remove(key);
 
     S3Status status = S3Status::OK;
@@ -96,6 +119,8 @@ void LibS3::s3_delete_object(
         switch (response.m_status) {
             case Server::S3Status::NOT_FOUND:
                 status = S3Status::NOT_FOUND;
+                break;
+            case Server::S3Status::OK:
                 break;
             default:
                 status = S3Status::UNKNOWN_ERROR;

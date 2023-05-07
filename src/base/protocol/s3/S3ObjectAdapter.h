@@ -9,6 +9,8 @@ class S3ObjectAdapter {
   public:
     S3ObjectAdapter(const std::string& metadata_prefix);
 
+    virtual ~S3ObjectAdapter() = default;
+
     virtual void to_s3(S3Object& object, const StorageObject& storage_object);
 
     virtual void from_s3(

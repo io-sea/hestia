@@ -26,6 +26,10 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::copy_data(
     uint8_t source_tier,
     uint8_t target_tier)
 {
+    (void)extent;
+    (void)source_tier;
+    (void)target_tier;
+
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::COPY);
     request.set_extent(request.extent());
     request.set_source_tier(request.source_tier());
@@ -39,6 +43,10 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::move_data(
     uint8_t source_tier,
     uint8_t target_tier)
 {
+    (void)extent;
+    (void)source_tier;
+    (void)target_tier;
+
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::MOVE);
     request.set_extent(request.extent());
     request.set_source_tier(request.source_tier());
@@ -82,6 +90,10 @@ HsmObjectStoreResponse::Ptr HsmStoreInterface::put_data(
     bool overwrite,
     hestia::Stream* stream)
 {
+    (void)extent;
+    (void)source_tier;
+    (void)target_tier;
+
     HsmObjectStoreRequest request(object, HsmObjectStoreRequestMethod::PUT);
     request.set_target_tier(target_tier);
     if (overwrite) {
@@ -123,6 +135,7 @@ hestia::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
 hestia::ObjectStoreResponse::Ptr HsmStoreInterface::release_metadata(
     const hestia::StorageObject& object, uint8_t source_tier)
 {
+    (void)source_tier;
     hestia::ObjectStoreRequest request(
         object, hestia::ObjectStoreRequestMethod::REMOVE);
     return m_key_value_store->make_request(request);

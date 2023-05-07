@@ -47,10 +47,12 @@ void Block::set_data(const ReadableBufferView& buffer, std::size_t offset)
         return;
     }
 
-    if (auto excess = buffer.length() + offset - m_data.size(); excess > 0) {
-        m_data.resize(m_data.size() + excess);
+    if (buffer.length() + offset > m_data.size()) {
+        if (auto excess = buffer.length() + offset - m_data.size();
+            excess > 0) {
+            m_data.resize(m_data.size() + excess);
+        }
     }
-
     for (std::size_t idx = 0; idx < buffer.length(); idx++) {
         m_data[idx + offset] = buffer.data()[idx];
     }

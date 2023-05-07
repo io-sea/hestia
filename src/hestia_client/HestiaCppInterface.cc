@@ -14,6 +14,13 @@ int error(const hestia::RequestError<hestia::HsmServiceErrorCode>& error)
     switch (error.code()) {
         case hestia::HsmServiceErrorCode::NO_ERROR:
             return hestia::old::hestia_error_t::HESTIA_ERROR_OK;
+        case hestia::HsmServiceErrorCode::ERROR:
+        case hestia::HsmServiceErrorCode::STL_EXCEPTION:
+        case hestia::HsmServiceErrorCode::UNKNOWN_EXCEPTION:
+        case hestia::HsmServiceErrorCode::UNSUPPORTED_REQUEST_METHOD:
+        case hestia::HsmServiceErrorCode::OBJECT_NOT_FOUND:
+        case hestia::HsmServiceErrorCode::BAD_PUT_OVERWRITE_COMBINATION:
+        case hestia::HsmServiceErrorCode::MAX_ERROR:
         default:
             return hestia::old::hestia_error_t::HESTIA_ERROR_UNKOWN;
     }
@@ -170,6 +177,8 @@ int HestiaCppInterface::release(const hestia::Uuid& object_id)
 int HestiaCppInterface::release(
     const hestia::Uuid& object_id, uint8_t tier_id, bool remove_key)
 {
+    (void)remove_key;
+
     HsmServiceRequest request(object_id, HsmServiceRequestMethod::REMOVE);
     request.set_source_tier(tier_id);
     const auto response =

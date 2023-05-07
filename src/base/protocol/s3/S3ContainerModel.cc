@@ -1,7 +1,7 @@
 #include "S3ContainerModel.h"
 
 namespace hestia {
-const std::vector<std::string> S3ContainerModel::internal_keys{
+const std::array<std::string, 4> S3ContainerModel::internal_keys{
     "key", "creation_time", "is-bucket", "protocol"};
 
 Metadata S3ContainerModel::serialize(

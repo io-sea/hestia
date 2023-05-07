@@ -40,6 +40,10 @@ macro(add_module)
     target_link_libraries(${TARGET_NAME} PUBLIC ${ADD_MODULE_INTERNAL_DEPENDENCIES} ${ADD_MODULE_DEPENDENCIES})
     target_link_libraries(${TARGET_NAME} PRIVATE ${ADD_MODULE_PRIVATE_DEPENDENCIES})
 
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        target_link_libraries(${TARGET_NAME} PUBLIC development_flags)
+    endif()
+
     if(${ADD_MODULE_WITH_FILESYSTEM})
         if(NOT APPLE)
             target_link_libraries(${TARGET_NAME} PUBLIC stdc++fs)

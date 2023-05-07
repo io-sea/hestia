@@ -20,7 +20,7 @@ const std::string& OpStatus::message() const
 bool OpStatus::ok() const
 {
     return m_status == Status::OK;
-};
+}
 
 std::string OpStatus::str() const
 {

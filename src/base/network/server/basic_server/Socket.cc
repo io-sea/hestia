@@ -18,7 +18,7 @@ Socket::Ptr SocketFactory::create(const std::string& address, unsigned port)
 }
 
 Socket::Socket(const std::string& address, unsigned port) :
-    m_address(address), m_port(port)
+    m_port(port), m_address(address)
 {
 }
 

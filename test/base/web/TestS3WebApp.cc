@@ -19,6 +19,7 @@ class WebAppTestFixture {
         auto s3_service = std::make_unique<hestia::S3Service>(service_config);
 
         hestia::S3WebAppConfig config;
+
         m_web_app = std::make_unique<hestia::S3WebApp>(
             m_object_store.get(), config, std::move(s3_service));
     }

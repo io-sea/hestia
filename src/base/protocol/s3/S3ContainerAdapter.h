@@ -8,6 +8,8 @@ class S3ContainerAdapter {
   public:
     S3ContainerAdapter(const std::string& metadata_prefix);
 
+    virtual ~S3ContainerAdapter() = default;
+
     virtual void from_s3(
         StorageObject& storage_object, const S3Container& container);
 

@@ -3,7 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#include "hsm/m0hsm_api.h" // NOLINT
+// #include "hsm/m0hsm_api.h" // NOLINT
 #ifdef __cplusplus
 }
 #endif

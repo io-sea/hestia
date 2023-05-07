@@ -23,6 +23,15 @@ HttpRequest ProxygenMessage::to_request(proxygen::HTTPMessage* message)
             case proxygen::HTTPMethod::HEAD:
                 method = HttpRequest::Method::HEAD;
                 break;
+            case proxygen::HTTPMethod::POST:
+            case proxygen::HTTPMethod::OPTIONS:
+            case proxygen::HTTPMethod::CONNECT:
+            case proxygen::HTTPMethod::CONNECT_UDP:
+            case proxygen::HTTPMethod::TRACE:
+            case proxygen::HTTPMethod::PATCH:
+            case proxygen::HTTPMethod::SUB:
+            case proxygen::HTTPMethod::PUB:
+            case proxygen::HTTPMethod::UNSUB:
             default:
                 break;
         }

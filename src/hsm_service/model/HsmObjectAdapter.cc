@@ -26,11 +26,16 @@ void HsmObjectAdapter::serialize(HsmObject& hsm_object)
     add_if_not_empty(md, tiers_key, sstr.str());
 }
 
-void HsmObjectAdapter::parse_tiers(HsmObject& hsm_object) {}
+void HsmObjectAdapter::parse_tiers(HsmObject& hsm_object)
+{
+    (void)hsm_object;
+}
 
 void HsmObjectAdapter::sync(
     const HsmObject& hsm_object, hestia::StorageObject& storage_object)
 {
+    (void)hsm_object;
+    (void)storage_object;
 }
 
 void HsmObjectAdapter::add_if_not_empty(

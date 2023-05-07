@@ -13,7 +13,7 @@ class S3Container {
         m_creation_time = std::to_string(std::time(nullptr));
     }
 
-    bool operator==(const S3Container& other)
+    bool operator==(const S3Container& other) const
     {
         return m_name == other.m_name
                && m_creation_time == other.m_creation_time

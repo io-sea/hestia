@@ -1,3 +1,7 @@
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    include(development_flags)
+endif()
+
 add_subdirectory(base)
 add_subdirectory(data_placement_engine)
 add_subdirectory(event_feed)
