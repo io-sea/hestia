@@ -123,19 +123,9 @@ Lint:
 #            && git diff-index --quiet HEAD
 #            || { echo "This commit contains changes to the documentation! Run doxygen-XML-parser on the project update the documentation."; false; }
 
-
-Debug:
-  <<: *default_job
-  stage: build
-  variables:
-    <<: *default_variables
-    CMAKE_BUILD_TYPE: Debug
-    HESTIA_BUILD_TESTS: "ON" # Ensure all code is seen by Debug build
-
 Release:
   <<: *default_job
   stage: build
-
 
 Unit_test:
   <<: *default_job
@@ -144,8 +134,13 @@ Unit_test:
     - Release
   variables:
     <<: *default_variables
-    CMAKE_BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Debug
+    CXX: clang++
+    C: clang
     HESTIA_BUILD_TESTS: "ON"
+  before_script:
+    - *install_dependencies
+    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
   script:
     - *configure
     - *build

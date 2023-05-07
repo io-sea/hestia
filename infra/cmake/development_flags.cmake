@@ -20,6 +20,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             INTERFACE
                 -fsanitize=address,undefined
                 -fno-sanitize-recover=all
+                -fno-sanitize=vptr
                 -fno-omit-frame-pointer
         )
         target_link_libraries(
