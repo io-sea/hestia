@@ -8,6 +8,7 @@ add_module(
         DataPlacementEngineRegistry.h
         BasicDataPlacementEngine.h
     SOURCES
+        DataPlacementEngineRegistry.cc
         BasicDataPlacementEngine.cc
     DEPENDENCIES
         hestia::hestia

@@ -23,15 +23,15 @@ void FileHsmObjectStoreClient::initialize(
     const FileHsmObjectStoreClientConfig& config)
 {
     m_store = config.m_store_location;
-    if (!m_store.exists()) {
-        std::filesystem::create_directories(m_store.path());
+    if (!std::filesystem::exists(m_store)) {
+        std::filesystem::create_directories(m_store);
     }
 }
 
 std::filesystem::path FileHsmObjectStoreClient::get_tier_path(
     uint8_t tier) const
 {
-    return m_store.path() / ("tier" + std::to_string(tier));
+    return m_store / ("tier" + std::to_string(tier));
 }
 
 void FileHsmObjectStoreClient::put(

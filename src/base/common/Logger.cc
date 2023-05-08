@@ -1,6 +1,6 @@
 #include "Logger.h"
 
-#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -28,11 +28,8 @@ void Logger::initialize(const Config& config)
     }
 
     if (!m_config.m_console_only) {
-        auto max_logfile_size = 1048576 * 5;
-        auto max_logfiles     = 3;
-        spdlog::set_default_logger(spdlog::rotating_logger_mt(
-            m_config.m_log_prefix, m_config.m_log_file_path, max_logfile_size,
-            max_logfiles));
+        spdlog::set_default_logger(spdlog::basic_logger_mt(
+            m_config.m_log_prefix, m_config.m_log_file_path, true));
     }
     switch (m_config.m_level) {
         case Level::ERROR:
@@ -76,7 +73,7 @@ void Logger::log_line(
     }
 
     std::stringstream sstr;
-    sstr << " [" << std::this_thread::get_id() << "] "
+    sstr << "[" << std::this_thread::get_id() << "] "
          << location_prefix(file_name, function_name, line_number) << "| "
          << line.str();
 

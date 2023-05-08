@@ -100,6 +100,10 @@ void HsmObjectStoreClientManager::setup_clients(
 
         if (item.second.is_hsm()) {
             if (get_hsm_client(item.second) == nullptr) {
+                LOG_INFO(
+                    "Setting up hsm client of type: "
+                    + item.second.to_string());
+
                 HsmObjectStoreClient::Ptr hsm_client;
                 auto client = m_client_registry->get_client(item.second);
 
@@ -113,11 +117,12 @@ void HsmObjectStoreClientManager::setup_clients(
                 }
                 else {
                     throw std::runtime_error(
-                        "Failed to retreive hsm client - bad cast.");
+                        "Failed to retrieve hsm client - bad cast.");
                 }
             }
         }
         else if (get_client(item.second) == nullptr) {
+            LOG_INFO("Setting up client of type: " + item.second.to_string());
             m_clients[item.second.m_identifier] =
                 m_client_registry->get_client(item.second);
         }

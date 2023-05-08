@@ -5,7 +5,7 @@
 namespace hestia {
 HsmActionAdapter::Ptr HsmActionAdapter::create()
 {
-    return std::unique_ptr<HsmActionAdapter>();
+    return std::make_unique<HsmActionAdapter>();
 }
 
 void HsmActionAdapter::parse(const std::string& input, HsmAction& action)

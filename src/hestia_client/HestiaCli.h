@@ -11,8 +11,8 @@ class HestiaCli {
 
     Method m_method{Method::UNKNOWN};
     std::string m_object_id;
-    std::string m_source_tier;
-    std::string m_target_tier;
+    uint8_t m_source_tier;
+    uint8_t m_target_tier;
     std::string m_path;
     std::string m_config_path;
 };

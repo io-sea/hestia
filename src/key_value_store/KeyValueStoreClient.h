@@ -28,5 +28,15 @@ class KeyValueStoreClient {
     virtual void list(
         const Metadata::Query& query,
         std::vector<StorageObject>& fetched) const = 0;
+
+    void on_exception(
+        const ObjectStoreRequest& request,
+        ObjectStoreResponse* response,
+        const std::string& message = {}) const;
+
+    void on_exception(
+        const ObjectStoreRequest& request,
+        ObjectStoreResponse* response,
+        const ObjectStoreError& error) const;
 };
 }  // namespace hestia

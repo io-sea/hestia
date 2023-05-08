@@ -12,3 +12,4 @@ add_subdirectory(hestia_client)
 
 add_executable(hestia_main main.cc)
 target_link_libraries(hestia_main hestia_client)
+set_target_properties(hestia_main PROPERTIES OUTPUT_NAME "hestia")

@@ -8,6 +8,8 @@
 #include "HsmActionAdapter.h"
 #include "HsmObjectAdapter.h"
 
+#include "Logger.h"
+
 #define ERROR_CHECK(response)                                                  \
     if (!response->ok()) {                                                     \
         return hestia::HsmServiceResponse::create(req, std::move(response));   \
@@ -22,16 +24,24 @@ namespace hestia {
 HsmService::HsmService(
     std::unique_ptr<KeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
-    std::unique_ptr<DataPlacementEngine> placement_engine) :
+    std::unique_ptr<DataPlacementEngine> placement_engine,
+    std::unique_ptr<HsmObjectAdapter> object_adatper) :
     m_store(HsmStoreInterface::create(
         std::move(kv_store), std::move(object_store))),
     m_data_placement_engine(std::move(placement_engine)),
-    m_object_adapter(HsmObjectAdapter::create()),
+    m_object_adapter(
+        object_adatper ? std::move(object_adatper) :
+                         HsmObjectAdapter::create()),
     m_action_adapter(HsmActionAdapter::create())
 {
+    LOG_INFO("Creating HsmService");
 }
 
-HsmService::~HsmService() {}
+HsmService::~HsmService()
+{
+
+    LOG_INFO("Destroying HsmService");
+}
 
 HsmServiceResponse::Ptr HsmService::make_request(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
@@ -60,6 +70,8 @@ HsmServiceResponse::Ptr HsmService::make_request(
 HsmServiceResponse::Ptr HsmService::put(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
+    LOG_INFO("Starting HSMService PUT: " + req.to_string());
+
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
     if (exists->object_found() != req.should_overwrite_put()) {
@@ -83,9 +95,11 @@ HsmServiceResponse::Ptr HsmService::put(
 
         m_object_adapter->sync(hsm_object, obj);
         auto metadata_put_response = m_store->put_metadata(obj);
+        auto response =
+            HsmServiceResponse::create(req, std::move(metadata_put_response));
 
-        return HsmServiceResponse::create(
-            req, std::move(metadata_put_response));
+        LOG_INFO("Finished HSMService PUT");
+        return response;
     }
 
     if (!req.query().empty()) {
@@ -124,7 +138,10 @@ HsmServiceResponse::Ptr HsmService::put(
     }
 
     auto metadata_put_response = m_store->put_metadata(req.object());
-    return HsmServiceResponse::create(req, std::move(metadata_put_response));
+    auto response =
+        HsmServiceResponse::create(req, std::move(metadata_put_response));
+    LOG_INFO("Finished HSMService PUT");
+    return response;
 }
 
 HsmServiceResponse::Ptr HsmService::get(

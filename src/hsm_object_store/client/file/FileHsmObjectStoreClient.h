@@ -6,7 +6,7 @@
 
 namespace hestia {
 struct FileHsmObjectStoreClientConfig {
-    std::filesystem::directory_entry m_store_location{"object_store"};
+    std::filesystem::path m_store_location{"object_store"};
 };
 
 class FileHsmObjectStoreClient : public HsmObjectStoreClient {
@@ -39,6 +39,6 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
     void move(const HsmObjectStoreRequest& request) const override;
 
     std::filesystem::path get_tier_path(uint8_t tier) const;
-    std::filesystem::directory_entry m_store;
+    std::filesystem::path m_store{"hsm_object_store"};
 };
 }  // namespace hestia

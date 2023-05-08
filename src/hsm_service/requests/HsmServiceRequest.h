@@ -5,6 +5,8 @@
 #include "StorageObject.h"
 #include "Uuid.h"
 
+#include <memory>
+
 namespace hestia {
 enum class HsmServiceRequestMethod {
     PUT,
@@ -22,6 +24,8 @@ class HsmServiceRequest :
     public hestia::BaseRequest,
     public hestia::MethodRequest<HsmServiceRequestMethod> {
   public:
+    using Ptr = std::unique_ptr<HsmServiceRequest>;
+
     HsmServiceRequest(
         const hestia::Uuid& object_id, HsmServiceRequestMethod method);
 
@@ -36,7 +40,7 @@ class HsmServiceRequest :
 
     const std::string& query() const { return m_query; }
 
-    std::string method_as_string() const override { return {}; }
+    std::string method_as_string() const override;
 
     void set_extent(const hestia::Extent& extent);
 
@@ -53,6 +57,8 @@ class HsmServiceRequest :
     uint8_t source_tier() const { return m_source_tier; }
 
     uint8_t target_tier() const { return m_target_tier; }
+
+    std::string to_string() const;
 
   private:
     uint8_t m_target_tier{0};

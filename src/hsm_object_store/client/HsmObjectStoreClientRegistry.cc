@@ -60,6 +60,10 @@ ObjectStoreClient::Ptr HsmObjectStoreClientRegistry::get_client(
     else {
         return m_plugin_handler->get_client(client_type);
     }
+    LOG_ERROR(
+        "Requested client type not recognized - returning empty client: "
+        + client_type.to_string());
+
     return nullptr;
 }
 }  // namespace hestia

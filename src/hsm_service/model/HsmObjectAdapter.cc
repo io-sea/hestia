@@ -3,7 +3,7 @@
 namespace hestia {
 HsmObjectAdapter::Ptr HsmObjectAdapter::create()
 {
-    return std::unique_ptr<HsmObjectAdapter>();
+    return std::make_unique<HsmObjectAdapter>();
 }
 
 void HsmObjectAdapter::serialize(HsmObject& hsm_object)

@@ -21,6 +21,25 @@ struct ObjectStoreClientType {
 
     bool is_hsm() const { return m_type == Type::HSM; }
 
+    std::string to_string() const
+    {
+        const std::string type_str = m_type == Type::BASIC ? "Basic" : "HSM";
+        std::string source_str;
+        switch (m_source) {
+            case Source::BUILT_IN:
+                source_str = "BUILT_IN";
+                break;
+            case Source::PLUGIN:
+                source_str = "PLUGIN";
+                break;
+            case Source::MOCK:
+                source_str = "MOCK";
+                break;
+        }
+        return "Type: " + type_str + " | Source: " + source_str
+               + " | Identifier: " + m_identifier;
+    }
+
     Type m_type{Type::BASIC};
     Source m_source{Source::BUILT_IN};
     std::string m_identifier;

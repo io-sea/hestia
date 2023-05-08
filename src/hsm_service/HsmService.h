@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HsmObject.h"
+#include "HsmObjectAdapter.h"
 #include "HsmServiceRequest.h"
 #include "HsmServiceResponse.h"
 
@@ -13,7 +14,6 @@ class MultiBackendHsmObjectStoreClient;
 class KeyValueStore;
 class HsmStoreInterface;
 
-class HsmObjectAdapter;
 class HsmActionAdapter;
 
 class HsmService {
@@ -23,7 +23,8 @@ class HsmService {
     HsmService(
         std::unique_ptr<KeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine);
+        std::unique_ptr<DataPlacementEngine> placement_engine,
+        std::unique_ptr<HsmObjectAdapter> object_adatper = nullptr);
 
     ~HsmService();
 
