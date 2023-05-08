@@ -37,7 +37,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND LINK_MODULES_FOR_EXPORT development_flags)
 endif()
 
-list(APPEND LINK_MODULES_FOR_EXPORT nlohmann_json spdlog)
+list(APPEND LINK_MODULES_FOR_EXPORT nlohmann_json spdlog yaml-cpp)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_link_libraries(${PROJECT_NAME} INTERFACE ${LINK_MODULES_FOR_EXPORT})

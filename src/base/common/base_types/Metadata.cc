@@ -1,6 +1,7 @@
 #include "Metadata.h"
 
 namespace hestia {
+
 std::string Metadata::get_item(const std::string& key) const
 {
     if (auto iter = m_data.find(key); iter != m_data.end()) {
@@ -54,4 +55,26 @@ std::string Metadata::to_string() const
     }
     return ret;
 }
+
+NestedMetadata* NestedMetadata::get_child(const std::string& key) const
+{
+    if (auto iter = m_children.find(key); iter != m_children.end()) {
+        return iter->second.get();
+    }
+    return nullptr;
+}
+
+void NestedMetadata::add_child(
+    const std::string& key, std::unique_ptr<NestedMetadata> child)
+{
+    m_children[key] = std::move(child);
+}
+
+
+bool NestedMetadata::has_child(const std::string& key) const
+{
+    auto iter = m_children.find(key);
+    return iter != m_children.end();
+}
+
 }  // namespace hestia

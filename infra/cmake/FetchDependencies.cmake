@@ -44,6 +44,22 @@ macro(fetch_spdlog)
         FetchContent_MakeAvailable(spdlog)
 endmacro()
 
+# https://github.com/jbeder/yaml-cpp
+# Note: system versions of yaml-cpp < 0.7 have a broken cmake config
+# If they are installed this will break
+macro(fetch_yaml_cpp)
+    FetchContent_Declare(
+            yaml-cpp
+            GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
+            GIT_TAG  0579ae3d976091d7d664aa9d2527e0d0cff25763
+            SYSTEM
+            FIND_PACKAGE_ARGS
+            )
+        set(YAML_CPP_BUILD_TESTS OFF)
+        FetchContent_MakeAvailable(yaml-cpp)
+endmacro()
+
+
 # https://gitlab.gnome.org/GNOME/libxml2
 macro(fetch_libxml2)
     FetchContent_Declare(

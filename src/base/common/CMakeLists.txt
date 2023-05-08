@@ -4,6 +4,7 @@ include(FetchDependencies)
 fetch_openssl()
 fetch_spdlog()
 fetch_nlohmann_json()
+fetch_yaml_cpp()
 
 add_module(
     MODULE_NAME common 
@@ -38,6 +39,7 @@ add_module(
         utils/SystemUtils.h 
         utils/JsonUtils.h
         utils/ErrorUtils.h
+        utils/YamlUtils.h
     SOURCES  
         File.cc
         Logger.cc
@@ -66,6 +68,7 @@ add_module(
         utils/SystemUtils.cc
         utils/StringUtils.cc
         utils/XmlUtils.cc
+        utils/YamlUtils.cc
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
@@ -75,6 +78,7 @@ add_module(
         threads
         utils
     PRIVATE_DEPENDENCIES
+        yaml-cpp::yaml-cpp
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         OpenSSL::SSL 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 
 class TestDirectories
 {
@@ -8,5 +9,10 @@ public:
     static std::string get_plugin_dir()
     {
         return "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@";
+    }
+
+    static std::filesystem::path get_test_data_dir()
+    {
+        return std::filesystem::path("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") / "test_data";
     }
 };

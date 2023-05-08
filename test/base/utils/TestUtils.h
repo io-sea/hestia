@@ -1,5 +1,6 @@
 #pragma once
 
+#include "TestDirectories.h"
 #include <filesystem>
 
 class TestUtils {
@@ -15,5 +16,10 @@ class TestUtils {
         else {
             return std::filesystem::current_path() / "test_output";
         }
+    }
+
+    static std::filesystem::path get_test_data_dir()
+    {
+        return TestDirectories::get_test_data_dir();
     }
 };

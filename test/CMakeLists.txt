@@ -20,6 +20,7 @@ set(UNIT_TEST_SOURCES
     base/common/TestJsonUtils.cc
     base/common/TestStream.cc
     base/common/TestStringUtils.cc
+    base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
     base/protocol/TestHttpRequest.cc
@@ -75,6 +76,7 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
 
 # There is an inconsistency in clang/gcc application of this - make it explicit
 target_compile_options(${UNIT_TEST_MODULE} PRIVATE -Wunused-parameter)
+file(COPY data/ DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_data)
 
 add_dependencies(${UNIT_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin)
 

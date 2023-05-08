@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -13,6 +14,8 @@ namespace hestia {
  */
 class Metadata {
   public:
+    virtual ~Metadata() = default;
+
     using onItem =
         std::function<void(const std::string& key, const std::string& value)>;
 
@@ -83,4 +86,18 @@ class Metadata {
   private:
     std::unordered_map<std::string, std::string> m_data;
 };
+
+class NestedMetadata : public Metadata {
+  public:
+    void add_child(
+        const std::string& key, std::unique_ptr<NestedMetadata> child);
+
+    NestedMetadata* get_child(const std::string& key) const;
+
+    bool has_child(const std::string& key) const;
+
+  private:
+    std::unordered_map<std::string, std::unique_ptr<NestedMetadata>> m_children;
+};
+
 }  // namespace hestia
