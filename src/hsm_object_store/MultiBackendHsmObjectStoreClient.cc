@@ -14,7 +14,7 @@ MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
 
 MultiBackendHsmObjectStoreClient::~MultiBackendHsmObjectStoreClient() {}
 
-void MultiBackendHsmObjectStoreClient::initialize(
+void MultiBackendHsmObjectStoreClient::do_initialize(
     const TierBackendRegistry& tier_backend_regsitry,
     const CopyToolConfig& copy_tool_config)
 {

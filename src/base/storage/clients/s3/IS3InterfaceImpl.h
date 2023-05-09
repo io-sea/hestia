@@ -4,13 +4,16 @@
 #include "S3Object.h"
 
 #include "Extent.h"
-#include "ReadableBufferView.h"
-#include "WriteableBufferView.h"
+#include "Stream.h"
 
 #include <memory>
 
 namespace hestia {
-struct S3Config {};
+struct S3Config {
+    std::string m_metadataprefix;
+    std::string m_user_agent;
+    std::string m_default_host;
+};
 
 class IS3InterfaceImpl {
   public:
@@ -18,17 +21,13 @@ class IS3InterfaceImpl {
 
     virtual ~IS3InterfaceImpl() = default;
 
-    virtual void initialize(const S3Config& config) { (void)config; };
+    virtual void initialize(const S3Config& config) = 0;
 
     virtual int put(
-        const S3Object& obj,
-        const Extent& extent,
-        const ReadableBufferView* buffer) = 0;
+        const S3Object& obj, const Extent& extent, Stream* stream) = 0;
 
     virtual int get(
-        const S3Object& obj,
-        const Extent& extent,
-        WriteableBufferView* buffer) = 0;
+        const S3Object& obj, const Extent& extent, Stream* stream) = 0;
 
     virtual int remove(const S3Object& obj) = 0;
 };

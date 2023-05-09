@@ -5,6 +5,7 @@ namespace hestia {
 InMemoryStreamSource::InMemoryStreamSource(const ReadableBufferView& buffer) :
     m_readable_buffer(buffer)
 {
+    m_size = buffer.length();
 }
 
 InMemoryStreamSource::InMemoryStreamSource(sourceFunc source) :

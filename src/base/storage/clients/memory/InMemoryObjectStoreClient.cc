@@ -53,6 +53,7 @@ void InMemoryObjectStoreClient::get(
 void InMemoryObjectStoreClient::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
+    LOG_INFO("Starting client PUT: " + object.to_string());
     auto md_iter = m_metadata.find(object.id());
     if (md_iter == m_metadata.end()) {
         m_metadata[object.id()] = object.m_metadata;

@@ -298,5 +298,6 @@ int Socket::do_accept()
 
 void Socket::do_close()
 {
+    ::shutdown(m_handle, 2);
     ::close(m_handle);
 }

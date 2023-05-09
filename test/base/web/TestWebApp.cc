@@ -25,7 +25,6 @@ TEST_CASE("Test Basic web app", "[web_app]")
 
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
     hestia::RequestContext request_context(request);
-    return;
 
     web_app.on_request(&request_context);
 

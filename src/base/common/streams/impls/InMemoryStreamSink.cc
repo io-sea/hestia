@@ -4,6 +4,7 @@ namespace hestia {
 InMemoryStreamSink::InMemoryStreamSink(const WriteableBufferView& buffer) :
     m_write_buffer(buffer)
 {
+    m_size = buffer.length();
 }
 
 InMemoryStreamSink::InMemoryStreamSink(sinkFunc sink) : m_sink_func(sink) {}

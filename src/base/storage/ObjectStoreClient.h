@@ -33,6 +33,8 @@ class ObjectStoreClient {
 
     virtual ~ObjectStoreClient() = default;
 
+    virtual void initialize(const NestedMetadata& config) { (void)config; }
+
     /**
      * Make a request to the object store backend. Consumers should primarily
      * work with this method.

@@ -19,7 +19,7 @@ FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::create()
     return std::make_unique<FileHsmObjectStoreClient>();
 }
 
-void FileHsmObjectStoreClient::initialize(
+void FileHsmObjectStoreClient::do_initialize(
     const FileHsmObjectStoreClientConfig& config)
 {
     m_store = config.m_store_location;
@@ -38,7 +38,7 @@ void FileHsmObjectStoreClient::put(
     const HsmObjectStoreRequest& request, Stream* stream) const
 {
     FileObjectStoreClient file_client;
-    file_client.initialize(get_tier_path(request.target_tier()));
+    file_client.do_initialize(get_tier_path(request.target_tier()));
     if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
@@ -55,7 +55,7 @@ void FileHsmObjectStoreClient::get(
     Stream* stream) const
 {
     FileObjectStoreClient file_client;
-    file_client.initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(get_tier_path(request.source_tier()));
     if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
@@ -73,7 +73,7 @@ void FileHsmObjectStoreClient::remove(
     const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
-    file_client.initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(get_tier_path(request.source_tier()));
     if (const auto response = file_client.make_request(
             HsmObjectStoreRequest::to_base_request(request));
         !response->ok()) {
@@ -87,7 +87,7 @@ void FileHsmObjectStoreClient::remove(
 void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
-    file_client.initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(get_tier_path(request.source_tier()));
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), true);
 }
@@ -95,7 +95,7 @@ void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 void FileHsmObjectStoreClient::move(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
-    file_client.initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(get_tier_path(request.source_tier()));
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), false);
 }

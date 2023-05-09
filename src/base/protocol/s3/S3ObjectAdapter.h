@@ -4,10 +4,16 @@
 #include "S3Object.h"
 #include "StorageObject.h"
 
+#include <memory>
+
 namespace hestia {
 class S3ObjectAdapter {
   public:
+    using Ptr = std::unique_ptr<S3ObjectAdapter>;
+
     S3ObjectAdapter(const std::string& metadata_prefix);
+
+    static Ptr create(const std::string& metadata_prefix);
 
     virtual ~S3ObjectAdapter() = default;
 

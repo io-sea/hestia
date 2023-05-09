@@ -41,7 +41,7 @@ stages:
   - &build 
     make -C "${CMAKE_BUILD_DIR}" -j$(nproc)
   - &test
-    make -C "${CMAKE_BUILD_DIR}" test -j$(nproc)
+    make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
 
 .cache:
   cmake_install_cache: &cmake_install_cache

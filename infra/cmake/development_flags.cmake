@@ -28,6 +28,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             INTERFACE
                 -fsanitize=address,undefined
         )
+
+        # Issue with older clang versions and loading plugins: https://github.com/google/sanitizers/issues/1017
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(development_flags INTERFACE -mllvm -asan-use-private-alias=1)
+        endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+
     endif(HESTIA_ENABLE_SANITIZERS)
 endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 

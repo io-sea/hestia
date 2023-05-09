@@ -52,7 +52,6 @@ class TestSocketFactory : public SocketFactory {
 
 TEST_CASE("Test TcpServer", "[server]")
 {
-    return;
     auto socket_factory = std::make_unique<TestSocketFactory>();
 
     TcpServer server(std::move(socket_factory));

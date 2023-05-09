@@ -1,5 +1,8 @@
 #include "ThreadCollection.h"
 
+#include "Logger.h"
+
+#include <sstream>
 #include <vector>
 
 bool ThreadCollection::add(std::unique_ptr<std::thread> thread)
@@ -7,6 +10,10 @@ bool ThreadCollection::add(std::unique_ptr<std::thread> thread)
     if (!m_accepting) {
         return false;
     }
+
+    std::stringstream sstr;
+    sstr << "[" << thread->get_id() << "]";
+    LOG_INFO("Registering thread: " + sstr.str());
 
     std::scoped_lock guard(m_mutex);
     m_threads[thread->get_id()] = std::move(thread);
@@ -64,7 +71,13 @@ void ThreadCollection::remove_marked()
 void ThreadCollection::remove(std::thread::thread::id input_id)
 {
     if (auto const& it = m_threads.find(input_id); it != m_threads.end()) {
-        it->second->detach();
+        std::stringstream sstr;
+        sstr << "[" << input_id << "]";
+        LOG_INFO("Removing thread: " + sstr.str());
+
+        if (it->second->joinable()) {
+            it->second->detach();
+        }
         m_threads.erase(it);
     }
 }

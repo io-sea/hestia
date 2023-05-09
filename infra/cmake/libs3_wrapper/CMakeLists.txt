@@ -21,7 +21,7 @@ add_library(s3 STATIC
     src/multipart.c
 )
 
-target_compile_definitions(s3 PUBLIC LIBS3_VER_MAJOR=4 LIBS3_VER_MINOR=1)
+target_compile_definitions(s3 PUBLIC LIBS3_VER_MAJOR="4" LIBS3_VER_MINOR="1")
 target_include_directories(s3 PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 target_link_libraries(s3 PUBLIC CURL::libcurl LibXml2::LibXml2)
 

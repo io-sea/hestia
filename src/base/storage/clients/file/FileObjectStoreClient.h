@@ -17,7 +17,7 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const std::filesystem::path& root);
+    void do_initialize(const std::filesystem::path& root);
 
     void migrate(
         const std::string& object_id,

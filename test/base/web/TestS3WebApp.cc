@@ -110,7 +110,6 @@ class WebAppTestFixture {
 
 TEST_CASE_METHOD(WebAppTestFixture, "Test s3 web app", "[s3]")
 {
-    return;
     auto response = make_request("/", hestia::HttpRequest::Method::GET);
     REQUIRE(response->code() == 200);
     REQUIRE_FALSE(response->body().empty());
@@ -150,5 +149,6 @@ TEST_CASE_METHOD(WebAppTestFixture, "Test s3 web app", "[s3]")
 
     std::string returned_data;
     response = get_data("/mybucket/myobject", returned_data);
+    REQUIRE(response->code() == 200);
     REQUIRE(returned_data == obj_data);
 }

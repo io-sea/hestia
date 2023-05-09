@@ -8,6 +8,12 @@ S3ContainerAdapter::S3ContainerAdapter(const std::string& metadata_prefix) :
 {
 }
 
+S3ContainerAdapter::Ptr S3ContainerAdapter::create(
+    const std::string& metadata_prefix)
+{
+    return std::make_unique<S3ContainerAdapter>(metadata_prefix);
+}
+
 void S3ContainerAdapter::to_s3(
     S3Container& container, const StorageObject& storage_object)
 {

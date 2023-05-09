@@ -13,17 +13,13 @@ MockLibS3InterfaceImpl::Ptr MockLibS3InterfaceImpl::create()
 
 void MockLibS3InterfaceImpl::initialize(const S3Config& config)
 {
-    (void)config;
-    std::string user_agent;
-    std::string default_host;
     int flags{0};
-    m_lib_s3.s3_initialize(user_agent.c_str(), flags, default_host.c_str());
+    m_lib_s3.s3_initialize(
+        config.m_user_agent.c_str(), flags, config.m_default_host.c_str());
 }
 
 int MockLibS3InterfaceImpl::put(
-    const S3Object& obj,
-    const Extent& extent,
-    const ReadableBufferView* read_buffer)
+    const S3Object& obj, const Extent& extent, Stream* stream)
 {
     (void)extent;
 
@@ -41,20 +37,11 @@ int MockLibS3InterfaceImpl::put(
         (void)callback_data;
     };
 
-    std::size_t buffer_loc{0};
-    auto on_put_data = [&buffer_loc, read_buffer](
-                           int buffer_size, char* buffer, void* callback_data) {
-        (void)callback_data;
-        int bytes_written = 0;
-        for (int idx = 0; idx < buffer_size; idx++) {
-            if (buffer_loc == read_buffer->length()) {
-                break;
-            }
-            buffer[idx] = *(read_buffer->data() + buffer_loc);
-            buffer_loc++;
-            bytes_written++;
-        }
-        return bytes_written;
+    auto on_put_data = [](int buffer_size, char* buffer, void* callback_data) {
+        auto stream = reinterpret_cast<Stream*>(callback_data);
+        WriteableBufferView buffer_view(buffer, buffer_size);
+        const auto io_result = stream->read(buffer_view);
+        return io_result.m_num_transferred;
     };
 
     libs3::S3PutObjectHandler put_handler;
@@ -63,15 +50,13 @@ int MockLibS3InterfaceImpl::put(
     put_handler.m_put_object_data_callback = on_put_data;
 
     m_lib_s3.s3_put_object(
-        &bucket, obj.m_key.c_str(), read_buffer->length(), nullptr, nullptr, 0,
-        &put_handler, nullptr);
+        &bucket, obj.m_key.c_str(), stream->get_source_size(), nullptr, nullptr,
+        0, &put_handler, reinterpret_cast<void*>(stream));
     return static_cast<int>(!(response_status == libs3::S3Status::OK));
 }
 
 int MockLibS3InterfaceImpl::get(
-    const S3Object& obj,
-    const Extent& extent,
-    WriteableBufferView* write_buffer)
+    const S3Object& obj, const Extent& extent, Stream* stream)
 {
     (void)extent;
 
@@ -89,16 +74,13 @@ int MockLibS3InterfaceImpl::get(
         (void)callback_data;
     };
 
-    std::size_t buffer_loc{0};
-    auto on_get_data = [write_buffer, &buffer_loc](
-                           int buffer_size, const char* buffer,
-                           void* callback_data) {
-        (void)callback_data;
-        for (int idx = 0; idx < buffer_size; idx++) {
-            *(write_buffer->data() + buffer_loc) = buffer[idx];
-            buffer_loc++;
-        }
-        return libs3::S3Status::OK;
+    auto on_get_data = [](int buffer_size, const char* buffer,
+                          void* callback_data) {
+        auto stream = reinterpret_cast<Stream*>(callback_data);
+        ReadableBufferView buffer_view(buffer, buffer_size);
+        const auto io_result = stream->write(buffer_view);
+        return io_result.ok() ? libs3::S3Status::OK :
+                                libs3::S3Status::UNKNOWN_ERROR;
     };
 
     libs3::S3GetObjectHandler get_handler;
@@ -107,8 +89,8 @@ int MockLibS3InterfaceImpl::get(
     get_handler.m_get_object_data_callback = on_get_data;
 
     m_lib_s3.s3_get_object(
-        &bucket, obj.m_key.c_str(), nullptr, 0, write_buffer->length(), nullptr,
-        0, &get_handler, nullptr);
+        &bucket, obj.m_key.c_str(), nullptr, 0, stream->get_sink_size(),
+        nullptr, 0, &get_handler, reinterpret_cast<void*>(stream));
 
     return static_cast<int>(!(response_status == libs3::S3Status::OK));
 }

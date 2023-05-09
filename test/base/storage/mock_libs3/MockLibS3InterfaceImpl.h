@@ -15,15 +15,9 @@ class MockLibS3InterfaceImpl : public IS3InterfaceImpl {
 
     void initialize(const S3Config& config) override;
 
-    int put(
-        const S3Object& obj,
-        const Extent& extent,
-        const ReadableBufferView* buffer) override;
+    int put(const S3Object& obj, const Extent& extent, Stream* stream) override;
 
-    int get(
-        const S3Object& obj,
-        const Extent& extent,
-        WriteableBufferView* buffer) override;
+    int get(const S3Object& obj, const Extent& extent, Stream* stream) override;
 
     int remove(const S3Object& obj) override;
 

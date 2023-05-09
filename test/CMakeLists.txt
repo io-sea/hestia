@@ -92,6 +92,7 @@ catch_discover_tests(${UNIT_TEST_MODULE})
 set(INTEGRATION_TEST_MODULE ${PROJECT_NAME}_integration_tests)
 
 set(INTEGRATION_TEST_SOURCES     
+    base/storage/ObjectStoreTestWrapper.cc
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
     base/storage/TestS3Client_Integration.cc
@@ -112,6 +113,7 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_server
     hestia_web
     hestia_s3app
+    hestia_s3_backend
     hestia_test_utils
     Catch2::Catch2
     ${PLATFORM_LIBS})

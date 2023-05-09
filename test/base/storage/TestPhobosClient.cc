@@ -13,8 +13,7 @@ class PhobosStoreTestFixture : public ObjectStoreTestWrapper {
     PhobosStoreTestFixture() : ObjectStoreTestWrapper("mock_phobos_plugin") {}
 };
 
-TEST_CASE_METHOD(
-    PhobosStoreTestFixture, "Test phobos object store", "[.][phobos]")
+TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
 {
     hestia::StorageObject obj("0000");
     obj.m_metadata.set_item("mykey", "myval");

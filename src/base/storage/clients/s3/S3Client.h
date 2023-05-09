@@ -6,6 +6,10 @@
 #include <memory>
 
 namespace hestia {
+
+class S3ContainerAdapter;
+class S3ObjectAdapter;
+
 class S3Client : public ObjectStoreClient {
   public:
     using Ptr = std::unique_ptr<S3Client>;
@@ -21,7 +25,9 @@ class S3Client : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const S3Config& config);
+    void initialize(const NestedMetadata& config) override;
+
+    void do_initialize(const S3Config& config);
 
   private:
     bool exists(const StorageObject& object) const override;
@@ -38,5 +44,7 @@ class S3Client : public ObjectStoreClient {
         const override;
 
     IS3InterfaceImpl::Ptr m_impl;
+    std::unique_ptr<S3ContainerAdapter> m_container_adapter;
+    std::unique_ptr<S3ObjectAdapter> m_object_adapter;
 };
 }  // namespace hestia

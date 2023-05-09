@@ -8,6 +8,11 @@ S3ObjectAdapter::S3ObjectAdapter(const std::string& metadata_prefix) :
 {
 }
 
+S3ObjectAdapter::Ptr S3ObjectAdapter::create(const std::string& metadata_prefix)
+{
+    return std::make_unique<S3ObjectAdapter>(metadata_prefix);
+}
+
 void S3ObjectAdapter::to_s3(
     S3Object& object, const StorageObject& storage_object)
 {

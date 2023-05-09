@@ -64,7 +64,7 @@ HestiaConfigurator::set_up_object_store()
 
     auto object_store = std::make_unique<MultiBackendHsmObjectStoreClient>(
         std::move(client_manager));
-    object_store->initialize(
+    object_store->do_initialize(
         m_config.m_tier_backend_registry, m_config.m_copy_tool_config);
     return object_store;
 }

@@ -22,7 +22,6 @@ class TestWebApp : public hestia::WebApp {
 
 TEST_CASE("Test Curl client", "[curl]")
 {
-    return;
     TestWebApp web_app;
 
     hestia::Server::Config test_config;

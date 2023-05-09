@@ -21,7 +21,7 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const FileHsmObjectStoreClientConfig& config);
+    void do_initialize(const FileHsmObjectStoreClientConfig& config);
 
   private:
     void put(

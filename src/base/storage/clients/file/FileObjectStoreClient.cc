@@ -22,7 +22,7 @@ FileObjectStoreClient::Ptr FileObjectStoreClient::create(
     const std::filesystem::path& root)
 {
     auto instance = create();
-    instance->initialize(root);
+    instance->do_initialize(root);
     return instance;
 }
 
@@ -32,7 +32,7 @@ std::string FileObjectStoreClient::get_registry_identifier()
            + "::FileObjectStoreClient";
 }
 
-void FileObjectStoreClient::initialize(const std::filesystem::path& root)
+void FileObjectStoreClient::do_initialize(const std::filesystem::path& root)
 {
     m_root = root;
     hestia::FileUtils::create_if_not_existing(m_root);
