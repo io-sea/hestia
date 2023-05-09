@@ -11,10 +11,10 @@ yum install -y $RPM_CACHE/isa-l-2.30.0-1.$HOST_RELEASE.$HOST_ARCH.rpm
 cd /cortx-motr
 ./autogen.sh
 ./configure --prefix=/motr_install --with-user-mode-only
-make -j 4
+make -j$(nproc)
 export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.6/site-packages/
-make install
-make rpms
+make install -j$(nproc)
+make rpms -j$(nproc)
 
 cp -f $RPM_CACHE/* /motr_install
 yum install -y $RPM_CACHE/cortx-motr-$MOTR_VERSION.$HOST_RELEASE.$HOST_ARCH.rpm
@@ -28,7 +28,7 @@ python3 -m pip install confluent-kafka==1.5.0
 fi 
 
 cd /cortx-utils
-./jenkins/build.sh -v 2.0.0 -b 2
+./jenkins/build.sh -v 2.0.0 -b 2 -j$(nproc)
 pip3 install -r py-utils/python_requirements.txt
 pip3 install cffi==1.14.5 numpy==1.19.5
 yum install -y /cortx-utils/py-utils/dist/cortx-py-utils-$CORTX_UTILS_VERSION.noarch.rpm
@@ -37,7 +37,7 @@ cp -f /cortx-utils/py-utils/dist/cortx-py-utils-$CORTX_UTILS_VERSION.noarch.rpm 
 # On aarch64 we fail here at the last hurdle - the python wheel name is hard coded to x86_64 in hax
 if [ $HOST_ARCH != "aarch64" ];then
 cd /cortx-hare
-make rpm
+make rpm -j$(nproc)
 yum install -y $RPM_CACHE/cortx-hare-$HARE_VERSION.$HOST_RELEASE.$HOST_ARCH.rpm
 fi
 

@@ -1,10 +1,12 @@
 image: rockylinux:8
 
-stages: 
+stages:   
+  - motr build
   - static analysis 
   - build
   - test
 
+# Hestia CI variables
 .variables:
   default_variables: &default_variables 
     CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
@@ -17,6 +19,8 @@ stages:
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_DOC_DIR: ""
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
+
+# Hestia CI code snippets
 .snippets: 
   - &install_dependencies
     yum check-update -q || true;
@@ -68,6 +72,35 @@ stages:
     - *build 
   cache:
     <<: *cmake_install_cache
+
+# Motr RPM Build
+motr_rpm_build:
+  stage: motr build
+  tags: 
+    - docker
+  variables:
+    <<: *default_variables 
+    MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
+    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
+  when: manual
+  before_script:
+    - yum -q check-update || true # Returns exit code 100 if updates exist
+    - yum update -qy
+    - yum install -qy epel-release
+    - yum config-manager -q --set-enabled powertools
+    - yum install -qy $(cat ${HESTIA_DEPS}/motr-rpm)
+    - python3 -m pip install --upgrade pip
+    - python3 -m pip install --no-cache-dir $(cat ${HESTIA_DEPS}/motr-rpm-pip)
+  script:
+    - ${CI_PROJECT_DIR}/infra/scripts/build_motr.sh
+  artifacts:
+    name: "motr-rpms"
+    expire_in: 1 month
+    paths:
+      - "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
+
+
+# Hestia CI Jobs
 
 Format: 
   <<: *default_job

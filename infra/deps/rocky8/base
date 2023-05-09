@@ -10,3 +10,4 @@ libcurl-devel
 libxml2-devel
 libasan
 libubsan
+python3 
