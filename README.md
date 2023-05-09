@@ -13,7 +13,7 @@ Hestia is supported on Linux and Mac.
 ### Required
 
 * A `c++17` compatible compiler
-* `cmake >= 3.24` (script provided to fetch if system version too old)
+* `cmake >= 3.24` ([script provided](infra/scripts/bootstrap_cmake.sh) to fetch if system version too old)
 * `curl` (and development headers)
 * `libxml2` (and development headers)
 
