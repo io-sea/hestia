@@ -29,6 +29,10 @@ stages:
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
+  - &install_motr
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/isa-l-2.30.0*.$(arch).rpm;
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/cortx-motr-2.0.0*.$(arch).rpm;
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/cortx-motr-devel-2.0.0*.$(arch).rpm;
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -74,12 +78,34 @@ stages:
   cache:
     <<: *cmake_install_cache
 
-  
+motr_rpm_download:
+  tags:
+    - docker
+  stage: .pre
+  image: alpine
+  script:
+    - 'wget -qO rpms.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://git.ichec.ie/api/v4/projects/418/jobs/artifacts/motr-rpm-builds/download?job=motr_rpm_build"'
+    - unzip -q rpms.zip && rm -f rpms.zip
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - motr-rpms/
+
 # Hestia CI Jobs
+motr install test:
+  <<: *default_job
+  stage: static analysis
+  dependencies:
+    - motr_rpm_download
+  before_script: 
+    - *update_distro
+  script:
+    - *install_motr
 
 Format: 
   <<: *default_job
   stage: static analysis
+  dependencies: []
   before_script: 
     - *update_distro
     - yum install -qy $(cat ${HESTIA_DEPS}/format)
@@ -92,6 +118,7 @@ Format:
 Lint: 
   <<: *default_job
   stage: static analysis
+  dependencies: []
   variables:
     <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
@@ -141,8 +168,6 @@ Unit_test:
   variables:
     <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
-    CXX: clang++
-    C: clang
     HESTIA_BUILD_TESTS: "ON"
   before_script:
     - *update_distro
@@ -151,4 +176,5 @@ Unit_test:
   script:
     - *configure
     - *build
+  script:
     - *test
