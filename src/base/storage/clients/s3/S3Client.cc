@@ -42,7 +42,7 @@ std::string S3Client::get_registry_identifier()
     return hestia::project_config::get_project_name() + "::S3Client";
 }
 
-void S3Client::initialize(const NestedMetadata& config_data)
+void S3Client::initialize(const Dictionary& config_data)
 {
     S3Config config;
     auto on_item = [&config](const std::string& key, const std::string& value) {
@@ -53,7 +53,7 @@ void S3Client::initialize(const NestedMetadata& config_data)
             config.m_default_host = value;
         }
     };
-    config_data.for_each_item(on_item);
+    config_data.for_each_scalar(on_item);
     do_initialize(config);
 }
 

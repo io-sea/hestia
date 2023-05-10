@@ -35,8 +35,8 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test S3 client - integration", "[.][s3]")
 
     const auto url = "127.0.0.1:8000/";
 
-    hestia::NestedMetadata client_config;
-    client_config.set_item("host", url);
+    hestia::Dictionary client_config;
+    client_config.set_map({{"host", url}});
 
     m_client->initialize(client_config);
 

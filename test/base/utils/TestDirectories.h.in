@@ -13,6 +13,6 @@ public:
 
     static std::filesystem::path get_test_data_dir()
     {
-        return std::filesystem::path("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") / "test_data";
+        return std::filesystem::path("${CMAKE_BINARY_DIR}") / "test_data";
     }
 };

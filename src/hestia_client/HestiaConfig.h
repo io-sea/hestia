@@ -5,30 +5,16 @@
 #include "HsmObjectStoreClientRegistry.h"
 #include "KeyValueStoreClientRegistry.h"
 
-class DataPlacementEngine;
-
 namespace hestia {
-class MultiBackendHsmObjectStoreClient;
-class KeyValueStore;
 
 struct HestiaConfig {
+    std::string m_host = "127.0.0.1";
+    std::string m_port = "8080";
     TierBackendRegistry m_tier_backend_registry;
-    KeyValueStoreType m_key_value_store_type;
-    PlacementEngineType m_placement_engine_type;
+    KeyValueStoreType m_key_value_store_type{hestia::KeyValueStoreType::FILE};
+    PlacementEngineType m_placement_engine_type{
+        hestia::PlacementEngineType::BASIC};
     CopyToolConfig m_copy_tool_config;
 };
 
-class HestiaConfigurator {
-  public:
-    int initialize(const HestiaConfig& config);
-
-  private:
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> set_up_object_store();
-
-    std::unique_ptr<KeyValueStore> set_up_key_value_store();
-
-    std::unique_ptr<DataPlacementEngine> set_up_data_placement_engine();
-
-    HestiaConfig m_config;
-};
 }  // namespace hestia

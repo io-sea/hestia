@@ -5,13 +5,14 @@ add_module(
     HEADERS
         hestia_old.h
         HestiaConfig.h
+        HestiaConfigurator.h
         HestiaCli.h
         HestiaCppInterface.h
         application/ApplicationContext.h
         application/ConfigParser.h
     SOURCES
         hestia.cc
-        HestiaConfig.cc
+        HestiaConfigurator.cc
         HestiaCli.cc
         HestiaCppInterface.cc
         application/ApplicationContext.cc

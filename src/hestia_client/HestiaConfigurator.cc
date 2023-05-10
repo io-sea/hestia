@@ -1,4 +1,4 @@
-#include "HestiaConfig.h"
+#include "HestiaConfigurator.h"
 
 #include "HsmObjectStoreClientManager.h"
 #include "MultiBackendHsmObjectStoreClient.h"

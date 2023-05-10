@@ -13,6 +13,7 @@ add_module(
         Logger.h
         base_types/Extent.h 
         base_types/Metadata.h 
+        base_types/Dictionary.h 
         base_types/StorageObject.h
         base_types/Uuid.h
         buffer/BufferView.h
@@ -45,6 +46,7 @@ add_module(
         Logger.cc
         base_types/Extent.cc
         base_types/Metadata.cc
+        base_types/Dictionary.cc
         base_types/StorageObject.cc
         base_types/Uuid.cc
         buffer/ReadableBufferView.cc
