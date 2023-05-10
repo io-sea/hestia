@@ -29,6 +29,7 @@ pushd $CORTX_UTILS_SRC && git reset --hard $CORTX_UTILS_SHA && popd
 export ISA_L_VERSION=2.30.0
 rpmbuild --define '_isa_l_version 2.30.0' --bb $MOTR_SRC/scripts/provisioning/roles/motr-build/tasks/isa-l.spec
 yum install -y $RPM_CACHE/isa-l-2.30.0-1.$HOST_RELEASE.$HOST_ARCH.rpm
+cp -f $RPM_CACHE/isa-l-*.rpm $MOTR_RPM_DIR
 
 # Make and install cortx-motr
 cd $MOTR_SRC

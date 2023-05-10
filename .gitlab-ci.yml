@@ -1,85 +1,15 @@
 image: rockylinux:8
 
 stages:   
-  - motr build
-  - static analysis 
-  - build
-  - test
-
-# Hestia CI variables
-.variables:
-  default_variables: &default_variables 
-    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
-    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
-    CMAKE_BUILD_TYPE: Release 
-    CXX: g++
-    C: gcc
-    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    HESTIA_BUILD_TESTS: "OFF" 
-    HESTIA_BUILD_DOCUMENTATION: "OFF"
-    HESTIA_DOC_DIR: ""
-    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
-
-# Hestia CI code snippets
-.snippets: 
-  - &install_dependencies
-    yum check-update -q || true;
-    yum update -qy;
-    yum install -qy epel-release;
-    yum config-manager -q --set-enabled powertools;
-    yum install -qy $(cat ${HESTIA_DEPS}/base);
-    ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
-  - &configure 
-    mkdir -p "${CMAKE_BUILD_DIR}"
-    && pushd "${CMAKE_BUILD_DIR}"
-    && (
-      set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR} 
-      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
-      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
-      -DCMAKE_CXX_COMPILER="${CXX}" 
-      -DHESTIA_WITH_PHOBOS=OFF
-      -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
-    )
-    && popd
-  - &build 
-    make -C "${CMAKE_BUILD_DIR}" -j$(nproc)
-  - &test
-    make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
-
-.cache:
-  cmake_install_cache: &cmake_install_cache
-    key: "cmake_3.26.3"
-    paths:
-      - .cache/cmake/
-
-.artifacts:
-  build_artifacts: &build_artifacts
-    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-    paths:
-      - build/
-    expire_in: 30 min
-
-.default_job: &default_job 
-  tags: 
-    - docker
-  variables:
-    <<: *default_variables 
-  before_script: 
-    - *install_dependencies
-  script: 
-    - *configure 
-    - *build 
-  cache:
-    <<: *cmake_install_cache
+  - motr
 
 # Motr RPM Build
 motr_rpm_build:
-  stage: motr build
+  stage: motr
   tags: 
     - docker
   variables:
-    <<: *default_variables 
+    DEPS_DIR: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
     MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
   when: manual
@@ -88,93 +18,13 @@ motr_rpm_build:
     - yum update -qy
     - yum install -qy epel-release
     - yum config-manager -q --set-enabled powertools
-    - yum install -qy $(cat ${HESTIA_DEPS}/motr-rpm)
+    - yum install -qy $(cat ${DEPS_DIR}/motr-rpm)
     - python3 -m pip install --upgrade pip
-    - python3 -m pip install --no-cache-dir $(cat ${HESTIA_DEPS}/motr-rpm-pip)
+    - python3 -m pip install --no-cache-dir $(cat ${DEPS_DIR}/motr-rpm-pip)
   script:
     - ${CI_PROJECT_DIR}/infra/scripts/build_motr.sh
   artifacts:
     name: "motr-rpms"
     expire_in: 1 month
     paths:
-      - "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
-
-
-# Hestia CI Jobs
-
-Format: 
-  <<: *default_job
-  stage: static analysis
-  before_script: 
-    - yum -q check-update || true # Returns exit code 100 if updates exist
-    - yum update -qy
-    - yum install -qy epel-release
-    - yum config-manager -q --set-enabled powertools
-    - yum install -qy $(cat ${HESTIA_DEPS}/format)
-  script: 
-    - ./infra/scripts/run_format.sh
-      && git status 
-      && git diff-index --quiet HEAD 
-      || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
-
-Lint: 
-  <<: *default_job
-  stage: static analysis
-  variables:
-    <<: *default_variables
-    CMAKE_BUILD_TYPE: Debug
-    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    CXX: clang++
-    C: clang
-    HESTIA_BUILD_TESTS: "ON" 
-  before_script:
-    - *install_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
-    - *configure
-    - *build 
-  script:
-    - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}"
-
-
-#Documentation:
-#   <<: *default_job
-#   stage: build 
-#   variables:
-#       <<: *default_variables
-#       HESTIA_BUILD_DOCUMENTATION: "ON"
-#        HESTIA_DOC_DIR: ../../doc/parser/src
-#    script:
-#        - apt-get install --no-install-recommends -y
-#            cmake
-#            git
-#            doxygen
-#            graphviz
-#            texlive texlive-font-utils
-#        - *configure
-#        - make -C build/doc
-#            && git status
-#            && git diff-index --quiet HEAD
-#            || { echo "This commit contains changes to the documentation! Run doxygen-XML-parser on the project update the documentation."; false; }
-
-Release:
-  <<: *default_job
-  stage: build
-
-Unit_test:
-  <<: *default_job
-  stage: test
-  dependencies: 
-    - Release
-  variables:
-    <<: *default_variables
-    CMAKE_BUILD_TYPE: Debug
-    CXX: clang++
-    C: clang
-    HESTIA_BUILD_TESTS: "ON"
-  before_script:
-    - *install_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
-  script:
-    - *configure
-    - *build
-    - *test
+      - "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}"

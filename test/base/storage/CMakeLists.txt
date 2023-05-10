@@ -1,2 +1,0 @@
-add_subdirectory(mock_libs3)
-add_subdirectory(mock_phobos)

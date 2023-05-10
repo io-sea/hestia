@@ -1,7 +1,0 @@
-ca-certificates 
-wget 
-build-essential 
-libssl-dev 
-libcurl4-openssl-dev 
-libxml2-dev
-git
