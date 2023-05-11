@@ -11,7 +11,7 @@ motr_rpm_build:
   variables:
     DEPS_DIR: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
-    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
+    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
   when: manual
   before_script:
     - yum -q check-update || true # Returns exit code 100 if updates exist
@@ -27,4 +27,4 @@ motr_rpm_build:
     name: "motr-rpms"
     expire_in: 1 month
     paths:
-      - "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}"
+      - "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
