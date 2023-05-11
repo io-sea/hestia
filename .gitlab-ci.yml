@@ -3,8 +3,8 @@ image: rockylinux:8
 stages:   
   - motr
 
-# Motr RPM Build
-motr_rpm_build:
+
+.base_motr_rpm_build: &base_motr_rpm_build 
   stage: motr
   tags: 
     - docker
@@ -12,7 +12,6 @@ motr_rpm_build:
     DEPS_DIR: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
     MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
-  when: manual
   before_script:
     - yum -q check-update || true # Returns exit code 100 if updates exist
     - yum update -qy
@@ -28,3 +27,14 @@ motr_rpm_build:
     expire_in: 1 month
     paths:
       - "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
+
+motr_rpm_build:
+  <<: *base_motr_rpm_build
+  when: manual
+
+arm_motr_rpm_build:
+  <<: *base_motr_rpm_build
+  when: manual
+  tags:
+    - docker
+    - arm
