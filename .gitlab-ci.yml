@@ -1,7 +1,6 @@
 image: rockylinux:8
 
 stages:   
-  - motr build
   - static analysis 
   - build
   - test
@@ -22,11 +21,12 @@ stages:
 
 # Hestia CI code snippets
 .snippets: 
-  - &install_dependencies
+  - &update_distro
     yum check-update -q || true;
     yum update -qy;
     yum install -qy epel-release;
     yum config-manager -q --set-enabled powertools;
+  - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &configure 
@@ -66,50 +66,22 @@ stages:
   variables:
     <<: *default_variables 
   before_script: 
-    - *install_dependencies
+    - *update_distro
+    - *install_base_dependencies
   script: 
     - *configure 
     - *build 
   cache:
     <<: *cmake_install_cache
 
-# Motr RPM Build
-motr_rpm_build:
-  stage: motr build
-  tags: 
-    - docker
-  variables:
-    <<: *default_variables 
-    MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
-    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
-  when: manual
-  before_script:
-    - yum -q check-update || true # Returns exit code 100 if updates exist
-    - yum update -qy
-    - yum install -qy epel-release
-    - yum config-manager -q --set-enabled powertools
-    - yum install -qy $(cat ${HESTIA_DEPS}/motr-rpm)
-    - python3 -m pip install --upgrade pip
-    - python3 -m pip install --no-cache-dir $(cat ${HESTIA_DEPS}/motr-rpm-pip)
-  script:
-    - ${CI_PROJECT_DIR}/infra/scripts/build_motr.sh
-  artifacts:
-    name: "motr-rpms"
-    expire_in: 1 month
-    paths:
-      - "${CI_PROJECT_DIR}/motr-${CI_RUNNER_EXECUTABLE_ARCH}-rpms"
-
-
+  
 # Hestia CI Jobs
 
 Format: 
   <<: *default_job
   stage: static analysis
   before_script: 
-    - yum -q check-update || true # Returns exit code 100 if updates exist
-    - yum update -qy
-    - yum install -qy epel-release
-    - yum config-manager -q --set-enabled powertools
+    - *update_distro
     - yum install -qy $(cat ${HESTIA_DEPS}/format)
   script: 
     - ./infra/scripts/run_format.sh
@@ -128,7 +100,8 @@ Lint:
     C: clang
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
-    - *install_dependencies
+    - *update_distro
+    - *install_base_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
     - *build 
@@ -172,8 +145,9 @@ Unit_test:
     C: clang
     HESTIA_BUILD_TESTS: "ON"
   before_script:
-    - *install_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
+    - *update_distro
+    - *install_base_dependencies
+    - yum install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
