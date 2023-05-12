@@ -6,6 +6,13 @@
 #include "HestiaConfigurator.h"
 #include "HsmService.h"
 
+#include "S3Service.h"
+#include "S3WebApp.h"
+#include "Server.h"
+
+#include "BasicHttpServer.h"
+#include "CopyToolWebApp.h"
+
 #include "Logger.h"
 
 #include <filesystem>
@@ -19,65 +26,77 @@ namespace hestia {
 
 void HestiaCli::add_get_options(CLI::App* command)
 {
-    command
-        ->add_option("-o, --object_id", m_hsm_command.m_object_id, "Object Id")
-        ->required();
-    command
-        ->add_option("-s, --source", m_hsm_command.m_source_tier, "Source Tier")
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
         ->required();
     command
         ->add_option(
-            "-f, --file", m_hsm_command.m_path, "Path to write object data to")
+            "file", m_hsm_command.m_path, "Path to write object data to")
         ->required();
+    command->add_option("source", m_hsm_command.m_source_tier, "Source Tier");
 }
 
 void HestiaCli::add_put_options(CLI::App* command)
 {
-    command
-        ->add_option("-o, --object_id", m_hsm_command.m_object_id, "Object Id")
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
         ->required();
-    command
-        ->add_option("-t, --target", m_hsm_command.m_target_tier, "Target Tier")
+    command->add_option("file", m_hsm_command.m_path, "Path to object data")
         ->required();
-    command
-        ->add_option("-f, --file", m_hsm_command.m_path, "Path to object data")
-        ->required();
+    command->add_option("target", m_hsm_command.m_target_tier, "Target Tier");
 }
 
 void HestiaCli::add_copy_options(CLI::App* command)
 {
-    command
-        ->add_option("-o, --object_id", m_hsm_command.m_object_id, "Object Id")
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
         ->required();
-    command
-        ->add_option("-s, --source", m_hsm_command.m_source_tier, "Source Tier")
+    command->add_option("source", m_hsm_command.m_source_tier, "Source Tier")
         ->required();
-    command
-        ->add_option("-t, --target", m_hsm_command.m_target_tier, "Target Tier")
+    command->add_option("target", m_hsm_command.m_target_tier, "Target Tier")
         ->required();
 }
 
 void HestiaCli::add_move_options(CLI::App* command)
 {
-    command
-        ->add_option("-o, --object_id", m_hsm_command.m_object_id, "Object Id")
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
         ->required();
-    command
-        ->add_option("-s, --source", m_hsm_command.m_source_tier, "Source Tier")
+    command->add_option("source", m_hsm_command.m_source_tier, "Source Tier")
         ->required();
-    command
-        ->add_option("-t, --target", m_hsm_command.m_target_tier, "Target Tier")
+    command->add_option("target", m_hsm_command.m_target_tier, "Target Tier")
         ->required();
 }
 
 void HestiaCli::add_release_options(CLI::App* command)
 {
-    command
-        ->add_option("-o, --object_id", m_hsm_command.m_object_id, "Object Id")
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
+        ->required();
+    command->add_option("source", m_hsm_command.m_source_tier, "Source Tier")
+        ->required();
+}
+
+void HestiaCli::add_get_metadata_options(CLI::App* command)
+{
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
+        ->required();
+}
+
+void HestiaCli::add_put_metadata_options(CLI::App* command)
+{
+    command->add_option("object_id", m_hsm_command.m_object_id, "Object Id")
         ->required();
     command
-        ->add_option("-s, --source", m_hsm_command.m_source_tier, "Source Tier")
+        ->add_option(
+            "attrs", m_hsm_command.m_attributes,
+            "Attributes, format: {key0: val0; key1: val1}")
         ->required();
+}
+
+void HestiaCli::add_list_options(CLI::App* command)
+{
+    (void)command;
+}
+
+void HestiaCli::add_list_tiers_options(CLI::App* command)
+{
+    (void)command;
 }
 
 void HestiaCli::parse(int argc, char* argv[])
@@ -88,13 +107,20 @@ void HestiaCli::parse(int argc, char* argv[])
 
     std::unordered_map<std::string, CLI::App*> commands;
     commands["get"] = app.add_subcommand("get", "Get an object from the store");
-    commands["put"] = app.add_subcommand("put", "Put an object in the store");
+    commands["put"] = app.add_subcommand("put", "Put an object to the store");
     commands["copy"] =
         app.add_subcommand("copy", "Copy an object between tiers");
     commands["move"] =
         app.add_subcommand("move", "Move an object between tiers");
     commands["release"] =
         app.add_subcommand("release", "Release an object from a tier");
+
+    commands["put_attrs"] =
+        app.add_subcommand("put_attrs", "Add attributes to an object.");
+    commands["get_attrs"] =
+        app.add_subcommand("get_attrs", "Get object attributes");
+    commands["list"]       = app.add_subcommand("list", "List objects");
+    commands["list_tiers"] = app.add_subcommand("list_tiers", "List tiers");
 
     commands["start"]  = app.add_subcommand("start", "Start the Hestia Daemon");
     commands["stop"]   = app.add_subcommand("stop", "Stop the Hestia Daemon");
@@ -106,12 +132,15 @@ void HestiaCli::parse(int argc, char* argv[])
     add_move_options(commands["move"]);
     add_release_options(commands["release"]);
 
-    commands["server"]
-        ->add_option("--host", m_config.m_host, "Hestia server host address")
-        ->required();
-    commands["server"]
-        ->add_option("-p, --port", m_config.m_port, "Hestia server host port")
-        ->required();
+    add_put_metadata_options(commands["put_attrs"]);
+    add_get_metadata_options(commands["get_attrs"]);
+
+    commands["server"]->add_option(
+        "--host", m_config.m_server_config.m_host,
+        "Hestia server host address");
+    commands["server"]->add_option(
+        "-p, --port", m_config.m_server_config.m_port,
+        "Hestia server host port");
 
     for (auto& kv_pair : commands) {
         kv_pair.second->add_option(
@@ -146,6 +175,22 @@ void HestiaCli::parse(int argc, char* argv[])
     else if (commands["release"]->parsed()) {
         m_command              = Command::HSM;
         m_hsm_command.m_method = HsmCommand::Method::RELEASE;
+    }
+    else if (commands["get_attrs"]->parsed()) {
+        m_command              = Command::HSM;
+        m_hsm_command.m_method = HsmCommand::Method::GET_METADATA;
+    }
+    else if (commands["put_attrs"]->parsed()) {
+        m_command              = Command::HSM;
+        m_hsm_command.m_method = HsmCommand::Method::PUT_METADATA;
+    }
+    else if (commands["list"]->parsed()) {
+        m_command              = Command::HSM;
+        m_hsm_command.m_method = HsmCommand::Method::LIST;
+    }
+    else if (commands["list_tiers"]->parsed()) {
+        m_command              = Command::HSM;
+        m_hsm_command.m_method = HsmCommand::Method::LIST_TIERS;
     }
     else if (commands["start"]->parsed()) {
         m_command = Command::DAEMON_START;
@@ -183,6 +228,15 @@ OpStatus HestiaCli::run()
 
     if (m_command == Command::HSM) {
         return run_hsm();
+    }
+    else if (m_command == Command::SERVER) {
+        return run_server();
+    }
+    else if (m_command == Command::DAEMON_START) {
+        return start_daemon();
+    }
+    else if (m_command == Command::DAEMON_STOP) {
+        return stop_daemon();
     }
     else {
         LOG_ERROR("CLI command not recognized");
@@ -222,6 +276,62 @@ OpStatus HestiaCli::run_hsm()
         auto source = hestia::FileStreamSource::create(m_hsm_command.m_path);
         stream->set_source(std::move(source));
     }
+    else if (m_hsm_command.m_method == HsmCommand::Method::COPY) {
+        LOG_INFO(
+            "Handling COPY CLI option - object: " + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::COPY);
+        request->set_source_tier(m_hsm_command.m_source_tier);
+        request->set_target_tier(m_hsm_command.m_target_tier);
+    }
+    else if (m_hsm_command.m_method == HsmCommand::Method::MOVE) {
+        LOG_INFO(
+            "Handling MOVE CLI option - object: " + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::MOVE);
+        request->set_source_tier(m_hsm_command.m_source_tier);
+        request->set_target_tier(m_hsm_command.m_target_tier);
+    }
+    else if (m_hsm_command.m_method == HsmCommand::Method::RELEASE) {
+        LOG_INFO(
+            "Handling RELEASE CLI option - object: "
+            + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::REMOVE);
+        request->set_target_tier(m_hsm_command.m_target_tier);
+    }
+    else if (m_hsm_command.m_method == HsmCommand::Method::GET_METADATA) {
+        LOG_INFO(
+            "Handling GET_METADATA CLI option - object: "
+            + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::GET);
+    }
+    else if (m_hsm_command.m_method == HsmCommand::Method::PUT_METADATA) {
+        LOG_INFO(
+            "Handling PUT_METADATA CLI option - object: "
+            + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::PUT);
+    }
+    else if (m_hsm_command.m_method == HsmCommand::Method::LIST) {
+        LOG_INFO(
+            "Handling LIST CLI option - object: " + m_hsm_command.m_object_id);
+
+        request = std::make_unique<hestia::HsmServiceRequest>(
+            hestia::StorageObject(m_hsm_command.m_object_id),
+            hestia::HsmServiceRequestMethod::LIST);
+    }
 
     if (request) {
         auto response =
@@ -245,6 +355,29 @@ OpStatus HestiaCli::run_hsm()
             return {OpStatus::Status::ERROR, -1, msg};
         }
     }
+    return {};
+}
+
+OpStatus HestiaCli::run_server()
+{
+    CopyToolWebApp web_app;
+
+    BasicHttpServer server({}, &web_app);
+
+    server.initialize();
+    server.start();
+    server.wait_until_bound();
+
+    return {};
+}
+
+OpStatus HestiaCli::start_daemon()
+{
+    return {};
+}
+
+OpStatus HestiaCli::stop_daemon()
+{
     return {};
 }
 

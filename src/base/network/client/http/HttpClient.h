@@ -11,7 +11,7 @@ namespace hestia {
  */
 class HttpClient {
   public:
-    ~HttpClient() = default;
+    virtual ~HttpClient() = default;
 
     /**
      * Make a sync http request and wait for the response

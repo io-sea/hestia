@@ -28,6 +28,33 @@ void HestiaConfig::load(const std::string& path)
     }
 }
 
+void HestiaConfig::load_server_config(const Dictionary& config)
+{
+    auto server_conf = config.get_map_item("server");
+    if (server_conf == nullptr) {
+        return;
+    }
+
+    Metadata sub_config;
+    server_conf->get_map_items(sub_config);
+
+    auto each_item = [this](const std::string& key, const std::string& value) {
+        if (key == "host_address") {
+            m_server_config.m_host = value;
+        }
+        else if (key == "host_port") {
+            m_server_config.m_port = value;
+        }
+        else if (key == "web_app") {
+            m_server_config.m_web_app = value;
+        }
+        else if (key == "backend") {
+            m_server_config.m_backend = value;
+        }
+    };
+    sub_config.for_each_item(each_item);
+}
+
 void HestiaConfig::load_defaults()
 {
     load_object_store_defaults();
@@ -82,6 +109,8 @@ void HestiaConfig::load(const Dictionary& dict)
     else {
         load_kv_store_defaults();
     }
+
+    load_server_config(dict);
 }
 
 void HestiaConfig::load_object_store_clients(

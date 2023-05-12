@@ -10,6 +10,8 @@ add_module(
         HestiaCppInterface.h
         application/ApplicationContext.h
         application/ConfigParser.h
+        web/http/HestiaWebApp.h 
+        web/s3/HestiaS3WebApp.h
     SOURCES
         hestia.cc
         HestiaConfig.cc
@@ -18,10 +20,15 @@ add_module(
         HestiaCppInterface.cc
         application/ApplicationContext.cc
         application/ConfigParser.cc
+        web/http/HestiaWebApp.cc 
+        web/s3/HestiaS3WebApp.cc
     INTERNAL_INCLUDE_DIRS
         application
+        web/s3 
+        web/http
     INTERNAL_DEPENDENCIES 
         hsm_service
+        web
     DEPENDENCIES  
         nlohmann_json::nlohmann_json       
 )

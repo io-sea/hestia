@@ -1,7 +1,17 @@
-
 server:
   host_address: 127.0.0.1
   host_port: 8080
+  web_app: hestia::HsmService
+  backend: hestia::Basic
+
+web_apps:
+  - identitifier: hestia::HsmService
+  - identitifier: hestia::HsmS3Service
+  - identitifier: hestia::CopyTool
+
+server_backends:
+  - identifier: hestia::Basic
+  - identifier: hestia::Proxygen
 
 object_store_clients:
   - identifier: hestia::FileHsmObjectStoreClient
@@ -33,6 +43,12 @@ object_store_clients:
     source: plugin
     type: hsm
     plugin_path: libhestia_motr_plugin
+
+key_value_store:
+  - client_identifier: hestia::FileKeyValueStoreClient
+
+key_value_store_clients:
+  - identifier: hestia::FileKeyValueStoreClient
 
 tier_registry:
   - identifier: 0
