@@ -4,12 +4,14 @@ add_module(
     MODULE_NAME hsm_object_store_client 
     HEADERS
         HsmObjectStoreClient.h
+        HsmObjectStoreClientSpec.h
         HsmObjectStoreClientPlugin.h
         HsmObjectStoreClientManager.h
         HsmObjectStoreClientRegistry.h
         file/FileHsmObjectStoreClient.h
     SOURCES
         HsmObjectStoreClient.cc
+        HsmObjectStoreClientSpec.cc
         HsmObjectStoreClientPlugin.cc
         HsmObjectStoreClientManager.cc
         HsmObjectStoreClientRegistry.cc

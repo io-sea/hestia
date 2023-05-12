@@ -7,17 +7,21 @@
 namespace hestia {
 class FileObjectStoreClient : public ObjectStoreClient {
   public:
+    enum class Mode { DATA_AND_METADATA, DATA_ONLY, METADATA_ONLY };
+
     using Ptr = std::unique_ptr<FileObjectStoreClient>;
 
     virtual ~FileObjectStoreClient() = default;
 
     static Ptr create();
 
-    static Ptr create(const std::filesystem::path& root);
+    static Ptr create(
+        const std::filesystem::path& root, Mode mode = Mode::DATA_AND_METADATA);
 
     static std::string get_registry_identifier();
 
-    void do_initialize(const std::filesystem::path& root);
+    void do_initialize(
+        const std::filesystem::path& root, Mode mode = Mode::DATA_AND_METADATA);
 
     void migrate(
         const std::string& object_id,
@@ -57,6 +61,7 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     void read_metadata(StorageObject& object) const;
 
+    Mode m_mode{Mode::DATA_AND_METADATA};
     std::filesystem::path m_root;
 };
 }  // namespace hestia

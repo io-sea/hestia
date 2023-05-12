@@ -10,14 +10,14 @@ HsmObjectStoreClientManager::HsmObjectStoreClientManager(
 }
 
 hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
-    ObjectStoreClientType client_type) const
+    const HsmObjectStoreClientSpec& client_spec) const
 {
-    if (const auto iter = m_hsm_clients.find(client_type.m_identifier);
+    if (const auto iter = m_hsm_clients.find(client_spec.m_identifier);
         iter != m_hsm_clients.end()) {
         return iter->second.get();
     }
     else {
-        if (const auto iter = m_clients.find(client_type.m_identifier);
+        if (const auto iter = m_clients.find(client_spec.m_identifier);
             iter != m_clients.end()) {
             return iter->second.get();
         }
@@ -28,14 +28,14 @@ hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
 }
 
 HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
-    ObjectStoreClientType client_type) const
+    const HsmObjectStoreClientSpec& client_spec) const
 {
-    if (!client_type.is_hsm()) {
+    if (!client_spec.is_hsm()) {
         throw std::runtime_error(
             "Requested HSM client for non-hsm client type.");
     }
 
-    if (const auto iter = m_hsm_clients.find(client_type.m_identifier);
+    if (const auto iter = m_hsm_clients.find(client_spec.m_identifier);
         iter != m_hsm_clients.end()) {
         return iter->second.get();
     }
@@ -91,6 +91,10 @@ void HsmObjectStoreClientManager::setup_clients(
     m_tier_backend_registry = tier_backend_regsitry;
 
     for (const auto& item : m_tier_backend_registry) {
+        LOG_INFO(
+            "Processing tier-backend entry: " + std::to_string(item.first)
+            + " | " + item.second.m_identifier);
+
         if (!m_client_registry->is_client_type_available(item.second)) {
             std::string msg = "Client " + item.second.m_identifier;
             msg += " not available. Requested for tier id: "
@@ -112,6 +116,8 @@ void HsmObjectStoreClientManager::setup_clients(
                     client.release();
                     auto hsm_client =
                         std::unique_ptr<HsmObjectStoreClient>(raw_client);
+
+                    hsm_client->initialize(item.second.m_extra_config);
                     m_hsm_clients[item.second.m_identifier] =
                         std::move(hsm_client);
                 }

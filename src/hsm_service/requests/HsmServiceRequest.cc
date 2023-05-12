@@ -85,11 +85,11 @@ const hestia::StorageObject& HsmServiceRequest::object() const
 std::string HsmServiceRequest::to_string() const
 {
     std::stringstream sstr;
-    sstr << "HsmServiceRequest:\n";
-    sstr << "Method:" << method_as_string() << "\n";
-    sstr << "Object:" << m_object.to_string() << "\n";
-    sstr << "Source Tier:" << std::to_string(m_source_tier) << "\n";
-    sstr << "Target Tier:" << std::to_string(m_target_tier) << "\n";
+    sstr << "HsmServiceRequest: [";
+    sstr << "Method:" << method_as_string() << ", ";
+    sstr << "Object:[" << m_object.to_string() << "], ";
+    sstr << "Source Tier:" << std::to_string(m_source_tier) << ", ";
+    sstr << "Target Tier:" << std::to_string(m_target_tier) << "]";
     return sstr.str();
 }
 

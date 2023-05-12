@@ -1,5 +1,7 @@
 #include "Dictionary.h"
 
+#include <algorithm>
+
 namespace hestia {
 Dictionary::Dictionary(Dictionary::Type type) : m_type(type) {}
 
@@ -19,6 +21,20 @@ void Dictionary::for_each_scalar(onItem func) const
         for (const auto& [key, value] : m_map) {
             if (value->get_type() == Type::SCALAR) {
                 func(key, value->get_scalar());
+            }
+        }
+    }
+}
+
+void Dictionary::get_map_items(
+    Metadata& sink, const std::vector<std::string>& exclude_keys) const
+{
+    if (m_type == Type::MAP) {
+        for (const auto& [key, value] : m_map) {
+            if (value->get_type() == Type::SCALAR
+                && std::find(exclude_keys.begin(), exclude_keys.end(), key)
+                       == exclude_keys.end()) {
+                sink.set_item(key, value->get_scalar());
             }
         }
     }

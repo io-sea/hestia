@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Dictionary.h"
+#include "Metadata.h"
 #include "ObjectStoreRequest.h"
 #include "ObjectStoreResponse.h"
 #include "Stream.h"
@@ -34,7 +34,7 @@ class ObjectStoreClient {
 
     virtual ~ObjectStoreClient() = default;
 
-    virtual void initialize(const Dictionary& config) { (void)config; }
+    virtual void initialize(const Metadata& config) { (void)config; }
 
     /**
      * Make a request to the object store backend. Consumers should primarily

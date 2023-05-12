@@ -1,11 +1,11 @@
 #include "HsmStoreInterface.h"
 
-#include "KeyValueStore.h"
+#include "HsmKeyValueStore.h"
 #include "MultiBackendHsmObjectStoreClient.h"
 
 namespace hestia {
 HsmStoreInterface::HsmStoreInterface(
-    std::unique_ptr<KeyValueStore> kv_store,
+    std::unique_ptr<HsmKeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store) :
     m_key_value_store(std::move(kv_store)),
     m_object_store(std::move(object_store))
@@ -13,7 +13,7 @@ HsmStoreInterface::HsmStoreInterface(
 }
 
 HsmStoreInterface::Ptr HsmStoreInterface::create(
-    std::unique_ptr<KeyValueStore> kv_store,
+    std::unique_ptr<HsmKeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store)
 {
     return std::make_unique<HsmStoreInterface>(

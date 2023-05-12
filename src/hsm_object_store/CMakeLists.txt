@@ -5,7 +5,7 @@ add_subdirectory(client)
 add_subdirectory(copytool)
 
 add_module(
-    MODULE_NAME object_store 
+    MODULE_NAME hsm_object_store 
     HEADERS
         CopyToolInterface.h
         MultiBackendHsmObjectStoreClient.h      

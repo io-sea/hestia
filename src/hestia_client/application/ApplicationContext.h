@@ -7,6 +7,8 @@ class HsmService;
 
 class ApplicationContext {
   public:
+    void clear();
+
     static ApplicationContext& get();
 
     HsmService* get_hsm_service() const;

@@ -11,7 +11,7 @@ class DataPlacementEngine;
 
 namespace hestia {
 class MultiBackendHsmObjectStoreClient;
-class KeyValueStore;
+class HsmKeyValueStore;
 class HsmStoreInterface;
 
 class HsmActionAdapter;
@@ -21,7 +21,7 @@ class HsmService {
     using Ptr = std::unique_ptr<HsmService>;
 
     HsmService(
-        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<HsmKeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<HsmObjectAdapter> object_adatper = nullptr);

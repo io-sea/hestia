@@ -8,6 +8,7 @@
 
 #include "Logger.h"
 
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
@@ -103,19 +104,18 @@ void HestiaCli::parse(int argc, char* argv[])
     add_put_options(commands["put"]);
     add_copy_options(commands["copy"]);
     add_move_options(commands["move"]);
-    add_move_options(commands["release"]);
+    add_release_options(commands["release"]);
 
     commands["server"]
-        ->add_option(
-            "-h, --host", m_config.m_host, "Hestia server host address")
+        ->add_option("--host", m_config.m_host, "Hestia server host address")
         ->required();
     commands["server"]
         ->add_option("-p, --port", m_config.m_port, "Hestia server host port")
         ->required();
 
     for (auto& kv_pair : commands) {
-        kv_pair.second->set_config(
-            "--config", "hestia.yaml", "Path to Hestia config file");
+        kv_pair.second->add_option(
+            "-c, --config", m_config_path, "Path to a Hestia config file.");
     }
 
     try {
@@ -156,16 +156,29 @@ void HestiaCli::parse(int argc, char* argv[])
     else if (commands["server"]->parsed()) {
         m_command = Command::SERVER;
     }
+
+    if (m_command == Command::UNKNOWN) {
+        std::cerr << "Hestia: Empty CLI arguments. Use --help for usage: \n"
+                  << app.help() << std::endl;
+        throw std::runtime_error(
+            "Returning after command line parsing. --help or invalid argument(s)");
+    }
+
+    if (!m_config_path.empty()) {
+        m_config.load(m_config_path);
+    }
+    else {
+        m_config.load_defaults();
+    }
 }
 
-int HestiaCli::run()
+OpStatus HestiaCli::run()
 {
     hestia::HestiaConfigurator configurator;
-    auto result = configurator.initialize(m_config);
-    if (result != 0) {
-        std::cerr << "Error configuring Hestia" << std::endl;
-        LOG_ERROR("Error configuring Hestia");
-        return -1;
+    const auto result = configurator.initialize(m_config);
+    if (!result.ok()) {
+        LOG_ERROR("Error configuring Hestia: " + result.message());
+        return result;
     }
 
     if (m_command == Command::HSM) {
@@ -173,11 +186,13 @@ int HestiaCli::run()
     }
     else {
         LOG_ERROR("CLI command not recognized");
-        return -1;
+        return {
+            OpStatus::Status::ERROR, -1,
+            "CLI command not supported. Use --help for options."};
     }
 }
 
-int HestiaCli::run_hsm()
+OpStatus HestiaCli::run_hsm()
 {
     hestia::HsmServiceRequest::Ptr request;
     hestia::Stream::Ptr stream;
@@ -214,23 +229,23 @@ int HestiaCli::run_hsm()
                 *(request.get()), stream.get());
 
         if (!response->ok()) {
-            std::cerr << "Object Store request failed with: "
-                      << response->get_error().to_string() << std::endl;
-            LOG_ERROR("Request Failed");
-            return -1;
+            const std::string msg =
+                "Request Failed with: " + response->get_error().to_string();
+            LOG_ERROR(msg);
+            return {OpStatus::Status::ERROR, -1, msg};
         }
     }
 
     if (stream) {
         auto stream_state = stream->flush();
         if (!stream_state.ok()) {
-            std::cerr << "Object Store stream failed with: "
-                      << stream_state.to_string() << std::endl;
-            LOG_ERROR("Stream Failed");
-            return -1;
+            const std::string msg =
+                "Stream Failed with: " + stream_state.to_string();
+            LOG_ERROR(msg);
+            return {OpStatus::Status::ERROR, -1, msg};
         }
     }
-    return 0;
+    return {};
 }
 
 }  // namespace hestia

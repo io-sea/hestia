@@ -1,5 +1,5 @@
 #include "common.h"
-#include "key_value_store/disk.h"
+#include "hsm_key_value_store/disk.h"
 #include <catch2/catch_all.hpp>
 #include <cwctype>
 #include <hestia.h>

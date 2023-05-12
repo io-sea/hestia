@@ -45,9 +45,9 @@ void StorageObject::initialize_timestamps()
 std::string StorageObject::to_string() const
 {
     std::string ret;
-    ret += "Id: " + m_id + "\n";
-    ret += "mMetadata:\n";
-    ret += m_metadata.to_string();
+    ret += "Id: " + m_id + " | ";
+    ret += "Metadata: {";
+    ret += m_metadata.to_string() + "}";
     return ret;
 }
 

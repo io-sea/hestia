@@ -1,8 +1,8 @@
 #include "HsmService.h"
 
 #include "DataPlacementEngine.h"
+#include "HsmKeyValueStore.h"
 #include "HsmStoreInterface.h"
-#include "KeyValueStore.h"
 #include "MultiBackendHsmObjectStoreClient.h"
 
 #include "HsmActionAdapter.h"
@@ -22,7 +22,7 @@
 
 namespace hestia {
 HsmService::HsmService(
-    std::unique_ptr<KeyValueStore> kv_store,
+    std::unique_ptr<HsmKeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<HsmObjectAdapter> object_adatper) :

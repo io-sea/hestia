@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Metadata.h"
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -31,6 +33,10 @@ class Dictionary {
     Type get_type() const;
 
     const std::vector<std::unique_ptr<Dictionary>>& get_sequence() const;
+
+    void get_map_items(
+        Metadata& sink,
+        const std::vector<std::string>& exclude_keys = {}) const;
 
     bool has_map_item(const std::string& key) const;
 

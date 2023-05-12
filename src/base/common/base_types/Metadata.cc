@@ -51,7 +51,7 @@ std::string Metadata::to_string() const
 {
     std::string ret;
     for (const auto& [key, value] : m_data) {
-        ret += key + " : " + value + "\n";
+        ret += key + " : " + value + ", ";
     }
     return ret;
 }

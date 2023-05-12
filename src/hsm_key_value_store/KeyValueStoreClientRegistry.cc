@@ -1,16 +1,17 @@
 #include "KeyValueStoreClientRegistry.h"
 
-#include "KeyValueStore.h"
+#include "HsmKeyValueStore.h"
 #include "Logger.h"
 
 namespace hestia {
 
-std::string KeyValueStoreClientRegistry::to_string(KeyValueStoreType store_type)
+std::string KeyValueStoreClientRegistry::to_string(
+    const KeyValueStoreClientSpec& client_spec)
 {
-    switch (store_type) {
-        case KeyValueStoreType::FILE:
+    switch (client_spec.m_type) {
+        case KeyValueStoreClientSpec::Type::FILE:
             return "FILE";
-        case KeyValueStoreType::KVSAL:
+        case KeyValueStoreClientSpec::Type::KVSAL:
             return "KVSAL";
         default:
             return "UNKNOWN";
@@ -18,12 +19,12 @@ std::string KeyValueStoreClientRegistry::to_string(KeyValueStoreType store_type)
 }
 
 bool KeyValueStoreClientRegistry::is_store_type_available(
-    KeyValueStoreType store_type)
+    const KeyValueStoreClientSpec& client_spec)
 {
-    switch (store_type) {
-        case KeyValueStoreType::FILE:
+    switch (client_spec.m_type) {
+        case KeyValueStoreClientSpec::Type::FILE:
             return true;
-        case KeyValueStoreType::KVSAL:
+        case KeyValueStoreClientSpec::Type::KVSAL:
 #ifdef HAS_KVSAL
             return true;
 #else
@@ -34,16 +35,17 @@ bool KeyValueStoreClientRegistry::is_store_type_available(
     }
 }
 
-std::unique_ptr<KeyValueStore> KeyValueStoreClientRegistry::get_store(
-    KeyValueStoreType store_type)
+std::unique_ptr<HsmKeyValueStore> KeyValueStoreClientRegistry::get_store(
+    const KeyValueStoreClientSpec& client_spec)
 {
-    switch (store_type) {
-        case KeyValueStoreType::FILE: {
+    switch (client_spec.m_type) {
+        case KeyValueStoreClientSpec::Type::FILE: {
             LOG_INFO("Using file key-value store client");
             auto client = std::make_unique<FileKeyValueStoreClient>();
-            return std::make_unique<KeyValueStore>(std::move(client));
+            client->initialize(client_spec.m_config);
+            return std::make_unique<HsmKeyValueStore>(std::move(client));
         }
-        case KeyValueStoreType::KVSAL:
+        case KeyValueStoreClientSpec::Type::KVSAL:
 #ifdef HAS_KVSAL
             return std::make_unique<KvsalKeyValueStore>();
 #else
@@ -53,7 +55,7 @@ std::unique_ptr<KeyValueStore> KeyValueStoreClientRegistry::get_store(
             LOG_INFO(
                 "Unknown kv-store type - defaulting to file key-value store client");
             auto client = std::make_unique<FileKeyValueStoreClient>();
-            return std::make_unique<KeyValueStore>(std::move(client));
+            return std::make_unique<HsmKeyValueStore>(std::move(client));
         }
     }
 }

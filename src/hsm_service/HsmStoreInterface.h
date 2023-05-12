@@ -7,18 +7,18 @@
 
 namespace hestia {
 class MultiBackendHsmObjectStoreClient;
-class KeyValueStore;
+class HsmKeyValueStore;
 
 class HsmStoreInterface {
   public:
     using Ptr = std::unique_ptr<HsmStoreInterface>;
 
     HsmStoreInterface(
-        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<HsmKeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
     static Ptr create(
-        std::unique_ptr<KeyValueStore> kv_store,
+        std::unique_ptr<HsmKeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
     hestia::ObjectStoreResponse::Ptr exists(
@@ -66,7 +66,7 @@ class HsmStoreInterface {
 
 
   private:
-    std::unique_ptr<KeyValueStore> m_key_value_store;
+    std::unique_ptr<HsmKeyValueStore> m_key_value_store;
     std::unique_ptr<MultiBackendHsmObjectStoreClient> m_object_store;
 };
 }  // namespace hestia

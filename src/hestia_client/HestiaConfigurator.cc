@@ -12,7 +12,7 @@
 #include "Logger.h"
 
 namespace hestia {
-int HestiaConfigurator::initialize(const HestiaConfig& config)
+OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 {
     m_config = config;
 
@@ -22,16 +22,16 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
     }
     catch (const std::exception& e) {
         LOG_ERROR(e.what());
-        return -1;
+        return {OpStatus::Status::ERROR, -1, e.what()};
     }
 
-    std::unique_ptr<KeyValueStore> kv_store;
+    std::unique_ptr<HsmKeyValueStore> kv_store;
     try {
         kv_store = set_up_key_value_store();
     }
     catch (const std::exception& e) {
         LOG_ERROR(e.what());
-        return -1;
+        return {OpStatus::Status::ERROR, -1, e.what()};
     }
 
     std::unique_ptr<DataPlacementEngine> dpe;
@@ -40,14 +40,14 @@ int HestiaConfigurator::initialize(const HestiaConfig& config)
     }
     catch (const std::exception& e) {
         LOG_ERROR(e.what());
-        return -1;
+        return {OpStatus::Status::ERROR, -1, e.what()};
     }
 
     auto hsm_service = std::make_unique<HsmService>(
         std::move(kv_store), std::move(object_store), std::move(dpe));
 
     ApplicationContext::get().set_hsm_service(std::move(hsm_service));
-    return 0;
+    return {};
 }
 
 std::unique_ptr<MultiBackendHsmObjectStoreClient>
@@ -69,32 +69,34 @@ HestiaConfigurator::set_up_object_store()
     return object_store;
 }
 
-std::unique_ptr<KeyValueStore> HestiaConfigurator::set_up_key_value_store()
+std::unique_ptr<HsmKeyValueStore> HestiaConfigurator::set_up_key_value_store()
 {
     LOG_INFO("Setting up key-value store");
-    const auto store_type = m_config.m_key_value_store_type;
-    if (!KeyValueStoreClientRegistry::is_store_type_available(store_type)) {
+    if (!KeyValueStoreClientRegistry::is_store_type_available(
+            m_config.m_key_value_store_spec)) {
         std::string msg = "Requested Key Value Store type: "
-                          + KeyValueStoreClientRegistry::to_string(store_type);
+                          + KeyValueStoreClientRegistry::to_string(
+                              m_config.m_key_value_store_spec);
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
-    return KeyValueStoreClientRegistry::get_store(store_type);
+    return KeyValueStoreClientRegistry::get_store(
+        m_config.m_key_value_store_spec);
 }
 
 std::unique_ptr<DataPlacementEngine>
 HestiaConfigurator::set_up_data_placement_engine()
 {
     LOG_INFO("Setting up data placement engine");
-    const auto pe_type = m_config.m_placement_engine_type;
-
-    if (!DataPlacementEngineRegistry::is_placement_engine_available(pe_type)) {
+    if (!DataPlacementEngineRegistry::is_placement_engine_available(
+            m_config.m_placement_engine_spec)) {
         std::string msg = "Requested Placement engine type: ";
         //                  + placement_engine_registry::to_string(pe_type);
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
 
-    return DataPlacementEngineRegistry::get_engine(pe_type);
+    return DataPlacementEngineRegistry::get_engine(
+        m_config.m_placement_engine_spec);
 }
 }  // namespace hestia

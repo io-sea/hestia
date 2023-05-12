@@ -14,12 +14,12 @@ class HsmObjectStoreClientManager {
 
     void setup_clients(const TierBackendRegistry& tier_backend_regsitry);
 
-    ObjectStoreClient* get_client(ObjectStoreClientType client_type) const;
+    ObjectStoreClient* get_client(const HsmObjectStoreClientSpec& spec) const;
 
     ObjectStoreClient* get_client(uint8_t tier_id) const;
 
     HsmObjectStoreClient* get_hsm_client(
-        ObjectStoreClientType client_type) const;
+        const HsmObjectStoreClientSpec& spec) const;
 
     HsmObjectStoreClient* get_hsm_client(uint8_t tier_id) const;
 

@@ -6,10 +6,12 @@ add_module(
         Database.h 
         ObjectStoreClient.h 
         ObjectStoreClientPlugin.h 
+        KeyValueStoreClient.h
         block_store/Block.h
         block_store/BlockList.h
         block_store/BlockStore.h
         clients/file/FileObjectStoreClient.h
+        clients/file/FileKeyValueStoreClient.h
         clients/memory/InMemoryObjectStoreClient.h
         requests/ObjectStoreRequest.h
         requests/ObjectStoreResponse.h
@@ -17,10 +19,12 @@ add_module(
     SOURCES
         ObjectStoreClient.cc
         ObjectStoreClientPlugin.cc
+        KeyValueStoreClient.cc
         block_store/Block.cc
         block_store/BlockList.cc
         block_store/BlockStore.cc
         clients/file/FileObjectStoreClient.cc
+        clients/file/FileKeyValueStoreClient.cc
         clients/memory/InMemoryObjectStoreClient.cc
         requests/ObjectStoreRequest.cc
         requests/ObjectStoreResponse.cc

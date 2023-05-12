@@ -3,6 +3,12 @@
 #include "HsmService.h"
 
 namespace hestia {
+
+void ApplicationContext::clear()
+{
+    m_hsm_service.reset();
+}
+
 ApplicationContext& ApplicationContext::get()
 {
     static ApplicationContext instance;

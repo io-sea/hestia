@@ -6,7 +6,7 @@
 
 namespace hestia {
 struct FileHsmObjectStoreClientConfig {
-    std::filesystem::path m_store_location{"object_store"};
+    std::filesystem::path m_root{"object_store"};
 };
 
 class FileHsmObjectStoreClient : public HsmObjectStoreClient {
@@ -20,6 +20,8 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
     static Ptr create();
 
     static std::string get_registry_identifier();
+
+    void initialize(const Metadata& config) override;
 
     void do_initialize(const FileHsmObjectStoreClientConfig& config);
 

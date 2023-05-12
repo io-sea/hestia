@@ -28,8 +28,8 @@ add_module(
         model
         requests
     INTERNAL_DEPENDENCIES 
-        object_store
-        key_value_store 
+        hsm_object_store
+        hsm_key_value_store 
         data_placement_engine
         event_feed
 )
@@ -48,7 +48,7 @@ target_include_directories(dpe PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-add_library(kv_disk ${PROJECT_SOURCE_DIR}/src/key_value_store/disk.cc)
+add_library(kv_disk ${PROJECT_SOURCE_DIR}/src/hsm_key_value_store/disk.cc)
 target_link_libraries(kv_disk PUBLIC nlohmann_json::nlohmann_json)
 target_include_directories(kv_disk PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

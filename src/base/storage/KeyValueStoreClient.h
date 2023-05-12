@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Metadata.h"
 #include "ObjectStoreResponse.h"
 
 #include <vector>
@@ -8,6 +9,8 @@ namespace hestia {
 class KeyValueStoreClient {
   public:
     virtual ~KeyValueStoreClient();
+
+    virtual void initialize(const Metadata& config) { (void)config; };
 
     [[nodiscard]] ObjectStoreResponse::Ptr make_request(
         const ObjectStoreRequest& request) const noexcept;

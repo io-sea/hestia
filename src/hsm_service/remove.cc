@@ -1,6 +1,6 @@
 #include "hestia.h"
+#include "hsm_key_value_store/disk.h"
 #include "hsm_object_store/disk.h"
-#include "key_value_store/disk.h"
 
 int hestia::remove(const struct hsm_uint& oid)
 {

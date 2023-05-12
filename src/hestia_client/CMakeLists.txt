@@ -12,6 +12,7 @@ add_module(
         application/ConfigParser.h
     SOURCES
         hestia.cc
+        HestiaConfig.cc
         HestiaConfigurator.cc
         HestiaCli.cc
         HestiaCppInterface.cc

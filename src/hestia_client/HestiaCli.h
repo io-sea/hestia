@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Dictionary.h"
+#include "ErrorUtils.h"
 #include "HestiaConfig.h"
 
 #include <string>
@@ -25,7 +26,7 @@ class HestiaCli {
 
     void parse(int argc, char* argv[]);
 
-    int run();
+    OpStatus run();
 
     Command m_command{Command::UNKNOWN};
 
@@ -41,6 +42,6 @@ class HestiaCli {
     void add_move_options(CLI::App* command);
     void add_release_options(CLI::App* command);
 
-    int run_hsm();
+    OpStatus run_hsm();
 };
 }  // namespace hestia

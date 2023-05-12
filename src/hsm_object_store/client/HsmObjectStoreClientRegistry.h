@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HsmObjectStoreClient.h"
+#include "HsmObjectStoreClientSpec.h"
 
 #include <filesystem>
 #include <set>
@@ -8,42 +9,6 @@
 #include <unordered_map>
 
 namespace hestia {
-struct ObjectStoreClientType {
-    enum class Type { HSM, BASIC };
-
-    enum class Source { BUILT_IN, PLUGIN, MOCK };
-
-    ObjectStoreClientType(
-        Type client_type, Source source, const std::string& identifier) :
-        m_type(client_type), m_source(source), m_identifier(identifier)
-    {
-    }
-
-    bool is_hsm() const { return m_type == Type::HSM; }
-
-    std::string to_string() const
-    {
-        const std::string type_str = m_type == Type::BASIC ? "Basic" : "HSM";
-        std::string source_str;
-        switch (m_source) {
-            case Source::BUILT_IN:
-                source_str = "BUILT_IN";
-                break;
-            case Source::PLUGIN:
-                source_str = "PLUGIN";
-                break;
-            case Source::MOCK:
-                source_str = "MOCK";
-                break;
-        }
-        return "Type: " + type_str + " | Source: " + source_str
-               + " | Identifier: " + m_identifier;
-    }
-
-    Type m_type{Type::BASIC};
-    Source m_source{Source::BUILT_IN};
-    std::string m_identifier;
-};
 
 class ObjectStorePluginHandler {
   public:
@@ -54,7 +19,8 @@ class ObjectStorePluginHandler {
 
     bool has_plugin(const std::string& identifier);
 
-    ObjectStoreClient::Ptr get_client(ObjectStoreClientType client_type) const;
+    ObjectStoreClient::Ptr get_client(
+        const HsmObjectStoreClientSpec& client_spec) const;
 
   private:
     std::vector<std::filesystem::directory_entry> m_search_paths;
@@ -65,13 +31,16 @@ class HsmObjectStoreClientRegistry {
     using Ptr = std::unique_ptr<HsmObjectStoreClientRegistry>;
     HsmObjectStoreClientRegistry(ObjectStorePluginHandler::Ptr plugin_handler);
 
-    bool is_client_type_available(ObjectStoreClientType client_type) const;
+    bool is_client_type_available(
+        const HsmObjectStoreClientSpec& client_spec) const;
 
-    ObjectStoreClient::Ptr get_client(ObjectStoreClientType client_type) const;
+    ObjectStoreClient::Ptr get_client(
+        const HsmObjectStoreClientSpec& client_spec) const;
 
   private:
     ObjectStorePluginHandler::Ptr m_plugin_handler;
 };
 
-using TierBackendRegistry = std::unordered_map<uint8_t, ObjectStoreClientType>;
+using TierBackendRegistry =
+    std::unordered_map<uint8_t, HsmObjectStoreClientSpec>;
 }  // namespace hestia

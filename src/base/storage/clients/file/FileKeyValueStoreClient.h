@@ -11,6 +11,8 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
 
     ~FileKeyValueStoreClient() = default;
 
+    void initialize(const Metadata& config) override;
+
   private:
     bool exists(const StorageObject& obj) const override;
 
@@ -28,7 +30,6 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
 
     std::filesystem::path get_filename(const StorageObject& obj) const;
 
-    // const char mDelimiter = ';';
-    const std::filesystem::directory_entry m_store{"kv_store"};
+    std::filesystem::path m_store{"kv_store"};
 };
 }  // namespace hestia

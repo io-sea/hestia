@@ -3,8 +3,22 @@
 #include "FileUtils.h"
 #include "JsonUtils.h"
 
+#include "Logger.h"
+
 namespace hestia {
 FileKeyValueStoreClient::FileKeyValueStoreClient() {}
+
+void FileKeyValueStoreClient::initialize(const Metadata& config)
+{
+    auto on_item = [this](const std::string& key, const std::string& value) {
+        if (key == "root") {
+            m_store = value;
+        }
+    };
+    config.for_each_item(on_item);
+
+    LOG_INFO("Initializing at: " + m_store.string());
+}
 
 bool FileKeyValueStoreClient::exists(const StorageObject& obj) const
 {
@@ -37,9 +51,8 @@ void FileKeyValueStoreClient::list(
     (void)query;
     (void)fetched;
 
-    for (const auto& dir_entry :
-         std::filesystem::directory_iterator{m_store.path()}) {
-        if (FileUtils::is_file_with_extension(dir_entry, ".meta")) {
+    for (const auto& dir_entry : std::filesystem::directory_iterator{m_store}) {
+        if (FileUtils::is_file_with_extension(dir_entry, ".dat")) {
             Metadata metadata;
             JsonUtils::read(dir_entry.path(), metadata);
             /*
@@ -57,7 +70,7 @@ void FileKeyValueStoreClient::list(
 std::filesystem::path FileKeyValueStoreClient::get_filename(
     const StorageObject& obj) const
 {
-    const auto path = m_store.path() / (obj.m_id + ".meta");
+    const auto path = m_store / ("objects/" + obj.m_id + ".dat");
     return path.string();
 }
 }  // namespace hestia

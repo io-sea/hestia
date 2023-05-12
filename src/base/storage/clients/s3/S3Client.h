@@ -25,7 +25,7 @@ class S3Client : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const Dictionary& config) override;
+    void initialize(const Metadata& config) override;
 
     void do_initialize(const S3Config& config);
 
