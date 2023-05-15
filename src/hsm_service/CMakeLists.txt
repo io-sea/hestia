@@ -95,8 +95,8 @@ endif()
 
 
 set(HESTIA_PUBLIC_HEADERS
-    hestia.h
-    types.h
+    ../hestia.h
+    ../types.h
     )
 set_target_properties(hestia_lib PROPERTIES PUBLIC_HEADER "${HESTIA_PUBLIC_HEADERS}")
 install(TARGETS hestia_lib
