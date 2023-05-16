@@ -26,7 +26,7 @@ std::make_unique<hestia::MotrInterface>(std::move(mock_impl));
 };
 */
 
-TEST_CASE("Motr client write and read", "[motr]")
+TEST_CASE("Motr client write and read", "[.][motr]")
 {
 
     hestia::mock::MockMotrHsmClient motr_client;
