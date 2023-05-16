@@ -31,8 +31,8 @@ TEST_CASE("Motr client write and read", "[.][motr]")
 
     hestia::mock::MockMotrHsmClient motr_client;
 
-
-    hestia::StorageObject obj{0};
+    std::string id = "0";
+    hestia::StorageObject obj{id};
     // hestia::Uuid objId{0};
     std::string content = "The quick brown fox jumps over the lazy dog.";
 
