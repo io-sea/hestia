@@ -30,9 +30,10 @@ stages:
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &install_motr
-    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/isa-l-2.30.0*.$(arch).rpm;
-    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/cortx-motr-2.0.0*.$(arch).rpm;
-    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/linux/*/cortx-motr-devel-2.0.0*.$(arch).rpm;
+    curl ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/motr-rpms/1.0.0/motr-rpms-$(arch).tar.gz | tar xz;
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/isa-l-2.30.0*.$(arch).rpm;
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/cortx-motr-2.0.0*.$(arch).rpm;
+    yum install -qy ${CI_PROJECT_DIR}/motr-rpms/cortx-motr-devel-2.0.0*.$(arch).rpm;
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -78,25 +79,10 @@ stages:
   cache:
     <<: *cmake_install_cache
 
-motr_rpm_download:
-  tags:
-    - docker
-  stage: .pre
-  image: alpine
-  script:
-    - 'wget -qO rpms.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://git.ichec.ie/api/v4/projects/418/jobs/artifacts/motr-rpm-builds/download?job=motr_rpm_build"'
-    - unzip -q rpms.zip && rm -f rpms.zip
-  artifacts:
-    expire_in: 1 hour
-    paths:
-      - motr-rpms/
-
 # Hestia CI Jobs
 motr install test:
   <<: *default_job
   stage: static analysis
-  dependencies:
-    - motr_rpm_download
   before_script: 
     - *update_distro
   script:
