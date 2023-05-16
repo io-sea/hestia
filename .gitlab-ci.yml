@@ -11,7 +11,7 @@ stages:
   variables:
     DEPS_DIR: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     MOTR_BUILD_DIR: "${CI_PROJECT_DIR}/motr_superbuild"
-    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
+    MOTR_RPM_DIR: "${CI_PROJECT_DIR}/motr-rpms/"
   before_script:
     - yum -q check-update || true # Returns exit code 100 if updates exist
     - yum update -qy
@@ -22,11 +22,8 @@ stages:
     - python3 -m pip install --no-cache-dir $(cat ${DEPS_DIR}/motr-rpm-pip)
   script:
     - ${CI_PROJECT_DIR}/infra/scripts/build_motr.sh
-  artifacts:
-    name: "motr-rpms"
-    expire_in: 1 month
-    paths:
-      - "${CI_PROJECT_DIR}/motr-rpms/${CI_RUNNER_EXECUTABLE_ARCH}"
+    - tar czf motr-rpms-$(arch).tar.gz ${MOTR_RPM_DIR} 
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file motr-rpms-$(arch).tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/motr-rpms/1.0.0/motr-rpms-$(arch).tar.gz"'
 
 motr_rpm_build:
   <<: *base_motr_rpm_build
