@@ -3,9 +3,12 @@
 #include "MotrInterface.h"
 
 namespace hestia {
-MotrHsmClient::MotrHsmClient() :
-    m_motr_interface(std::make_unique<MotrInterface>())
+MotrHsmClient::MotrHsmClient(std::unique_ptr<MotrInterface> interface) :
+    m_motr_interface(std::move(interface))
 {
+    if (m_motr_interface == nullptr) {
+        m_motr_interface = std::make_unique<MotrInterface>();
+    }
 }
 
 void MotrHsmClient::intialize(const MotrConfig& config)

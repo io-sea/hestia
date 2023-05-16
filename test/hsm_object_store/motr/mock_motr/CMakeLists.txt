@@ -9,6 +9,7 @@ add_module(
         MockMotr.h 
         MockMotrHsm.h 
         MockMotrHsmInternal.h 
+        MockMotrClient.h
     SOURCES
         MockMotrInterfaceImpl.cc
         MockMotrTypes.cc 
@@ -16,6 +17,7 @@ add_module(
         MockMotr.cc
         MockMotrHsm.cc
         MockMotrHsmInternal.cc
+        MockMotrClient.cc
     INTERNAL_DEPENDENCIES 
         hsm_service
         motr_object_store_client
