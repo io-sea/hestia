@@ -1,7 +1,12 @@
 #include "FileKeyValueStoreClient.h"
 
+#include "File.h"
 #include "FileUtils.h"
 #include "JsonUtils.h"
+
+#include <fstream>
+#include <iterator>
+#include <set>
 
 #include "Logger.h"
 
@@ -16,61 +21,81 @@ void FileKeyValueStoreClient::initialize(const Metadata& config)
         }
     };
     config.for_each_item(on_item);
-
     LOG_INFO("Initializing at: " + m_store.string());
 }
 
-bool FileKeyValueStoreClient::exists(const StorageObject& obj) const
+void FileKeyValueStoreClient::string_get(
+    const std::string& key, std::string& value) const
 {
-    return std::filesystem::exists(get_filename(obj));
+    JsonUtils::get_value(m_store / "strings_db.meta", key, value);
 }
 
-void FileKeyValueStoreClient::put(
-    const StorageObject& obj, const std::vector<std::string>& keys) const
+void FileKeyValueStoreClient::string_set(
+    const std::string& key, const std::string& value) const
 {
-    (void)keys;
-    const auto path = get_filename(obj);
-    JsonUtils::write(path, obj.m_metadata, exists(obj));
+    JsonUtils::set_value(m_store / "strings_db.meta", key, value);
 }
 
-void FileKeyValueStoreClient::get(
-    StorageObject& obj, const std::vector<std::string>& keys) const
+void FileKeyValueStoreClient::string_remove(const std::string& key) const
 {
-    const auto path = get_filename(obj);
-    JsonUtils::read(path, obj.m_metadata, keys);
+    JsonUtils::remove_key(m_store / "strings_db.meta", key);
 }
 
-void FileKeyValueStoreClient::remove(const StorageObject& obj) const
+bool FileKeyValueStoreClient::string_exists(const std::string& key) const
 {
-    std::filesystem::remove(get_filename(obj));
+    return JsonUtils::has_key(m_store / "strings_db.meta", key);
 }
 
-void FileKeyValueStoreClient::list(
-    const Metadata::Query& query, std::vector<StorageObject>& fetched) const
+void FileKeyValueStoreClient::set_add(
+    const std::string& key, const std::string& value) const
 {
-    (void)query;
-    (void)fetched;
+    const auto path = m_store / (key + "_set.meta");
+    FileUtils::create_if_not_existing(path);
 
-    for (const auto& dir_entry : std::filesystem::directory_iterator{m_store}) {
-        if (FileUtils::is_file_with_extension(dir_entry, ".dat")) {
-            Metadata metadata;
-            JsonUtils::read(dir_entry.path(), metadata);
-            /*
-                    if (metadata.getItem("tiers") == std::to_string(tier))
-                    {
-                        hestia::StorageObject
-               obj(hestia::FileUtils::getFilenameWithoutExtension(dir_entry.path()));
-                        objects.push_back(obj);
-                    }
-            */
-        }
+    std::ofstream out_file(path);
+    out_file << value << "\n";
+}
+
+void FileKeyValueStoreClient::set_list(
+    const std::string& key, std::vector<std::string>& values) const
+{
+    const auto path = m_store / (key + "_set.meta");
+
+    if (!std::filesystem::exists(path)) {
+        return;
     }
+
+    File in_file(path);
+    std::vector<std::string> file_values;
+    in_file.read_lines(file_values);
+
+    std::set<std::string> s(file_values.begin(), file_values.end());
+    std::copy(s.begin(), s.end(), std::back_inserter(values));
 }
 
-std::filesystem::path FileKeyValueStoreClient::get_filename(
-    const StorageObject& obj) const
+void FileKeyValueStoreClient::set_remove(
+    const std::string& key, const std::string& value) const
 {
-    const auto path = m_store / ("objects/" + obj.m_id + ".dat");
-    return path.string();
+    const auto path = m_store / (key + "_set.meta");
+
+    if (!std::filesystem::exists(path)) {
+        return;
+    }
+
+    std::vector<std::string> file_values;
+    {
+        File in_file(path);
+        in_file.read_lines(file_values);
+    }
+
+    std::set<std::string> s(file_values.begin(), file_values.end());
+    s.erase(value);
+
+    std::vector<std::string> write_values;
+    std::copy(s.begin(), s.end(), std::back_inserter(write_values));
+
+    File out_file(path);
+    out_file.write_lines(write_values);
 }
+
 }  // namespace hestia

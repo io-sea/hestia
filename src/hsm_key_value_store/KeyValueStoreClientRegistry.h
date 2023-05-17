@@ -13,7 +13,7 @@
 namespace hestia {
 class KeyValueStoreClientSpec {
   public:
-    enum class Type { FILE, KVSAL };
+    enum class Type { FILE, KVSAL, REDIS };
 
     KeyValueStoreClientSpec(Type type, const Metadata& config = {}) :
         m_type(type), m_config(config)
@@ -28,6 +28,7 @@ class KeyValueStoreClientSpec {
 class KeyValueStoreClientRegistry {
 
   public:
+    ~KeyValueStoreClientRegistry();
     static std::string to_string(const KeyValueStoreClientSpec& client_spec);
 
     static bool is_store_type_available(

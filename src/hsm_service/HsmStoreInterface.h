@@ -21,48 +21,48 @@ class HsmStoreInterface {
         std::unique_ptr<HsmKeyValueStore> kv_store,
         std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store);
 
-    hestia::ObjectStoreResponse::Ptr exists(
-        const hestia::StorageObject& object);
+    ObjectStoreResponse::Ptr exists(const StorageObject& object);
 
-    hestia::ObjectStoreResponse::Ptr get_metadata(
-        const hestia::StorageObject& object);
+    ObjectStoreResponse::Ptr get_metadata(const StorageObject& object);
+
     HsmObjectStoreResponse::Ptr get_data(
-        const hestia::StorageObject& object,
-        const hestia::Extent& extent,
+        const StorageObject& object,
+        const Extent& extent,
         uint8_t source_tier,
-        hestia::Stream* stream);
+        Stream* stream);
 
-    hestia::ObjectStoreResponse::Ptr put_metadata(
-        const hestia::StorageObject& object);
+    ObjectStoreResponse::Ptr put_metadata(const StorageObject& object);
+
     HsmObjectStoreResponse::Ptr put_data(
-        const hestia::StorageObject& object,
-        const hestia::Extent& extent,
+        const StorageObject& object,
+        const Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier,
         bool overwrite,
-        hestia::Stream* stream);
+        Stream* stream);
 
     HsmObjectStoreResponse::Ptr copy_data(
-        const hestia::StorageObject& object,
-        const hestia::Extent& extent,
-        uint8_t source_tier,
-        uint8_t target_tier);
-    HsmObjectStoreResponse::Ptr move_data(
-        const hestia::StorageObject& object,
-        const hestia::Extent& extent,
+        const StorageObject& object,
+        const Extent& extent,
         uint8_t source_tier,
         uint8_t target_tier);
 
-    hestia::ObjectStoreResponse::Ptr release_metadata(
-        const hestia::StorageObject& object);
-    hestia::ObjectStoreResponse::Ptr release_metadata(
-        const hestia::StorageObject& object, uint8_t source_tier);
+    HsmObjectStoreResponse::Ptr move_data(
+        const StorageObject& object,
+        const Extent& extent,
+        uint8_t source_tier,
+        uint8_t target_tier);
+
+    ObjectStoreResponse::Ptr release_metadata(const StorageObject& object);
+
+    ObjectStoreResponse::Ptr release_metadata(
+        const StorageObject& object, uint8_t source_tier);
+
     HsmObjectStoreResponse::Ptr release_data(
-        const hestia::StorageObject& object,
-        const hestia::Extent& extent,
-        uint8_t source_tier);
+        const StorageObject& object, const Extent& extent, uint8_t source_tier);
+
     HsmObjectStoreResponse::Ptr release_data(
-        const hestia::StorageObject& object, const hestia::Extent& extent);
+        const StorageObject& object, const Extent& extent);
 
 
   private:

@@ -50,6 +50,10 @@ void TcpServer::listen(
         return 0;
     };
     m_working_socket_task = std::async(std::launch::async, socket_task);
+
+    if (m_block_on_listen) {
+        m_working_socket_task.get();
+    }
 }
 
 void TcpServer::shut_down()
@@ -84,6 +88,11 @@ void TcpServer::on_connection(Socket::Ptr client_connection)
 void TcpServer::on_thread_complete(std::thread::id id)
 {
     m_threads.mark_for_removal(id);
+}
+
+void TcpServer::set_block_on_listen(bool block)
+{
+    m_block_on_listen = block;
 }
 
 void TcpServer::wait_until_bound()

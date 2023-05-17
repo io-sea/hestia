@@ -16,6 +16,7 @@ class Server {
         int m_http_port{8000};
         int m_http2_port{8080};
         std::size_t m_num_threads{0};
+        bool m_block_on_launch{false};
         int m_argc{0};
         char** m_argv{nullptr};
     };

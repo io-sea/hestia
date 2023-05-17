@@ -1,9 +1,13 @@
 #include "KeyValueStoreClientRegistry.h"
 
+#include "RedisKeyValueStoreClient.h"
+
 #include "HsmKeyValueStore.h"
 #include "Logger.h"
 
 namespace hestia {
+
+KeyValueStoreClientRegistry::~KeyValueStoreClientRegistry() {}
 
 std::string KeyValueStoreClientRegistry::to_string(
     const KeyValueStoreClientSpec& client_spec)
@@ -13,6 +17,8 @@ std::string KeyValueStoreClientRegistry::to_string(
             return "FILE";
         case KeyValueStoreClientSpec::Type::KVSAL:
             return "KVSAL";
+        case KeyValueStoreClientSpec::Type::REDIS:
+            return "REDIS";
         default:
             return "UNKNOWN";
     }
@@ -30,6 +36,8 @@ bool KeyValueStoreClientRegistry::is_store_type_available(
 #else
             return false;
 #endif
+        case KeyValueStoreClientSpec::Type::REDIS:
+            return true;
         default:
             return false;
     }
@@ -51,6 +59,12 @@ std::unique_ptr<HsmKeyValueStore> KeyValueStoreClientRegistry::get_store(
 #else
             return nullptr;
 #endif
+        case KeyValueStoreClientSpec::Type::REDIS: {
+            LOG_INFO("Using redis key-value store client");
+            auto client = std::make_unique<RedisKeyValueStoreClient>();
+            client->initialize(client_spec.m_config);
+            return std::make_unique<HsmKeyValueStore>(std::move(client));
+        }
         default: {
             LOG_INFO(
                 "Unknown kv-store type - defaulting to file key-value store client");

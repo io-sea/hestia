@@ -3,7 +3,7 @@
 #include "Logger.h"
 
 #define CATCH_FLOW()                                                           \
-    catch (const RequestException<ObjectStoreError>& e)                        \
+    catch (const RequestException<KeyValueStoreError>& e)                      \
     {                                                                          \
         on_exception(request, response.get(), e.get_error());                  \
         return response;                                                       \
@@ -20,49 +20,62 @@
     }
 
 namespace hestia {
-ObjectStoreResponse::Ptr KeyValueStoreClient::make_request(
-    const ObjectStoreRequest& request) const noexcept
+KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
+    const KeyValueStoreRequest& request) const noexcept
 {
-    auto response = ObjectStoreResponse::create(request);
+    auto response = KeyValueStoreResponse::create(request);
 
     switch (request.method()) {
-        case ObjectStoreRequestMethod::GET:
+        case KeyValueStoreRequestMethod::STRING_EXISTS:
             try {
-                get(response->object());
+                const auto exists = string_exists(request.get_query().first);
+                response->set_key_found(exists);
             }
             CATCH_FLOW();
             break;
-        case ObjectStoreRequestMethod::PUT:
+        case KeyValueStoreRequestMethod::STRING_GET:
             try {
-                put(request.object());
+                string_get(request.get_query().first, response->get_value());
             }
             CATCH_FLOW();
             break;
-        case ObjectStoreRequestMethod::EXISTS:
+        case KeyValueStoreRequestMethod::STRING_SET:
             try {
-                response->set_object_found(exists(request.object()));
+                string_set(
+                    request.get_query().first, request.get_query().second);
             }
             CATCH_FLOW();
             break;
-        case ObjectStoreRequestMethod::LIST:
+        case KeyValueStoreRequestMethod::STRING_REMOVE:
             try {
-                list(request.query(), response->objects());
+                string_remove(request.get_query().first);
             }
             CATCH_FLOW();
             break;
-        case ObjectStoreRequestMethod::REMOVE:
+        case KeyValueStoreRequestMethod::SET_ADD:
             try {
-                remove(request.object());
+                set_add(request.get_query().first, request.get_query().second);
             }
             CATCH_FLOW();
             break;
-        case ObjectStoreRequestMethod::CUSTOM:
+        case KeyValueStoreRequestMethod::SET_LIST:
+            try {
+                set_list(request.get_query().first, response->get_set_items());
+            }
+            CATCH_FLOW();
+            break;
+        case KeyValueStoreRequestMethod::SET_REMOVE:
+            try {
+                set_remove(
+                    request.get_query().first, request.get_query().second);
+            }
+            CATCH_FLOW();
             break;
         default:
             const std::string msg =
                 "Method: " + request.method_as_string() + " not supported";
-            const ObjectStoreError error(
-                ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
+            const KeyValueStoreError error(
+                KeyValueStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
             LOG_ERROR("Error: " << error);
             response->on_error(error);
             return response;
@@ -72,31 +85,32 @@ ObjectStoreResponse::Ptr KeyValueStoreClient::make_request(
 }
 
 void KeyValueStoreClient::on_exception(
-    const ObjectStoreRequest& request,
-    ObjectStoreResponse* response,
+    const KeyValueStoreRequest& request,
+    KeyValueStoreResponse* response,
     const std::string& message) const
 {
     if (!message.empty()) {
         const std::string msg = "Exception in " + request.method_as_string()
                                 + " method: " + message;
-        const ObjectStoreError error(ObjectStoreErrorCode::STL_EXCEPTION, msg);
+        const KeyValueStoreError error(
+            KeyValueStoreErrorCode::STL_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
         response->on_error(error);
     }
     else {
         const std::string msg =
             "Uknown Exception in " + request.method_as_string() + " method";
-        const ObjectStoreError error(
-            ObjectStoreErrorCode::UNKNOWN_EXCEPTION, msg);
+        const KeyValueStoreError error(
+            KeyValueStoreErrorCode::UNKNOWN_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
         response->on_error(error);
     }
 }
 
 void KeyValueStoreClient::on_exception(
-    const ObjectStoreRequest& request,
-    ObjectStoreResponse* response,
-    const ObjectStoreError& error) const
+    const KeyValueStoreRequest& request,
+    KeyValueStoreResponse* response,
+    const KeyValueStoreError& error) const
 {
     const std::string msg =
         "Error in " + request.method_as_string() + " method: ";

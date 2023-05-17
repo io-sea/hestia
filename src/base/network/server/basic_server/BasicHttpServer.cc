@@ -11,6 +11,9 @@ namespace hestia {
 BasicHttpServer::BasicHttpServer(const Config& config, WebApp* web_app) :
     Server(config, web_app), m_tcp_server(std::make_unique<TcpServer>())
 {
+    if (m_config.m_block_on_launch) {
+        m_tcp_server->set_block_on_listen(true);
+    }
 }
 
 BasicHttpServer::~BasicHttpServer()

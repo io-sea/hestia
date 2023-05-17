@@ -2,18 +2,30 @@
 
 #include "KeyValueStoreClient.h"
 
-#include <filesystem>
+#include <memory>
+#include <string>
 
 namespace hestia {
-class FileKeyValueStoreClient : public KeyValueStoreClient {
-  public:
-    FileKeyValueStoreClient();
 
-    ~FileKeyValueStoreClient() = default;
+class RedisReplyWrapper;
+class RedisContextWrapper;
+
+class RedisKeyValueStoreClientConfig {
+  public:
+    std::string m_redis_backend_address{"127.0.0.1"};
+    int m_redis_backend_port{6379};
+};
+
+class RedisKeyValueStoreClient : public KeyValueStoreClient {
+  public:
+    RedisKeyValueStoreClient();
+
+    virtual ~RedisKeyValueStoreClient();
 
     void initialize(const Metadata& config) override;
 
-  private:
+    void do_initialize(const RedisKeyValueStoreClientConfig& config);
+
     bool string_exists(const std::string& key) const override;
 
     void string_get(const std::string& key, std::string& value) const override;
@@ -32,6 +44,11 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
     void set_remove(
         const std::string& key, const std::string& value) const override;
 
-    std::filesystem::path m_store{"kv_store"};
+  private:
+    std::unique_ptr<RedisReplyWrapper> make_request(
+        const std::string& request) const;
+
+    RedisKeyValueStoreClientConfig m_config;
+    std::unique_ptr<RedisContextWrapper> m_context;
 };
 }  // namespace hestia

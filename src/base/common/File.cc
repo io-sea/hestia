@@ -32,6 +32,31 @@ OpStatus File::write(const char* data, std::size_t length)
     return {};
 }
 
+OpStatus File::write_lines(const std::vector<std::string>& lines)
+{
+    if (!m_out_stream.is_open()) {
+        if (const auto status = open_for_write(); !status.ok()) {
+            return status;
+        }
+    }
+
+    if (m_out_stream.bad()) {
+        return {
+            OpStatus::Status::ERROR, 0,
+            "Out stream in bad state before write."};
+    }
+
+    for (const auto& line : lines) {
+        m_out_stream << line << "\n";
+    }
+
+    if (m_out_stream.bad()) {
+        return {
+            OpStatus::Status::ERROR, 0, "Out stream in bad state after write."};
+    }
+    return {};
+}
+
 std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
 {
     if (!m_in_stream.is_open()) {
@@ -52,6 +77,33 @@ std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
     if (m_in_stream.eof()) {
         read_state.m_finished = true;
     }
+    read_state.m_size_read = static_cast<std::size_t>(m_in_stream.gcount());
+    return {{}, read_state};
+}
+
+std::pair<OpStatus, File::ReadState> File::read_lines(
+    std::vector<std::string>& lines)
+{
+    if (!m_in_stream.is_open()) {
+        if (const auto status = open_for_read(); !status.ok()) {
+            return {{OpStatus::Status::ERROR, 0, status.message()}, {}};
+        }
+    }
+
+    if (m_in_stream.bad()) {
+        return {
+            {OpStatus::Status::ERROR, 0,
+             "In stream in bad state before write."},
+            {}};
+    }
+
+    File::ReadState read_state;
+    std::string line;
+    while (std::getline(m_in_stream, line)) {
+        lines.push_back(line);
+    }
+
+    read_state.m_finished  = true;
     read_state.m_size_read = static_cast<std::size_t>(m_in_stream.gcount());
     return {{}, read_state};
 }

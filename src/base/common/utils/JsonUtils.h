@@ -39,6 +39,22 @@ class JsonUtils {
      */
     static void from_json(const std::string& json, Metadata& metadata);
 
+    static void get_value(
+        const std::filesystem::path& path,
+        const std::string& key,
+        std::string& value);
+
+    static void set_value(
+        const std::filesystem::path& path,
+        const std::string& key,
+        const std::string& value);
+
+    static bool has_key(
+        const std::filesystem::path& path, const std::string& key);
+
+    static void remove_key(
+        const std::filesystem::path& path, const std::string& key);
+
     /**
      * Read the specified keys from a file containing json into Metadata
      *

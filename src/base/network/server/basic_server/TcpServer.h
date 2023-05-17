@@ -30,6 +30,8 @@ class TcpServer {
         onConnectionSuccessFunc connection_success_func,
         onConnectionFailedFunc connection_failed_func);
 
+    void set_block_on_listen(bool block);
+
     void shut_down();
 
     void wait_until_bound();
@@ -40,6 +42,7 @@ class TcpServer {
     void on_thread_complete(std::thread::id id);
 
     ThreadCollection m_threads;
+    bool m_block_on_listen{false};
 
     std::unique_ptr<Socket> m_working_socket;
     std::future<int> m_working_socket_task;

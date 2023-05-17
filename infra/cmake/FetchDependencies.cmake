@@ -72,6 +72,18 @@ macro(fetch_libxml2)
         FetchContent_MakeAvailable(LibXml2)
 endmacro()
 
+# https://github.com/redis/hiredis
+macro(fetch_hiredis)
+    FetchContent_Declare(
+        hiredis
+        GIT_REPOSITORY https://github.com/redis/hiredis
+        GIT_TAG        c14775b4e48334e0262c9f168887578f4a368b5d # v1.1.0
+        SYSTEM
+        FIND_PACKAGE_ARGS
+        )
+        FetchContent_MakeAvailable(hiredis)
+endmacro()
+
 # https://github.com/bji/libs3
 set(LIBS3_PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/infra/cmake/libs3_wrapper/ <SOURCE_DIR>)
 macro(fetch_libs3)

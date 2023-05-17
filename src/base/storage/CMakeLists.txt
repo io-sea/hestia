@@ -1,5 +1,7 @@
 include(AddModule)
 
+fetch_hiredis()
+
 add_module(
     MODULE_NAME storage 
     HEADERS
@@ -13,9 +15,13 @@ add_module(
         clients/file/FileObjectStoreClient.h
         clients/file/FileKeyValueStoreClient.h
         clients/memory/InMemoryObjectStoreClient.h
+        clients/redis/RedisKeyValueStoreClient.h
         requests/ObjectStoreRequest.h
         requests/ObjectStoreResponse.h
         requests/ObjectStoreError.h 
+        requests/KeyValueStoreRequest.h
+        requests/KeyValueStoreResponse.h
+        requests/KeyValueStoreError.h
     SOURCES
         ObjectStoreClient.cc
         ObjectStoreClientPlugin.cc
@@ -26,17 +32,24 @@ add_module(
         clients/file/FileObjectStoreClient.cc
         clients/file/FileKeyValueStoreClient.cc
         clients/memory/InMemoryObjectStoreClient.cc
+        clients/redis/RedisKeyValueStoreClient.cc
         requests/ObjectStoreRequest.cc
         requests/ObjectStoreResponse.cc
         requests/ObjectStoreError.cc
+        requests/KeyValueStoreRequest.cc
+        requests/KeyValueStoreResponse.cc
+        requests/KeyValueStoreError.cc
     INTERNAL_INCLUDE_DIRS
         block_store
         clients/file
         clients/memory
+        clients/redis
         requests
     INTERNAL_DEPENDENCIES 
         common
         protocol
+    PRIVATE_DEPENDENCIES
+        hiredis::hiredis
     WITH_FILESYSTEM
 )
 

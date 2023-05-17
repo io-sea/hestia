@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 namespace hestia {
 
@@ -48,6 +49,8 @@ class File {
      */
     std::pair<OpStatus, ReadState> read(char* data, std::size_t length);
 
+    std::pair<OpStatus, ReadState> read_lines(std::vector<std::string>& lines);
+
     /**
      * Write to the file - the file is opened if needed
      * @param data buffer to write from
@@ -55,6 +58,8 @@ class File {
      * @return Status of the write operation
      */
     OpStatus write(const char* data, std::size_t length);
+
+    OpStatus write_lines(const std::vector<std::string>& lines);
 
   private:
     OpStatus open_for_read() noexcept;

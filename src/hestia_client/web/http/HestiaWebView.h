@@ -1,13 +1,14 @@
 #pragma once
 
 #include "WebView.h"
+#include <memory>
 
 namespace hestia {
-class S3Service;
+class HestiaService;
 
-class S3ObjectView : public WebView {
+class HestiaWebView : public WebView {
   public:
-    S3ObjectView(S3Service* service);
+    HestiaWebView(HestiaService* hestia_service);
 
     HttpResponse::Ptr on_get(const HttpRequest& request) override;
 
@@ -18,6 +19,6 @@ class S3ObjectView : public WebView {
     HttpResponse::Ptr on_head(const HttpRequest& request) override;
 
   private:
-    S3Service* m_service{nullptr};
+    HestiaService* m_hestia_service{nullptr};
 };
 }  // namespace hestia

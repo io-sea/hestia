@@ -42,6 +42,68 @@ std::vector<std::string> JsonUtils::get_values(
     return vals;
 }
 
+void JsonUtils::get_value(
+    const std::filesystem::path& path,
+    const std::string& key,
+    std::string& value)
+{
+    std::ifstream read_file(path);
+
+    nlohmann::json file_content;
+    read_file >> file_content;
+    read_file.close();
+
+    if (file_content.contains(key)) {
+        value = file_content[key];
+    }
+}
+
+bool JsonUtils::has_key(
+    const std::filesystem::path& path, const std::string& key)
+{
+    std::ifstream read_file(path);
+
+    nlohmann::json file_content;
+    read_file >> file_content;
+    read_file.close();
+
+    return file_content.contains(key);
+}
+
+void JsonUtils::remove_key(
+    const std::filesystem::path& path, const std::string& key)
+{
+    std::ifstream read_file(path);
+
+    nlohmann::json file_content;
+    read_file >> file_content;
+    read_file.close();
+
+    file_content.erase(key);
+
+    std::ofstream out_file;
+    out_file.open(path);
+    out_file << file_content;
+}
+
+void JsonUtils::set_value(
+    const std::filesystem::path& path,
+    const std::string& key,
+    const std::string& value)
+{
+    std::ifstream read_file(path);
+
+    nlohmann::json file_content;
+    read_file >> file_content;
+    read_file.close();
+
+    file_content[key] = value;
+
+    std::ofstream out_file;
+    out_file.open(path);
+    out_file << file_content;
+}
+
 void JsonUtils::read(
     const std::filesystem::path& path,
     Metadata& metadata,

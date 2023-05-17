@@ -3,5 +3,12 @@
 #include "WebApp.h"
 
 namespace hestia {
-class HestiaWebApp : public WebApp {};
+
+class HestiaService;
+
+class HestiaWebApp : public WebApp {
+
+  public:
+    HestiaWebApp(HestiaService* hestia_service);
+};
 }  // namespace hestia

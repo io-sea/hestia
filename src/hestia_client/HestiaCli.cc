@@ -4,6 +4,9 @@
 #include "FileStreamSink.h"
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
+
+#include "HestiaService.h"
+#include "HsmS3Service.h"
 #include "HsmService.h"
 
 #include "S3Service.h"
@@ -12,6 +15,10 @@
 
 #include "BasicHttpServer.h"
 #include "CopyToolWebApp.h"
+#include "CurlClient.h"
+#include "FileKeyValueStoreClient.h"
+#include "HestiaS3WebApp.h"
+#include "HestiaWebApp.h"
 
 #include "Logger.h"
 
@@ -360,13 +367,41 @@ OpStatus HestiaCli::run_hsm()
 
 OpStatus HestiaCli::run_server()
 {
-    CopyToolWebApp web_app;
+    std::unique_ptr<HestiaService> hestia_service;
+    std::unique_ptr<HsmS3Service> hsm_s3_service;
 
-    BasicHttpServer server({}, &web_app);
+    WebApp::Ptr web_app;
+    if (m_config.m_server_config.m_web_app == "hestia::HsmService") {
+        HestiaServiceConfig service_config;
+        auto hsm_service = ApplicationContext::get().get_hsm_service();
+        auto kv_store    = std::make_unique<FileKeyValueStoreClient>();
 
+        CurlClientConfig http_client_config;
+        auto http_client = std::make_unique<CurlClient>(http_client_config);
+
+        hestia_service = std::make_unique<HestiaService>(
+            service_config, hsm_service, std::move(kv_store),
+            std::move(http_client));
+
+        web_app = std::make_unique<HestiaWebApp>(hestia_service.get());
+    }
+    else if (m_config.m_server_config.m_web_app == "hestia::HsmS3Service") {
+        hsm_s3_service = std::make_unique<HsmS3Service>(
+            ApplicationContext::get().get_hsm_service());
+        web_app = std::make_unique<HestiaS3WebApp>(hsm_s3_service.get());
+    }
+    else if (m_config.m_server_config.m_web_app == "hestia::CopyTool") {
+        web_app = std::make_unique<CopyToolWebApp>();
+    }
+
+    Server::Config server_config;
+    server_config.m_ip        = m_config.m_server_config.m_host;
+    server_config.m_http_port = std::stoi(m_config.m_server_config.m_port);
+    server_config.m_block_on_launch = true;
+
+    BasicHttpServer server(server_config, web_app.get());
     server.initialize();
     server.start();
-    server.wait_until_bound();
 
     return {};
 }
