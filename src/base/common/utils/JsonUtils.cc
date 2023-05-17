@@ -61,6 +61,10 @@ void JsonUtils::get_value(
 bool JsonUtils::has_key(
     const std::filesystem::path& path, const std::string& key)
 {
+    if (!std::filesystem::is_regular_file(path)) {
+        return false;
+    }
+
     std::ifstream read_file(path);
 
     nlohmann::json file_content;
@@ -91,16 +95,17 @@ void JsonUtils::set_value(
     const std::string& key,
     const std::string& value)
 {
-    std::ifstream read_file(path);
-
     nlohmann::json file_content;
-    read_file >> file_content;
-    read_file.close();
+
+    if (std::filesystem::is_regular_file(path)) {
+        std::ifstream read_file(path);
+        read_file >> file_content;
+        read_file.close();
+    }
 
     file_content[key] = value;
 
-    std::ofstream out_file;
-    out_file.open(path);
+    std::ofstream out_file(path);
     out_file << file_content;
 }
 
@@ -144,8 +149,7 @@ void JsonUtils::write(
 
     FileUtils::create_if_not_existing(path);
 
-    std::ofstream out_file;
-    out_file.open(path);
+    std::ofstream out_file(path);
     out_file << existing_content;
 }
 }  // namespace hestia

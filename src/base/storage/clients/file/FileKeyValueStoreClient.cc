@@ -3,6 +3,7 @@
 #include "File.h"
 #include "FileUtils.h"
 #include "JsonUtils.h"
+#include "StringUtils.h"
 
 #include <fstream>
 #include <iterator>
@@ -13,53 +14,68 @@
 namespace hestia {
 FileKeyValueStoreClient::FileKeyValueStoreClient() {}
 
-void FileKeyValueStoreClient::initialize(const Metadata& config)
+void FileKeyValueStoreClient::initialize(const Metadata& config_data)
 {
-    auto on_item = [this](const std::string& key, const std::string& value) {
+    FileKeyValueStoreClientConfig config;
+    auto on_item = [&config](const std::string& key, const std::string& value) {
         if (key == "root") {
-            m_store = value;
+            config.m_root = value;
         }
     };
-    config.for_each_item(on_item);
+    config_data.for_each_item(on_item);
+    do_initialize(config);
+}
+
+void FileKeyValueStoreClient::do_initialize(
+    const FileKeyValueStoreClientConfig& config)
+{
+    m_store = config.m_root;
     LOG_INFO("Initializing at: " + m_store.string());
 }
 
 void FileKeyValueStoreClient::string_get(
     const std::string& key, std::string& value) const
 {
-    JsonUtils::get_value(m_store / "strings_db.meta", key, value);
+    JsonUtils::get_value(m_store / "strings_db.json", key, value);
 }
 
 void FileKeyValueStoreClient::string_set(
     const std::string& key, const std::string& value) const
 {
-    JsonUtils::set_value(m_store / "strings_db.meta", key, value);
+    const auto path = m_store / "strings_db.json";
+    FileUtils::create_if_not_existing(path);
+    LOG_INFO("Setting: " + key + " to " + value + " at " + path.string());
+    JsonUtils::set_value(path, key, value);
 }
 
 void FileKeyValueStoreClient::string_remove(const std::string& key) const
 {
-    JsonUtils::remove_key(m_store / "strings_db.meta", key);
+    JsonUtils::remove_key(m_store / "strings_db.json", key);
 }
 
 bool FileKeyValueStoreClient::string_exists(const std::string& key) const
 {
-    return JsonUtils::has_key(m_store / "strings_db.meta", key);
+    return JsonUtils::has_key(m_store / "strings_db.json", key);
 }
 
 void FileKeyValueStoreClient::set_add(
     const std::string& key, const std::string& value) const
 {
-    const auto path = m_store / (key + "_set.meta");
+    LOG_INFO("Adding to set: " + key + " " + value);
+
+    const auto prefix = StringUtils::replace(key, ':', '_');
+    const auto path   = m_store / (prefix + "_set.meta");
     FileUtils::create_if_not_existing(path);
 
-    std::ofstream out_file(path);
+    std::ofstream out_file(path, std::ios_base::app);
     out_file << value << "\n";
 }
 
 void FileKeyValueStoreClient::set_list(
     const std::string& key, std::vector<std::string>& values) const
 {
-    const auto path = m_store / (key + "_set.meta");
+    const auto prefix = StringUtils::replace(key, ':', '_');
+    const auto path   = m_store / (prefix + "_set.meta");
 
     if (!std::filesystem::exists(path)) {
         return;
@@ -76,7 +92,8 @@ void FileKeyValueStoreClient::set_list(
 void FileKeyValueStoreClient::set_remove(
     const std::string& key, const std::string& value) const
 {
-    const auto path = m_store / (key + "_set.meta");
+    const auto prefix = StringUtils::replace(key, ':', '_');
+    const auto path   = m_store / (prefix + "_set.meta");
 
     if (!std::filesystem::exists(path)) {
         return;

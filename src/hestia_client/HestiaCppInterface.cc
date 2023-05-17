@@ -1,6 +1,6 @@
 #include "HestiaCppInterface.h"
 
-#include "hestia_old.h"
+#include "hestia.h"
 
 #include "ApplicationContext.h"
 #include "HsmService.h"
@@ -13,7 +13,7 @@ int error(const hestia::RequestError<hestia::HsmServiceErrorCode>& error)
 {
     switch (error.code()) {
         case hestia::HsmServiceErrorCode::NO_ERROR:
-            return hestia::old::hestia_error_t::HESTIA_ERROR_OK;
+            return hestia::hestia_error_t::HESTIA_ERROR_OK;
         case hestia::HsmServiceErrorCode::ERROR:
         case hestia::HsmServiceErrorCode::STL_EXCEPTION:
         case hestia::HsmServiceErrorCode::UNKNOWN_EXCEPTION:
@@ -22,18 +22,18 @@ int error(const hestia::RequestError<hestia::HsmServiceErrorCode>& error)
         case hestia::HsmServiceErrorCode::BAD_PUT_OVERWRITE_COMBINATION:
         case hestia::HsmServiceErrorCode::MAX_ERROR:
         default:
-            return hestia::old::hestia_error_t::HESTIA_ERROR_UNKOWN;
+            return hestia::hestia_error_t::HESTIA_ERROR_UNKOWN;
     }
 }
 
 int ok()
 {
-    return hestia::old::hestia_error_t::HESTIA_ERROR_OK;
+    return hestia::hestia_error_t::HESTIA_ERROR_OK;
 }
 
 int bad_stream()
 {
-    return hestia::old::hestia_error_t::HESTIA_ERROR_BAD_STREAM;
+    return hestia::hestia_error_t::HESTIA_ERROR_BAD_STREAM;
 }
 
 }  // namespace rc

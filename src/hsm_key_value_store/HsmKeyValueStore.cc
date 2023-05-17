@@ -104,6 +104,16 @@ void HsmKeyValueStore::put(const StorageObject& object) const
             "Error in kv_store STRING_SET: "
             + response->get_error().to_string());
     }
+
+    const std::string set_key = "hestia:objects";
+    const Metadata::Query set_add_query{set_key, object.id()};
+    KeyValueStoreRequest set_request(
+        KeyValueStoreRequestMethod::SET_ADD, set_add_query);
+    const auto set_response = m_client->make_request(set_request);
+    if (!set_response->ok()) {
+        throw std::runtime_error(
+            "Error in kv_store SET_ADD: " + response->get_error().to_string());
+    }
 }
 
 bool HsmKeyValueStore::exists(const StorageObject& object) const
@@ -136,8 +146,10 @@ void HsmKeyValueStore::remove(const StorageObject& object) const
             + string_response->get_error().to_string());
     }
 
+    const std::string set_key = "hestia:objects";
+    const Metadata::Query set_remove_query{set_key, object.id()};
     KeyValueStoreRequest set_request(
-        KeyValueStoreRequestMethod::SET_REMOVE, query);
+        KeyValueStoreRequestMethod::SET_REMOVE, set_remove_query);
     const auto set_response = m_client->make_request(set_request);
     if (!set_response->ok()) {
         throw std::runtime_error(
@@ -158,7 +170,19 @@ void HsmKeyValueStore::put(const StorageTier& tier) const
 
 void HsmKeyValueStore::list_objects(std::vector<StorageObject>& objects) const
 {
-    (void)objects;
+    const std::string key = "hestia:objects";
+    const Metadata::Query query{key, ""};
+
+    KeyValueStoreRequest request(KeyValueStoreRequestMethod::SET_LIST, query);
+    const auto response = m_client->make_request(request);
+    if (!response->ok()) {
+        throw std::runtime_error(
+            "Error in kv_store SET_LIST: " + response->get_error().to_string());
+    }
+
+    for (const auto& item : response->get_set_items()) {
+        objects.push_back(hestia::StorageObject(item));
+    }
 }
 
 void HsmKeyValueStore::list_tiers(std::vector<StorageTier>& tiers) const

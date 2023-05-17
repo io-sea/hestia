@@ -5,6 +5,11 @@
 #include <filesystem>
 
 namespace hestia {
+
+struct FileKeyValueStoreClientConfig {
+    std::filesystem::path m_root{"kv_store"};
+};
+
 class FileKeyValueStoreClient : public KeyValueStoreClient {
   public:
     FileKeyValueStoreClient();
@@ -12,6 +17,8 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
     ~FileKeyValueStoreClient() = default;
 
     void initialize(const Metadata& config) override;
+
+    void do_initialize(const FileKeyValueStoreClientConfig& config);
 
   private:
     bool string_exists(const std::string& key) const override;

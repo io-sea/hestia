@@ -62,5 +62,8 @@ class StringUtils {
      * @return the string in lower case
      */
     static std::string to_lower(const std::string& str);
+
+    static std::string replace(
+        const std::string& input, char to_replace, char replacement);
 };
 }  // namespace hestia

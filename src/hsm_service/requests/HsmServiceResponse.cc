@@ -12,6 +12,11 @@ HsmServiceResponse::HsmServiceResponse(
     hestia::Response<HsmServiceErrorCode>(request),
     m_object_store_response(std::move(object_store_response))
 {
+    if (!m_object_store_response->ok()) {
+        on_error(
+            {HsmServiceErrorCode::ERROR,
+             m_object_store_response->get_error().to_string()});
+    }
 }
 
 HsmServiceResponse::HsmServiceResponse(
@@ -20,6 +25,11 @@ HsmServiceResponse::HsmServiceResponse(
     hestia::Response<HsmServiceErrorCode>(request),
     m_key_value_store_response(std::move(kv_store_response))
 {
+    if (!m_key_value_store_response->ok()) {
+        on_error(
+            {HsmServiceErrorCode::ERROR,
+             m_key_value_store_response->get_error().to_string()});
+    }
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(

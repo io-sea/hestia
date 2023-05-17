@@ -1,5 +1,3 @@
-#include "hestia.h"
-
 #include "ApplicationContext.h"
 #include "HestiaCli.h"
 #include "Logger.h"

@@ -64,4 +64,19 @@ std::string StringUtils::to_lower(const std::string& str)
         copy_str.begin(), copy_str.end(), copy_str.begin(), ::tolower);
     return copy_str;
 }
+
+std::string StringUtils::replace(
+    const std::string& input, char to_replace, char replacement)
+{
+    std::string output;
+    for (auto c : input) {
+        if (c == to_replace) {
+            output += replacement;
+        }
+        else {
+            output += c;
+        }
+    }
+    return output;
+}
 }  // namespace hestia

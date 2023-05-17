@@ -36,21 +36,11 @@ set(UNIT_TEST_SOURCES
     base/web/TestS3Service.cc
     base/web/TestS3WebApp.cc
     base/web/TestS3Authorization.cc
-    hestia_client/put_get.cc
-    hestia_client/set_get_attrs.cc
-    hestia_client/list_attrs.cc
-    hestia_client/remove.cc
-    hestia_client/copy.cc
-    hestia_client/move.cc
-    hestia_client/release.cc
-    hestia_client/locate.cc
-    hestia_client/list.cc
-    hestia_client/get_tiers_info.cc
-    hestia_client/list_tiers.cc
-    hestia_client/main_tests.cc
     hsm_object_store/motr/TestMockMotrBackend.cc
     hsm_object_store/motr/TestMockMotrHsm.cc
     hsm_object_store/motr/TestMotrHsmClient.cc
+    hsm_key_value_store/TestHsmKeyValueStore.cc
+    hestia_client/TestHestiaCppClient.cc
 )
 
 add_executable(${UNIT_TEST_MODULE} 
@@ -65,10 +55,10 @@ endif()
 target_link_libraries(${UNIT_TEST_MODULE} PRIVATE 
     hestia_client 
     hestia_motr_plugin_mock
-    hestia_lib 
     hestia_server 
     hestia_storage
     hestia_s3app
+    hestia_lib
     hestia_test_utils
     ${PLATFORM_LIBS}
     Catch2::Catch2

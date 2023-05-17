@@ -5,6 +5,22 @@
 
 namespace hestia {
 
+typedef enum hestia_error_e {
+    /// No error
+    HESTIA_ERROR_OK = 0,
+
+    HESTIA_ERROR_PUT_NOEXIST_OVRWRITE,  // Tried to overwrite non-existing
+                                        // object
+    HESTIA_ERROR_PUT_EXIST_NOOVRWRITE,  // Tried to Put an existing object with
+                                        // no-overwrite
+
+    HESTIA_ERROR_BAD_STREAM,
+    HESTIA_ERROR_UNKOWN,
+    HESTIA_ERROR_COUNT,
+} hestia_error_t;
+
+void initialize(const char* config_path = nullptr);
+
 /// @brief Creates an object in the object store and an entry for it in the key value store
 ///
 /// @param oid ID of the object to be created
@@ -40,7 +56,6 @@ int put(
 /// @param target_tier The tier to write the data to
 ///
 /// @returns 0 on success, negative error code on error
-/*
 int put(
     const struct hsm_uint oid,
     const bool is_overwrite,
@@ -48,7 +63,7 @@ int put(
     const std::size_t offset,
     const std::size_t length,
     const std::uint8_t target_tier = 0);
-*/
+
 /// @brief Retrieves data from the object store
 ///
 /// @param oid ID of the object to retrieve the data from

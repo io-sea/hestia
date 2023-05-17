@@ -2,6 +2,9 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     include(development_flags)
 endif()
 
+add_library(hestia_headers INTERFACE)
+target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+
 add_subdirectory(base)
 add_subdirectory(data_placement_engine)
 add_subdirectory(event_feed)

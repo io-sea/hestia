@@ -3,7 +3,6 @@ include(AddModule)
 add_module(
     MODULE_NAME client
     HEADERS
-        hestia_old.h
         HestiaConfig.h
         HestiaConfigurator.h
         HestiaCli.h
@@ -16,7 +15,6 @@ add_module(
         web/s3/HestiaS3WebApp.h
         web/s3/HsmS3Service.h
     SOURCES
-        hestia.cc
         HestiaConfig.cc
         HestiaConfigurator.cc
         HestiaCli.cc
@@ -33,10 +31,28 @@ add_module(
         web/s3 
         web/http
     INTERNAL_DEPENDENCIES 
+        headers
         hsm_service
-        web
-    DEPENDENCIES  
-        nlohmann_json::nlohmann_json       
+        web      
 )
 
 target_include_directories(hestia_client SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/external)
+
+add_module(
+    MODULE_NAME lib
+    SHARED
+    SOURCES
+        hestia.cc
+    INTERNAL_DEPENDENCIES 
+        headers
+        client  
+)
+
+set(HESTIA_PUBLIC_HEADERS
+    ../hestia.h
+    ../types.h
+    )
+set_target_properties(hestia_lib PROPERTIES PUBLIC_HEADER "${HESTIA_PUBLIC_HEADERS}")
+install(TARGETS hestia_lib
+        LIBRARY DESTINATION lib64
+        PUBLIC_HEADER DESTINATION include)

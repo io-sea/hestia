@@ -352,6 +352,9 @@ OpStatus HestiaCli::run_hsm()
             return {OpStatus::Status::ERROR, -1, msg};
         }
     }
+    else {
+        return {};
+    }
 
     if (stream) {
         auto stream_state = stream->flush();
@@ -362,6 +365,11 @@ OpStatus HestiaCli::run_hsm()
             return {OpStatus::Status::ERROR, -1, msg};
         }
     }
+
+    std::cout << "Completed "
+              << request->method_as_string()
+                     + " with object: " + m_hsm_command.m_object_id
+              << std::endl;
     return {};
 }
 
