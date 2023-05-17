@@ -21,5 +21,13 @@ add_module(
     INTERNAL_DEPENDENCIES 
         hsm_service
         motr_object_store_client
+
 )
+
+add_library(${PROJECT_NAME}_mock_motr_plugin SHARED 
+    MockMotrClientPlugin.cc
+)
+
+target_link_libraries(${PROJECT_NAME}_mock_motr_plugin PUBLIC 
+    hestia_motr_plugin_mock)
 
