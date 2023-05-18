@@ -10,7 +10,8 @@ enum class HsmObjectStoreRequestMethod {
     REMOVE,
     REMOVE_ALL,
     COPY,
-    MOVE
+    MOVE,
+    EXISTS
 };
 
 class HsmObjectStoreRequest :

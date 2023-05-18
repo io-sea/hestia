@@ -75,6 +75,7 @@ ObjectStoreRequestMethod HsmObjectStoreRequest::to_base_method(
         case HsmObjectStoreRequestMethod::REMOVE_ALL:
         case HsmObjectStoreRequestMethod::COPY:
         case HsmObjectStoreRequestMethod::MOVE:
+        case HsmObjectStoreRequestMethod::EXISTS:
         default:
             return ObjectStoreRequestMethod::CUSTOM;
     }
@@ -132,6 +133,8 @@ std::string HsmObjectStoreRequest::to_string(
             return "MOVE";
         case HsmObjectStoreRequestMethod::REMOVE_ALL:
             return "REMOVE_ALL";
+        case HsmObjectStoreRequestMethod::EXISTS:
+            return "EXISTS";
         default:
             return "UNKNOWN";
     }

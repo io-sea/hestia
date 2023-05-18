@@ -1,6 +1,9 @@
 #include <catch2/catch_all.hpp>
 
-#include "MockMotrHsm.h"
+//#include "MockMotrHsm.h"
+
+#include "HsmObjectStoreTestWrapper.h"
+
 
 #include <iostream>
 
@@ -39,6 +42,7 @@ static void* to_buffer(std::vector<char>& content)
 }
 
 TEST_CASE_METHOD(
+    MockMotrTestFixture,
     MotrHsmTestFixture,
     "Test Mock Motr HSM - Write and Read",
     "[mock-motr-hsm]")

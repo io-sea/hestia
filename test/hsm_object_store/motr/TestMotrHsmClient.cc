@@ -1,9 +1,12 @@
 #include <catch2/catch_all.hpp>
 
-#include "MockMotrClient.h"
-#include "MockMotrInterfaceImpl.h"
-#include "MotrHsmClient.h"
-#include "MotrInterface.h"
+//#include "MockMotrClient.h"
+//#include "MockMotrInterfaceImpl.h"
+//#include "MotrHsmClient.h"
+//#include "MotrInterface.h"
+#include "HsmObjectStoreTestWrapper.h"
+#include "TestContext.h"
+
 #include "types.h"
 
 /*
@@ -26,45 +29,53 @@ std::make_unique<hestia::MotrInterface>(std::move(mock_impl));
 };
 */
 
-TEST_CASE("Motr client write and read", "[.][motr]")
+class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
+  public:
+    MockMotrTestFixture() : HsmObjectStoreTestWrapper("mock_motr_plugin") {}
+};
+
+TEST_CASE_METHOD(MockMotrTestFixture, "Motr client write and read", "[.][motr]")
 {
 
-    hestia::mock::MockMotrHsmClient motr_client;
+    hestia::StorageObject obj("0000");
+    obj.m_metadata.set_item("mykey", "myval");
 
-    std::string id = "0";
-    hestia::StorageObject obj{id};
-    // hestia::Uuid objId{0};
-    std::string content = "The quick brown fox jumps over the lazy dog.";
+    exists(obj, false);
 
+    put(obj);
 
-    hestia::HsmObjectStoreRequest put_op(
-        obj.m_id, hestia::HsmObjectStoreRequestMethod::PUT);
-    // put_op.mType = hestia::HsmObjectStoreRequestMethod::PUT;
-    // put_op.mExtent = {0, content.size()};
+    exists(obj, true);
 
-    hestia::ReadableBufferView read_buffer(content);
+    hestia::StorageObject fetched_obj("0000");
+    get(fetched_obj);
+
+    REQUIRE(fetched_obj.m_metadata.get_item("mykey") == "myval");
+
+    remove(obj);
+    exists(fetched_obj, false);
+
+    std::string content = "The quick brown fox jumps over the lazy dog";
+    obj.m_size          = content.size();
 
     hestia::Stream stream;
+    put(obj, &stream);
+
     REQUIRE(stream.write(content).ok());
-
-    /*auto rc = */ motr_client.put(put_op, &stream);
-    // REQUIRE_FALSE(rc);
-
     REQUIRE(stream.reset().ok());
 
-    std::vector<char> sink(content.length());
-    hestia::WriteableBufferView write_buffer(sink);
+    get(obj, &stream);
 
-    hestia::HsmObjectStoreRequest get_op(
-        obj.m_id, hestia::HsmObjectStoreRequestMethod::GET);
-    // get_op.mType = hestia::HsmObjectStoreRequestMethod::GET;
-    // get_op.mExtent = {0, content.size()};
+    std::vector<char> returned_buffer(content.length());
+    hestia::WriteableBufferView write_buffer(returned_buffer);
+    REQUIRE(stream.read(write_buffer).ok());
+    REQUIRE(stream.reset().ok());
 
-    /*rc = */ motr_client.get(get_op, obj, &stream);
-    // REQUIRE_FALSE(rc);
+    std::string returned_content =
+        std::string(returned_buffer.begin(), returned_buffer.end());
+    REQUIRE(returned_content == content);
 
-    std::string recontstructed_content(sink.begin(), sink.end());
-    REQUIRE(recontstructed_content == content);
-
-    REQUIRE(false);
+    std::vector<hestia::StorageObject> fetched_objects;
+    list({"mykey", "myval"}, fetched_objects);
+    REQUIRE(fetched_objects.size() == 1);
+    REQUIRE(fetched_objects[0].m_id == obj.m_id);
 }

@@ -7,7 +7,7 @@ add_subdirectory(hsm_object_store)
 if(HESTIA_BUILD_TESTS)
 fetch_catch2()
 
-add_subdirectory(base/utils)
+add_subdirectory(utils)
 
 include(external/code-coverage)
 
@@ -39,6 +39,7 @@ set(UNIT_TEST_SOURCES
     hsm_object_store/motr/TestMockMotrBackend.cc
     hsm_object_store/motr/TestMockMotrHsm.cc
     hsm_object_store/motr/TestMotrHsmClient.cc
+    hsm_object_store/HsmObjectStoreTestWrapper.cc
     hsm_key_value_store/TestHsmKeyValueStore.cc
     hestia_client/TestHestiaCppClient.cc
 )
@@ -64,11 +65,13 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     Catch2::Catch2
 )
 
+target_include_directories(${UNIT_TEST_MODULE} PUBLIC hsm_object_store)
+
 # There is an inconsistency in clang/gcc application of this - make it explicit
 target_compile_options(${UNIT_TEST_MODULE} PRIVATE -Wunused-parameter)
 file(COPY data/ DESTINATION ${CMAKE_BINARY_DIR}/test_data)
 
-add_dependencies(${UNIT_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin)
+add_dependencies(${UNIT_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin hestia_mock_motr_plugin)
 
 target_code_coverage(hestia_common)
 target_code_coverage(hestia_server)

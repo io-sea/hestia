@@ -1,8 +1,11 @@
 #include <catch2/catch_all.hpp>
 
-#include "MockMotr.h"
-#include "MockMotrBackend.h"
-#include "MockMotrHsm.h"
+//#include "MockMotr.h"
+//#include "MockMotrBackend.h"
+//#include "MockMotrHsm.h"
+
+#include "HsmObjectStoreTestWrapper.h"
+
 
 static char* to_buffer(std::string& content)
 {
@@ -34,6 +37,7 @@ class MotrBackendTestFixture {
 };
 
 TEST_CASE_METHOD(
+    MockMotrTestFixture,
     MotrBackendTestFixture,
     "Test Mock Motr Backend - Standard Object",
     "[motr-backend]")

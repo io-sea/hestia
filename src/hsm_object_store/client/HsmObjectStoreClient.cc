@@ -53,6 +53,9 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
         case HsmObjectStoreRequestMethod::REMOVE_ALL:
             LOG_ERROR("Not implemented yet: ");
             break;
+        case HsmObjectStoreRequestMethod::EXISTS:
+            LOG_ERROR("Not implemented yet: ");
+            break;
         default:
             const std::string msg =
                 "Method: " + request.method_as_string() + " not supported";
