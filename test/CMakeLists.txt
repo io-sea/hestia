@@ -56,6 +56,7 @@ endif()
 target_link_libraries(${UNIT_TEST_MODULE} PRIVATE 
     hestia_client 
     hestia_motr_plugin_mock
+    hestia_lib 
     hestia_server 
     hestia_storage
     hestia_s3app
