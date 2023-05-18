@@ -127,7 +127,27 @@ You can do the following in the source directory, pointing to the `$BUILD_DIR`:
 tools/run_lint.sh $BUILD_DIR
 ```
 
+# Building Plugins
 
+## Cortx-Motr
 
+To build the Cortx-Motr Hestia plugin, you will need motr installed. As they provide
+no official RPMs, we build our own for Rocky8, and store them in the [Gitlab package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33).
 
+For instructions on installing and building these beyond "download, untar, install with yum", see [this document](/doc/Markdown/motr_use.md).
 
+## Phobos
+
+Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON`. Note, this 
+will silently fail on a Mac and not look for phobos. 
+
+To build Phobos, you need to install the following dependencies. 
+
+```
+yum install -y autoconf automake libtool openssl-devel gcc-c++ git wget doxygen rpm-build python3-devel libxml2-devel libcurl-devel \
+    make glib2-devel which jansson-devel libini_config-devel libattr-devel sg3_utils-devel protobuf-c-devel libpq-devel
+```
+
+Then you can run the [following script](/infra/scripts/build_phobos.sh) 
+as `infra/scripts/build_phobos.sh infra/cmake/patches` to build Phobos
+(tested in rocky8 docker container).
