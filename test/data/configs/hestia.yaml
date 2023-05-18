@@ -45,7 +45,7 @@ object_store_clients:
     plugin_path: libhestia_motr_plugin
 
 key_value_store:
-  - client_identifier: hestia::FileKeyValueStoreClient
+  client_identifier: hestia::FileKeyValueStoreClient
 
 key_value_store_clients:
   - identifier: hestia::FileKeyValueStoreClient

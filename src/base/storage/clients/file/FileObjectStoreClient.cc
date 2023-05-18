@@ -138,7 +138,8 @@ void FileObjectStoreClient::get(
 
     if (!exists(object)) {
         const std::string msg =
-            "Requested object: " + object.m_id + " not found.";
+            "Requested object: " + object.m_id
+            + " not found in: " + get_data_path(object.m_id).string();
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
@@ -220,6 +221,11 @@ std::filesystem::path FileObjectStoreClient::get_metadata_path(
 
 bool FileObjectStoreClient::exists(const std::string& object_id) const
 {
-    return std::filesystem::is_regular_file(get_metadata_path(object_id));
+    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+        return std::filesystem::is_regular_file(get_metadata_path(object_id));
+    }
+    else {
+        return std::filesystem::is_regular_file(get_data_path(object_id));
+    }
 }
 }  // namespace hestia

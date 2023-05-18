@@ -39,7 +39,6 @@ HsmService::HsmService(
 
 HsmService::~HsmService()
 {
-
     LOG_INFO("Destroying HsmService");
 }
 
@@ -147,6 +146,8 @@ HsmServiceResponse::Ptr HsmService::put(
 HsmServiceResponse::Ptr HsmService::get(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
+    LOG_INFO("Starting HSMService GET: " + req.to_string());
+
     auto exists = m_store->exists(req.object());
     ERROR_CHECK(exists);
     if (!exists->object_found()) {
@@ -157,10 +158,12 @@ HsmServiceResponse::Ptr HsmService::get(
     if (stream != nullptr) {
         auto response = m_store->get_data(
             req.object(), req.extent(), req.source_tier(), stream);
+        LOG_INFO("Finished HSMService GET");
         return HsmServiceResponse::create(req, std::move(response));
     }
     else {
         auto response = m_store->get_metadata(req.object());
+        LOG_INFO("Finished HSMService GET");
         return HsmServiceResponse::create(req, std::move(response));
     }
 }

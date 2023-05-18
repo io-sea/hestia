@@ -6,6 +6,7 @@
 #include "DataPlacementEngineRegistry.h"
 #include "HsmObjectStoreClientRegistry.h"
 #include "KeyValueStoreClientRegistry.h"
+#include "Logger.h"
 
 #include <string>
 #include <unordered_map>
@@ -42,11 +43,14 @@ class HestiaConfig {
     CopyToolConfig m_copy_tool_config;
 
   private:
+    void load_logger_config();
+
     void load_object_store_clients(
         const Dictionary& object_store_clients,
         const Dictionary& tier_backend_registry);
 
-    void load_kv_store(const Dictionary& kv_store_config);
+    void load_kv_store(
+        const Dictionary& kv_store_config, const Dictionary& kv_store_clients);
 
     void load_object_store_defaults();
 

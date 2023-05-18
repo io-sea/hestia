@@ -94,14 +94,15 @@ void FileHsmObjectStoreClient::get(
     StorageObject& object,
     Stream* stream) const
 {
+    LOG_INFO("Getting metadata");
     FileObjectStoreClient md_client;
     md_client.do_initialize(
         m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
     if (const auto response = md_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
-        const std::string msg =
-            "Error in file client GET: " + response->get_error().to_string();
+        const std::string msg = "Error in file client metadata GET: "
+                                + response->get_error().to_string();
         throw RequestException<HsmObjectStoreError>(
             {HsmObjectStoreErrorCode::ERROR, msg});
     }
@@ -113,6 +114,7 @@ void FileHsmObjectStoreClient::get(
         return;
     }
 
+    LOG_INFO("Getting data");
     FileObjectStoreClient data_client;
     data_client.do_initialize(
         get_tier_path(request.target_tier()),
@@ -120,8 +122,8 @@ void FileHsmObjectStoreClient::get(
     if (const auto response = data_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
-        const std::string msg =
-            "Error in file client GET: " + response->get_error().to_string();
+        const std::string msg = "Error in file client data GET: "
+                                + response->get_error().to_string();
         throw RequestException<HsmObjectStoreError>(
             {HsmObjectStoreErrorCode::ERROR, msg});
     }
@@ -160,7 +162,9 @@ void FileHsmObjectStoreClient::remove(
 void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
-    file_client.do_initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(
+        get_tier_path(request.source_tier()),
+        FileObjectStoreClient::Mode::DATA_ONLY);
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), true);
 }
@@ -168,7 +172,9 @@ void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 void FileHsmObjectStoreClient::move(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
-    file_client.do_initialize(get_tier_path(request.source_tier()));
+    file_client.do_initialize(
+        get_tier_path(request.source_tier()),
+        FileObjectStoreClient::Mode::DATA_ONLY);
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), false);
 }

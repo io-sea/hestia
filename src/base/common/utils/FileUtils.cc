@@ -22,4 +22,10 @@ void FileUtils::create_if_not_existing(const Path& path)
         }
     }
 }
+
+void FileUtils::empty_path(const Path& path)
+{
+    std::filesystem::remove_all(path);
+    std::filesystem::create_directories(path);
+}
 }  // namespace hestia

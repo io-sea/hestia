@@ -19,7 +19,9 @@ typedef enum hestia_error_e {
     HESTIA_ERROR_COUNT,
 } hestia_error_t;
 
-void initialize(const char* config_path = nullptr);
+int initialize(const char* config_path = nullptr);
+
+void finish();
 
 /// @brief Creates an object in the object store and an entry for it in the key value store
 ///

@@ -1,5 +1,6 @@
 #include "HestiaConfig.h"
 
+#include "Logger.h"
 #include "YamlUtils.h"
 
 #include <filesystem>
@@ -84,9 +85,33 @@ void HestiaConfig::load_kv_store_defaults()
         KeyValueStoreClientSpec(KeyValueStoreClientSpec::Type::FILE, config);
 }
 
-void HestiaConfig::load_kv_store(const Dictionary& kv_store_config)
+void HestiaConfig::load_kv_store(
+    const Dictionary& kv_store_config, const Dictionary& kv_store_clients)
 {
-    (void)kv_store_config;
+    std::string client_identifier;
+    if (auto client_id = kv_store_config.get_map_item("client_identifier");
+        client_id != nullptr) {
+        client_identifier = client_id->get_scalar();
+    }
+
+    for (const auto& config : kv_store_clients.get_sequence()) {
+        std::string identifier;
+        if (const auto identifier_dict = config->get_map_item("identifier");
+            identifier_dict != nullptr) {
+            identifier = identifier_dict->get_scalar();
+        }
+
+        if (identifier == client_identifier) {
+            Metadata client_config;
+            config->get_map_items(client_config);
+            if (client_identifier == "hestia::FileKeyValueStoreClient") {
+                LOG_INFO("Setting kv store spec: ");
+                m_key_value_store_spec = KeyValueStoreClientSpec(
+                    KeyValueStoreClientSpec::Type::FILE, client_config);
+            }
+            break;
+        }
+    }
 }
 
 void HestiaConfig::load(const Dictionary& dict)
@@ -102,9 +127,11 @@ void HestiaConfig::load(const Dictionary& dict)
         load_object_store_clients(*object_store_config, *tier_client_registry);
     }
 
-    if (auto kv_store_spec = dict.get_map_item("key_value_store");
-        kv_store_spec != nullptr) {
-        load_kv_store(*kv_store_spec);
+    auto kv_store_config   = dict.get_map_item("key_value_store");
+    auto kv_store_registry = dict.get_map_item("key_value_store_clients");
+
+    if ((kv_store_config != nullptr) && (kv_store_registry != nullptr)) {
+        load_kv_store(*kv_store_config, *kv_store_registry);
     }
     else {
         load_kv_store_defaults();

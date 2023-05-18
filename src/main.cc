@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     logger_config.m_log_file_path =
         std::filesystem::current_path() / "hestia_log.txt";
 
-    hestia::Logger::get_instance().initialize(logger_config);
+    hestia::Logger::get_instance().do_initialize(logger_config);
 
     LOG_INFO("Starting Hestia");
 

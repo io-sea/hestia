@@ -2,6 +2,18 @@
 
 #include "Logger.h"
 
+#define CATCH_FLOW()                                                           \
+    catch (const std::exception& e)                                            \
+    {                                                                          \
+        on_exception(request, response.get(), e.what());                       \
+        return response;                                                       \
+    }                                                                          \
+    catch (...)                                                                \
+    {                                                                          \
+        on_exception(request, response.get());                                 \
+        return response;                                                       \
+    }
+
 namespace hestia {
 HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, Stream* stream) const noexcept
@@ -12,66 +24,31 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
             try {
                 get(request, response->object(), stream);
             }
-            catch (std::exception& e) {
-                on_exception(request, response.get(), e.what());
-                return response;
-            }
-            catch (...) {
-                on_exception(request, response.get());
-                return response;
-            }
+            CATCH_FLOW();
             break;
         case HsmObjectStoreRequestMethod::PUT:
             try {
                 put(request, stream);
             }
-            catch (std::exception& e) {
-                on_exception(request, response.get(), e.what());
-                return response;
-            }
-            catch (...) {
-                on_exception(request, response.get());
-                return response;
-            }
+            CATCH_FLOW();
             break;
         case HsmObjectStoreRequestMethod::MOVE:
             try {
                 move(request);
             }
-            catch (std::exception& e) {
-                on_exception(request, response.get(), e.what());
-                return response;
-            }
-            catch (...) {
-                on_exception(request, response.get());
-                return response;
-            }
+            CATCH_FLOW();
             break;
         case HsmObjectStoreRequestMethod::COPY:
             try {
                 copy(request);
             }
-            catch (std::exception& e) {
-                on_exception(request, response.get(), e.what());
-                return response;
-            }
-            catch (...) {
-                on_exception(request, response.get());
-                return response;
-            }
+            CATCH_FLOW();
             break;
         case HsmObjectStoreRequestMethod::REMOVE:
             try {
                 remove(request);
             }
-            catch (std::exception& e) {
-                on_exception(request, response.get(), e.what());
-                return response;
-            }
-            catch (...) {
-                on_exception(request, response.get());
-                return response;
-            }
+            CATCH_FLOW();
             break;
         case HsmObjectStoreRequestMethod::REMOVE_ALL:
             LOG_ERROR("Not implemented yet: ");

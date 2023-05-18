@@ -8,6 +8,8 @@
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 
+#include "Logger.h"
+
 namespace rc {
 int error(const hestia::RequestError<hestia::HsmServiceErrorCode>& error)
 {
@@ -58,10 +60,12 @@ int HestiaCppInterface::put(
             ApplicationContext::get().get_hsm_service()->make_request(
                 request, &stream);
         !response->ok()) {
+        LOG_ERROR("Error in PUT: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
+        LOG_ERROR("Error in PUT Stream: " + stream_state.to_string());
         return rc::bad_stream();
     }
     return rc::ok();
@@ -84,10 +88,12 @@ int HestiaCppInterface::get(
             ApplicationContext::get().get_hsm_service()->make_request(
                 request, &stream);
         !response->ok()) {
+        LOG_ERROR("Error in GET: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
 
     if (const auto stream_state = stream.flush(); !stream_state.ok()) {
+        LOG_ERROR("Error in GET Stream: " + stream_state.to_string());
         return rc::bad_stream();
     }
     return rc::ok();
@@ -107,6 +113,7 @@ int HestiaCppInterface::copy(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
+        LOG_ERROR("Error in COPY: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     return rc::ok();
@@ -126,6 +133,7 @@ int HestiaCppInterface::move(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
+        LOG_ERROR("Error in MOVE: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     return rc::ok();
@@ -142,6 +150,7 @@ int HestiaCppInterface::get_attributes(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
+        LOG_ERROR("Error in GET ATTRS: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
 
@@ -158,6 +167,7 @@ int HestiaCppInterface::set_attributes(
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
+        LOG_ERROR("Error in SET ATTRS: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     return rc::ok();
@@ -169,6 +179,7 @@ int HestiaCppInterface::release(const hestia::Uuid& object_id)
     if (const auto response =
             ApplicationContext::get().get_hsm_service()->make_request(request);
         !response->ok()) {
+        LOG_ERROR("Error in RELEASE: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     return rc::ok();
@@ -184,6 +195,7 @@ int HestiaCppInterface::release(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
+        LOG_ERROR("Error in RELEASE: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     return rc::ok();
@@ -197,6 +209,7 @@ int HestiaCppInterface::list_objects(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
+        LOG_ERROR("Error in LIST: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     objects = response->objects();
@@ -211,6 +224,7 @@ int HestiaCppInterface::list_tiers(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
+        LOG_ERROR("Error in LIST TIERS: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     tiers = response->tiers();
@@ -224,6 +238,7 @@ int HestiaCppInterface::list_attributes(
     const auto response =
         ApplicationContext::get().get_hsm_service()->make_request(request);
     if (!response->ok()) {
+        LOG_ERROR("Error in LIST ATTRS: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
     attributes = response->query_result();

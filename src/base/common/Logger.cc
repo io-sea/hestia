@@ -19,7 +19,36 @@ Logger& Logger::get_instance()
     return instance;
 }
 
-void Logger::initialize(const Config& config)
+void Logger::initialize(const Metadata& config_data)
+{
+    Config config;
+    auto on_item = [&config](const std::string& key, const std::string& value) {
+        if (key == "path") {
+            config.m_log_file_path = value;
+        }
+        else if (key == "prefix") {
+            config.m_log_prefix = std::stoi(value);
+        }
+        else if (key == "level") {
+            if (value == "INFO") {
+                config.m_level = Logger::Level::INFO;
+            }
+            else if (value == "WARN") {
+                config.m_level = Logger::Level::WARN;
+            }
+            else if (value == "DEBUG") {
+                config.m_level = Logger::Level::DEBUG;
+            }
+            else if (value == "ERROR") {
+                config.m_level = Logger::Level::ERROR;
+            }
+        }
+    };
+    config_data.for_each_item(on_item);
+    do_initialize(config);
+}
+
+void Logger::do_initialize(const Config& config)
 {
     m_config = config;
 

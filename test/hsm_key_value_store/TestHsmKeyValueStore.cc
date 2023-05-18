@@ -8,6 +8,21 @@
 
 class HsmKeyValueStoreTestFixture {
   public:
+    void init(const std::string& test_name)
+    {
+        m_test_name           = test_name;
+        const auto store_path = get_store_path();
+        std::filesystem::remove_all(store_path);
+
+        hestia::Metadata config;
+        config.set_item("root", store_path);
+        auto kv_store_client =
+            std::make_unique<hestia::FileKeyValueStoreClient>();
+        kv_store_client->initialize(config);
+        m_store = std::make_unique<hestia::HsmKeyValueStore>(
+            std::move(kv_store_client));
+    }
+
     ~HsmKeyValueStoreTestFixture()
     {
         std::filesystem::remove_all(get_store_path());
@@ -54,21 +69,6 @@ class HsmKeyValueStoreTestFixture {
             obj, hestia::ObjectStoreRequestMethod::REMOVE);
         auto response = m_store->make_request(request);
         REQUIRE(response->ok());
-    }
-
-    void init(const std::string& test_name)
-    {
-        m_test_name           = test_name;
-        const auto store_path = get_store_path();
-        std::filesystem::remove_all(store_path);
-
-        hestia::Metadata config;
-        config.set_item("root", store_path);
-        auto kv_store_client =
-            std::make_unique<hestia::FileKeyValueStoreClient>();
-        kv_store_client->initialize(config);
-        m_store = std::make_unique<hestia::HsmKeyValueStore>(
-            std::move(kv_store_client));
     }
 
     std::string get_store_path() const

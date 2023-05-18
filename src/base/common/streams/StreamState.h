@@ -50,7 +50,7 @@ struct StreamState {
      *
      * @return the state as a string - intended for debugging
      */
-    std::string to_string();
+    std::string to_string() const;
 
     /**
      * Convert the internal state enum to string

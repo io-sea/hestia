@@ -100,6 +100,7 @@ add_executable(${INTEGRATION_TEST_MODULE} ${INTEGRATION_TEST_SOURCES})
 
 target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
     hestia_http_client
+    hestia_client
     hestia_server
     hestia_web
     hestia_s3app

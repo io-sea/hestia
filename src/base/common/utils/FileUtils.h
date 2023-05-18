@@ -40,5 +40,7 @@ class FileUtils {
      * @return the filename only
      */
     static std::string get_filename_without_extension(const Path& path);
+
+    static void empty_path(const Path& path);
 };
 }  // namespace hestia

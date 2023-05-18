@@ -16,7 +16,7 @@ bool StreamState::ok() const
     return m_state != State::ERROR;
 }
 
-std::string StreamState::to_string()
+std::string StreamState::to_string() const
 {
     return to_string(m_state);
 }

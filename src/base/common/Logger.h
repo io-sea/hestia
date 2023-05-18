@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Metadata.h"
+
 #include <sstream>
 
 #define LOG_BASE(msg, level)                                                   \
@@ -30,7 +32,9 @@ class Logger {
         Level m_level{Level::INFO};
     };
 
-    void initialize(const Config& config);
+    void initialize(const Metadata& config);
+
+    void do_initialize(const Config& config);
 
     static Logger& get_instance();
 
