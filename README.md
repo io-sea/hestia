@@ -1,44 +1,12 @@
-# Hestia
+# Hestia Motr RPM Builds
 
-Hestia (Hierarchical Storage Tiers Interface for Applications) is a Hierarchical Storage Management (HSM) enabled interface to various Object Store backends.
+This branch is dedicated to building Motr RPMs and pushing them to the [Gitlab Package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33).
 
-It allows incorporation of both HSM-enabled and standard Object Store backend realisations into a single HSM API, with standard backends available as individual 'tiers'.
+For instructions on consuming these, see [this guide](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/doc/Markdown/motr_use.md).
 
-# Building from Source
+Running a build just requires manually triggering the job from the CI.
 
-Hestia is supported on Linux and Mac. 
-
-## Dependencies
-
-### Required
-
-* A `c++17` compatible compiler
-* `cmake >= 3.24` ([script provided](infra/scripts/bootstrap_cmake.sh) to fetch if system version too old)
-* `curl` (and development headers)
-* `libxml2` (and development headers)
-
-### Recommended
-
-* `OpenSSL` 
-
-### Automatically Fetched If not Present
-
-* `libs3` - for S3 clients
-* `phobos` - for tape storage
-* `Catch` - unit testing
-* `spdlog` - logging
-* `nlohmann:json` - json support
-
-## Doing the build
-
-It is a 'standard' CMake build, do:
-
-```bash
-mkdir $BUILD_DIR
-cd $BUILD_DIR
-cmake $PATH_TO_SOURCE
-make
-```
-
-# Applications
-The main function can be run with `./hestia` from `/path/to/hestia/project/build/src`. Note that the executable must be run from this directory. 
+The versions currently built are as follows:
+ - Cortx-Motr 2.0.0, GIT-SHA: 71735b89b26fec78cea0f5fb43dadd964486fff5
+ - Cortx-Utils 2.0.0, GIT-SHA=95e10fa204bd8f4d38aa7c2634e764022475342e
+ - Cortx-Utils-Hare 2.0.0, GIT-SHA=6915b5670f12c666900261dfbef56b8e719054a0
