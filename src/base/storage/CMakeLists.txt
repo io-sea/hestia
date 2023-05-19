@@ -49,7 +49,7 @@ add_module(
         common
         protocol
     PRIVATE_DEPENDENCIES
-        hiredis::hiredis
+        hiredis::hiredis_static
     WITH_FILESYSTEM
 )
 

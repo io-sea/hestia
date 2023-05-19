@@ -1,5 +1,7 @@
 #include "PhobosDescriptor.h"
 
+#include <string>
+
 #if HAS_PHOBOS
 PhobosDescriptor::PhobosDescriptor()
 {
@@ -42,7 +44,9 @@ void PhobosDescriptor::set_up_object_operation(const Info& info)
     clear_object_id();
 
     char* unconsted_object_id = new char[info.m_object_id.length() + 1];
-    ::strcpy(unconsted_object_id, info.m_object_id.c_str());
+    ::strncpy(
+        unconsted_object_id, info.m_object_id.c_str(),
+        info.m_object_id.length());
     m_handle.xd_objid = unconsted_object_id;
 
     switch (info.m_op) {

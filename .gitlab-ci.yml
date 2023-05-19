@@ -5,21 +5,20 @@ stages:
   - build
   - test
 
-# Hestia CI variables
+# CI variables
 .variables:
   default_variables: &default_variables 
     CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: Release 
     CXX: g++
-    C: gcc
+    CC: gcc
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     HESTIA_BUILD_TESTS: "OFF" 
-    HESTIA_BUILD_DOCUMENTATION: "OFF"
-    HESTIA_DOC_DIR: ""
+    HESTIA_CODE_COVERAGE: "OFF"
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
 
-# Hestia CI code snippets
+# CI code snippets
 .snippets: 
   - &update_distro
     yum check-update -q || true;
@@ -29,6 +28,8 @@ stages:
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
+  - &install_phobos_dependencies
+    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -38,8 +39,9 @@ stages:
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
       -DCMAKE_CXX_COMPILER="${CXX}" 
-      -DHESTIA_WITH_PHOBOS=OFF
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
+      -DHESTIA_WITH_PHOBOS=OFF
+      -DCODE_COVERAGE="${HESTIA_CODE_COVERAGE}"
     )
     && popd
   - &build 
@@ -68,14 +70,14 @@ stages:
   before_script: 
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos_dependencies
   script: 
     - *configure 
-    - *build 
+    - *build
   cache:
     <<: *cmake_install_cache
 
-  
-# Hestia CI Jobs
+# CI Jobs
 
 Format: 
   <<: *default_job
@@ -97,41 +99,28 @@ Lint:
     CMAKE_BUILD_TYPE: Debug
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
     CXX: clang++
-    C: clang
+    CC: clang
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
     - *build 
   script:
     - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}"
 
-
-#Documentation:
-#   <<: *default_job
-#   stage: build 
-#   variables:
-#       <<: *default_variables
-#       HESTIA_BUILD_DOCUMENTATION: "ON"
-#        HESTIA_DOC_DIR: ../../doc/parser/src
-#    script:
-#        - apt-get install --no-install-recommends -y
-#            cmake
-#            git
-#            doxygen
-#            graphviz
-#            texlive texlive-font-utils
-#        - *configure
-#        - make -C build/doc
-#            && git status
-#            && git diff-index --quiet HEAD
-#            || { echo "This commit contains changes to the documentation! Run doxygen-XML-parser on the project update the documentation."; false; }
-
 Release:
   <<: *default_job
   stage: build
+  variables:
+    <<: *default_variables
+    HESTIA_BUILD_DOCUMENTATION: "ON"
+  script: 
+    - *configure 
+    - *build 
+#    - make doxygen
 
 Unit_test:
   <<: *default_job
@@ -142,13 +131,17 @@ Unit_test:
     <<: *default_variables
     CMAKE_BUILD_TYPE: Debug
     CXX: clang++
-    C: clang
+    CC: clang
     HESTIA_BUILD_TESTS: "ON"
+    HESTIA_CODE_COVERAGE: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
     - *test
+#    - make ccov-hestia_unit_tests
+#    - make ccov-report-hestia_unit_test

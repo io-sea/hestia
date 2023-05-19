@@ -126,5 +126,8 @@ set(CPACK_SOURCE_IGNORE_FILES
 )
 
 include(CPack)
+
+else()
+        message(STATUS "Skipping package targets due to PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} " not equal to CMAKE_SOURCE_DIR: " ${CMAKE_SOURCE_DIR}) 
 endif()
 

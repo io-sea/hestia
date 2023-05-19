@@ -5,6 +5,7 @@ pkg_search_module(GLIB REQUIRED glib-2.0)
 
 add_module(
     MODULE_NAME phobos_impl
+    NO_INSTRUMENT
     HEADERS
         PhobosWrapper.h
         PhobosInterfaceImpl.h
