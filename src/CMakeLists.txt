@@ -1,3 +1,5 @@
+include(AddModule)
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     include(development_flags)
 endif()
@@ -14,5 +16,26 @@ add_subdirectory(hsm_service)
 add_subdirectory(hestia_client)
 
 add_executable(hestia_main main.cc)
-target_link_libraries(hestia_main hestia_client)
+target_link_libraries(hestia_main PRIVATE hestia_client)
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_link_libraries(hestia_main PRIVATE development_flags)
+endif()
+if(NOT APPLE)
+    target_link_libraries(hestia_main PRIVATE stdc++fs)
+endif()
+
 set_target_properties(hestia_main PROPERTIES OUTPUT_NAME "hestia")
+
+add_module(
+    MODULE_NAME lib
+    SHARED
+    WITH_FILESYSTEM
+    HEADERS
+        hestia.h
+        hestia_types.h
+    SOURCES
+        hestia_client/hestia.cc
+    INTERNAL_DEPENDENCIES 
+        headers
+        client  
+)

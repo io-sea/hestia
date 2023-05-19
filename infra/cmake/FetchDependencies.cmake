@@ -55,10 +55,11 @@ macro(fetch_yaml_cpp)
             SYSTEM
             FIND_PACKAGE_ARGS
             )
-        set(YAML_CPP_BUILD_TESTS OFF)
+        set(YAML_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
+        set(YAML_BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+        set(YAML_CPP_BUILD_TOOLS OFF CACHE INTERNAL "")
         FetchContent_MakeAvailable(yaml-cpp)
 endmacro()
-
 
 # https://gitlab.gnome.org/GNOME/libxml2
 macro(fetch_libxml2)
@@ -81,6 +82,7 @@ macro(fetch_hiredis)
         SYSTEM
         FIND_PACKAGE_ARGS
         )
+        set(DISABLE_TESTS ON CACHE INTERNAL "disable hiredis tests")
         FetchContent_MakeAvailable(hiredis)
 endmacro()
 

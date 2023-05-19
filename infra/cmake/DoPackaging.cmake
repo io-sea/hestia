@@ -6,6 +6,17 @@ set(LINK_MODULES_FOR_EXPORT
         storage 
         web
         s3app
+        hsm_service
+        event_feed
+        copytool_lib
+        http_client
+        hsm_object_store_common
+        hsm_object_store_client
+        hsm_key_value_store
+        hsm_object_store
+        data_placement_engine
+        client
+        headers
 )
 
 set(STANDALONE_MODULES_FOR_EXPORT
@@ -17,6 +28,8 @@ set(STANDALONE_MODULES_FOR_EXPORT
         mock_s3_server
         mock_s3
         mock_s3_plugin
+        main 
+        lib
 )
 
 if(HESTIA_WITH_S3_CLIENT)
@@ -89,10 +102,21 @@ set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 
-set(CPACK_GENERATOR RPM)
-set(CPACK_RPM_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_RPM_PACKAGE_REQUIRES "libcurl-devel openssl-devel libxml2-devel")
-set(CPACK_RPM_PACKAGE_AUTOREQ "no")
+set(HESTIA_CPACK_GENERATORS TGZ)
+if(NOT APPLE)
+        set(HESTIA_PACKAGE_TYPE RPM CACHE STRING "Linux package type: DEB or RPM")
+        set(CPACK_RPM_PACKAGE_NAME ${PROJECT_NAME})
+        set(CPACK_RPM_PACKAGE_REQUIRES "libcurl openssl libxml2")
+        set(CPACK_RPM_PACKAGE_AUTOREQ "no")
+
+        set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+        set(CPACK_DEBIAN_PACKAGE_MAINTAINER "support@ichec.ie")
+
+        list(APPEND HESTIA_CPACK_GENERATORS ${HESTIA_PACKAGE_TYPE})
+endif()
+
+set(CPACK_GENERATOR ${HESTIA_CPACK_GENERATORS})
+
 set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
 set(CPACK_SOURCE_IGNORE_FILES
     /.git

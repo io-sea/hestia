@@ -90,8 +90,7 @@ bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 
 void PhobosInterfaceImpl::remove(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{
-        .m_object_id = obj.m_id, .m_op = PhobosDescriptor::Operation::DEL};
+    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::DEL};
 
     PhobosDescriptor descriptor(info);
 

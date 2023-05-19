@@ -36,23 +36,4 @@ add_module(
         web      
 )
 
-target_include_directories(hestia_client SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/external)
-
-add_module(
-    MODULE_NAME lib
-    SHARED
-    SOURCES
-        hestia.cc
-    INTERNAL_DEPENDENCIES 
-        headers
-        client  
-)
-
-set(HESTIA_PUBLIC_HEADERS
-    ../hestia.h
-    ../types.h
-    )
-set_target_properties(hestia_lib PROPERTIES PUBLIC_HEADER "${HESTIA_PUBLIC_HEADERS}")
-install(TARGETS hestia_lib
-        LIBRARY DESTINATION lib64
-        PUBLIC_HEADER DESTINATION include)
+target_include_directories(hestia_client SYSTEM PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>)
