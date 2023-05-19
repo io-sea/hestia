@@ -4,9 +4,6 @@
 #include "MockMotrBackend.h"
 #include "MockMotrHsm.h"
 
-//#include "HsmObjectStoreTestWrapper.h"
-
-
 static char* to_buffer(std::string& content)
 {
     return reinterpret_cast<char*>(content.data());

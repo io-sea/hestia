@@ -9,10 +9,8 @@ add_module(
         MockWebView.h
         TestContext.h
         TestUtils.h
-      #  HsmTestContext.h
     SOURCES
         TestContext.cc
-       # HsmTestContext.cc
     INTERNAL_DEPENDENCIES 
         web
         hsm_object_store_client

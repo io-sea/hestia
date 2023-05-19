@@ -2,9 +2,6 @@
 
 #include "MockMotrHsm.h"
 
-//#include "HsmObjectStoreTestWrapper.h"
-
-
 #include <iostream>
 
 class MotrHsmTestFixture {

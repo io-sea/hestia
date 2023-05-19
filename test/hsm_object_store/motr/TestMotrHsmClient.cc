@@ -1,33 +1,9 @@
 #include <catch2/catch_all.hpp>
 
-//#include "MockMotrClient.h"
-//#include "MockMotrInterfaceImpl.h"
-//#include "MotrHsmClient.h"
-//#include "MotrInterface.h"
 #include "HsmObjectStoreTestWrapper.h"
 #include "TestContext.h"
 
 #include "types.h"
-
-/*
-class TestMockMotrHsmClient : public hestia::mock::MockMotrHsmClient
-{
-public:
-    TestMockMotrHsmClient()
-        : MockMotrHsmClient()
-    {
-    //   auto mock_impl = std::make_unique<hestia::MockMotrInterfaceImpl>();
-    //    mMockMotrImpl = mock_impl.get();
-    //    mMotrInterface =
-std::make_unique<hestia::MotrInterface>(std::move(mock_impl));
-    }
-
-    ~TestMockMotrHsmClient
-
-//private:
-  //  hestia::MockMotrInterfaceImpl* mMockMotrImpl{nullptr};
-};
-*/
 
 class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
   public:
