@@ -80,8 +80,6 @@ stages:
   cache:
     <<: *cmake_install_cache
 
-# CI Jobs
-
 Format: 
   <<: *default_job
   stage: static analysis
@@ -154,3 +152,14 @@ Unit_test:
     - *test
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-hestia_unit_tests
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-report-hestia_unit_test
+
+E2E_test:
+  <<: *default_job
+  stage: test
+  dependencies: 
+    - Release
+  before_script:
+    - *update_distro
+    - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
+  script:
+    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --do_install=True --package_name=${CMAKE_BUILD_DIR}/hestia-0.0.1-Linux.rpm

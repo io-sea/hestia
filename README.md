@@ -196,3 +196,9 @@ make
 ```
 
 For more build details see the [Hestia Developer Guide](./doc/DeveloperGuide.md).
+
+# License
+
+This code is primarily licensed under an MIT license - see the included LICENSE file for details. Third-party code licenses are included in [external/licenses](external/licenses/).
+
+Some project plugins (lazy-loaded shared libraries) are licensed under the LGPL as required by their specific dependencies - this is determined by their dependecies as listed in their respective CMakeLists file. You can cross check the CMake target for the dependency with the content of [external/licenses](external/licenses/), the directory names map to the CMake target names.
