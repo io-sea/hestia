@@ -42,6 +42,7 @@ set(UNIT_TEST_SOURCES
     hsm_object_store/HsmObjectStoreTestWrapper.cc
     hsm_key_value_store/TestHsmKeyValueStore.cc
     hestia_client/TestHestiaCppClient.cc
+    hsm_service/TestHsmService.cc
 )
 
 add_executable(${UNIT_TEST_MODULE} 

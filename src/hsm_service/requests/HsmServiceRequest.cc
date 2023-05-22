@@ -28,6 +28,8 @@ std::string HsmServiceRequest::method_as_string() const
             return "PUT";
         case HsmServiceRequestMethod::GET:
             return "GET";
+        case HsmServiceRequestMethod::EXISTS:
+            return "EXISTS";
         case HsmServiceRequestMethod::GET_TIERS:
             return "GET_TIERS";
         case HsmServiceRequestMethod::REMOVE:

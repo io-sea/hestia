@@ -11,6 +11,7 @@ namespace hestia {
 enum class HsmServiceRequestMethod {
     PUT,
     GET,
+    EXISTS,
     GET_TIERS,
     REMOVE,
     REMOVE_ALL,

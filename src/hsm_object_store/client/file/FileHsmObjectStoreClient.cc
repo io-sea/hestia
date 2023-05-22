@@ -117,7 +117,7 @@ void FileHsmObjectStoreClient::get(
     LOG_INFO("Getting data");
     FileObjectStoreClient data_client;
     data_client.do_initialize(
-        get_tier_path(request.target_tier()),
+        get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     if (const auto response = data_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
