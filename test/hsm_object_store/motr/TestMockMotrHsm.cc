@@ -127,7 +127,7 @@ TEST_CASE_METHOD(
     int tgt_tier    = 3;
     auto copy_flags = hestia::mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     rc              = m_hsm.m0hsm_copy(
-                     obj_id, src_tier, tgt_tier, 0, content.size(), copy_flags);
+        obj_id, src_tier, tgt_tier, 0, content.size(), copy_flags);
     REQUIRE_FALSE(rc);
 
     dump_target.clear();

@@ -1,6 +1,6 @@
 #include "MockMotrClient.h"
 
-//#include "MotrInterface.h"
+// #include "MotrInterface.h"
 
 namespace hestia::mock {
 MockMotrHsmClient::MockMotrHsmClient() :

@@ -221,7 +221,7 @@ int Hsm::on_layer_match_for_copy(
     if ((ctx->flags & HSM_WRITE_TO_DEST) != 0) {
         write_tier = ctx->tgt_tier;
         rc         = impl()->check_top_layer_writable(
-                    layout, write_priority, write_tier);
+            layout, write_priority, write_tier);
     }
     else {
         rc = impl()->check_top_layer_writable(
@@ -251,7 +251,7 @@ int Hsm::on_layer_match_for_copy(
 
         subobj_id = tgt_layer->m_id;
         auto mc   = tgt_layer->match_extent(
-              *match, &already_ext, ExtentMatchType::EMT_INTERSECT, false, false);
+            *match, &already_ext, ExtentMatchType::EMT_INTERSECT, false, false);
 
         if (mc == ExtentMatchCode::EM_FULL) {
             on_release_post_copy(ctx, layout, src_layer, match, gen);
