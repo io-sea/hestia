@@ -10,7 +10,7 @@ import filecmp
 
 def install_package(e2e_dir: Path, package_path: Path, project_name: str = "hestia"):
     
-    if sys.platform == "darwin":
+    if str(package_path).endswith(".tar.gz"):
         logging.info(f"Extracting: {package_path} to {e2e_dir}")
         tar = tarfile.open(package_path)
         tar.extractall(e2e_dir)
@@ -18,13 +18,19 @@ def install_package(e2e_dir: Path, package_path: Path, project_name: str = "hest
 
         package_name = package_path.stem
 
-        # Remove .tar from package name if found
+        # Remove .tar from package name
         components = package_path.stem.split(".")
-        if len(components) > 0 and components[-1] == "tar":
-            package_name = package_name[0:-4]
+        package_name = package_name[0:-4]
 
         extracted_path = e2e_dir / package_name
         extracted_path.rename(e2e_dir / project_name)
+    elif str(package_path).endswith(".rpm"):
+        logging.info(f"Installing RPM: {package_path}")
+
+        cmd = f"yum install -y {package_path}"
+        subprocess.run(cmd, shell=True)
+        logging.info(f"RPM installed")
+
 
 def run_ops(runtime_path: Path, runtime_env, ops: list):
     for op in ops:

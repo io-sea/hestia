@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(hestia VERSION 0.0.1 LANGUAGES C CXX)
+set(HESTIA_PROJECT_VERSION "0.0.1" CACHE STRING "Version tag for releases")
+
+project(hestia VERSION ${HESTIA_PROJECT_VERSION} LANGUAGES C CXX)
+message(STATUS "Hestia Version: " ${CMAKE_PROJECT_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

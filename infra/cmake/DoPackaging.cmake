@@ -84,7 +84,7 @@ install(EXPORT ${PROJECT_NAME}-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         ${PROJECT_NAME}ConfigVersion.cmake
-    VERSION ${PACKAGE_VERSION}
+    VERSION ${CMAKE_PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 

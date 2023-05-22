@@ -30,6 +30,17 @@ function(add_clang_format)
 endfunction()
 
 function(add_clang_tidy)
+    add_custom_target(${PROJECT_NAME}_fetch_lint_dependencies)
+    add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies nlohmann_json spdlog yaml-cpp hiredis libs3::s3)
+
+    if(${HESTIA_BUILD_TESTS})
+        fetch_catch2()
+        add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies Catch2::Catch2)
+    endif()
+    if(NOT APPLE AND ${HESTIA_WITH_PHOBOS})
+        add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies phobos)
+    endif()
+
     find_program(CLANG_TIDY_EXE clang-tidy 
         HINTS /opt/homebrew/opt/llvm/bin/
         )

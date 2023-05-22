@@ -1,6 +1,7 @@
 #include "ApplicationContext.h"
 #include "HestiaCli.h"
 #include "Logger.h"
+#include "ProjectConfig.h"
 
 #include <filesystem>
 #include <iostream>
@@ -26,7 +27,9 @@ int main(int argc, char** argv)
 
     hestia::Logger::get_instance().do_initialize(logger_config);
 
-    LOG_INFO("Starting Hestia");
+    LOG_INFO(
+        "Starting Hestia Version: "
+        << hestia::project_config::get_project_version());
 
     int rc = 0;
     try {

@@ -14,7 +14,9 @@ stages:
     CXX: g++
     CC: gcc
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    HESTIA_PROJECT_VERSION: 0.3.0
     HESTIA_BUILD_TESTS: "OFF" 
+    HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_CODE_COVERAGE: "OFF"
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
 
@@ -39,8 +41,9 @@ stages:
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
       -DCMAKE_CXX_COMPILER="${CXX}" 
+      -DCMAKE_PROJECT_VERSION="${HESTIA_PROJECT_VERSION}"
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
-      -DHESTIA_WITH_PHOBOS=OFF
+      -DHESTIA_BUILD_DOCUMENTATION="${HESTIA_BUILD_DOCUMENTATION}"
       -DCODE_COVERAGE="${HESTIA_CODE_COVERAGE}"
     )
     && popd
@@ -107,7 +110,7 @@ Lint:
     - *install_phobos_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
-    - *build 
+    - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies
   script:
     - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}"
 
@@ -120,7 +123,13 @@ Release:
   script: 
     - *configure 
     - *build 
-#    - make doxygen
+    - make -C "${CMAKE_BUILD_DIR}" doxygen
+    - make -C "${CMAKE_BUILD_DIR}" package
+  artifacts:
+    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - ${CMAKE_BUILD_DIR}/*.rpm
+    expire_in: 1 day
 
 Unit_test:
   <<: *default_job
@@ -143,5 +152,5 @@ Unit_test:
     - *configure
     - *build
     - *test
-#    - make ccov-hestia_unit_tests
-#    - make ccov-report-hestia_unit_test
+#    - make -C "${CMAKE_BUILD_DIR}" ccov-hestia_unit_tests
+#    - make -C "${CMAKE_BUILD_DIR}" ccov-report-hestia_unit_test

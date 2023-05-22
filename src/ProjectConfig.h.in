@@ -1,0 +1,14 @@
+#pragma once
+
+namespace hestia::project_config
+{
+    [[maybe_unused]] static std::string get_project_name()
+    {
+        return "@PROJECT_NAME@";
+    }
+
+    [[maybe_unused]] static std::string get_project_version()
+    {
+        return "@PROJECT_VERSION@";
+    }
+}

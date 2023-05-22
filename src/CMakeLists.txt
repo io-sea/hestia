@@ -4,6 +4,9 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     include(development_flags)
 endif()
 
+configure_file(ProjectConfig.h.in ${PROJECT_BINARY_DIR}/ProjectConfig.h)
+install(FILES ${PROJECT_BINARY_DIR}/ProjectConfig.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
 add_library(hestia_headers INTERFACE)
 target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
