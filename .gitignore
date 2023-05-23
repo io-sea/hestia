@@ -4,3 +4,4 @@
 .editorconfig
 build/
 .cache/
+__pycache__/

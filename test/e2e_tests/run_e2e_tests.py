@@ -4,159 +4,85 @@ import argparse
 import logging
 import shutil
 from pathlib import Path
-import tarfile
 import subprocess
-import filecmp
 
-def install_package(e2e_dir: Path, package_path: Path, project_name: str = "hestia") -> bool:
-    
-    system_install = False
-    if str(package_path).endswith(".tar.gz"):
-        logging.info(f"Extracting: {package_path} to {e2e_dir}")
-        tar = tarfile.open(package_path)
-        tar.extractall(e2e_dir)
-        tar.close()
+from hestia_tests.utils import BaseTest, install_package, find_package
 
-        package_name = package_path.stem
+from hestia_tests.cli_tests import CliTests
+from hestia_tests.sample_app_tests import SampleAppTests
+from hestia_tests.server_tests import ServerTests
+# from hestia_tests.s3_tests import S3Tests
 
-        # Remove .tar from package name
-        components = package_path.stem.split(".")
-        package_name = package_name[0:-4]
+class E2eTests(BaseTest):
+    def __init__(self, source_dir: Path, work_dir: Path, package_path: Path):
+        super().__init__(source_dir, work_dir)
+        self.package_path = package_path
 
-        extracted_path = e2e_dir / package_name
-        extracted_path.rename(e2e_dir / project_name)
+    def setup_environment(self):
+        test_data_src = self.source_dir / "test" / "data"
+        test_data_dest = self.work_dir / "test_data"
 
-    elif str(package_path).endswith(".rpm"):
-        logging.info(f"Installing RPM: {package_path}")
+        logging.info(f"Copying test data from: {test_data_src} to {test_data_dest}")
+        shutil.copytree(test_data_src, test_data_dest)
 
-        cmd = f"yum install -y {package_path}"
-        subprocess.run(cmd, shell=True)
-        logging.info(f"RPM installed")
-        system_install = True
-    return system_install
+    def run(self, test_names = []):
+        logging.info("Installing package")
+        self.system_install = install_package(self.work_dir, self.package_path, self.project_name)
 
-def run_ops(runtime_path: Path, runtime_env, ops: list):
-    for op in ops:
-        logging.info("Launching: " + op)
-        subprocess.run(op, shell=True, cwd=runtime_path, env=runtime_env)
-        logging.info("Finished CLI command")
-
-def run_cli_tests(e2e_dir: Path):
-
-    logging.info("Running CLI tests")
-
-    object_content = e2e_dir / "test_data" / "EmperorWu.txt"
-    return_cache = e2e_dir / "object.dat"
-
-    runtime_path = e2e_dir / "cli_tests"
-    Path.mkdir(runtime_path)
-
-    runtime_env = os.environ.copy()
-    project_bin_dir = e2e_dir / "hestia" / "bin"
-    project_lib_dir = e2e_dir / "hestia" / "lib"
-    runtime_env["PATH"] = f"{project_bin_dir}:{runtime_env['PATH']}"
-
-    if "LD_LIBRARY_PATH" in runtime_env:
-        runtime_env["LD_LIBRARY_PATH"] = f"{project_lib_dir}:{runtime_env['LD_LIBRARY_PATH']}"
-    else:
-        runtime_env["LD_LIBRARY_PATH"] = f"{project_lib_dir}"
-    
-    put_cmd = f"hestia put 00001234 {object_content} 0"
-    get_cmd = f"hestia get 00001234 {return_cache} 0"
-
-    ops = [put_cmd, get_cmd]
-    run_ops(runtime_path, runtime_env, ops)
-
-    same = filecmp.cmp(object_content, return_cache)
-    if not same:
-        raise ValueError(f'Object content mismatch after put-get')
-    
-def run_cmake_sample_app(e2e_dir: Path, system_install: bool):
-
-    logging.info("Running CMake sample app")
-
-    runtime_path = e2e_dir / "sample_cmake_app"
-    build_dir = runtime_path / "build"
-
-    if not system_install:
-        hestia_dir = e2e_dir / "hestia"
-        cmake_args = f"-Dhestia_DIR={hestia_dir}/lib/cmake/hestia "
-    else:
-        cmake_args = ""
-
-    cmd = f"mkdir {build_dir}; cd {build_dir}; cmake {cmake_args}../; make; ./hestia_sample_app"
-    subprocess.run(cmd, shell=True, cwd=runtime_path)
-
-def run_autotools_sample_app(e2e_dir: Path, system_install: bool):
-
-    logging.info("Running Autotools sample app")
-
-    runtime_path = e2e_dir / "sample_autotools_app"
-    runtime_env = os.environ.copy()
-
-    if not system_install:
-        hestia_dir = e2e_dir / "hestia"
-        pkgconfig_path = f"{hestia_dir}/lib/pkgconfig"
-        runtime_env["PKG_CONFIG_PATH"] = pkgconfig_path
-
-    cmd = f"./autogen.sh; ./configure; make;"
-    subprocess.run(cmd, shell=True, cwd=runtime_path, env=runtime_env)
-
-def setup_environment(source_dir: Path, e2e_dir: Path):
-    test_data_src = source_dir / "test" / "data"
-    test_data_dest = e2e_dir / "test_data"
-
-    logging.info(f"Copying test data from: {test_data_src} to {test_data_dest}")
-    shutil.copytree(test_data_src, test_data_dest)
-
-    cmake_sample_src = source_dir / "examples" / "sample_cmake_app"
-    cmake_sample_dest = e2e_dir / "sample_cmake_app"
-    logging.info(f"Copying sample app from: {cmake_sample_src} to {cmake_sample_dest}")
-    shutil.copytree(cmake_sample_src, cmake_sample_dest)
-
-    autotools_sample_src = source_dir / "examples" / "sample_autotools_app"
-    autotools_sample_dest = e2e_dir / "sample_autotools_app"
-    logging.info(f"Copying sample app from: {autotools_sample_src} to {autotools_sample_dest}")
-    shutil.copytree(autotools_sample_src, autotools_sample_dest)
-
-def run_tests(source_dir: Path, e2e_dir: Path, package_path: Path):
-
-    logging.info("Installing package")
-    system_install = install_package(e2e_dir, package_path)
-
-    setup_environment(source_dir, e2e_dir)
-
-    run_cli_tests(e2e_dir)
-
-    run_cmake_sample_app(e2e_dir, system_install)
-
-    run_autotools_sample_app(e2e_dir, system_install)
+        self.tests = [
+                        CliTests(self.source_dir, self.work_dir, self.system_install), 
+                        SampleAppTests(self.source_dir, self.work_dir, self.system_install),
+                        # ServerTests(self.source_dir, self.work_dir, self.system_install),
+                        #S3Tests(self.source_dir, self.work_dir, self.system_install)
+                    ]
+        
+        for eachTest in self.tests:
+            if (not test_names) or (eachTest.name in test_names):
+                eachTest.setup_environment()
+                eachTest.run()
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--source_dir', type=str, default=os.getcwd())
     parser.add_argument('--build_dir', type=str, default=os.getcwd())
-    parser.add_argument('--package_name', type=str, required=True)
+    parser.add_argument('--package_name', type=str)
 
     args = parser.parse_args()
 
+    source_dir = Path(args.source_dir)
+    if not source_dir.is_absolute():
+        source_dir = os.getcwd() / source_dir
+
     build_dir = Path(args.build_dir)
-    e2e_dir = build_dir / "e2e_tests"
-    package_path = build_dir / args.package_name
+    if not build_dir.is_absolute():
+        build_dir = os.getcwd() / build_dir
 
-    if (Path.exists(e2e_dir)):
-        print(f"E2E Tests: clearing {e2e_dir}")
-        shutil.rmtree(e2e_dir)
+    work_dir = build_dir / "e2e_tests"
+    if (Path.exists(work_dir)):
+        print(f"E2E Tests: clearing {work_dir}")
+        shutil.rmtree(work_dir)
     
-    Path.mkdir(e2e_dir)
+    Path.mkdir(work_dir)
 
-    logging.basicConfig(filename=e2e_dir / 'e2e_tests.log', filemode='w', 
+    logging.basicConfig(filename=work_dir / 'e2e_tests.log', filemode='w', 
                         format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
                         level=logging.INFO)
-
+    
     logging.info("Starting E2E Tests")
+    
+    if args.package_name is not None:
+        package_path = build_dir / args.package_name
+    else:
+        logging.info(f"Package name not given, searching in: {build_dir}")
+        package_path = find_package(build_dir)
+        if package_path is None:
+            raise ValueError("Failed to find supported package")
+        else:
+            logging.info(f"Found package: {package_path}")
 
-    run_tests(Path(args.source_dir), e2e_dir, package_path)
+    e2e_tests = E2eTests(source_dir, work_dir, package_path)
+    e2e_tests.setup_environment()
+    e2e_tests.run()
 
     logging.info("Finished E2E Tests")

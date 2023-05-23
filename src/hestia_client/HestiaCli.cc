@@ -20,6 +20,8 @@
 #include "HestiaS3WebApp.h"
 #include "HestiaWebApp.h"
 
+#include "DaemonManager.h"
+
 #include "Logger.h"
 
 #include <filesystem>
@@ -226,11 +228,13 @@ void HestiaCli::parse(int argc, char* argv[])
 
 OpStatus HestiaCli::run()
 {
-    hestia::HestiaConfigurator configurator;
-    const auto result = configurator.initialize(m_config);
-    if (!result.ok()) {
-        LOG_ERROR("Error configuring Hestia: " + result.message());
-        return result;
+    if (m_command != Command::DAEMON_STOP) {
+        hestia::HestiaConfigurator configurator;
+        const auto result = configurator.initialize(m_config);
+        if (!result.ok()) {
+            LOG_ERROR("Error configuring Hestia: " + result.message());
+            return result;
+        }
     }
 
     if (m_command == Command::HSM) {
@@ -416,11 +420,38 @@ OpStatus HestiaCli::run_server()
 
 OpStatus HestiaCli::start_daemon()
 {
-    return {};
+    LOG_INFO("Starting Hestia Daemon");
+
+    DaemonManager daemon_manager;
+    auto rc = daemon_manager.start();
+    if (rc == DaemonManager::Status::EXIT_OK) {
+        LOG_INFO("Daemon started ok");
+        return {};
+    }
+    else if (rc == DaemonManager::Status::EXIT_FAILED) {
+        LOG_ERROR("Error starting hestia Daemon");
+        return OpStatus(
+            OpStatus::Status::ERROR, 0, "Error starting hestia Daemon");
+    }
+
+    return run_server();
 }
 
 OpStatus HestiaCli::stop_daemon()
 {
+    LOG_INFO("Stopping Hestia Daemon");
+
+    DaemonManager daemon_manager;
+    auto rc = daemon_manager.stop();
+    if (rc == DaemonManager::Status::EXIT_OK) {
+        LOG_INFO("Daemon stopped ok");
+        return {};
+    }
+    else if (rc == DaemonManager::Status::EXIT_FAILED) {
+        LOG_ERROR("Error stopping hestia Daemon");
+        return OpStatus(
+            OpStatus::Status::ERROR, 0, "Error stopping hestia Daemon");
+    }
     return {};
 }
 

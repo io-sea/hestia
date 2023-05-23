@@ -6,9 +6,9 @@
 namespace hestia {
 class HestiaService;
 
-class HestiaWebView : public WebView {
+class HestiaNodeView : public WebView {
   public:
-    HestiaWebView(HestiaService* hestia_service);
+    HestiaNodeView(HestiaService* hestia_service);
 
     HttpResponse::Ptr on_get(const HttpRequest& request) override;
 

@@ -11,7 +11,9 @@ add_module(
         application/ApplicationContext.h
         application/ConfigParser.h
         web/http/HestiaWebApp.h 
-        web/http/HestiaWebView.h 
+        web/http/HestiaObjectView.h 
+        web/http/HestiaTierView.h 
+        web/http/HestiaNodeView.h
         web/s3/HestiaS3WebApp.h
         web/s3/HsmS3Service.h
     SOURCES
@@ -23,7 +25,9 @@ add_module(
         application/ApplicationContext.cc
         application/ConfigParser.cc
         web/http/HestiaWebApp.cc 
-        web/http/HestiaWebView.cc
+        web/http/HestiaObjectView.cc 
+        web/http/HestiaTierView.cc 
+        web/http/HestiaNodeView.cc
         web/s3/HestiaS3WebApp.cc
         web/s3/HsmS3Service.cc
     INTERNAL_INCLUDE_DIRS

@@ -53,7 +53,7 @@ hestia copy 00001234 0 1 --config=hestia.yaml
 Retrieve the version on tier `1`:
 
 ```bash
-hestia get 00001234 my_file_out.dat --config=hestia.yaml
+hestia get 00001234 my_file_out.dat 1 --config=hestia.yaml
 ```
 
 ## Http

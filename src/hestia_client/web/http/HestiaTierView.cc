@@ -1,15 +1,15 @@
-#include "HestiaWebView.h"
+#include "HestiaTierView.h"
 
 #include "HestiaService.h"
 
 namespace hestia {
-HestiaWebView::HestiaWebView(HestiaService* hestia_service) :
+HestiaTierView::HestiaTierView(HestiaService* hestia_service) :
     WebView(), m_hestia_service(hestia_service)
 {
     (void)m_hestia_service;
 }
 
-HttpResponse::Ptr HestiaWebView::on_get(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_get(const HttpRequest& request)
 {
     (void)request;
 
@@ -18,7 +18,7 @@ HttpResponse::Ptr HestiaWebView::on_get(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr HestiaWebView::on_put(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_put(const HttpRequest& request)
 {
     (void)request;
     auto response = HttpResponse::create();
@@ -26,13 +26,13 @@ HttpResponse::Ptr HestiaWebView::on_put(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr HestiaWebView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_delete(const HttpRequest& request)
 {
     (void)request;
     return HttpResponse::create();
 }
 
-HttpResponse::Ptr HestiaWebView::on_head(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_head(const HttpRequest& request)
 {
     (void)request;
     return HttpResponse::create();

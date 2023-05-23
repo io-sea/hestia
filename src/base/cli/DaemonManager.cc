@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "Logger.h"
 #include <fstream>
 #include <iostream>
 
@@ -23,6 +24,7 @@ DaemonManager::Status DaemonManager::start()
         return m_status;
     }
     if (pid > 0) {
+        LOG_INFO("Exiting parent on pid: " << pid);
         m_status = Status::EXIT_OK;
         return m_status;
     }
@@ -60,6 +62,8 @@ DaemonManager::Status DaemonManager::stop()
         m_status = Status::EXIT_FAILED;
         return m_status;
     }
+
+    LOG_INFO("Attempting to stop pid: " << pid);
 
     if (auto rc = ::kill(pid, SIGTERM); rc < 0) {
         std::cerr

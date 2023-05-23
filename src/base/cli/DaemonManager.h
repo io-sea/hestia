@@ -14,5 +14,5 @@ class DaemonManager {
 
   private:
     Status m_status{Status::OK};
-    std::string m_pid_filename{"/tmp/deimos_pid"};
+    std::string m_pid_filename{"/tmp/hestia_pid"};
 };
