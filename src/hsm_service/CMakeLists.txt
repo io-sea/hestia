@@ -4,32 +4,47 @@ add_module(
     MODULE_NAME hsm_service 
     HEADERS
         HsmService.h
-        HsmStoreInterface.h
+        KeyValueStoreClientRegistry.h
+        data_placement_engine/BasicDataPlacementEngine.h 
+        data_placement_engine/DataPlacementEngine.h
+        data_placement_engine/DataPlacementEngineRegistry.h
         model/HsmAction.h
         model/HsmActionAdapter.h
-        model/HsmObjectAdapter.h
-        model/HsmObject.h
         model/CompositeLayer.h
+        object_service/ObjectService.h
+        object_service/ObjectServiceRequest.h
+        object_service/model/HsmObject.h 
+        object_service/model/HsmObjectAdapter.h 
         requests/HsmServiceResponse.h 
         requests/HsmServiceRequest.h
         requests/HsmServiceError.h 
+        tier_service/TierService.h 
+        tier_service/model/StorageTier.h
     SOURCES
         HsmService.cc
-        HsmStoreInterface.cc
+        KeyValueStoreClientRegistry.cc
+        data_placement_engine/BasicDataPlacementEngine.cc
+        data_placement_engine/DataPlacementEngineRegistry.cc
         model/HsmAction.cc
         model/HsmActionAdapter.cc
-        model/HsmObjectAdapter.cc
-        model/HsmObject.cc
         model/CompositeLayer.cc
+        object_service/ObjectService.cc
+        object_service/ObjectServiceRequest.cc
+        object_service/model/HsmObject.cc
+        object_service/model/HsmObjectAdapter.cc
         requests/HsmServiceResponse.cc
         requests/HsmServiceRequest.cc
         requests/HsmServiceError.cc
+        tier_service/TierService.cc 
     INTERNAL_INCLUDE_DIRS
         model
         requests
+        data_placement_engine
+        object_service
+        object_service/model
+        tier_service
+        tier_service/model
     INTERNAL_DEPENDENCIES 
         hsm_object_store
-        hsm_key_value_store 
-        data_placement_engine
         event_feed
 )

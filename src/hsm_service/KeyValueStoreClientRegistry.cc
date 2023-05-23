@@ -2,7 +2,6 @@
 
 #include "RedisKeyValueStoreClient.h"
 
-#include "HsmKeyValueStore.h"
 #include "Logger.h"
 
 namespace hestia {
@@ -24,7 +23,7 @@ std::string KeyValueStoreClientRegistry::to_string(
     }
 }
 
-bool KeyValueStoreClientRegistry::is_store_type_available(
+bool KeyValueStoreClientRegistry::is_client_type_available(
     const KeyValueStoreClientSpec& client_spec)
 {
     switch (client_spec.m_type) {
@@ -43,15 +42,16 @@ bool KeyValueStoreClientRegistry::is_store_type_available(
     }
 }
 
-std::unique_ptr<HsmKeyValueStore> KeyValueStoreClientRegistry::get_store(
+std::unique_ptr<KeyValueStoreClient> KeyValueStoreClientRegistry::get_client(
     const KeyValueStoreClientSpec& client_spec)
 {
+    std::unique_ptr<KeyValueStoreClient> client;
+
     switch (client_spec.m_type) {
         case KeyValueStoreClientSpec::Type::FILE: {
             LOG_INFO("Using file key-value store client");
-            auto client = std::make_unique<FileKeyValueStoreClient>();
-            client->initialize(client_spec.m_config);
-            return std::make_unique<HsmKeyValueStore>(std::move(client));
+            client = std::make_unique<FileKeyValueStoreClient>();
+            break;
         }
         case KeyValueStoreClientSpec::Type::KVSAL:
 #ifdef HAS_KVSAL
@@ -61,17 +61,20 @@ std::unique_ptr<HsmKeyValueStore> KeyValueStoreClientRegistry::get_store(
 #endif
         case KeyValueStoreClientSpec::Type::REDIS: {
             LOG_INFO("Using redis key-value store client");
-            auto client = std::make_unique<RedisKeyValueStoreClient>();
-            client->initialize(client_spec.m_config);
-            return std::make_unique<HsmKeyValueStore>(std::move(client));
+            client = std::make_unique<RedisKeyValueStoreClient>();
+            break;
         }
         default: {
             LOG_INFO(
                 "Unknown kv-store type - defaulting to file key-value store client");
-            auto client = std::make_unique<FileKeyValueStoreClient>();
-            return std::make_unique<HsmKeyValueStore>(std::move(client));
+            client = std::make_unique<FileKeyValueStoreClient>();
         }
     }
+
+    if (client) {
+        client->initialize(client_spec.m_config);
+    }
+    return client;
 }
 
 }  // namespace hestia

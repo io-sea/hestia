@@ -1,12 +1,13 @@
 #include <catch2/catch_all.hpp>
 
 #include "FileKeyValueStoreClient.h"
-#include "HsmKeyValueStore.h"
+#include "HsmObjectAdapter.h"
+#include "ObjectService.h"
 #include "TestUtils.h"
 
 #include <filesystem>
 
-class HsmKeyValueStoreTestFixture {
+class ObjectServiceTestFixture {
   public:
     void init(const std::string& test_name)
     {
@@ -16,58 +17,57 @@ class HsmKeyValueStoreTestFixture {
 
         hestia::Metadata config;
         config.set_item("root", store_path);
-        auto kv_store_client =
-            std::make_unique<hestia::FileKeyValueStoreClient>();
-        kv_store_client->initialize(config);
-        m_store = std::make_unique<hestia::HsmKeyValueStore>(
-            std::move(kv_store_client));
+        m_kv_store_client = std::make_unique<hestia::FileKeyValueStoreClient>();
+        m_kv_store_client->initialize(config);
+        m_object_service =
+            std::make_unique<hestia::ObjectService>(m_kv_store_client.get());
     }
 
-    ~HsmKeyValueStoreTestFixture()
+    ~ObjectServiceTestFixture()
     {
         std::filesystem::remove_all(get_store_path());
     }
 
     void put(const hestia::StorageObject& obj)
     {
-        hestia::ObjectStoreRequest request(
-            obj, hestia::ObjectStoreRequestMethod::PUT);
-        auto response = m_store->make_request(request);
+        hestia::ObjectServiceRequest request(
+            obj, hestia::ObjectServiceRequestMethod::PUT);
+        auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
     }
 
     void get(hestia::StorageObject& obj)
     {
-        hestia::ObjectStoreRequest request(
-            obj, hestia::ObjectStoreRequestMethod::GET);
-        auto response = m_store->make_request(request);
+        hestia::ObjectServiceRequest request(
+            obj, hestia::ObjectServiceRequestMethod::GET);
+        auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
-        obj = response->object();
+        obj = response->object().object();
     }
 
     bool exists(const hestia::StorageObject& obj)
     {
-        hestia::ObjectStoreRequest request(
-            obj, hestia::ObjectStoreRequestMethod::EXISTS);
-        auto response = m_store->make_request(request);
+        hestia::ObjectServiceRequest request(
+            obj, hestia::ObjectServiceRequestMethod::EXISTS);
+        auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
         return response->object_found();
     }
 
-    void list(std::vector<hestia::StorageObject>& objects)
+    void list(std::vector<hestia::HsmObject>& objects)
     {
-        hestia::ObjectStoreRequest request(
-            hestia::StorageObject(), hestia::ObjectStoreRequestMethod::LIST);
-        auto response = m_store->make_request(request);
+        hestia::ObjectServiceRequest request(
+            hestia::StorageObject(), hestia::ObjectServiceRequestMethod::LIST);
+        auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
         objects = response->objects();
     }
 
     void remove(const hestia::StorageObject& obj)
     {
-        hestia::ObjectStoreRequest request(
-            obj, hestia::ObjectStoreRequestMethod::REMOVE);
-        auto response = m_store->make_request(request);
+        hestia::ObjectServiceRequest request(
+            obj, hestia::ObjectServiceRequestMethod::REMOVE);
+        auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
     }
 
@@ -77,15 +77,16 @@ class HsmKeyValueStoreTestFixture {
     }
 
     std::string m_test_name;
-    std::unique_ptr<hestia::HsmKeyValueStore> m_store;
+    std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
+    std::unique_ptr<hestia::ObjectService> m_object_service;
 };
 
 TEST_CASE_METHOD(
-    HsmKeyValueStoreTestFixture,
-    "Test HSM Key Value Store - Get and Set",
-    "[hsm_key_value]")
+    ObjectServiceTestFixture,
+    "Test Object Service - Get and Set",
+    "[object_service]")
 {
-    init("TestHsmKeyValueStore");
+    init("TestObjectService");
 
     hestia::StorageObject object0("01234");
     object0.m_metadata.set_item("key0", "value0");
@@ -108,16 +109,16 @@ TEST_CASE_METHOD(
     REQUIRE(retrieved_object0.m_metadata.get_item("key1") == "value1");
     REQUIRE(retrieved_object0.m_metadata.get_item("key2") == "value2");
 
-    std::vector<hestia::StorageObject> objects;
+    std::vector<hestia::HsmObject> objects;
     list(objects);
     REQUIRE(objects.size() == 2);
-    REQUIRE(objects[0].id() == object0.id());
-    REQUIRE(objects[1].id() == object1.id());
+    REQUIRE(objects[0].object().id() == object0.id());
+    REQUIRE(objects[1].object().id() == object1.id());
 
     remove(object0);
 
     REQUIRE_FALSE(exists(object0));
-    std::vector<hestia::StorageObject> updated_objects;
+    std::vector<hestia::HsmObject> updated_objects;
     list(updated_objects);
     REQUIRE(updated_objects.size() == 1);
 }

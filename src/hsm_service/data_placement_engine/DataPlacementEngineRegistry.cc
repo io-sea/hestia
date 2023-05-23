@@ -33,11 +33,11 @@ bool DataPlacementEngineRegistry::is_placement_engine_available(
 
 
 std::unique_ptr<DataPlacementEngine> DataPlacementEngineRegistry::get_engine(
-    PlacementEngineType placement_engine_type)
+    PlacementEngineType placement_engine_type, TierService* tier_service)
 {
     switch (placement_engine_type) {
         case PlacementEngineType::BASIC:
-            return std::make_unique<BasicDataPlacementEngine>();
+            return std::make_unique<BasicDataPlacementEngine>(tier_service);
         case PlacementEngineType::ROBINHOOD:
 #ifdef HAS_ROBINHOOD
             return std::make_unique<RobinhoodDataPlacementEngine>();

@@ -12,9 +12,7 @@ set(LINK_MODULES_FOR_EXPORT
         http_client
         hsm_object_store_common
         hsm_object_store_client
-        hsm_key_value_store
         hsm_object_store
-        data_placement_engine
         client
         headers
 )

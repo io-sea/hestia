@@ -7,6 +7,15 @@ HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(
 {
 }
 
+HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(
+    const HsmObjectStoreClientSpec& other)
+{
+    m_type         = other.m_type;
+    m_source       = other.m_source;
+    m_identifier   = other.m_identifier;
+    m_extra_config = other.m_extra_config;
+}
+
 HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(const Dictionary& config)
 {
     if (const auto identifier_dict = config.get_map_item("identifier")) {

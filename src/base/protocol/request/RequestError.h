@@ -3,13 +3,29 @@
 #include <string>
 
 namespace hestia {
+
+class BaseRequestError {
+  public:
+    BaseRequestError(const std::string& message = {}) : m_message(message) {}
+
+    virtual ~BaseRequestError() = default;
+
+    const std::string& message() const { return m_message; }
+
+    virtual std::string to_string() const { return m_message; }
+
+  protected:
+    std::string m_message;
+};
+
+
 template<typename ErrorCode>
-class RequestError {
+class RequestError : public BaseRequestError {
   public:
     RequestError() = default;
 
     RequestError(ErrorCode code, const std::string& message) :
-        m_message(message), m_code(code)
+        BaseRequestError(message), m_code(code)
     {
     }
 
@@ -19,13 +35,11 @@ class RequestError {
 
     virtual std::string code_as_string() const { return {}; }
 
-    const std::string& message() const { return m_message; }
-
     int number() const { return static_cast<int>(m_code); }
 
-    virtual std::string to_string() const
+    std::string to_string() const override
     {
-        return "# " + std::to_string(number()) + " | " + code_as_string()
+        return "Code: " + std::to_string(number()) + " | " + code_as_string()
                + " | " + m_message;
     }
 

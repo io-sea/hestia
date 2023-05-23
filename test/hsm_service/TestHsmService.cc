@@ -3,12 +3,15 @@
 #include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
 #include "FileKeyValueStoreClient.h"
-#include "HsmKeyValueStore.h"
+
+#include "CopyToolInterface.h"
 #include "HsmObjectStoreClientManager.h"
 #include "HsmObjectStoreClientSpec.h"
 #include "HsmService.h"
-#include "HsmStoreInterface.h"
 #include "MultiBackendHsmObjectStoreClient.h"
+#include "ObjectService.h"
+#include "TierService.h"
+
 #include "TestUtils.h"
 
 #include <iostream>
@@ -16,20 +19,67 @@
 class TestHsmService : public hestia::HsmService {
   public:
     TestHsmService(
-        std::unique_ptr<hestia::HsmKeyValueStore> kv_store,
-        std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient> object_client,
-        std::unique_ptr<DataPlacementEngine> placement_engine) :
+        std::unique_ptr<hestia::ObjectService> object_service,
+        std::unique_ptr<hestia::TierService> tier_service,
+        hestia::MultiBackendHsmObjectStoreClient* object_client,
+        std::unique_ptr<hestia::DataPlacementEngine> placement_engine) :
         hestia::HsmService(
-            std::move(kv_store),
-            std::move(object_client),
+            std::move(object_service),
+            std::move(tier_service),
+            object_client,
             std::move(placement_engine)){};
 
-    hestia::HsmStoreInterface* get_store() { return m_store.get(); }
+    virtual ~TestHsmService() {}
 };
 
 class HsmServiceTestFixture {
   public:
     ~HsmServiceTestFixture() { std::filesystem::remove_all(get_store_path()); }
+
+    void init(const std::string& test_name)
+    {
+        m_test_name           = test_name;
+        const auto store_path = get_store_path();
+        std::filesystem::remove_all(store_path);
+        hestia::Metadata config;
+        config.set_item("root", store_path);
+
+        m_kv_store_client = std::make_unique<hestia::FileKeyValueStoreClient>();
+        m_kv_store_client->initialize(config);
+        auto object_service =
+            std::make_unique<hestia::ObjectService>(m_kv_store_client.get());
+
+        auto tier_service = std::make_unique<hestia::TierService>(
+            hestia::TierServiceConfig(), m_kv_store_client.get());
+
+        auto client_registry =
+            std::make_unique<hestia::HsmObjectStoreClientRegistry>(nullptr);
+        auto client_manager =
+            std::make_unique<hestia::HsmObjectStoreClientManager>(
+                std::move(client_registry));
+        m_object_store_client =
+            std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
+                std::move(client_manager));
+
+        hestia::HsmObjectStoreClientSpec my_spec(
+            hestia::HsmObjectStoreClientSpec::Type::HSM,
+            hestia::HsmObjectStoreClientSpec::Source::BUILT_IN,
+            "hestia::FileHsmObjectStoreClient");
+        my_spec.m_extra_config.set_item("root", get_store_path());
+        hestia::TierBackendRegistry g_all_file_backend_example;
+        g_all_file_backend_example.emplace(0, my_spec);
+        g_all_file_backend_example.emplace(1, my_spec);
+
+        m_object_store_client->do_initialize(g_all_file_backend_example, {});
+        auto placement_engine =
+            std::make_unique<hestia::BasicDataPlacementEngine>(
+                tier_service.get());
+
+        m_hsm_service = std::make_unique<TestHsmService>(
+            std::move(object_service), std::move(tier_service),
+            m_object_store_client.get(), std::move(placement_engine));
+    }
+
     void put(const hestia::StorageObject& obj, hestia::Stream* stream)
     {
         hestia::HsmServiceRequest request(
@@ -83,7 +133,8 @@ class HsmServiceTestFixture {
 
     bool obj_exists(const hestia::StorageObject& obj)
     {
-        auto exists = m_hsm_service->get_store()->exists(obj);
+        auto exists = m_hsm_service->make_request(hestia::HsmServiceRequest(
+            obj, hestia::HsmServiceRequestMethod::EXISTS));
         if (!exists->ok()) {
             return false;
         }
@@ -104,52 +155,15 @@ class HsmServiceTestFixture {
         REQUIRE(recontstructed_content == content);
     }
 
-    void init(const std::string& test_name)
-    {
-        m_test_name           = test_name;
-        const auto store_path = get_store_path();
-        std::filesystem::remove_all(store_path);
-        hestia::Metadata config;
-        config.set_item("root", store_path);
-
-        auto kv_client = std::make_unique<hestia::FileKeyValueStoreClient>();
-        kv_client->initialize(config);
-        auto kv_store =
-            std::make_unique<hestia::HsmKeyValueStore>(std::move(kv_client));
-
-        auto client_registry =
-            std::make_unique<hestia::HsmObjectStoreClientRegistry>(nullptr);
-        auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(
-                std::move(client_registry));
-        auto object_client =
-            std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
-                std::move(client_manager));
-
-        hestia::HsmObjectStoreClientSpec my_spec(
-            hestia::HsmObjectStoreClientSpec::Type::HSM,
-            hestia::HsmObjectStoreClientSpec::Source::BUILT_IN,
-            "hestia::FileHsmObjectStoreClient");
-        my_spec.m_extra_config.set_item("root", get_store_path());
-        hestia::TierBackendRegistry g_all_file_backend_example;
-        g_all_file_backend_example.emplace(0, my_spec);
-        g_all_file_backend_example.emplace(1, my_spec);
-
-        object_client->do_initialize(g_all_file_backend_example, {});
-
-        auto placement_engine = std::make_unique<BasicDataPlacementEngine>();
-
-        m_hsm_service = std::make_unique<TestHsmService>(
-            std::move(kv_store), std::move(object_client),
-            std::move(placement_engine));
-    }
-
     std::string get_store_path() const
     {
         return TestUtils::get_test_output_dir(__FILE__) / m_test_name;
     }
 
     std::string m_test_name;
+    std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
+    std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient>
+        m_object_store_client;
     std::unique_ptr<TestHsmService> m_hsm_service;
 };
 

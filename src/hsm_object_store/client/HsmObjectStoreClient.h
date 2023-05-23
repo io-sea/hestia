@@ -10,6 +10,8 @@ class HsmObjectStoreClient : public ObjectStoreClient {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClient>;
 
+    virtual ~HsmObjectStoreClient();
+
     [[nodiscard]] virtual HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,
         Stream* stream = nullptr) const noexcept;

@@ -7,6 +7,7 @@
 namespace hestia {
 MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
+    HsmObjectStoreClient(),
     m_copy_tool_interface(std::make_unique<CopyToolInterface>()),
     m_client_manager(std::move(client_manager))
 {

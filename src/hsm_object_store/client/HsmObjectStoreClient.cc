@@ -15,6 +15,9 @@
     }
 
 namespace hestia {
+
+HsmObjectStoreClient::~HsmObjectStoreClient() {}
+
 HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {

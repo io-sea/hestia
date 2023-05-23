@@ -14,7 +14,7 @@ enum class HsmServiceErrorCode {
     MAX_ERROR
 };
 
-class HsmServiceError : public hestia::RequestError<HsmServiceErrorCode> {
+class HsmServiceError : public RequestError<HsmServiceErrorCode> {
   public:
     HsmServiceError();
     HsmServiceError(HsmServiceErrorCode code, const std::string& message);

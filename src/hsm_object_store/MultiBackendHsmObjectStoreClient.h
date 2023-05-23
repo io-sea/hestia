@@ -17,7 +17,7 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
     MultiBackendHsmObjectStoreClient(
         std::unique_ptr<HsmObjectStoreClientManager> client_manager);
 
-    ~MultiBackendHsmObjectStoreClient();
+    virtual ~MultiBackendHsmObjectStoreClient();
 
     void do_initialize(
         const TierBackendRegistry& tier_backend_regsitry,

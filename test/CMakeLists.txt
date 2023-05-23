@@ -40,9 +40,9 @@ set(UNIT_TEST_SOURCES
     hsm_object_store/motr/TestMockMotrHsm.cc
     hsm_object_store/motr/TestMotrHsmClient.cc
     hsm_object_store/HsmObjectStoreTestWrapper.cc
-    hsm_key_value_store/TestHsmKeyValueStore.cc
     hestia_client/TestHestiaCppClient.cc
     hsm_service/TestHsmService.cc
+    hsm_service/TestObjectService.cc
     event_feed/TestEventFeed.cc
 )
 

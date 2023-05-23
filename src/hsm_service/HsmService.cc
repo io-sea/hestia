@@ -1,9 +1,9 @@
 #include "HsmService.h"
 
 #include "DataPlacementEngine.h"
-#include "HsmKeyValueStore.h"
-#include "HsmStoreInterface.h"
 #include "MultiBackendHsmObjectStoreClient.h"
+#include "ObjectService.h"
+#include "TierService.h"
 
 #include "HsmActionAdapter.h"
 #include "HsmObjectAdapter.h"
@@ -22,17 +22,15 @@
 
 namespace hestia {
 HsmService::HsmService(
-    std::unique_ptr<HsmKeyValueStore> kv_store,
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
+    std::unique_ptr<ObjectService> object_service,
+    std::unique_ptr<TierService> tier_service,
+    MultiBackendHsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
-    std::unique_ptr<EventFeed> event_feed,
-    std::unique_ptr<HsmObjectAdapter> object_adapter) :
-    m_store(HsmStoreInterface::create(
-        std::move(kv_store), std::move(object_store))),
-    m_data_placement_engine(std::move(placement_engine)),
-    m_object_adapter(
-        object_adapter ? std::move(object_adapter) :
-                         HsmObjectAdapter::create()),
+    std::unique_ptr<EventFeed> event_feed) :
+    m_object_service(std::move(object_service)),
+    m_tier_service(std::move(tier_service)),
+    m_object_store(object_store),
+    m_placement_engine(std::move(placement_engine)),
     m_action_adapter(HsmActionAdapter::create()),
     m_event_feed(std::move(event_feed))
 {
@@ -40,13 +38,14 @@ HsmService::HsmService(
 }
 
 HsmService::Ptr HsmService::create(
-    std::unique_ptr<HsmKeyValueStore> kv_store,
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
+    std::unique_ptr<ObjectService> object_service,
+    std::unique_ptr<TierService> tier_service,
+    MultiBackendHsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed)
 {
     return std::make_unique<HsmService>(
-        std::move(kv_store), std::move(object_store),
+        std::move(object_service), std::move(tier_service), object_store,
         std::move(placement_engine), std::move(event_feed));
 }
 
@@ -87,20 +86,31 @@ HsmServiceResponse::Ptr HsmService::put(
 {
     LOG_INFO("Starting HSMService PUT: " + req.to_string());
 
-    auto exists = m_store->exists(req.object());
-    ERROR_CHECK(exists);
-    if (exists->object_found() != req.should_overwrite_put()) {
+    auto exists_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+    ERROR_CHECK(exists_response);
+    if (exists_response->object_found() != req.should_overwrite_put()) {
         const std::string msg =
             "Overwrite request not compatible with object existence.";
         ON_ERROR(BAD_PUT_OVERWRITE_COMBINATION, msg);
     }
 
     if (stream != nullptr) {
-        const auto chosen_tier = m_data_placement_engine->choose_tier(
+        const auto chosen_tier = m_placement_engine->choose_tier(
             req.extent().m_length, req.target_tier());
-        auto data_put_response = m_store->put_data(
-            req.object(), req.extent(), req.source_tier(), chosen_tier,
-            req.should_overwrite_put(), stream);
+
+        HsmObjectStoreRequest data_put_request(
+            req.object(), HsmObjectStoreRequestMethod::PUT);
+        data_put_request.set_target_tier(chosen_tier);
+        data_put_request.set_extent(req.extent());
+        if (req.should_overwrite_put()) {
+            data_put_request.object().update_modified_time();
+        }
+        else {
+            data_put_request.object().initialize_timestamps();
+        }
+        auto data_put_response =
+            m_object_store->make_request(data_put_request, stream);
         ERROR_CHECK(data_put_response);
 
         // Update metadata
@@ -108,10 +118,13 @@ HsmServiceResponse::Ptr HsmService::put(
         HsmObject hsm_object(obj);
         hsm_object.add_tier(chosen_tier);
 
-        m_object_adapter->sync(hsm_object, obj);
-        auto metadata_put_response = m_store->put_metadata(obj);
+        ObjectServiceRequest obj_put_request(
+            hsm_object, ObjectServiceRequestMethod::PUT);
+
+        auto object_put_response =
+            m_object_service->make_request(obj_put_request);
         auto response =
-            HsmServiceResponse::create(req, std::move(metadata_put_response));
+            HsmServiceResponse::create(req, std::move(object_put_response));
 
         LOG_INFO("Finished HSMService PUT");
 
@@ -162,9 +175,11 @@ HsmServiceResponse::Ptr HsmService::put(
         }
     }
 
-    auto metadata_put_response = m_store->put_metadata(req.object());
+    ObjectServiceRequest obj_put_request(
+        req.object(), ObjectServiceRequestMethod::PUT);
+    auto object_put_response = m_object_service->make_request(obj_put_request);
     auto response =
-        HsmServiceResponse::create(req, std::move(metadata_put_response));
+        HsmServiceResponse::create(req, std::move(object_put_response));
     LOG_INFO("Finished HSMService PUT");
 
     return response;
@@ -175,23 +190,33 @@ HsmServiceResponse::Ptr HsmService::get(
 {
     LOG_INFO("Starting HSMService GET: " + req.to_string());
 
-    auto exists = m_store->exists(req.object());
-    ERROR_CHECK(exists);
-    if (!exists->object_found()) {
+    auto exists_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+    ERROR_CHECK(exists_response);
+    if (!exists_response->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
     if (stream != nullptr) {
-        auto response = m_store->get_data(
-            req.object(), req.extent(), req.source_tier(), stream);
+        HsmObjectStoreRequest get_data_request(
+            req.object(), HsmObjectStoreRequestMethod::GET);
+        get_data_request.set_source_tier(req.source_tier());
+        get_data_request.set_extent(req.extent());
+        auto get_data_response =
+            m_object_store->make_request(get_data_request, stream);
+
         LOG_INFO("Finished HSMService GET");
-        return HsmServiceResponse::create(req, std::move(response));
+        return HsmServiceResponse::create(req, std::move(get_data_response));
     }
     else {
-        auto response = m_store->get_metadata(req.object());
+        ObjectServiceRequest obj_get_request(
+            req.object(), ObjectServiceRequestMethod::GET);
+        auto object_get_response =
+            m_object_service->make_request(obj_get_request);
+
         LOG_INFO("Finished HSMService GET");
-        return HsmServiceResponse::create(req, std::move(response));
+        return HsmServiceResponse::create(req, std::move(object_get_response));
     }
 }
 
@@ -200,14 +225,19 @@ HsmServiceResponse::Ptr HsmService::exists(
 {
     LOG_INFO("Starting HSMService EXISTS: " + req.to_string());
 
-    auto exists = m_store->exists(req.object());
-    ERROR_CHECK(exists);
-    if (!exists->object_found()) {
+    auto exists_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+    ERROR_CHECK(exists_response);
+    const bool found = exists_response->object_found();
+    if (!found) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
     else {
-        return HsmServiceResponse::create(req, std::move(exists));
+        auto response =
+            HsmServiceResponse::create(req, std::move(exists_response));
+        response->set_object_found(found);
+        return response;
     }
 }
 
@@ -215,32 +245,33 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 {
     LOG_INFO("Starting HSMService COPY: " + req.to_string());
 
-    auto exists = m_store->exists(req.object());
-    ERROR_CHECK(exists);
-    if (!exists->object_found()) {
+    auto exists_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+    ERROR_CHECK(exists_response);
+    if (!exists_response->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
     auto obj = req.object();
-    /*
-    m_key_value_store->fetch(obj, {"tiers"});
-    */
-
     HsmObject hsm_object(obj);
 
-    m_object_adapter->parse_tiers(hsm_object);
+    HsmObjectStoreRequest copy_data_request(
+        req.object(), HsmObjectStoreRequestMethod::COPY);
+    copy_data_request.set_extent(req.extent());
+    copy_data_request.set_source_tier(req.source_tier());
+    copy_data_request.set_target_tier(req.target_tier());
 
-    auto copy_data_response = m_store->copy_data(
-        req.object(), req.extent(), req.source_tier(), req.target_tier());
+    auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response);
     LOG_INFO("Finished HSMService COPY - COPY DATA");
 
     hsm_object.add_tier(req.target_tier());
-    m_object_adapter->serialize(hsm_object);
-    LOG_INFO("Finished HSMService COPY - ADD TIER");
 
-    auto metadata_put_response = m_store->put_metadata(obj);
+    ObjectServiceRequest obj_put_request(
+        req.object(), ObjectServiceRequestMethod::PUT);
+    auto object_put_response = m_object_service->make_request(obj_put_request);
+
     LOG_INFO("Finished HSMService COPY - PUT METADATA");
 
     if (m_event_feed) {
@@ -253,31 +284,31 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
         m_event_feed->log_event(event);
     }
 
-    return HsmServiceResponse::create(req, std::move(metadata_put_response));
+    return HsmServiceResponse::create(req, std::move(object_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 {
     LOG_INFO("Starting HSMService MOVE: " + req.to_string());
 
-    auto exists = m_store->exists(req.object());
-    ERROR_CHECK(exists);
-    if (!exists->object_found()) {
+    auto exists_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+    ERROR_CHECK(exists_response);
+    if (!exists_response->object_found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
     auto obj = req.object();
-    /*
-    m_key_value_store->fetch(obj, {"tiers"});
-    */
-
     HsmObject hsm_object(obj);
 
-    m_object_adapter->parse_tiers(hsm_object);
+    HsmObjectStoreRequest move_request(
+        req.object(), HsmObjectStoreRequestMethod::MOVE);
+    move_request.set_extent(req.extent());
+    move_request.set_source_tier(req.source_tier());
+    move_request.set_target_tier(req.target_tier());
 
-    auto move_data_response = m_store->move_data(
-        req.object(), req.extent(), req.source_tier(), req.target_tier());
+    auto move_data_response = m_object_store->make_request(move_request);
     ERROR_CHECK(move_data_response);
     LOG_INFO("Finished HSMService MOVE - MOVE DATA");
 
@@ -292,13 +323,13 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     }
 
     hsm_object.add_tier(req.target_tier());
-    m_object_adapter->serialize(hsm_object);
-    LOG_INFO("Finished HSMService MOVE - ADD TIER");
 
-    auto metadata_put_response = m_store->put_metadata(obj);
+    ObjectServiceRequest obj_put_request(
+        req.object(), ObjectServiceRequestMethod::PUT);
+    auto object_put_response = m_object_service->make_request(obj_put_request);
+
     LOG_INFO("Finished HSMService MOVE - PUT METADATA");
-
-    return HsmServiceResponse::create(req, std::move(metadata_put_response));
+    return HsmServiceResponse::create(req, std::move(object_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove(
@@ -306,22 +337,22 @@ HsmServiceResponse::Ptr HsmService::remove(
 {
     auto obj = req.object();
 
-    /*
-    m_key_value_store->fetch(obj, {"tiers"});
-    */
-
     HsmObject hsm_object(obj);
-    m_object_adapter->parse_tiers(hsm_object);
-    m_object_adapter->serialize(hsm_object);
+
+    HsmObjectStoreRequest remove_data_request(
+        req.object(), HsmObjectStoreRequestMethod::REMOVE_ALL);
+    remove_data_request.set_extent(req.extent());
+    remove_data_request.set_source_tier(req.source_tier());
 
     auto remove_data_response =
-        m_store->release_data(req.object(), req.extent(), req.source_tier());
+        m_object_store->make_request(remove_data_request);
     ERROR_CHECK(remove_data_response);
 
     hsm_object.remove_tier(req.source_tier());
-    m_object_adapter->serialize(hsm_object);
 
-    auto metadata_put_response = m_store->put_metadata(obj);
+    ObjectServiceRequest obj_put_request(
+        req.object(), ObjectServiceRequestMethod::PUT);
+    auto object_put_response = m_object_service->make_request(obj_put_request);
 
     if (m_event_feed) {
         EventFeed::Event event;
@@ -331,28 +362,27 @@ HsmServiceResponse::Ptr HsmService::remove(
         m_event_feed->log_event(event);
     }
 
-    return HsmServiceResponse::create(req, std::move(metadata_put_response));
+    return HsmServiceResponse::create(req, std::move(object_put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove_all(
     const HsmServiceRequest& req) noexcept
 {
-    auto obj = req.object();
+    HsmObject hsm_object(req.object());
 
-    /*
-    m_key_value_store->fetch(obj, {"tiers"});
-    */
-
-    HsmObject hsm_object(obj);
-    m_object_adapter->parse_tiers(hsm_object);
-    m_object_adapter->serialize(hsm_object);
+    HsmObjectStoreRequest removal_all_request(
+        req.object(), HsmObjectStoreRequestMethod::REMOVE_ALL);
+    removal_all_request.set_extent(req.extent());
 
     auto remove_data_response =
-        m_store->release_data(req.object(), req.extent());
+        m_object_store->make_request(removal_all_request);
     ERROR_CHECK(remove_data_response);
 
     hsm_object.remove_all_but_one_tiers();
-    m_object_adapter->serialize(hsm_object);
+
+    ObjectServiceRequest obj_put_request(
+        req.object(), ObjectServiceRequestMethod::PUT);
+    auto object_put_response = m_object_service->make_request(obj_put_request);
 
     if (m_event_feed) {
         EventFeed::Event event;
@@ -361,8 +391,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
         m_event_feed->log_event(event);  // TODO: Get remaining tier
     }
 
-    auto metadata_put_response = m_store->put_metadata(obj);
-    return HsmServiceResponse::create(req, std::move(metadata_put_response));
+    return HsmServiceResponse::create(req, std::move(object_put_response));
 }
 
 void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)

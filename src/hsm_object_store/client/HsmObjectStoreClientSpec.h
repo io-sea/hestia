@@ -16,13 +16,7 @@ class HsmObjectStoreClientSpec {
 
     HsmObjectStoreClientSpec(const Dictionary& config);
 
-    HsmObjectStoreClientSpec(const HsmObjectStoreClientSpec& other)
-    {
-        m_type         = other.m_type;
-        m_source       = other.m_source;
-        m_identifier   = other.m_identifier;
-        m_extra_config = other.m_extra_config;
-    }
+    HsmObjectStoreClientSpec(const HsmObjectStoreClientSpec& other);
 
     void set_source(const std::string& source);
 

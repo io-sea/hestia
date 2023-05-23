@@ -7,28 +7,14 @@ HsmServiceResponse::HsmServiceResponse(const HsmServiceRequest& request) :
 }
 
 HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request,
-    HsmObjectStoreResponse::Ptr object_store_response) :
+    const HsmServiceRequest& request, BaseResponse::Ptr child_response) :
     hestia::Response<HsmServiceErrorCode>(request),
-    m_object_store_response(std::move(object_store_response))
+    m_child_response(std::move(child_response))
 {
-    if (!m_object_store_response->ok()) {
+    if (!m_child_response->ok()) {
         on_error(
             {HsmServiceErrorCode::ERROR,
-             m_object_store_response->get_error().to_string()});
-    }
-}
-
-HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request,
-    hestia::ObjectStoreResponse::Ptr kv_store_response) :
-    hestia::Response<HsmServiceErrorCode>(request),
-    m_key_value_store_response(std::move(kv_store_response))
-{
-    if (!m_key_value_store_response->ok()) {
-        on_error(
-            {HsmServiceErrorCode::ERROR,
-             m_key_value_store_response->get_error().to_string()});
+             m_child_response->get_base_error().to_string()});
     }
 }
 
@@ -39,19 +25,10 @@ HsmServiceResponse::Ptr HsmServiceResponse::create(
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request,
-    HsmObjectStoreResponse::Ptr object_store_response)
+    const HsmServiceRequest& request, BaseResponse::Ptr child_response)
 {
     return std::make_unique<HsmServiceResponse>(
-        request, std::move(object_store_response));
-}
-
-HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request,
-    hestia::ObjectStoreResponse::Ptr kv_store_response)
-{
-    return std::make_unique<HsmServiceResponse>(
-        request, std::move(kv_store_response));
+        request, std::move(child_response));
 }
 
 const std::string& HsmServiceResponse::query_result() const

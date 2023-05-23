@@ -8,6 +8,8 @@
 namespace hestia {
 class HsmObject {
   public:
+    HsmObject() = default;
+
     HsmObject(const hestia::Uuid& id);
 
     HsmObject(const hestia::StorageObject& object);
@@ -22,9 +24,13 @@ class HsmObject {
 
     hestia::StorageObject& object() { return m_storage_object; }
 
+    const hestia::StorageObject& object() const { return m_storage_object; }
+
     const std::string& dataset() { return m_dataset; }
 
     const std::vector<uint8_t>& tiers() const { return m_tier_ids; }
+
+    std::string to_string() const { return m_storage_object.to_string(); }
 
   private:
     hestia::Uuid m_id;

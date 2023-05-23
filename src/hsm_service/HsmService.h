@@ -8,11 +8,11 @@
 
 #include "Stream.h"
 
-class DataPlacementEngine;
-
 namespace hestia {
 class MultiBackendHsmObjectStoreClient;
-class HsmKeyValueStore;
+class DataPlacementEngine;
+class ObjectService;
+class TierService;
 class HsmStoreInterface;
 
 class HsmActionAdapter;
@@ -22,25 +22,23 @@ class HsmService {
     using Ptr = std::unique_ptr<HsmService>;
 
     HsmService(
-        std::unique_ptr<HsmKeyValueStore> kv_store,
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine,
-        std::unique_ptr<EventFeed> event_feed            = nullptr,
-        std::unique_ptr<HsmObjectAdapter> object_adapter = nullptr);
-
-    static Ptr create(
-        std::unique_ptr<HsmKeyValueStore> kv_store,
-        std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
+        std::unique_ptr<ObjectService> object_service,
+        std::unique_ptr<TierService> tier_service,
+        MultiBackendHsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<EventFeed> event_feed = nullptr);
 
-    ~HsmService();
+    static Ptr create(
+        std::unique_ptr<ObjectService> object_service,
+        std::unique_ptr<TierService> tier_service,
+        MultiBackendHsmObjectStoreClient* object_store,
+        std::unique_ptr<DataPlacementEngine> placement_engine,
+        std::unique_ptr<EventFeed> event_feed = nullptr);
+
+    virtual ~HsmService();
 
     [[nodiscard]] HsmServiceResponse::Ptr make_request(
         const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
-
-  protected:
-    std::unique_ptr<HsmStoreInterface> m_store;
 
   private:
     HsmServiceResponse::Ptr get(
@@ -58,9 +56,10 @@ class HsmService {
     void list_objects(uint8_t tier, std::vector<HsmObject>& objects);
     void list_tiers(HsmObject& object, std::vector<uint8_t>& tiers);
 
-    std::unique_ptr<DataPlacementEngine> m_data_placement_engine;
-
-    std::unique_ptr<HsmObjectAdapter> m_object_adapter;
+    std::unique_ptr<ObjectService> m_object_service;
+    std::unique_ptr<TierService> m_tier_service;
+    MultiBackendHsmObjectStoreClient* m_object_store;
+    std::unique_ptr<DataPlacementEngine> m_placement_engine;
     std::unique_ptr<HsmActionAdapter> m_action_adapter;
 
     std::unique_ptr<EventFeed> m_event_feed;
