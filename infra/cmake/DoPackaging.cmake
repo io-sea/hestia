@@ -50,11 +50,13 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND LINK_MODULES_FOR_EXPORT development_flags)
 endif()
 
-list(APPEND LINK_MODULES_FOR_EXPORT nlohmann_json spdlog yaml-cpp)
+list(APPEND LINK_MODULES_FOR_EXPORT nlohmann_json spdlog yaml-cpp hiredis_static)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_link_libraries(${PROJECT_NAME} INTERFACE ${LINK_MODULES_FOR_EXPORT})
+
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(${PROJECT_NAME}::${PROJECT_NAME}_lib ALIAS ${PROJECT_NAME}_lib)
 
 add_library(${PROJECT_NAME}_cmake_modules INTERFACE)
 target_include_directories(${PROJECT_NAME}_cmake_modules INTERFACE 
@@ -92,6 +94,11 @@ configure_file(infra/cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
                 "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         DESTINATION lib/cmake/${PROJECT_NAME}
+        )
+
+configure_file(infra/cmake/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
+install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION lib/pkgconfig
         )
 
 set(CPACK_PACKAGE_VENDOR "Irish Centre for High End Computing (ICHEC)")

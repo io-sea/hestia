@@ -1,1 +1,11 @@
+autoconf
+automake
+cmake
+gcc
+gcc-c++
+libtool
+libcurl-devel 
+libxml2-devel
+openssl-devel
+make
 python3

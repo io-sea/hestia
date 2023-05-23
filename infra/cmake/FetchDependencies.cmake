@@ -83,7 +83,11 @@ macro(fetch_hiredis)
         FIND_PACKAGE_ARGS
         )
         set(DISABLE_TESTS ON CACHE INTERNAL "disable hiredis tests")
-        FetchContent_MakeAvailable(hiredis)
+        FetchContent_GetProperties(hiredis)
+        if(NOT hiredis_POPULATED)
+            FetchContent_Populate(hiredis)
+            add_subdirectory(${hiredis_SOURCE_DIR} ${hiredis_BINARY_DIR} EXCLUDE_FROM_ALL SYSTEM)
+        endif()
 endmacro()
 
 # https://github.com/bji/libs3
@@ -97,7 +101,11 @@ macro(fetch_libs3)
         SYSTEM
         FIND_PACKAGE_ARGS
         )
-        FetchContent_MakeAvailable(libs3)
+        FetchContent_GetProperties(libs3)
+        if(NOT libs3_POPULATED)
+            FetchContent_Populate(libs3)
+            add_subdirectory(${libs3_SOURCE_DIR} ${libs3_BINARY_DIR} EXCLUDE_FROM_ALL SYSTEM)
+        endif()
         if(NOT TARGET libs3::s3)
             add_library(libs3::s3 ALIAS s3)
         endif()
