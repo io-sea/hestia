@@ -33,6 +33,8 @@ class Dictionary {
     Type get_type() const;
 
     const std::vector<std::unique_ptr<Dictionary>>& get_sequence() const;
+    const std::unordered_map<std::string, std::unique_ptr<Dictionary>>&
+    get_map() const;
 
     void get_map_items(
         Metadata& sink,
@@ -46,8 +48,19 @@ class Dictionary {
 
     void set_map(const std::unordered_map<std::string, std::string>& items);
 
+    bool has_tag() const;
+
+    const std::pair<std::string, std::string>& get_tag() const;
+
+    void set_tag(const std::string& tag, const std::string& prefix = "");
+
+    bool is_empty() const;
+
+    bool operator==(const Dictionary& rhs) const;  // Deep Comparision
+
   private:
     Type m_type{Type::MAP};
+    std::pair<std::string, std::string> m_tag;
     std::string m_scalar;
     std::vector<std::unique_ptr<Dictionary>> m_sequence;
     std::unordered_map<std::string, std::unique_ptr<Dictionary>> m_map;

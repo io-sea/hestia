@@ -1,6 +1,8 @@
 #include "Dictionary.h"
 
 #include <algorithm>
+#include <unordered_map>
+#include <vector>
 
 namespace hestia {
 Dictionary::Dictionary(Dictionary::Type type) : m_type(type) {}
@@ -69,6 +71,12 @@ const std::vector<std::unique_ptr<Dictionary>>& Dictionary::get_sequence() const
     return m_sequence;
 }
 
+const std::unordered_map<std::string, std::unique_ptr<Dictionary>>&
+Dictionary::get_map() const
+{
+    return m_map;
+}
+
 void Dictionary::set_map_item(
     const std::string& key, std::unique_ptr<Dictionary> item)
 {
@@ -89,4 +97,79 @@ void Dictionary::set_scalar(const std::string& scalar)
 {
     m_scalar = scalar;
 }
+
+
+bool Dictionary::has_tag() const
+{
+    return !m_tag.second.empty();
+}
+
+const std::pair<std::string, std::string>& Dictionary::get_tag() const
+{
+    return m_tag;
+}
+
+void Dictionary::set_tag(const std::string& tag, const std::string& prefix)
+{
+    m_tag.first.assign(prefix);
+    m_tag.second.assign(tag);
+}
+
+bool Dictionary::is_empty() const
+{
+    switch (m_type) {
+        case Type::MAP:
+            return m_map.empty();
+        case Type::SEQUENCE:
+            return m_sequence.empty();
+        case Type::SCALAR:
+            return m_scalar.empty();
+    }
+}
+
+bool Dictionary::operator==(const Dictionary& rhs) const
+{
+    if (m_type != rhs.get_type()) {
+        return false;
+    }
+
+    if (m_tag != rhs.get_tag()) {
+        return false;
+    }
+
+    if (m_type == Dictionary::Type::MAP) {
+        for (const auto& [key, value] : m_map) {
+            if (!rhs.has_map_item(key)) {
+                return false;
+            }
+            if (value == nullptr || rhs.get_map_item(key) == nullptr) {
+                if (value != nullptr || rhs.get_map_item(key) != nullptr) {
+                    return false;
+                }
+            }
+            if (value != nullptr) {
+                if (*value == *(rhs.get_map_item(key))) {
+                    return false;
+                }
+            }
+        }
+    }
+    else if (m_type == Dictionary::Type::SEQUENCE) {
+        if (m_sequence.size() != rhs.get_sequence().size()) {
+            return false;
+        }
+
+        for (size_t i = 0; i < m_sequence.size(); i++) {
+            if (!(*(m_sequence[i]) == *(rhs.get_sequence()[i]))) {
+                return false;
+            }
+        }
+    }
+    else if (m_type == Dictionary::Type::SCALAR) {
+        return m_scalar == rhs.get_scalar();
+    }
+
+    return true;
+}
+
 }  // namespace hestia

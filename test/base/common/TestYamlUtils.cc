@@ -1,6 +1,8 @@
 #include <catch2/catch_all.hpp>
+#include <fstream>
 
 #include "Dictionary.h"
+#include "Logger.h"
 #include "TestUtils.h"
 #include "YamlUtils.h"
 
@@ -50,4 +52,27 @@ TEST_CASE("Test YamlUtils - hestia config", "[common]")
             ->get_map_item("identifier")
             ->get_scalar()
         == "hestia::FileHsmObjectStoreClient");
+}
+
+TEST_CASE("Yaml Utils Dict to Yaml", "[common]")
+{
+    auto test_input_dir  = TestUtils::get_test_data_dir();
+    auto test_output_dir = TestUtils::get_test_output_dir();
+    auto yaml_path       = test_input_dir / "test.yaml";
+    auto out_yaml_path   = test_output_dir / "test_out.yaml";
+
+    hestia::Dictionary dict, out_dict;
+    hestia::YamlUtils::load(yaml_path.string(), dict);
+
+    std::ofstream out_file;
+    std::string out_yaml;
+    hestia::YamlUtils::dict_to_yaml(dict, out_yaml);
+
+    out_file.open(out_yaml_path.string(), std::ios::trunc);  // Clear file
+    out_file << out_yaml;
+    out_file.close();
+
+    hestia::YamlUtils::load(out_yaml_path.string(), out_dict);
+    LOG_DEBUG("Serialized Event : " + out_yaml);
+    REQUIRE(dict == out_dict);  // Deep comparison
 }

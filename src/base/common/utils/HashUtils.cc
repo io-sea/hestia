@@ -1,5 +1,6 @@
 #include "HashUtils.h"
 
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 
 #include <iomanip>
@@ -7,6 +8,20 @@
 #include <stdexcept>
 
 namespace hestia {
+std::string HashUtils::base64_encode(const std::string& input)
+{
+    unsigned char* output = new unsigned char[EVP_MAX_MD_SIZE];
+
+    EVP_EncodeBlock(
+        output, reinterpret_cast<const unsigned char*>(input.c_str()),
+        input.length());
+
+    std::stringstream ss;
+    ss << reinterpret_cast<const char*>(output);
+    delete[] output;
+    return ss.str();
+}
+
 std::string HashUtils::uri_encode(const std::string& input, bool encode_slash)
 {
     std::stringstream sstr;

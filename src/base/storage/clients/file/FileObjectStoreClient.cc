@@ -10,6 +10,7 @@
 
 #include <exception>
 #include <fstream>
+#include <string>
 
 namespace hestia {
 

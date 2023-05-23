@@ -4,12 +4,14 @@
 #include "MultiBackendHsmObjectStoreClient.h"
 
 #include "DataPlacementEngine.h"
+#include "EventFeed.h"
 #include "KeyValueStoreClient.h"
 
 #include "ApplicationContext.h"
 #include "HsmService.h"
 
 #include "Logger.h"
+#include <memory>
 
 namespace hestia {
 OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
@@ -43,8 +45,18 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
 
+    std::unique_ptr<EventFeed> event_feed;
+    try {
+        event_feed = set_up_event_feed();
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR(e.what());
+        return {OpStatus::Status::ERROR, -1, e.what()};
+    }
+
     auto hsm_service = std::make_unique<HsmService>(
-        std::move(kv_store), std::move(object_store), std::move(dpe));
+        std::move(kv_store), std::move(object_store), std::move(dpe),
+        std::move(event_feed));
 
     ApplicationContext::get().set_hsm_service(std::move(hsm_service));
     return {};
@@ -98,5 +110,15 @@ HestiaConfigurator::set_up_data_placement_engine()
 
     return DataPlacementEngineRegistry::get_engine(
         m_config.m_placement_engine_spec);
+}
+
+std::unique_ptr<EventFeed> HestiaConfigurator::set_up_event_feed()
+{
+    LOG_INFO("Setting up event feed");
+    auto event_feed = std::make_unique<EventFeed>();
+
+    event_feed->initialize(m_config.m_event_feed_config);
+
+    return event_feed;
 }
 }  // namespace hestia

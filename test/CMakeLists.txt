@@ -43,6 +43,7 @@ set(UNIT_TEST_SOURCES
     hsm_key_value_store/TestHsmKeyValueStore.cc
     hestia_client/TestHestiaCppClient.cc
     hsm_service/TestHsmService.cc
+    event_feed/TestEventFeed.cc
 )
 
 add_executable(${UNIT_TEST_MODULE} 
@@ -62,6 +63,7 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     hestia_storage
     hestia_s3app
     hestia_lib
+    hestia_event_feed
     hestia_test_utils
     ${PLATFORM_LIBS}
     Catch2::Catch2
@@ -92,6 +94,7 @@ target_code_coverage(hestia_mock_s3_plugin)
 target_code_coverage(hestia_s3_plugin)
 target_code_coverage(hestia_main)
 target_code_coverage(hestia_lib)
+# target_code_coverage(hestia_event_feed)
 
 target_code_coverage(${UNIT_TEST_MODULE})
 catch_discover_tests(${UNIT_TEST_MODULE})
@@ -122,6 +125,7 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_web
     hestia_s3app
     hestia_s3_backend
+    hestia_event_feed
     hestia_test_utils
     Catch2::Catch2
     ${PLATFORM_LIBS})

@@ -59,3 +59,6 @@ tier_registry:
   - identifier: 2
     client_identifier: hestia::FileHsmObjectStoreClient
 
+event_feed:
+  event_feed_path: event_feed.yaml
+  event_feed_active: y

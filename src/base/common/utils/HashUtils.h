@@ -14,5 +14,7 @@ class HashUtils {
         const std::string& key, const std::string& code);
 
     static std::string uri_encode(const std::string& input, bool encode_slash);
+
+    static std::string base64_encode(const std::string& input);
 };
 }  // namespace hestia

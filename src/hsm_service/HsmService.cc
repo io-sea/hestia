@@ -25,25 +25,29 @@ HsmService::HsmService(
     std::unique_ptr<HsmKeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
-    std::unique_ptr<HsmObjectAdapter> object_adatper) :
+    std::unique_ptr<EventFeed> event_feed,
+    std::unique_ptr<HsmObjectAdapter> object_adapter) :
     m_store(HsmStoreInterface::create(
         std::move(kv_store), std::move(object_store))),
     m_data_placement_engine(std::move(placement_engine)),
     m_object_adapter(
-        object_adatper ? std::move(object_adatper) :
+        object_adapter ? std::move(object_adapter) :
                          HsmObjectAdapter::create()),
-    m_action_adapter(HsmActionAdapter::create())
+    m_action_adapter(HsmActionAdapter::create()),
+    m_event_feed(std::move(event_feed))
 {
     LOG_INFO("Creating HsmService");
 }
+
 HsmService::Ptr HsmService::create(
     std::unique_ptr<HsmKeyValueStore> kv_store,
     std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store,
-    std::unique_ptr<DataPlacementEngine> placement_engine)
+    std::unique_ptr<DataPlacementEngine> placement_engine,
+    std::unique_ptr<EventFeed> event_feed)
 {
     return std::make_unique<HsmService>(
         std::move(kv_store), std::move(object_store),
-        std::move(placement_engine));
+        std::move(placement_engine), std::move(event_feed));
 }
 
 
@@ -110,6 +114,16 @@ HsmServiceResponse::Ptr HsmService::put(
             HsmServiceResponse::create(req, std::move(metadata_put_response));
 
         LOG_INFO("Finished HSMService PUT");
+
+        if (m_event_feed) {
+            EventFeed::Event event;
+            event.m_id          = req.object().id();
+            event.m_length      = req.extent().m_length;
+            event.m_method      = EventFeed::Event::Method::PUT;
+            event.m_target_tier = req.target_tier();
+            m_event_feed->log_event(event);
+        }
+
         return response;
     }
 
@@ -152,6 +166,7 @@ HsmServiceResponse::Ptr HsmService::put(
     auto response =
         HsmServiceResponse::create(req, std::move(metadata_put_response));
     LOG_INFO("Finished HSMService PUT");
+
     return response;
 }
 
@@ -227,6 +242,17 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     auto metadata_put_response = m_store->put_metadata(obj);
     LOG_INFO("Finished HSMService COPY - PUT METADATA");
+
+    if (m_event_feed) {
+        EventFeed::Event event;
+        event.m_id          = req.object().id();
+        event.m_length      = req.extent().m_length;
+        event.m_method      = EventFeed::Event::Method::COPY;
+        event.m_source_tier = req.source_tier();
+        event.m_target_tier = req.target_tier();
+        m_event_feed->log_event(event);
+    }
+
     return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
@@ -255,12 +281,23 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     ERROR_CHECK(move_data_response);
     LOG_INFO("Finished HSMService MOVE - MOVE DATA");
 
+    if (m_event_feed) {
+        EventFeed::Event event;
+        event.m_id          = req.object().id();
+        event.m_length      = req.extent().m_length;
+        event.m_method      = EventFeed::Event::Method::MOVE;
+        event.m_source_tier = req.source_tier();
+        event.m_target_tier = req.target_tier();
+        m_event_feed->log_event(event);
+    }
+
     hsm_object.add_tier(req.target_tier());
     m_object_adapter->serialize(hsm_object);
     LOG_INFO("Finished HSMService MOVE - ADD TIER");
 
     auto metadata_put_response = m_store->put_metadata(obj);
     LOG_INFO("Finished HSMService MOVE - PUT METADATA");
+
     return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
@@ -285,6 +322,15 @@ HsmServiceResponse::Ptr HsmService::remove(
     m_object_adapter->serialize(hsm_object);
 
     auto metadata_put_response = m_store->put_metadata(obj);
+
+    if (m_event_feed) {
+        EventFeed::Event event;
+        event.m_id          = req.object().id();
+        event.m_method      = EventFeed::Event::Method::REMOVE;
+        event.m_source_tier = req.source_tier();
+        m_event_feed->log_event(event);
+    }
+
     return HsmServiceResponse::create(req, std::move(metadata_put_response));
 }
 
@@ -307,6 +353,13 @@ HsmServiceResponse::Ptr HsmService::remove_all(
 
     hsm_object.remove_all_but_one_tiers();
     m_object_adapter->serialize(hsm_object);
+
+    if (m_event_feed) {
+        EventFeed::Event event;
+        event.m_id     = req.object().id();
+        event.m_method = EventFeed::Event::Method::REMOVE_ALL;
+        m_event_feed->log_event(event);  // TODO: Get remaining tier
+    }
 
     auto metadata_put_response = m_store->put_metadata(obj);
     return HsmServiceResponse::create(req, std::move(metadata_put_response));

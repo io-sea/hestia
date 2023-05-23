@@ -20,6 +20,8 @@ class HestiaConfigurator {
 
     std::unique_ptr<DataPlacementEngine> set_up_data_placement_engine();
 
+    std::unique_ptr<EventFeed> set_up_event_feed();
+
     HestiaConfig m_config;
 };
 }  // namespace hestia

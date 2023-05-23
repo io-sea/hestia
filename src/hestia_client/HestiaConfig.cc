@@ -60,6 +60,7 @@ void HestiaConfig::load_defaults()
 {
     load_object_store_defaults();
     load_kv_store_defaults();
+    load_event_feed_defaults();
 }
 
 void HestiaConfig::load_object_store_defaults()
@@ -114,6 +115,46 @@ void HestiaConfig::load_kv_store(
     }
 }
 
+void HestiaConfig::load_event_feed(const Dictionary& event_feed_config)
+{
+    if (const auto event_feed_path_dict =
+            event_feed_config.get_map_item("event_feed_path");
+        event_feed_path_dict != nullptr) {
+        m_event_feed_config.m_event_feed_file_path =
+            event_feed_path_dict->get_scalar();
+    }
+    if (const auto event_feed_active_dict =
+            event_feed_config.get_map_item("event_feed_active");
+        event_feed_active_dict != nullptr) {
+        auto event_feed_active = event_feed_active_dict->get_scalar();
+        if (event_feed_active == "n") {
+            m_event_feed_config.m_active = false;
+        }
+        else {
+            m_event_feed_config.m_active = true;
+        }
+    }
+    if (const auto event_feed_sorted_dict =
+            event_feed_config.get_map_item("event_feed_sorted");
+        event_feed_sorted_dict != nullptr) {
+        auto event_feed_sorted = event_feed_sorted_dict->get_scalar();
+        if (event_feed_sorted == "y") {
+            m_event_feed_config.m_sorted_keys = true;
+        }
+        else {
+            m_event_feed_config.m_sorted_keys = false;
+        }
+    }
+}
+
+void HestiaConfig::load_event_feed_defaults()
+{
+    m_event_feed_config.m_event_feed_file_path =
+        std::filesystem::current_path() / "event-feed.yaml";
+    m_event_feed_config.m_active      = true;
+    m_event_feed_config.m_sorted_keys = false;
+}
+
 void HestiaConfig::load(const Dictionary& dict)
 {
     if (auto cache_loc = dict.get_map_item("cache_location"); cache_loc) {
@@ -135,6 +176,14 @@ void HestiaConfig::load(const Dictionary& dict)
     }
     else {
         load_kv_store_defaults();
+    }
+
+    auto event_feed_config = dict.get_map_item("event_feed");
+    if (event_feed_config != nullptr) {
+        load_event_feed(*event_feed_config);
+    }
+    else {
+        load_event_feed_defaults();
     }
 
     load_server_config(dict);

@@ -4,6 +4,7 @@
 
 #include "CopyTool.h"
 #include "DataPlacementEngineRegistry.h"
+#include "EventFeed.h"
 #include "HsmObjectStoreClientRegistry.h"
 #include "KeyValueStoreClientRegistry.h"
 #include "Logger.h"
@@ -42,6 +43,8 @@ class HestiaConfig {
 
     CopyToolConfig m_copy_tool_config;
 
+    EventFeedConfig m_event_feed_config;
+
   private:
     void load_logger_config();
 
@@ -51,6 +54,10 @@ class HestiaConfig {
 
     void load_kv_store(
         const Dictionary& kv_store_config, const Dictionary& kv_store_clients);
+
+    void load_event_feed(const Dictionary& event_feed_config);
+
+    void load_event_feed_defaults();
 
     void load_object_store_defaults();
 

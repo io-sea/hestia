@@ -1,0 +1,68 @@
+---
+!upsert
+id: !!binary MV8w
+statx:
+  attributes:
+    append: !!bool n
+    automount: !!bool n
+    compressed: !!bool n
+    dax: !!bool n
+    encrypted: !!bool n
+    immutable: !!bool n
+    mount-root: !!bool n
+    nodump: !!bool n
+    verity: !!bool n
+  mode: 0777
+  size: !uint64 44
+  type: file
+symlink: !!bool n
+xattrs:
+  tier: !uint32 0
+...
+---
+!upsert
+id: !!binary MV8w
+statx:
+  attributes:
+    append: !!bool n
+    automount: !!bool n
+    compressed: !!bool n
+    dax: !!bool n
+    encrypted: !!bool n
+    immutable: !!bool n
+    mount-root: !!bool n
+    nodump: !!bool n
+    verity: !!bool n
+  mode: 0777
+  size: !uint64 0
+  type: file
+symlink: !!bool n
+xattrs:
+  source_tier: !uint32 0
+  target_tier: !uint32 1
+...
+---
+!delete
+id: !!binary MV8wMQ==
+...
+---
+!upsert
+id: !!binary MV8w
+statx:
+  attributes:
+    append: !!bool n
+    automount: !!bool n
+    compressed: !!bool n
+    dax: !!bool n
+    encrypted: !!bool n
+    immutable: !!bool n
+    mount-root: !!bool n
+    nodump: !!bool n
+    verity: !!bool n
+  mode: 0777
+  size: !uint64 0
+  type: file
+symlink: !!bool n
+xattrs:
+  tier: !uint32 2
+...

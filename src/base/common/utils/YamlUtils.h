@@ -5,16 +5,32 @@
 
 namespace YAML {  // NOLINT
 class Node;
-}
+class Emitter;
+}  // namespace YAML
 
 namespace hestia {
 class YamlUtils {
   public:
-    static void load(const std::string& path, Dictionary& dict);
+    /// @brief Load first YAML document in file at path
+    ///
+    /// @param path Path of YAML file to load
+    /// @param dict Dictionary to read YAML to
+    static void load(
+        const std::string& path, Dictionary& dict);  // Load first doc in file
 
-  private:
-    static void on_map(const YAML::Node& node, Dictionary& dict);
+    /// @brief Load all YAML documents in file at path
+    ///
+    /// @param path Path of YAML file to load
+    /// @param dicts Vector of dictionaries to read the YAML documents to
+    static void load_all(
+        const std::string& path,
+        std::vector<std::unique_ptr<hestia::Dictionary>>& dicts);
 
-    static void on_sequence(const YAML::Node& node, Dictionary& dict);
+    /// @brief Serialize a dictionary to a YAML string
+    ///
+    /// @param dict Dictionary to serialize
+    /// @param yaml String to serialize to
+    static void dict_to_yaml(
+        const Dictionary& dict, std::string& yaml, const bool sorted = false);
 };
 }  // namespace hestia

@@ -1,4 +1,5 @@
 #include "ApplicationContext.h"
+#include "EventFeed.h"
 #include "HestiaCli.h"
 #include "Logger.h"
 #include "ProjectConfig.h"
