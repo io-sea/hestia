@@ -80,10 +80,10 @@ std::unique_ptr<MultiBackendHsmObjectStoreClient>
 HestiaConfigurator::set_up_object_store()
 {
     LOG_INFO("Setting up object store");
-    std::vector<std::filesystem::directory_entry> search_paths;
+    std::vector<std::filesystem::path> search_paths;
     auto plugin_handler =
         std::make_unique<ObjectStorePluginHandler>(search_paths);
-    auto client_registry = std::make_unique<HsmObjectStoreClientRegistry>(
+    auto client_registry = std::make_unique<HsmObjectStoreClientFactory>(
         std::move(plugin_handler));
     auto client_manager = std::make_unique<HsmObjectStoreClientManager>(
         std::move(client_registry));
@@ -99,15 +99,15 @@ std::unique_ptr<KeyValueStoreClient>
 HestiaConfigurator::set_up_key_value_store()
 {
     LOG_INFO("Setting up key-value store");
-    if (!KeyValueStoreClientRegistry::is_client_type_available(
+    if (!KeyValueStoreClientFactory::is_client_type_available(
             m_config.m_key_value_store_spec)) {
         std::string msg = "Requested Key Value Store type: "
-                          + KeyValueStoreClientRegistry::to_string(
+                          + KeyValueStoreClientFactory::to_string(
                               m_config.m_key_value_store_spec);
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
-    return KeyValueStoreClientRegistry::get_client(
+    return KeyValueStoreClientFactory::get_client(
         m_config.m_key_value_store_spec);
 }
 
@@ -115,14 +115,14 @@ std::unique_ptr<DataPlacementEngine>
 HestiaConfigurator::set_up_data_placement_engine(TierService* tier_service)
 {
     LOG_INFO("Setting up data placement engine");
-    if (!DataPlacementEngineRegistry::is_placement_engine_available(
+    if (!DataPlacementEngineFactory::is_placement_engine_available(
             m_config.m_placement_engine_spec)) {
         std::string msg = "Requested Placement engine type: ";
         msg += " is not available.";
         throw std::runtime_error(msg);
     }
 
-    return DataPlacementEngineRegistry::get_engine(
+    return DataPlacementEngineFactory::get_engine(
         m_config.m_placement_engine_spec, tier_service);
 }
 

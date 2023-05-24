@@ -3,10 +3,10 @@
 #include "Dictionary.h"
 
 #include "CopyTool.h"
-#include "DataPlacementEngineRegistry.h"
+#include "DataPlacementEngineFactory.h"
 #include "EventFeed.h"
-#include "HsmObjectStoreClientRegistry.h"
-#include "KeyValueStoreClientRegistry.h"
+#include "HsmObjectStoreClientFactory.h"
+#include "KeyValueStoreClientFactory.h"
 #include "Logger.h"
 
 #include <string>
@@ -24,7 +24,7 @@ struct HestiaServerConfig {
 class HestiaConfig {
 
   public:
-    void load(const std::string& path);
+    std::string load(const std::string& path);
 
     void load(const Dictionary& dict);
 

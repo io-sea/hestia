@@ -9,7 +9,7 @@ TestContext::get_object_store_plugin(const std::string& plugin_name)
 {
     hestia::ObjectStorePluginFactory plugin_factory("libhestia_" + plugin_name);
     auto plugin = m_plugin_loader.load_plugin_resource(
-        TestDirectories::get_plugin_dir(), plugin_factory);
+        {TestDirectories::get_plugin_dir()}, plugin_factory);
 
     auto raw_plugin = plugin.get();
     if (auto typed_plugin =
@@ -31,7 +31,7 @@ TestContext::get_hsm_object_store_plugin(const std::string& plugin_name)
     hestia::HsmObjectStorePluginFactory plugin_factory(
         "libhestia_" + plugin_name);
     auto plugin = m_plugin_loader.load_plugin_resource(
-        TestDirectories::get_plugin_dir(), plugin_factory);
+        {TestDirectories::get_plugin_dir()}, plugin_factory);
 
     auto raw_plugin = plugin.get();
     if (auto typed_plugin =

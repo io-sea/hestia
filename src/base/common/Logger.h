@@ -2,6 +2,7 @@
 
 #include "Metadata.h"
 
+#include <memory>
 #include <sstream>
 
 #define LOG_BASE(msg, level)                                                   \
@@ -17,7 +18,16 @@
 #define LOG_INFO(msg) LOG_BASE(msg, hestia::Logger::Level::INFO);
 #define LOG_DEBUG(msg) LOG_BASE(msg, hestia::Logger::Level::DEBUG);
 
+namespace spdlog {
+class logger;
+}
+
 namespace hestia {
+
+class LoggerContext {
+  public:
+    std::shared_ptr<spdlog::logger> m_logger_impl;
+};
 
 class Logger {
   public:
@@ -34,9 +44,13 @@ class Logger {
 
     void initialize(const Metadata& config);
 
+    void initialize(const LoggerContext& context);
+
     void do_initialize(const Config& config);
 
     static Logger& get_instance();
+
+    const LoggerContext& get_context() const;
 
     void log_line(
         Level level,
@@ -46,6 +60,7 @@ class Logger {
         int line_number                  = -1);
 
   private:
+    LoggerContext m_context;
     Config m_config;
 };
 }  // namespace hestia

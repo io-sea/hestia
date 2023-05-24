@@ -48,6 +48,18 @@ void Logger::initialize(const Metadata& config_data)
     do_initialize(config);
 }
 
+void Logger::initialize(const LoggerContext& context)
+{
+    if (context.m_logger_impl) {
+        spdlog::set_default_logger(context.m_logger_impl);
+    }
+}
+
+const LoggerContext& Logger::get_context() const
+{
+    return m_context;
+}
+
 void Logger::do_initialize(const Config& config)
 {
     m_config = config;
@@ -57,8 +69,11 @@ void Logger::do_initialize(const Config& config)
     }
 
     if (!m_config.m_console_only) {
-        spdlog::set_default_logger(spdlog::basic_logger_mt(
-            m_config.m_log_prefix, m_config.m_log_file_path, true));
+        auto logger = spdlog::basic_logger_mt(
+            m_config.m_log_prefix, m_config.m_log_file_path, true);
+        m_context.m_logger_impl = logger;
+
+        spdlog::set_default_logger(logger);
     }
     switch (m_config.m_level) {
         case Level::ERROR:

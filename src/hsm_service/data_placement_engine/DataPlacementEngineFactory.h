@@ -12,7 +12,7 @@
 namespace hestia {
 enum class PlacementEngineType { BASIC, ROBINHOOD };
 
-class DataPlacementEngineRegistry {
+class DataPlacementEngineFactory {
 
   public:
     static std::string to_string(PlacementEngineType placement_engine_type);

@@ -4,10 +4,11 @@
 #include "YamlUtils.h"
 
 #include <filesystem>
+#include <iostream>
 
 namespace hestia {
 
-void HestiaConfig::load(const std::string& path)
+std::string HestiaConfig::load(const std::string& path)
 {
     auto config_path = path;
     if (!std::filesystem::is_regular_file(config_path)) {
@@ -15,7 +16,7 @@ void HestiaConfig::load(const std::string& path)
     }
 
     if (!std::filesystem::is_regular_file(config_path)) {
-        return;
+        return {};
     }
 
     Dictionary dict;
@@ -27,6 +28,7 @@ void HestiaConfig::load(const std::string& path)
     if (m_tier_backend_registry.empty()) {
         load_object_store_defaults();
     }
+    return config_path;
 }
 
 void HestiaConfig::load_server_config(const Dictionary& config)
@@ -106,7 +108,6 @@ void HestiaConfig::load_kv_store(
             Metadata client_config;
             config->get_map_items(client_config);
             if (client_identifier == "hestia::FileKeyValueStoreClient") {
-                LOG_INFO("Setting kv store spec: ");
                 m_key_value_store_spec = KeyValueStoreClientSpec(
                     KeyValueStoreClientSpec::Type::FILE, client_config);
             }
@@ -162,7 +163,7 @@ void HestiaConfig::load(const Dictionary& dict)
     }
 
     auto object_store_config  = dict.get_map_item("object_store_clients");
-    auto tier_client_registry = dict.get_map_item("tier_client_registry");
+    auto tier_client_registry = dict.get_map_item("tier_registry");
 
     if ((object_store_config != nullptr) && (tier_client_registry != nullptr)) {
         load_object_store_clients(*object_store_config, *tier_client_registry);

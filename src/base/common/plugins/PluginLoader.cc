@@ -22,15 +22,35 @@ std::string PluginLoader::get_plugin_extension() const
 }
 
 std::unique_ptr<PluginResource> PluginLoader::load_plugin_resource(
-    const std::filesystem::path& plugin_dir,
+    const std::vector<std::filesystem::path>& plugin_dirs,
     const PluginFactory& plugin_factory)
 {
     auto plugin_iter = m_plugins.find(plugin_factory.get_name());
 
     if (plugin_iter == m_plugins.end()) {
-        const auto path =
-            plugin_dir / (plugin_factory.get_name() + get_plugin_extension());
-        auto [status, handle] = SystemUtils::load_module(path.string());
+
+        OpStatus status;
+        void* handle{nullptr};
+        for (const auto& dir : plugin_dirs) {
+            const auto path =
+                dir / (plugin_factory.get_name() + get_plugin_extension());
+            auto [op_status, op_handle] =
+                SystemUtils::load_module(path.string());
+            if (op_status.ok()) {
+                status = op_status;
+                handle = op_handle;
+                break;
+            }
+        }
+
+        if (handle == nullptr) {
+            const auto path =
+                plugin_factory.get_name() + get_plugin_extension();
+            auto [op_status, op_handle] = SystemUtils::load_module(path);
+            status                      = op_status;
+            handle                      = op_handle;
+        }
+
         if (!status.ok()) {
             LOG_ERROR(status.message());
             return nullptr;

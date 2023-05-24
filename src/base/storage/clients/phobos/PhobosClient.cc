@@ -6,12 +6,15 @@
 
 #include "IPhobosInterfaceImpl.h"
 
+#include "Logger.h"
+
 #include <stdexcept>
 
 namespace hestia {
 
 PhobosClient::PhobosClient(PhobosInterface::Ptr phobos_interface)
 {
+    LOG_INFO("Creating Phobos Client");
     if (phobos_interface) {
         m_phobos_interface = std::move(phobos_interface);
     }
@@ -26,7 +29,10 @@ std::unique_ptr<PhobosClient> PhobosClient::create(
     return std::make_unique<PhobosClient>(std::move(phobos_interface));
 }
 
-PhobosClient::~PhobosClient() {}
+PhobosClient::~PhobosClient()
+{
+    LOG_INFO("Destroying Phobos Client");
+}
 
 std::string PhobosClient::get_registry_identifier()
 {

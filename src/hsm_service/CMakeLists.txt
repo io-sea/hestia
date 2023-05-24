@@ -4,10 +4,10 @@ add_module(
     MODULE_NAME hsm_service 
     HEADERS
         HsmService.h
-        KeyValueStoreClientRegistry.h
+        KeyValueStoreClientFactory.h
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
-        data_placement_engine/DataPlacementEngineRegistry.h
+        data_placement_engine/DataPlacementEngineFactory.h
         model/HsmAction.h
         model/HsmActionAdapter.h
         model/CompositeLayer.h
@@ -22,9 +22,9 @@ add_module(
         tier_service/model/StorageTier.h
     SOURCES
         HsmService.cc
-        KeyValueStoreClientRegistry.cc
+        KeyValueStoreClientFactory.cc
         data_placement_engine/BasicDataPlacementEngine.cc
-        data_placement_engine/DataPlacementEngineRegistry.cc
+        data_placement_engine/DataPlacementEngineFactory.cc
         model/HsmAction.cc
         model/HsmActionAdapter.cc
         model/CompositeLayer.cc

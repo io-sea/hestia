@@ -7,14 +7,14 @@ add_module(
         HsmObjectStoreClientSpec.h
         HsmObjectStoreClientPlugin.h
         HsmObjectStoreClientManager.h
-        HsmObjectStoreClientRegistry.h
+        HsmObjectStoreClientFactory.h
         file/FileHsmObjectStoreClient.h
     SOURCES
         HsmObjectStoreClient.cc
         HsmObjectStoreClientSpec.cc
         HsmObjectStoreClientPlugin.cc
         HsmObjectStoreClientManager.cc
-        HsmObjectStoreClientRegistry.cc
+        HsmObjectStoreClientFactory.cc
         file/FileHsmObjectStoreClient.cc
     INTERNAL_INCLUDE_DIRS
         file

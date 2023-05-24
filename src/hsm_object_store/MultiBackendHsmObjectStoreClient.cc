@@ -1,8 +1,8 @@
 #include "MultiBackendHsmObjectStoreClient.h"
 
 #include "CopyToolInterface.h"
+#include "HsmObjectStoreClientFactory.h"
 #include "HsmObjectStoreClientManager.h"
-#include "HsmObjectStoreClientRegistry.h"
 
 namespace hestia {
 MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(

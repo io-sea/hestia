@@ -34,23 +34,23 @@ HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(const Dictionary& config)
 
 void HsmObjectStoreClientSpec::set_source(const std::string& source)
 {
-    if (source == "BUILT_IN") {
+    if (source == "built_in") {
         m_source = Source::BUILT_IN;
     }
-    else if (source == "PLUGIN") {
+    else if (source == "plugin") {
         m_source = Source::PLUGIN;
     }
-    else if (source == "MOCK") {
+    else if (source == "mock") {
         m_source = Source::MOCK;
     }
 }
 
 void HsmObjectStoreClientSpec::set_type(const std::string& type)
 {
-    if (type == "Basic") {
+    if (type == "basic") {
         m_type = Type::BASIC;
     }
-    else if (type == "HSM") {
+    else if (type == "hsm") {
         m_type = Type::HSM;
     }
 }

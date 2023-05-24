@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HsmObjectStoreClientRegistry.h"
+#include "HsmObjectStoreClientFactory.h"
 
 #include <unordered_map>
 
@@ -10,7 +10,7 @@ class HsmObjectStoreClientManager {
     using Ptr = std::unique_ptr<HsmObjectStoreClientManager>;
 
     HsmObjectStoreClientManager(
-        HsmObjectStoreClientRegistry::Ptr client_registry);
+        HsmObjectStoreClientFactory::Ptr client_factory);
 
     void setup_clients(const TierBackendRegistry& tier_backend_regsitry);
 
@@ -28,9 +28,15 @@ class HsmObjectStoreClientManager {
     bool have_same_client_types(uint8_t tier_id0, uint8_t tier_id1) const;
 
   private:
-    HsmObjectStoreClientRegistry::Ptr m_client_registry;
+    HsmObjectStoreClientFactory::Ptr m_client_factory;
     TierBackendRegistry m_tier_backend_registry;
+
     std::unordered_map<std::string, ObjectStoreClient::Ptr> m_clients;
+    std::unordered_map<std::string, ObjectStoreClientPlugin::Ptr>
+        m_plugin_clients;
+
     std::unordered_map<std::string, HsmObjectStoreClient::Ptr> m_hsm_clients;
+    std::unordered_map<std::string, HsmObjectStoreClientPlugin::Ptr>
+        m_hsm_plugin_clients;
 };
 }  // namespace hestia

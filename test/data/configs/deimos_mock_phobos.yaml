@@ -1,0 +1,32 @@
+server:
+  host_address: 127.0.0.1
+  host_port: 8080
+  web_app: hestia::HsmS3Service
+  backend: hestia::Basic
+
+web_apps:
+  - identitifier: hestia::HsmS3Service
+
+server_backends:
+  - identifier: hestia::Basic
+
+object_store_clients:
+  - identifier: hestia::MockPhobosClient
+    source: mock
+    type: basic
+    plugin_path: libhestia_mock_phobos_plugin
+
+key_value_store:
+  client_identifier: hestia::FileKeyValueStoreClient
+
+key_value_store_clients:
+  - identifier: hestia::FileKeyValueStoreClient
+    root: key_value_store
+
+tier_registry:
+  - identifier: 0
+    client_identifier: hestia::MockPhobosClient
+
+event_feed:
+  event_feed_path: event_feed.yaml
+  event_feed_active: y

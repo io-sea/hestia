@@ -24,10 +24,10 @@ class KeyValueStoreClientSpec {
 };
 
 
-class KeyValueStoreClientRegistry {
+class KeyValueStoreClientFactory {
 
   public:
-    ~KeyValueStoreClientRegistry();
+    ~KeyValueStoreClientFactory();
     static std::string to_string(const KeyValueStoreClientSpec& client_spec);
 
     static bool is_client_type_available(

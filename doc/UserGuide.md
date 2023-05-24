@@ -108,4 +108,12 @@ The C++ interface can be consumed via the `hestia.h` header and linking to the p
 
 This API provides similar functionality to the CLI.
 
-# Http Interface
+# Web Interfaces
+
+To start a Hestia Web Service you can do:
+
+```bash
+hestia server --config=hestia.yaml
+```
+
+this will block in the terminal while the service is running.

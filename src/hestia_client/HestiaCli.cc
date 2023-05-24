@@ -219,7 +219,18 @@ void HestiaCli::parse(int argc, char* argv[])
     }
 
     if (!m_config_path.empty()) {
-        m_config.load(m_config_path);
+        auto used_config_path = m_config.load(m_config_path);
+        if (used_config_path.empty()) {
+            std::cout << "Warning: Failed to load config file from:  "
+                      << m_config_path
+                      << " - Falling back to built-in defaults";
+        }
+        else if (used_config_path != m_config_path) {
+            std::cout << "Warning: Failed to load config file from:  "
+                      << m_config_path << " - Falling back to default path: "
+                      << used_config_path;
+        }
+        m_config_path = used_config_path;
     }
     else {
         m_config.load_defaults();
@@ -228,6 +239,10 @@ void HestiaCli::parse(int argc, char* argv[])
 
 OpStatus HestiaCli::run()
 {
+    if (!m_config_path.empty()) {
+        LOG_INFO("Using config at: " << m_config_path);
+    }
+
     if (m_command != Command::DAEMON_STOP) {
         hestia::HestiaConfigurator configurator;
         const auto result = configurator.initialize(m_config);

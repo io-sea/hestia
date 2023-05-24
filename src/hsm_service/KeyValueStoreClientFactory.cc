@@ -1,4 +1,4 @@
-#include "KeyValueStoreClientRegistry.h"
+#include "KeyValueStoreClientFactory.h"
 
 #include "RedisKeyValueStoreClient.h"
 
@@ -6,9 +6,9 @@
 
 namespace hestia {
 
-KeyValueStoreClientRegistry::~KeyValueStoreClientRegistry() {}
+KeyValueStoreClientFactory::~KeyValueStoreClientFactory() {}
 
-std::string KeyValueStoreClientRegistry::to_string(
+std::string KeyValueStoreClientFactory::to_string(
     const KeyValueStoreClientSpec& client_spec)
 {
     switch (client_spec.m_type) {
@@ -23,7 +23,7 @@ std::string KeyValueStoreClientRegistry::to_string(
     }
 }
 
-bool KeyValueStoreClientRegistry::is_client_type_available(
+bool KeyValueStoreClientFactory::is_client_type_available(
     const KeyValueStoreClientSpec& client_spec)
 {
     switch (client_spec.m_type) {
@@ -42,7 +42,7 @@ bool KeyValueStoreClientRegistry::is_client_type_available(
     }
 }
 
-std::unique_ptr<KeyValueStoreClient> KeyValueStoreClientRegistry::get_client(
+std::unique_ptr<KeyValueStoreClient> KeyValueStoreClientFactory::get_client(
     const KeyValueStoreClientSpec& client_spec)
 {
     std::unique_ptr<KeyValueStoreClient> client;

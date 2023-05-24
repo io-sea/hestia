@@ -1,7 +1,7 @@
-#include "DataPlacementEngineRegistry.h"
+#include "DataPlacementEngineFactory.h"
 
 namespace hestia {
-std::string DataPlacementEngineRegistry::to_string(
+std::string DataPlacementEngineFactory::to_string(
     PlacementEngineType placement_engine_type)
 {
     switch (placement_engine_type) {
@@ -14,7 +14,7 @@ std::string DataPlacementEngineRegistry::to_string(
     }
 };
 
-bool DataPlacementEngineRegistry::is_placement_engine_available(
+bool DataPlacementEngineFactory::is_placement_engine_available(
     PlacementEngineType placement_engine_type)
 {
     switch (placement_engine_type) {
@@ -32,7 +32,7 @@ bool DataPlacementEngineRegistry::is_placement_engine_available(
 };
 
 
-std::unique_ptr<DataPlacementEngine> DataPlacementEngineRegistry::get_engine(
+std::unique_ptr<DataPlacementEngine> DataPlacementEngineFactory::get_engine(
     PlacementEngineType placement_engine_type, TierService* tier_service)
 {
     switch (placement_engine_type) {

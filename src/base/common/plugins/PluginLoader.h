@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <unordered_map>
+#include <vector>
 
 namespace hestia {
 
@@ -54,12 +55,12 @@ class PluginLoader {
      * Load the 'default resource' from the plugin specified by the
      * 'PluginFactory'. If the plugin hasn't been previously loaded it is
      * searched for in the 'plugin_dir'
-     * @param plugin_dir directory to search for the plugin
+     * @param plugin_dirs directories to search for the plugin
      * @param plugin_factory provides details on the plugin to load, particularly the name
      * @return a wrapper around the default resource (C++ object) loaded from the plugin. Nullptr if not found.
      */
     std::unique_ptr<PluginResource> load_plugin_resource(
-        const std::filesystem::path& plugin_dir,
+        const std::vector<std::filesystem::path>& plugin_dirs,
         const PluginFactory& plugin_factory);
 
   private:

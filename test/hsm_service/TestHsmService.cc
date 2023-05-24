@@ -52,11 +52,11 @@ class HsmServiceTestFixture {
         auto tier_service = std::make_unique<hestia::TierService>(
             hestia::TierServiceConfig(), m_kv_store_client.get());
 
-        auto client_registry =
-            std::make_unique<hestia::HsmObjectStoreClientRegistry>(nullptr);
+        auto client_factory =
+            std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
         auto client_manager =
             std::make_unique<hestia::HsmObjectStoreClientManager>(
-                std::move(client_registry));
+                std::move(client_factory));
         m_object_store_client =
             std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
                 std::move(client_manager));

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CopyToolConfig.h"
-#include "HsmObjectStoreClientRegistry.h"
+#include "HsmObjectStoreClientFactory.h"
 
 #include <memory>
 #include <string>

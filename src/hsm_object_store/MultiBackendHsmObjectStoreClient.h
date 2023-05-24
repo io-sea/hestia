@@ -2,7 +2,7 @@
 
 #include "CopyToolConfig.h"
 #include "HsmObjectStoreClient.h"
-#include "HsmObjectStoreClientRegistry.h"
+#include "HsmObjectStoreClientFactory.h"
 
 #include <memory>
 
