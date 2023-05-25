@@ -1,5 +1,6 @@
 #include "PhobosClient.h"
 
+#include "Logger.h"
 #include "PhobosInterface.h"
 
 #ifdef HAS_PHOBOS  // Keep linter happy
@@ -11,8 +12,14 @@ extern "C" hestia::ObjectStoreClient* create()
         std::make_unique<hestia::PhobosInterfaceImpl>()));
 }
 
+#endif
+
 extern "C" void destroy(hestia::ObjectStoreClient* object)
 {
     delete object;
 }
-#endif
+
+extern "C" void set_logger_context(const hestia::LoggerContext& logger_context)
+{
+    hestia::Logger::get_instance().initialize(logger_context);
+}

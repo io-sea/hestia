@@ -26,6 +26,11 @@ class Metadata {
      */
     void for_each_item(onItem func, const std::string& key_prefix = {}) const;
 
+    const std::unordered_map<std::string, std::string>& get_raw_data() const
+    {
+        return m_data;
+    }
+
     /**
      * Return the item with this key
      * @param key the key for the map

@@ -5,10 +5,13 @@ add_module(
     HEADERS
         HestiaCli.h
         HestiaCppInterface.h
-        HestiaService.h
         application/ApplicationContext.h
         application/HestiaConfig.h
         application/HestiaConfigurator.h
+        hestia_service/HestiaService.h
+        hestia_service/HestiaNodeService.h
+        hestia_service/HestiaNode.h
+        hestia_service/HestiaNodeAdapter.h
         web/http/HestiaWebApp.h 
         web/http/HestiaObjectView.h 
         web/http/HestiaTierView.h 
@@ -18,10 +21,12 @@ add_module(
     SOURCES
         HestiaCli.cc
         HestiaCppInterface.cc
-        HestiaService.cc
         application/ApplicationContext.cc
         application/HestiaConfig.cc
         application/HestiaConfigurator.cc
+        hestia_service/HestiaService.cc
+        hestia_service/HestiaNodeService.cc
+        hestia_service/HestiaNodeAdapter.cc
         web/http/HestiaWebApp.cc 
         web/http/HestiaObjectView.cc 
         web/http/HestiaTierView.cc 
@@ -30,6 +35,7 @@ add_module(
         web/s3/HsmS3Service.cc
     INTERNAL_INCLUDE_DIRS
         application
+        hestia_service
         web/s3 
         web/http
     INTERNAL_DEPENDENCIES 

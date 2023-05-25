@@ -3,6 +3,13 @@
 #include "Logger.h"
 
 namespace hestia {
+
+WebView::WebView() {}
+void WebView::set_path(const std::string& path)
+{
+    m_path = path;
+}
+
 HttpResponse::Ptr WebView::get_response(const HttpRequest& request)
 {
     switch (request.get_method()) {

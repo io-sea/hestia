@@ -31,6 +31,9 @@ class JsonUtils {
      */
     static std::string to_json(const Metadata& metadata);
 
+    static std::string to_json(
+        const std::vector<Metadata>& metadata, const std::string& key = {});
+
     /**
      * Read Metadata from json - only reads the top level keys
      *
@@ -43,6 +46,11 @@ class JsonUtils {
         const std::filesystem::path& path,
         const std::string& key,
         std::string& value);
+
+    static void get_values(
+        const std::filesystem::path& path,
+        const std::vector<std::string>& keys,
+        std::vector<std::string>& values);
 
     static void set_value(
         const std::filesystem::path& path,

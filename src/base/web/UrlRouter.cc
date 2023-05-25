@@ -5,6 +5,7 @@ namespace hestia {
 void UrlRouter::add_pattern(
     const std::string& pattern, std::unique_ptr<WebView> view)
 {
+    view->set_path(pattern);
     m_views.push_back({pattern, std::move(view)});
 }
 

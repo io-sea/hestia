@@ -18,7 +18,7 @@ struct HestiaServerConfig {
     std::string m_host{"127.0.0.1"};
     std::string m_port{"8080"};
     std::string m_backend{"hestia::Basic"};
-    std::string m_web_app{"hestia::CopyTool"};
+    std::string m_web_app{"hestia::HsmService"};
 };
 
 class HestiaConfig {

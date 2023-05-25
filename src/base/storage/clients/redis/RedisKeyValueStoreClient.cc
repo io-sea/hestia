@@ -150,6 +150,13 @@ void RedisKeyValueStoreClient::string_get(
     value                     = reply->as_string_or_nill();
 }
 
+void RedisKeyValueStoreClient::string_multi_get(
+    const std::vector<std::string>& key, std::vector<std::string>& value) const
+{
+    (void)key;
+    (void)value;
+}
+
 void RedisKeyValueStoreClient::string_set(
     const std::string& key, const std::string& value) const
 {

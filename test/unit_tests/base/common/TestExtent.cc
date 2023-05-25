@@ -8,8 +8,6 @@ TEST_CASE("Test Extent Operations", "[extents]")
     ext.m_offset = 5;
     ext.m_length = 10;
 
-    /*
-
     SECTION("Extents equal")
     {
         hestia::Extent ext_equal{5, 10};
@@ -28,5 +26,4 @@ TEST_CASE("Test Extent Operations", "[extents]")
         REQUIRE_FALSE(ext.includes(ext_outside));
         REQUIRE(ext.overlaps(ext_outside));
     }
-    */
 }

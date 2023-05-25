@@ -74,6 +74,10 @@ class CrudResponse : public Response<ErrorCode> {
 
     ItemType& item() { return m_item; }
 
+    const std::vector<std::string>& ids() const { return m_ids; };
+
+    std::vector<std::string>& ids() { return m_ids; };
+
     bool found() const { return m_found; }
 
     void set_found(bool found) { m_found = found; }
@@ -81,6 +85,7 @@ class CrudResponse : public Response<ErrorCode> {
   private:
     std::string m_query_result;
     std::vector<ItemType> m_items;
+    std::vector<std::string> m_ids;
     ItemType m_item;
     bool m_found{false};
 

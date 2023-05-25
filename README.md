@@ -94,13 +94,6 @@ Retrieve the version on tier `1`:
 curl $HESTIA_ENDPOINT/api/v1/hsm/tiers/1/objects/000012345/data
 ```
 
-List the supported object store backends on the system - the node supporting the backend may be elsewhere on
-the network.
-
-```bash
-curl $HESTIA_ENDPOINT/api/v1/object_store_backends/
-```
-
 List the hestia nodes in the system:
 
 ```bash

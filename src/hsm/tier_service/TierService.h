@@ -9,8 +9,7 @@ namespace hestia {
 class KeyValueStoreClient;
 
 struct TierServiceConfig {
-    std::string m_key_prefix{"tier_service"};
-    std::string m_tier_key{"tier"};
+    std::string m_endpoint;
 };
 
 class TierService : public KeyValueCrudService<StorageTier> {

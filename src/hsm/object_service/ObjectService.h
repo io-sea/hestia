@@ -18,6 +18,7 @@ class ObjectService : public KeyValueCrudService<HsmObject> {
   public:
     using Ptr = std::unique_ptr<ObjectService>;
     ObjectService(
+        const ObjectServiceConfig& config,
         KeyValueStoreClient* kv_store_client,
         HttpClient* http_client                          = nullptr,
         std::unique_ptr<HsmObjectAdapter> object_adatper = nullptr);

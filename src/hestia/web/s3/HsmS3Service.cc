@@ -103,17 +103,16 @@ S3Service::Status HsmS3Service::list(std::vector<S3Container>& fetched) const
     LOG_INFO("Starting container list request");
 
     const std::string key = "hestia:buckets";
-    const Metadata::Query query{key, ""};
 
-    KeyValueStoreRequest request(KeyValueStoreRequestMethod::SET_LIST, query);
-    const auto response = m_kv_store_client->make_request(request);
+    const auto response = m_kv_store_client->make_request(
+        {KeyValueStoreRequestMethod::SET_LIST, key});
     if (!response->ok()) {
         return {
             S3Service::Status::Code::ERROR, response->get_error().to_string()};
     }
 
-    for (const auto& item : response->get_set_items()) {
-        fetched.push_back(S3Container(item));
+    for (const auto& id : response->ids()) {
+        fetched.push_back(S3Container(id));
     }
     LOG_INFO("Finished container list request: found " << fetched.size());
     return {};
@@ -135,7 +134,7 @@ S3Service::Status HsmS3Service::list(
             S3Service::Status::Code::ERROR, response->get_error().to_string()};
     }
 
-    for (const auto& item : response->get_set_items()) {
+    for (const auto& item : response->items()) {
         fetched.push_back(S3Object(item));
     }
     LOG_INFO("Finished object list request: found " << fetched.size());

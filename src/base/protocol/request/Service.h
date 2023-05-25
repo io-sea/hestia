@@ -79,6 +79,12 @@ class CrudService :
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
+            case CrudMethod::MULTI_GET:
+                try {
+                    multi_get(response->items());
+                }
+                HESTIA_CRUD_SERVICE_CATCH_FLOW();
+                break;
             case CrudMethod::PUT:
                 try {
                     put(request.item());
@@ -93,7 +99,7 @@ class CrudService :
                 break;
             case CrudMethod::LIST:
                 try {
-                    list(response->items());
+                    list(response->ids());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
@@ -119,13 +125,15 @@ class CrudService :
   protected:
     virtual void get(ItemT& item) const = 0;
 
-    virtual void put(const ItemT& item) const = 0;
-
     virtual bool exists(const ItemT& item) const = 0;
 
-    virtual void remove(const ItemT& item) const = 0;
+    virtual void list(std::vector<std::string>& ids) const = 0;
 
-    virtual void list(std::vector<ItemT>& item) const = 0;
+    virtual void multi_get(std::vector<ItemT>& items) const = 0;
+
+    virtual void put(const ItemT& item) const = 0;
+
+    virtual void remove(const ItemT& item) const = 0;
 
   private:
     void on_exception(

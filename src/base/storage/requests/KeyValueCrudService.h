@@ -5,21 +5,26 @@
 
 namespace hestia {
 struct KeyValueCrudServiceConfig {
-    std::string m_endpoint;
+
+    KeyValueCrudServiceConfig(
+        const std::string& prefix,
+        const std::string& item_prefix,
+        const std::string& endpoint = {}) :
+        m_prefix(prefix), m_item_prefix(item_prefix), m_endpoint(endpoint)
+    {
+    }
+
     std::string m_prefix{"kv_crud_service"};
     std::string m_item_prefix{"item"};
+    std::string m_endpoint;
 };
 
 template<typename ItemT>
 class KeyValueCrudService : public CrudService<ItemT> {
   public:
-    KeyValueCrudService(KeyValueStoreClient* client) :
-        CrudService<ItemT>(), m_client(client){};
-
-    void intialize(const KeyValueCrudServiceConfig& config)
-    {
-        m_config = config;
-    }
+    KeyValueCrudService(
+        const KeyValueCrudServiceConfig& config, KeyValueStoreClient* client) :
+        CrudService<ItemT>(), m_config(config), m_client(client){};
 
     virtual ~KeyValueCrudService() = default;
 
@@ -29,17 +34,39 @@ class KeyValueCrudService : public CrudService<ItemT> {
   private:
     void get(ItemT& item) const override
     {
-        LOG_INFO("Doing get for item: " << get_item_key(item));
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_GET, get_item_key(item),
+             m_config.m_endpoint});
+        if (!response->ok()) {
+            throw RequestException<CrudRequestError>(
+                {CrudErrorCode::ERROR,
+                 "Error in kv_store STRING_GET: "
+                     + response->get_error().to_string()});
+        }
+        from_string(response->item(), item);
+    }
 
-        const Metadata::Query query{get_item_key(item), ""};
+    void multi_get(std::vector<ItemT>& items) const override
+    {
+        std::vector<std::string> ids;
+        list(ids);
 
-        KeyValueStoreRequest request(
-            KeyValueStoreRequestMethod::STRING_GET, query);
-        const auto response = m_client->make_request(request);
+        std::vector<std::string> keys;
+        get_item_keys(ids, keys);
 
-        LOG_INFO("Response value is: " << response->get_value());
-
-        from_string(response->get_value(), item);
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_MULTI_GET, keys,
+             m_config.m_endpoint});
+        if (!response->ok()) {
+            throw std::runtime_error(
+                "Error in kv_store STRING_MULTI_GET: "
+                + response->get_error().to_string());
+        }
+        for (const auto& item_data : response->items()) {
+            ItemT item;
+            from_string(item_data, item);
+            items.push_back(item);
+        }
     }
 
     void put(const ItemT& item) const override
@@ -47,21 +74,20 @@ class KeyValueCrudService : public CrudService<ItemT> {
         std::string content;
         to_string(item, content);
 
-        const Metadata::Query query{get_item_key(item), content};
-
-        KeyValueStoreRequest request(
-            KeyValueStoreRequestMethod::STRING_SET, query);
-        const auto response = m_client->make_request(request);
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_SET,
+             Metadata::Query(get_item_key(item), content),
+             m_config.m_endpoint});
         if (!response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store STRING_SET: "
-                + response->get_error().to_string());
+            throw RequestException<CrudRequestError>(
+                {CrudErrorCode::ERROR,
+                 "Error in kv_store STRING_SET: "
+                     + response->get_error().to_string()});
         }
 
-        const Metadata::Query set_add_query{get_set_key(), item.id()};
-        KeyValueStoreRequest set_request(
-            KeyValueStoreRequestMethod::SET_ADD, set_add_query);
-        const auto set_response = m_client->make_request(set_request);
+        const auto set_response = m_client->make_request(
+            {KeyValueStoreRequestMethod::SET_ADD,
+             Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_ADD: "
@@ -71,36 +97,31 @@ class KeyValueCrudService : public CrudService<ItemT> {
 
     bool exists(const ItemT& item) const override
     {
-        const Metadata::Query query{get_item_key(item), ""};
-
-        KeyValueStoreRequest request(
-            KeyValueStoreRequestMethod::STRING_EXISTS, query);
-        const auto response = m_client->make_request(request);
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(item),
+             m_config.m_endpoint});
         if (!response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store STRING_EXISTS: "
                 + response->get_error().to_string());
         }
-        return response->has_key();
+        return response->found();
     }
 
     void remove(const ItemT& item) const override
     {
-        const Metadata::Query query{get_item_key(item), ""};
-
-        KeyValueStoreRequest string_request(
-            KeyValueStoreRequestMethod::STRING_REMOVE, query);
-        const auto string_response = m_client->make_request(string_request);
+        const auto string_response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(item),
+             m_config.m_endpoint});
         if (!string_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store STRING_REMOVE: "
                 + string_response->get_error().to_string());
         }
 
-        const Metadata::Query set_remove_query{get_set_key(), item.id()};
-        KeyValueStoreRequest set_request(
-            KeyValueStoreRequestMethod::SET_REMOVE, set_remove_query);
-        const auto set_response = m_client->make_request(set_request);
+        const auto set_response = m_client->make_request(
+            {KeyValueStoreRequestMethod::SET_REMOVE,
+             Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_REMOVE: "
@@ -108,21 +129,21 @@ class KeyValueCrudService : public CrudService<ItemT> {
         }
     }
 
-    void list(std::vector<ItemT>& items) const override
+    void list(std::vector<std::string>& ids) const override
     {
-        const Metadata::Query query{get_set_key(), ""};
-
-        KeyValueStoreRequest request(
-            KeyValueStoreRequestMethod::SET_LIST, query);
-        const auto response = m_client->make_request(request);
+        LOG_INFO("Have client: " << bool(m_client));
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
+             m_config.m_endpoint});
         if (!response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_LIST: "
                 + response->get_error().to_string());
         }
 
-        for (const auto& item : response->get_set_items()) {
-            items.push_back(ItemT(item));
+        for (const auto& id : response->ids()) {
+            LOG_INFO("Adding id: " + id);
+            ids.push_back(id);
         }
     }
 
@@ -134,6 +155,16 @@ class KeyValueCrudService : public CrudService<ItemT> {
     {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
                + item.id();
+    }
+
+    void get_item_keys(
+        const std::vector<std::string>& ids,
+        std::vector<std::string>& keys) const
+    {
+        for (const auto& id : ids) {
+            keys.push_back(
+                m_config.m_prefix + ":" + m_config.m_item_prefix + ":" + id);
+        }
     }
 
     std::string get_set_key() const

@@ -1,9 +1,11 @@
 #include "KeyValueStoreClient.h"
 
+#include "RequestException.h"
+
 #include "Logger.h"
 
 #define CATCH_FLOW()                                                           \
-    catch (const RequestException<KeyValueStoreError>& e)                      \
+    catch (const RequestException<RequestError<CrudErrorCode>>& e)             \
     {                                                                          \
         on_exception(request, response.get(), e.get_error());                  \
         return response;                                                       \
@@ -20,22 +22,28 @@
     }
 
 namespace hestia {
-KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
+KeyValueStoreResponsePtr KeyValueStoreClient::make_request(
     const KeyValueStoreRequest& request) const noexcept
 {
-    auto response = KeyValueStoreResponse::create(request);
+    auto response = std::make_unique<KeyValueStoreResponse>(request);
 
     switch (request.method()) {
         case KeyValueStoreRequestMethod::STRING_EXISTS:
             try {
-                const auto exists = string_exists(request.get_query().first);
-                response->set_key_found(exists);
+                const auto exists = string_exists(request.get_key());
+                response->set_found(exists);
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::STRING_GET:
             try {
-                string_get(request.get_query().first, response->get_value());
+                string_get(request.get_key(), response->item());
+            }
+            CATCH_FLOW();
+            break;
+        case KeyValueStoreRequestMethod::STRING_MULTI_GET:
+            try {
+                string_multi_get(request.get_keys(), response->items());
             }
             CATCH_FLOW();
             break;
@@ -48,7 +56,7 @@ KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
             break;
         case KeyValueStoreRequestMethod::STRING_REMOVE:
             try {
-                string_remove(request.get_query().first);
+                string_remove(request.get_key());
             }
             CATCH_FLOW();
             break;
@@ -60,7 +68,7 @@ KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
             break;
         case KeyValueStoreRequestMethod::SET_LIST:
             try {
-                set_list(request.get_query().first, response->get_set_items());
+                set_list(request.get_key(), response->ids());
             }
             CATCH_FLOW();
             break;
@@ -74,8 +82,8 @@ KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
         default:
             const std::string msg =
                 "Method: " + request.method_as_string() + " not supported";
-            const KeyValueStoreError error(
-                KeyValueStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
+            const CrudRequestError error(
+                CrudErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
             LOG_ERROR("Error: " << error);
             response->on_error(error);
             return response;
@@ -92,16 +100,14 @@ void KeyValueStoreClient::on_exception(
     if (!message.empty()) {
         const std::string msg = "Exception in " + request.method_as_string()
                                 + " method: " + message;
-        const KeyValueStoreError error(
-            KeyValueStoreErrorCode::STL_EXCEPTION, msg);
-        LOG_ERROR("Error: " << error);
+        const CrudRequestError error(CrudErrorCode::STL_EXCEPTION, msg);
+        LOG_ERROR("Error: " << error << " msg " << message);
         response->on_error(error);
     }
     else {
         const std::string msg =
             "Uknown Exception in " + request.method_as_string() + " method";
-        const KeyValueStoreError error(
-            KeyValueStoreErrorCode::UNKNOWN_EXCEPTION, msg);
+        const CrudRequestError error(CrudErrorCode::UNKNOWN_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
         response->on_error(error);
     }
@@ -110,7 +116,7 @@ void KeyValueStoreClient::on_exception(
 void KeyValueStoreClient::on_exception(
     const KeyValueStoreRequest& request,
     KeyValueStoreResponse* response,
-    const KeyValueStoreError& error) const
+    const RequestError<CrudErrorCode>& error) const
 {
     const std::string msg =
         "Error in " + request.method_as_string() + " method: ";

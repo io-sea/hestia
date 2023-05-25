@@ -14,7 +14,7 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
   public:
     FileKeyValueStoreClient();
 
-    ~FileKeyValueStoreClient() = default;
+    virtual ~FileKeyValueStoreClient() = default;
 
     void initialize(const Metadata& config) override;
 
@@ -24,6 +24,10 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
     bool string_exists(const std::string& key) const override;
 
     void string_get(const std::string& key, std::string& value) const override;
+
+    void string_multi_get(
+        const std::vector<std::string>& key,
+        std::vector<std::string>& value) const override;
 
     void string_set(
         const std::string& key, const std::string& value) const override;
@@ -40,5 +44,6 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
         const std::string& key, const std::string& value) const override;
 
     std::filesystem::path m_store{"kv_store"};
+    std::string m_db_name{"strings_db.json"};
 };
 }  // namespace hestia

@@ -5,6 +5,7 @@
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
 
+#include "HestiaNodeService.h"
 #include "HestiaService.h"
 #include "HsmS3Service.h"
 #include "HsmService.h"
@@ -402,14 +403,17 @@ OpStatus HestiaCli::run_server()
         LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
         HestiaServiceConfig service_config;
         auto hsm_service = ApplicationContext::get().get_hsm_service();
-        auto kv_store    = std::make_unique<FileKeyValueStoreClient>();
 
         CurlClientConfig http_client_config;
         auto http_client = std::make_unique<CurlClient>(http_client_config);
 
+        HestiaNodeServiceConfig node_service_config;
+        auto node_service = std::make_unique<HestiaNodeService>(
+            node_service_config,
+            ApplicationContext::get().get_kv_store_client());
+
         hestia_service = std::make_unique<HestiaService>(
-            service_config, hsm_service, std::move(kv_store),
-            std::move(http_client));
+            service_config, hsm_service, std::move(node_service));
 
         web_app = std::make_unique<HestiaWebApp>(hestia_service.get());
     }

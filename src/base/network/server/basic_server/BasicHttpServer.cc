@@ -69,7 +69,8 @@ void BasicHttpServer::on_connection(Socket* socket)
         RequestContext request_context(request);
         m_web_app->on_request(&request_context);
 
-        if (!request.body().empty()) {
+        if (!request.body().empty()
+            && request_context.get_stream()->waiting_for_content()) {
             auto status = request_context.write_to_stream(
                 ReadableBufferView(request.body()));
             if (!status.ok()) {
@@ -78,6 +79,10 @@ void BasicHttpServer::on_connection(Socket* socket)
                     << status.m_state.message());
             }
         }
+
+        LOG_INFO(
+            "Sending response: "
+            << request_context.get_response()->to_string());
 
         socket->respond(request_context.get_response()->to_string());
         socket->close();

@@ -49,7 +49,11 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
         try {
             response = view->get_response(request_context->get_request());
         }
+        catch (const std::exception& e) {
+            LOG_ERROR("Unhandled exception in view: " << e.what());
+        }
         catch (...) {
+            LOG_ERROR("Uknown exception in view");
             response = HttpResponse::create(500, "Internal Server Error");
         }
     }

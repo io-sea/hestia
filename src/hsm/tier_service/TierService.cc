@@ -9,7 +9,9 @@ namespace hestia {
 
 TierService::TierService(
     const TierServiceConfig& config, KeyValueStoreClient* kv_store_client) :
-    KeyValueCrudService<StorageTier>(kv_store_client), m_config(config)
+    KeyValueCrudService<StorageTier>(
+        {"hestia", "tier", config.m_endpoint}, kv_store_client),
+    m_config(config)
 {
 }
 

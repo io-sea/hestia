@@ -36,13 +36,20 @@ void FileKeyValueStoreClient::do_initialize(
 void FileKeyValueStoreClient::string_get(
     const std::string& key, std::string& value) const
 {
-    JsonUtils::get_value(m_store / "strings_db.json", key, value);
+    JsonUtils::get_value(m_store / m_db_name, key, value);
+}
+
+void FileKeyValueStoreClient::string_multi_get(
+    const std::vector<std::string>& keys,
+    std::vector<std::string>& values) const
+{
+    JsonUtils::get_values(m_store / m_db_name, keys, values);
 }
 
 void FileKeyValueStoreClient::string_set(
     const std::string& key, const std::string& value) const
 {
-    const auto path = m_store / "strings_db.json";
+    const auto path = m_store / m_db_name;
     FileUtils::create_if_not_existing(path);
     LOG_INFO("Setting: " + key + " to " + value + " at " + path.string());
     JsonUtils::set_value(path, key, value);
@@ -50,12 +57,12 @@ void FileKeyValueStoreClient::string_set(
 
 void FileKeyValueStoreClient::string_remove(const std::string& key) const
 {
-    JsonUtils::remove_key(m_store / "strings_db.json", key);
+    JsonUtils::remove_key(m_store / m_db_name, key);
 }
 
 bool FileKeyValueStoreClient::string_exists(const std::string& key) const
 {
-    return JsonUtils::has_key(m_store / "strings_db.json", key);
+    return JsonUtils::has_key(m_store / m_db_name, key);
 }
 
 void FileKeyValueStoreClient::set_add(
@@ -74,6 +81,7 @@ void FileKeyValueStoreClient::set_add(
 void FileKeyValueStoreClient::set_list(
     const std::string& key, std::vector<std::string>& values) const
 {
+    LOG_INFO("FileKeyValueStoreClient SET LIST");
     const auto prefix = StringUtils::replace(key, ':', '_');
     const auto path   = m_store / (prefix + "_set.meta");
 

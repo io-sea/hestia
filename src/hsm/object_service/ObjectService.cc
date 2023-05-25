@@ -7,10 +7,12 @@
 
 namespace hestia {
 ObjectService::ObjectService(
+    const ObjectServiceConfig& config,
     KeyValueStoreClient* kv_store_client,
     HttpClient* http_client,
     std::unique_ptr<HsmObjectAdapter> object_adatper) :
-    KeyValueCrudService<HsmObject>(kv_store_client),
+    KeyValueCrudService<HsmObject>(
+        {"hestia", "object", config.m_endpoint}, kv_store_client),
     m_http_client(http_client),
     m_object_adapter(
         object_adatper ? std::move(object_adatper) : HsmObjectAdapter::create())

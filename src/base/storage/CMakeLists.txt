@@ -20,8 +20,6 @@ add_module(
         requests/ObjectStoreResponse.h
         requests/ObjectStoreError.h 
         requests/KeyValueStoreRequest.h
-        requests/KeyValueStoreResponse.h
-        requests/KeyValueStoreError.h
     SOURCES
         ObjectStoreClient.cc
         ObjectStoreClientPlugin.cc
@@ -37,8 +35,6 @@ add_module(
         requests/ObjectStoreResponse.cc
         requests/ObjectStoreError.cc
         requests/KeyValueStoreRequest.cc
-        requests/KeyValueStoreResponse.cc
-        requests/KeyValueStoreError.cc
     INTERNAL_INCLUDE_DIRS
         block_store
         clients/file

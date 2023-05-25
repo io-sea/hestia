@@ -57,7 +57,9 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
 
-    auto object_service = std::make_unique<ObjectService>(raw_kv_store_client);
+    ObjectServiceConfig object_config;
+    auto object_service =
+        std::make_unique<ObjectService>(object_config, raw_kv_store_client);
 
     std::unique_ptr<EventFeed> event_feed;
     try {

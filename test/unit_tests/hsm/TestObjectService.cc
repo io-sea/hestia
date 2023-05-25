@@ -19,55 +19,52 @@ class ObjectServiceTestFixture {
         config.set_item("root", store_path);
         m_kv_store_client = std::make_unique<hestia::FileKeyValueStoreClient>();
         m_kv_store_client->initialize(config);
-        m_object_service =
-            std::make_unique<hestia::ObjectService>(m_kv_store_client.get());
+
+        hestia::ObjectServiceConfig object_config;
+        m_object_service = std::make_unique<hestia::ObjectService>(
+            object_config, m_kv_store_client.get());
     }
 
     ~ObjectServiceTestFixture()
     {
-        std::filesystem::remove_all(get_store_path());
+        // std::filesystem::remove_all(get_store_path());
     }
 
     void put(const hestia::StorageObject& obj)
     {
-        hestia::CrudRequest<hestia::HsmObject> request(
-            obj, hestia::CrudMethod::PUT);
-        auto response = m_object_service->make_request(request);
+        auto response =
+            m_object_service->make_request({obj, hestia::CrudMethod::PUT});
         REQUIRE(response->ok());
     }
 
     void get(hestia::StorageObject& obj)
     {
-        hestia::CrudRequest<hestia::HsmObject> request(
-            obj, hestia::CrudMethod::GET);
-        auto response = m_object_service->make_request(request);
+        auto response =
+            m_object_service->make_request({obj, hestia::CrudMethod::GET});
         REQUIRE(response->ok());
         obj = response->item().object();
     }
 
     bool exists(const hestia::StorageObject& obj)
     {
-        hestia::CrudRequest<hestia::HsmObject> request(
-            obj, hestia::CrudMethod::EXISTS);
-        auto response = m_object_service->make_request(request);
+        auto response =
+            m_object_service->make_request({obj, hestia::CrudMethod::EXISTS});
         REQUIRE(response->ok());
         return response->found();
     }
 
-    void list(std::vector<hestia::HsmObject>& objects)
+    void list(std::vector<std::string>& ids)
     {
-        hestia::CrudRequest<hestia::HsmObject> request(
-            hestia::StorageObject(), hestia::CrudMethod::LIST);
-        auto response = m_object_service->make_request(request);
+        auto response =
+            m_object_service->make_request({hestia::CrudMethod::LIST});
         REQUIRE(response->ok());
-        objects = response->items();
+        ids = response->ids();
     }
 
     void remove(const hestia::StorageObject& obj)
     {
-        hestia::CrudRequest<hestia::HsmObject> request(
-            obj, hestia::CrudMethod::REMOVE);
-        auto response = m_object_service->make_request(request);
+        auto response =
+            m_object_service->make_request({obj, hestia::CrudMethod::REMOVE});
         REQUIRE(response->ok());
     }
 
@@ -109,16 +106,16 @@ TEST_CASE_METHOD(
     REQUIRE(retrieved_object0.m_metadata.get_item("key1") == "value1");
     REQUIRE(retrieved_object0.m_metadata.get_item("key2") == "value2");
 
-    std::vector<hestia::HsmObject> objects;
-    list(objects);
-    REQUIRE(objects.size() == 2);
-    REQUIRE(objects[0].object().id() == object0.id());
-    REQUIRE(objects[1].object().id() == object1.id());
+    std::vector<std::string> ids;
+    list(ids);
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids[0] == object0.id());
+    REQUIRE(ids[1] == object1.id());
 
     remove(object0);
 
     REQUIRE_FALSE(exists(object0));
-    std::vector<hestia::HsmObject> updated_objects;
-    list(updated_objects);
-    REQUIRE(updated_objects.size() == 1);
+    std::vector<std::string> updated_ids;
+    list(updated_ids);
+    REQUIRE(updated_ids.size() == 1);
 }

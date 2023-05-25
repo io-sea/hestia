@@ -2,6 +2,7 @@
 
 #include "FileUtils.h"
 
+#include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
@@ -15,6 +16,24 @@ std::string JsonUtils::to_json(const Metadata& metadata)
 
     metadata.for_each_item(for_each);
     nlohmann::json json = map;
+    return json.dump();
+}
+
+std::string JsonUtils::to_json(
+    const std::vector<Metadata>& metadata, const std::string& key)
+{
+    std::vector<std::unordered_map<std::string, std::string>> data;
+    for (const auto& md : metadata) {
+        data.push_back(md.get_raw_data());
+    }
+
+    nlohmann::json json;
+    if (key.empty()) {
+        json = data;
+    }
+    else {
+        json[key] = data;
+    }
     return json.dump();
 }
 
@@ -47,6 +66,10 @@ void JsonUtils::get_value(
     const std::string& key,
     std::string& value)
 {
+    if (!std::filesystem::exists(path)) {
+        return;
+    }
+
     std::ifstream read_file(path);
 
     nlohmann::json file_content;
@@ -55,6 +78,28 @@ void JsonUtils::get_value(
 
     if (file_content.contains(key)) {
         value = file_content[key];
+    }
+}
+
+void JsonUtils::get_values(
+    const std::filesystem::path& path,
+    const std::vector<std::string>& keys,
+    std::vector<std::string>& values)
+{
+    if (!std::filesystem::exists(path)) {
+        return;
+    }
+
+    std::ifstream read_file(path);
+
+    nlohmann::json file_content;
+    read_file >> file_content;
+    read_file.close();
+
+    for (const auto& key : keys) {
+        if (file_content.contains(key)) {
+            values.push_back(file_content[key]);
+        }
     }
 }
 
