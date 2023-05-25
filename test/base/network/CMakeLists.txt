@@ -1,1 +1,0 @@
-add_subdirectory(mock_s3_server)

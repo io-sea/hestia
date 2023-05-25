@@ -12,12 +12,11 @@ target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CU
 
 add_subdirectory(base)
 add_subdirectory(event_feed)
-add_subdirectory(hsm_object_store)
-add_subdirectory(hsm_service)
-add_subdirectory(hestia_client)
+add_subdirectory(hsm)
+add_subdirectory(hestia)
 
 add_executable(hestia_main main.cc)
-target_link_libraries(hestia_main PRIVATE hestia_client)
+target_link_libraries(hestia_main PRIVATE hestia_app)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_link_libraries(hestia_main PRIVATE development_flags)
 endif()
@@ -33,10 +32,9 @@ add_module(
     WITH_FILESYSTEM
     HEADERS
         hestia.h
-        hestia_types.h
     SOURCES
-        hestia_client/hestia.cc
+        hestia/hestia.cc
     INTERNAL_DEPENDENCIES 
         headers
-        client  
+        app  
 )

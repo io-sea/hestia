@@ -1,43 +1,47 @@
 include(AddModule)
 
+add_subdirectory(object_store)
+
 add_module(
-    MODULE_NAME hsm_service 
+    MODULE_NAME hsm
     HEADERS
-        HsmService.h
-        KeyValueStoreClientFactory.h
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
-        model/HsmAction.h
-        model/HsmActionAdapter.h
-        model/CompositeLayer.h
+        hsm_service/HsmService.h
+        hsm_service/model/HsmAction.h
+        hsm_service/model/HsmActionAdapter.h
+        hsm_service/model/CompositeLayer.h
+        hsm_service/requests/HsmServiceResponse.h 
+        hsm_service/requests/HsmServiceRequest.h
+        hsm_service/requests/HsmServiceError.h 
+        key_value_store/KeyValueStoreClientFactory.h
         object_service/ObjectService.h
         object_service/model/HsmObject.h 
         object_service/model/HsmObjectAdapter.h 
-        requests/HsmServiceResponse.h 
-        requests/HsmServiceRequest.h
-        requests/HsmServiceError.h 
         tier_service/TierService.h 
         tier_service/model/StorageTier.h
     SOURCES
-        HsmService.cc
-        KeyValueStoreClientFactory.cc
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
-        model/HsmAction.cc
-        model/HsmActionAdapter.cc
-        model/CompositeLayer.cc
+        hsm_service/HsmService.cc
+        hsm_service/model/HsmAction.cc
+        hsm_service/model/HsmActionAdapter.cc
+        hsm_service/model/CompositeLayer.cc
+        hsm_service/requests/HsmServiceResponse.cc
+        hsm_service/requests/HsmServiceRequest.cc
+        hsm_service/requests/HsmServiceError.cc
+        key_value_store/KeyValueStoreClientFactory.cc
         object_service/ObjectService.cc
         object_service/model/HsmObject.cc
         object_service/model/HsmObjectAdapter.cc
-        requests/HsmServiceResponse.cc
-        requests/HsmServiceRequest.cc
-        requests/HsmServiceError.cc
         tier_service/TierService.cc 
     INTERNAL_INCLUDE_DIRS
-        model
-        requests
         data_placement_engine
+        hsm_service
+        hsm_service/model
+        hsm_service/requests
+        key_value_store
         object_service
         object_service/model
         tier_service

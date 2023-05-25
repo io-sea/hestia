@@ -3,7 +3,7 @@
 #include "HsmObjectStoreTestWrapper.h"
 #include "TestContext.h"
 
-#include "hestia_types.h"
+#include "hestia.h"
 
 class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
   public:

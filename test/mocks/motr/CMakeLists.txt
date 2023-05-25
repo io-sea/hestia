@@ -1,7 +1,7 @@
 include(AddModule)
 
 add_module(
-    MODULE_NAME motr_plugin_mock 
+    MODULE_NAME mock_motr 
     HEADERS
         MockMotrInterfaceImpl.h
         MockMotrTypes.h 
@@ -19,7 +19,7 @@ add_module(
         MockMotrHsmInternal.cc
         MockMotrClient.cc
     INTERNAL_DEPENDENCIES 
-        hsm_service
+        hsm
         motr_object_store_client
 
 )
@@ -29,5 +29,5 @@ add_library(${PROJECT_NAME}_mock_motr_plugin SHARED
 )
 
 target_link_libraries(${PROJECT_NAME}_mock_motr_plugin PUBLIC 
-    hestia_motr_plugin_mock)
+    hestia_mock_motr)
 

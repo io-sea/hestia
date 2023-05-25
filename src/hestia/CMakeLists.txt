@@ -1,15 +1,14 @@
 include(AddModule)
 
 add_module(
-    MODULE_NAME client
+    MODULE_NAME app
     HEADERS
-        HestiaConfig.h
-        HestiaConfigurator.h
         HestiaCli.h
         HestiaCppInterface.h
         HestiaService.h
         application/ApplicationContext.h
-        application/ConfigParser.h
+        application/HestiaConfig.h
+        application/HestiaConfigurator.h
         web/http/HestiaWebApp.h 
         web/http/HestiaObjectView.h 
         web/http/HestiaTierView.h 
@@ -17,13 +16,12 @@ add_module(
         web/s3/HestiaS3WebApp.h
         web/s3/HsmS3Service.h
     SOURCES
-        HestiaConfig.cc
-        HestiaConfigurator.cc
         HestiaCli.cc
         HestiaCppInterface.cc
         HestiaService.cc
         application/ApplicationContext.cc
-        application/ConfigParser.cc
+        application/HestiaConfig.cc
+        application/HestiaConfigurator.cc
         web/http/HestiaWebApp.cc 
         web/http/HestiaObjectView.cc 
         web/http/HestiaTierView.cc 
@@ -36,8 +34,8 @@ add_module(
         web/http
     INTERNAL_DEPENDENCIES 
         headers
-        hsm_service
+        hsm
         web      
 )
 
-target_include_directories(hestia_client SYSTEM PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>)
+target_include_directories(hestia_app SYSTEM PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>)

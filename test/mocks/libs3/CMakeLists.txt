@@ -5,13 +5,14 @@ add_module(
     HEADERS
         MockLibS3InterfaceImpl.h
         MockLibS3.h
+        MockS3Server.h
     SOURCES
         MockLibS3InterfaceImpl.cc
         MockLibS3.cc
+        MockS3Server.cc
     INTERNAL_DEPENDENCIES 
         storage
         s3_backend
-        mock_s3_server
 )
 
 add_library(${PROJECT_NAME}_mock_s3_plugin SHARED 

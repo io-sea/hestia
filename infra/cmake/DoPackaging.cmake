@@ -6,14 +6,14 @@ set(LINK_MODULES_FOR_EXPORT
         storage 
         web
         s3app
-        hsm_service
+        hsm
         event_feed
         copytool_lib
         http_client
         hsm_object_store_common
         hsm_object_store_client
         hsm_object_store
-        client
+        app
         headers
 )
 
@@ -23,7 +23,7 @@ set(STANDALONE_MODULES_FOR_EXPORT
         mock_phobos
         mock_phobos_plugin
         s3_backend
-        mock_s3_server
+        mocks
         mock_s3
         mock_s3_plugin
         main 
