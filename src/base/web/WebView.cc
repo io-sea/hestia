@@ -1,5 +1,7 @@
 #include "WebView.h"
 
+#include "Logger.h"
+
 namespace hestia {
 HttpResponse::Ptr WebView::get_response(const HttpRequest& request)
 {
@@ -42,6 +44,11 @@ HttpResponse::Ptr WebView::on_not_supported(const HttpRequest& request)
 {
     const auto msg =
         "Method " + request.get_method_as_string() + " is not supported.";
+    LOG_INFO(
+        "Got unsupported method: " + request.get_path() + " "
+        + request.get_method_as_string());
+    LOG_INFO(request.get_header().to_string());
+    LOG_INFO(request.body());
     return HttpResponse::create(400, "Bad method", msg);
 }
 }  // namespace hestia

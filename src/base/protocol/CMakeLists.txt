@@ -15,6 +15,7 @@ add_module(
         request/Response.h 
         request/RequestError.h
         request/RequestException.h
+        request/Service.h
         s3/S3Error.h
         s3/S3Path.h
         s3/S3Object.h

@@ -11,10 +11,12 @@
 namespace hestia {
 class MultiBackendHsmObjectStoreClient;
 class DataPlacementEngine;
+
 class ObjectService;
+using ObjectServiceRequest = CrudRequest<HsmObject>;
+
 class TierService;
 class HsmStoreInterface;
-
 class HsmActionAdapter;
 
 class HsmService {

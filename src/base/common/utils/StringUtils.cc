@@ -14,6 +14,24 @@ std::pair<std::string, std::string> StringUtils::split_on_first(
     return {str.substr(0, loc), str.substr(loc + 1, str.size() - loc)};
 }
 
+void StringUtils::split(
+    const std::string& str, char delimiter, std::vector<std::string>& elements)
+{
+    std::string working_element;
+    for (const auto c : str) {
+        if (c == delimiter) {
+            elements.push_back(working_element);
+            working_element.clear();
+        }
+        else {
+            working_element += c;
+        }
+    }
+    if (!working_element.empty()) {
+        elements.push_back(working_element);
+    }
+}
+
 std::string StringUtils::id_to_string(
     uint64_t lo, uint64_t hi, char delimiter, bool as_hex)
 {

@@ -21,15 +21,18 @@ class HttpRequest {
 
     HttpHeader& get_header();
 
-    std::string get_path() const;
+    const std::string& get_path() const;
 
     std::string get_method_as_string() const;
 
     const Method& get_method() const;
 
-    const std::string& get_queries() const { return m_queries; }
+    const Metadata& get_queries() const { return m_preamble.m_queries; }
 
-    void set_queries(const std::string& query) { m_queries = query; }
+    void set_queries(const Metadata& queries)
+    {
+        m_preamble.m_queries = queries;
+    }
 
     const HttpHeader& get_header() const;
 
@@ -48,7 +51,6 @@ class HttpRequest {
     std::string m_body;
     HttpPreamble m_preamble;
     HttpHeader m_header;
-    std::string m_queries;
 };
 
 using responseProviderFunc =

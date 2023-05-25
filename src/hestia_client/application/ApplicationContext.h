@@ -15,6 +15,8 @@ class ApplicationContext {
 
     HsmService* get_hsm_service() const;
 
+    KeyValueStoreClient* get_kv_store_client() const;
+
     void set_hsm_service(std::unique_ptr<HsmService> hsm_service);
 
     void set_kv_store_client(

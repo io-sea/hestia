@@ -55,6 +55,11 @@ class StringUtils {
     static std::pair<std::string, std::string> split_on_first(
         const std::string& str, char delimiter);
 
+    static void split(
+        const std::string& str,
+        char delimiter,
+        std::vector<std::string>& elements);
+
     /**
      * Convert the string to lower case
      *

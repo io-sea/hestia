@@ -14,6 +14,7 @@ add_module(
     SOURCES
         WebApp.cc
         WebView.cc
+        UrlRouter.cc
         authentication/UserService.cc
     INTERNAL_DEPENDENCIES 
         storage 

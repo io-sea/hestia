@@ -49,17 +49,10 @@ void S3AuthorisationObject::add_signed_header(const std::string& header)
     m_signed_headers.push_back(header_cp);
 }
 
-void S3AuthorisationObject::add_query(const std::string& query)
+void S3AuthorisationObject::add_query(
+    const std::pair<std::string, std::string>& query)
 {
-    size_t loc = query.find('=');
-    if (loc != query.npos) {
-        m_queries.push_back(std::make_pair<std::string, std::string>(
-            query.substr(0, loc), query.substr(loc + 1)));
-    }
-    else {
-        m_queries.push_back(
-            std::make_pair<std::string, std::string>(query.c_str(), ""));
-    }
+    m_queries.push_back(query);
 }
 
 void S3AuthorisationObject::sort_headers()

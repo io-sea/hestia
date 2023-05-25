@@ -161,5 +161,6 @@ E2E_test:
   before_script:
     - *update_distro
     - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
+    - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-0.0.1-Linux.rpm

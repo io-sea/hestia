@@ -14,7 +14,7 @@ class S3AuthorisationObject {
 
     void add_signed_header(const std::string& header);
 
-    void add_query(const std::string& query);
+    void add_query(const std::pair<std::string, std::string>& query);
 
     bool is_initialized() const;
 

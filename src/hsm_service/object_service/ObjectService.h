@@ -1,8 +1,7 @@
 #pragma once
 
 #include "HsmObject.h"
-#include "ObjectServiceRequest.h"
-#include "StorageTier.h"
+#include "KeyValueCrudService.h"
 
 #include <memory>
 
@@ -15,7 +14,7 @@ struct ObjectServiceConfig {
     std::string m_endpoint;
 };
 
-class ObjectService {
+class ObjectService : public KeyValueCrudService<HsmObject> {
   public:
     using Ptr = std::unique_ptr<ObjectService>;
     ObjectService(
@@ -25,31 +24,10 @@ class ObjectService {
 
     virtual ~ObjectService();
 
-    [[nodiscard]] ObjectServiceResponse::Ptr make_request(
-        const ObjectServiceRequest& request) const noexcept;
+    void to_string(const HsmObject& item, std::string& output) const override;
 
-  private:
-    void get(HsmObject& object) const;
+    void from_string(const std::string& output, HsmObject& item) const override;
 
-    void put(const HsmObject& object) const;
-
-    bool exists(const HsmObject& object) const;
-
-    void remove(const HsmObject& object) const;
-
-    void list(std::vector<HsmObject>& objects) const;
-
-    void on_exception(
-        const ObjectServiceRequest& request,
-        ObjectServiceResponse* response,
-        const std::string& message = {}) const;
-
-    void on_exception(
-        const ObjectServiceRequest& request,
-        ObjectServiceResponse* response,
-        const ObjectServiceError& error) const;
-
-    KeyValueStoreClient* m_kv_store_client{nullptr};
     HttpClient* m_http_client{nullptr};
     std::unique_ptr<HsmObjectAdapter> m_object_adapter;
 };

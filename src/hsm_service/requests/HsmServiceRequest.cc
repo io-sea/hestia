@@ -84,6 +84,11 @@ const hestia::StorageObject& HsmServiceRequest::object() const
     return m_object;
 }
 
+StorageObject& HsmServiceRequest::object()
+{
+    return m_object;
+}
+
 std::string HsmServiceRequest::to_string() const
 {
     std::stringstream sstr;

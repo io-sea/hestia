@@ -212,7 +212,10 @@ int HestiaCppInterface::list_objects(
         LOG_ERROR("Error in LIST: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
-    objects = response->objects();
+
+    for (const auto& object : response->objects()) {
+        objects.push_back(object.uuid());
+    }
 
     return rc::ok();
 }
@@ -227,7 +230,10 @@ int HestiaCppInterface::list_tiers(
         LOG_ERROR("Error in LIST TIERS: " + response->get_error().to_string());
         return rc::error(response->get_error());
     }
-    tiers = response->tiers();
+
+    for (const auto& tier : response->tiers()) {
+        tiers.push_back(std::stoi(tier.id()));
+    }
     return rc::ok();
 }
 

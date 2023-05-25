@@ -34,7 +34,7 @@ class S3AuthorisationSession {
 
     void parse_signed_headers(const std::string& headers);
 
-    void parse_queries(const std::string& queries);
+    void parse_queries(const HttpRequest& request);
 
     void parse_credentials(const std::string& credentials);
 

@@ -30,43 +30,43 @@ class ObjectServiceTestFixture {
 
     void put(const hestia::StorageObject& obj)
     {
-        hestia::ObjectServiceRequest request(
-            obj, hestia::ObjectServiceRequestMethod::PUT);
+        hestia::CrudRequest<hestia::HsmObject> request(
+            obj, hestia::CrudMethod::PUT);
         auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
     }
 
     void get(hestia::StorageObject& obj)
     {
-        hestia::ObjectServiceRequest request(
-            obj, hestia::ObjectServiceRequestMethod::GET);
+        hestia::CrudRequest<hestia::HsmObject> request(
+            obj, hestia::CrudMethod::GET);
         auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
-        obj = response->object().object();
+        obj = response->item().object();
     }
 
     bool exists(const hestia::StorageObject& obj)
     {
-        hestia::ObjectServiceRequest request(
-            obj, hestia::ObjectServiceRequestMethod::EXISTS);
+        hestia::CrudRequest<hestia::HsmObject> request(
+            obj, hestia::CrudMethod::EXISTS);
         auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
-        return response->object_found();
+        return response->found();
     }
 
     void list(std::vector<hestia::HsmObject>& objects)
     {
-        hestia::ObjectServiceRequest request(
-            hestia::StorageObject(), hestia::ObjectServiceRequestMethod::LIST);
+        hestia::CrudRequest<hestia::HsmObject> request(
+            hestia::StorageObject(), hestia::CrudMethod::LIST);
         auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
-        objects = response->objects();
+        objects = response->items();
     }
 
     void remove(const hestia::StorageObject& obj)
     {
-        hestia::ObjectServiceRequest request(
-            obj, hestia::ObjectServiceRequestMethod::REMOVE);
+        hestia::CrudRequest<hestia::HsmObject> request(
+            obj, hestia::CrudMethod::REMOVE);
         auto response = m_object_service->make_request(request);
         REQUIRE(response->ok());
     }

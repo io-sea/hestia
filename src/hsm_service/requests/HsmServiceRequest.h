@@ -22,22 +22,23 @@ enum class HsmServiceRequestMethod {
 };
 
 class HsmServiceRequest :
-    public hestia::BaseRequest,
-    public hestia::MethodRequest<HsmServiceRequestMethod> {
+    public BaseRequest,
+    public MethodRequest<HsmServiceRequestMethod> {
   public:
     using Ptr = std::unique_ptr<HsmServiceRequest>;
 
-    HsmServiceRequest(
-        const hestia::Uuid& object_id, HsmServiceRequestMethod method);
+    HsmServiceRequest(const Uuid& object_id, HsmServiceRequestMethod method);
 
     HsmServiceRequest(
-        const hestia::StorageObject& object, HsmServiceRequestMethod method);
+        const StorageObject& object, HsmServiceRequestMethod method);
 
     HsmServiceRequest(HsmServiceRequestMethod method);
 
-    const hestia::Extent& extent() const { return m_extent; }
+    const Extent& extent() const { return m_extent; }
 
-    const hestia::StorageObject& object() const;
+    const StorageObject& object() const;
+
+    StorageObject& object();
 
     const std::string& query() const { return m_query; }
 

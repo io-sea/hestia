@@ -3,11 +3,11 @@ from pathlib import Path
 import logging
 import shutil
 import filecmp
-import boto3
 
 import argparse
 
 import hestia_tests.utils
+from hestia_tests.s3_client import S3_client
 
 class S3Tests(hestia_tests.utils.BaseTest):
 

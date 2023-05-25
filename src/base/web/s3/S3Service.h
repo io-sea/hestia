@@ -36,29 +36,29 @@ class S3Service {
 
     S3Service(const S3ServiceConfig& config);
 
-    ~S3Service();
+    virtual ~S3Service();
 
     static std::unique_ptr<S3Service> create(const S3ServiceConfig& config);
 
-    [[nodiscard]] std::pair<Status, bool> exists(
+    [[nodiscard]] virtual std::pair<Status, bool> exists(
         const S3Container& container) const noexcept;
 
     [[nodiscard]] std::pair<Status, bool> exists(
         const S3Object& object) const noexcept;
 
-    [[nodiscard]] Status get(S3Container& container) const noexcept;
+    [[nodiscard]] virtual Status get(S3Container& container) const noexcept;
 
     [[nodiscard]] Status get(
         S3Object& object,
         const Extent& extent = {},
         Stream* stream       = nullptr) const noexcept;
 
-    [[nodiscard]] Status list(std::vector<S3Container>& fetched) const;
+    [[nodiscard]] virtual Status list(std::vector<S3Container>& fetched) const;
 
-    [[nodiscard]] Status list(
+    [[nodiscard]] virtual Status list(
         const S3Container& container, std::vector<S3Object>& fetched) const;
 
-    [[nodiscard]] Status put(const S3Container& container) noexcept;
+    [[nodiscard]] virtual Status put(const S3Container& container) noexcept;
 
     [[nodiscard]] Status put(
         const S3Container& container,
@@ -70,16 +70,18 @@ class S3Service {
 
     [[nodiscard]] Status remove(const S3Object& object) noexcept;
 
-  private:
-    std::pair<Status, bool> exists(const std::string& object_id) const;
+  protected:
+    virtual std::pair<Status, bool> exists(const std::string& object_id) const;
 
+    std::unique_ptr<S3ObjectAdapter> m_object_adapter;
+    std::unique_ptr<S3ContainerAdapter> m_container_adapter;
+
+  private:
     Status remove(const std::string& object_id);
 
     S3Service::Status make_object_store_request(
         const ObjectStoreRequest& request, Stream* stream = nullptr);
 
-    std::unique_ptr<S3ObjectAdapter> m_object_adapter;
-    std::unique_ptr<S3ContainerAdapter> m_container_adapter;
     ObjectStoreClient* m_object_store_client{nullptr};
 };
 }  // namespace hestia

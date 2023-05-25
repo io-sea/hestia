@@ -107,7 +107,9 @@ TEST_CASE("S3 authorization - bucket", "[authorisation]")
 
     WHEN("The GET request contains one empty valued query")
     {
-        request.set_queries("lifecycle");
+        hestia::Metadata queries;
+        queries.set_item("lifecycle", "");
+        request.set_queries(queries);
         const std::string sig =
             "fea454ca298b7da1c68078a5d1bdbfbbe0d65c699e0f91ac7a200a0136783543";
         request.get_header().set_item(
@@ -124,7 +126,11 @@ TEST_CASE("S3 authorization - bucket", "[authorisation]")
 
     WHEN("The GET request contains two queries")
     {
-        request.set_queries("max-keys=2&prefix=J");
+        hestia::Metadata queries;
+        queries.set_item("max-keys", "2");
+        queries.set_item("prefix", "J");
+        request.set_queries(queries);
+
         const std::string sig =
             "34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7";
         request.get_header().set_item(

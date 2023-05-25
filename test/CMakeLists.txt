@@ -142,16 +142,6 @@ add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin hestia_moc
 target_code_coverage(${INTEGRATION_TEST_MODULE})
 catch_discover_tests(${INTEGRATION_TEST_MODULE})
 
-add_custom_target(
-    py_integration_tests
-    COMMAND ${CMAKE_COMMAND} -E copy_directory 
-    ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_custom_command(
-    TARGET py_integration_tests POST_BUILD
-    COMMAND python3 -m unittest -f client
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+add_subdirectory(e2e_tests)
 
 endif()

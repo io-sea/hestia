@@ -87,9 +87,9 @@ HsmServiceResponse::Ptr HsmService::put(
     LOG_INFO("Starting HSMService PUT: " + req.to_string());
 
     auto exists_response = m_object_service->make_request(
-        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+        ObjectServiceRequest(req.object(), CrudMethod::EXISTS));
     ERROR_CHECK(exists_response);
-    if (exists_response->object_found() != req.should_overwrite_put()) {
+    if (exists_response->found() != req.should_overwrite_put()) {
         const std::string msg =
             "Overwrite request not compatible with object existence.";
         ON_ERROR(BAD_PUT_OVERWRITE_COMBINATION, msg);
@@ -118,8 +118,7 @@ HsmServiceResponse::Ptr HsmService::put(
         HsmObject hsm_object(obj);
         hsm_object.add_tier(chosen_tier);
 
-        ObjectServiceRequest obj_put_request(
-            hsm_object, ObjectServiceRequestMethod::PUT);
+        ObjectServiceRequest obj_put_request(hsm_object, CrudMethod::PUT);
 
         auto object_put_response =
             m_object_service->make_request(obj_put_request);
@@ -175,8 +174,7 @@ HsmServiceResponse::Ptr HsmService::put(
         }
     }
 
-    ObjectServiceRequest obj_put_request(
-        req.object(), ObjectServiceRequestMethod::PUT);
+    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
     auto object_put_response = m_object_service->make_request(obj_put_request);
     auto response =
         HsmServiceResponse::create(req, std::move(object_put_response));
@@ -191,33 +189,28 @@ HsmServiceResponse::Ptr HsmService::get(
     LOG_INFO("Starting HSMService GET: " + req.to_string());
 
     auto exists_response = m_object_service->make_request(
-        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+        ObjectServiceRequest(req.object(), CrudMethod::EXISTS));
     ERROR_CHECK(exists_response);
-    if (!exists_response->object_found()) {
+    if (!exists_response->found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
+    auto object_response = m_object_service->make_request(
+        ObjectServiceRequest(req.object(), CrudMethod::GET));
+    ERROR_CHECK(object_response);
+
     if (stream != nullptr) {
-        HsmObjectStoreRequest get_data_request(
+        HsmObjectStoreRequest data_request(
             req.object(), HsmObjectStoreRequestMethod::GET);
-        get_data_request.set_source_tier(req.source_tier());
-        get_data_request.set_extent(req.extent());
-        auto get_data_response =
-            m_object_store->make_request(get_data_request, stream);
-
-        LOG_INFO("Finished HSMService GET");
-        return HsmServiceResponse::create(req, std::move(get_data_response));
+        data_request.set_source_tier(req.source_tier());
+        data_request.set_extent(req.extent());
+        auto data_response = m_object_store->make_request(data_request, stream);
+        ERROR_CHECK(data_response);
     }
-    else {
-        ObjectServiceRequest obj_get_request(
-            req.object(), ObjectServiceRequestMethod::GET);
-        auto object_get_response =
-            m_object_service->make_request(obj_get_request);
 
-        LOG_INFO("Finished HSMService GET");
-        return HsmServiceResponse::create(req, std::move(object_get_response));
-    }
+    LOG_INFO("Finished HSMService GET");
+    return HsmServiceResponse::create(req, std::move(object_response));
 }
 
 HsmServiceResponse::Ptr HsmService::exists(
@@ -226,19 +219,12 @@ HsmServiceResponse::Ptr HsmService::exists(
     LOG_INFO("Starting HSMService EXISTS: " + req.to_string());
 
     auto exists_response = m_object_service->make_request(
-        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+        ObjectServiceRequest(req.object(), CrudMethod::EXISTS));
     ERROR_CHECK(exists_response);
-    const bool found = exists_response->object_found();
-    if (!found) {
-        const std::string msg = "Requested Object Not Found.";
-        ON_ERROR(OBJECT_NOT_FOUND, msg);
-    }
-    else {
-        auto response =
-            HsmServiceResponse::create(req, std::move(exists_response));
-        response->set_object_found(found);
-        return response;
-    }
+    bool found    = exists_response->found();
+    auto response = HsmServiceResponse::create(req, std::move(exists_response));
+    response->set_object_found(found);
+    return response;
 }
 
 HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
@@ -246,9 +232,9 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     LOG_INFO("Starting HSMService COPY: " + req.to_string());
 
     auto exists_response = m_object_service->make_request(
-        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+        ObjectServiceRequest(req.object(), CrudMethod::EXISTS));
     ERROR_CHECK(exists_response);
-    if (!exists_response->object_found()) {
+    if (!exists_response->found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
@@ -268,8 +254,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     hsm_object.add_tier(req.target_tier());
 
-    ObjectServiceRequest obj_put_request(
-        req.object(), ObjectServiceRequestMethod::PUT);
+    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
     auto object_put_response = m_object_service->make_request(obj_put_request);
 
     LOG_INFO("Finished HSMService COPY - PUT METADATA");
@@ -292,9 +277,9 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     LOG_INFO("Starting HSMService MOVE: " + req.to_string());
 
     auto exists_response = m_object_service->make_request(
-        ObjectServiceRequest(req.object(), ObjectServiceRequestMethod::EXISTS));
+        ObjectServiceRequest(req.object(), CrudMethod::EXISTS));
     ERROR_CHECK(exists_response);
-    if (!exists_response->object_found()) {
+    if (!exists_response->found()) {
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
@@ -324,8 +309,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     hsm_object.add_tier(req.target_tier());
 
-    ObjectServiceRequest obj_put_request(
-        req.object(), ObjectServiceRequestMethod::PUT);
+    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
     auto object_put_response = m_object_service->make_request(obj_put_request);
 
     LOG_INFO("Finished HSMService MOVE - PUT METADATA");
@@ -350,8 +334,7 @@ HsmServiceResponse::Ptr HsmService::remove(
 
     hsm_object.remove_tier(req.source_tier());
 
-    ObjectServiceRequest obj_put_request(
-        req.object(), ObjectServiceRequestMethod::PUT);
+    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
     auto object_put_response = m_object_service->make_request(obj_put_request);
 
     if (m_event_feed) {
@@ -380,8 +363,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
 
     hsm_object.remove_all_but_one_tiers();
 
-    ObjectServiceRequest obj_put_request(
-        req.object(), ObjectServiceRequestMethod::PUT);
+    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
     auto object_put_response = m_object_service->make_request(obj_put_request);
 
     if (m_event_feed) {

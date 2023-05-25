@@ -1,21 +1,13 @@
-# Copyright (c) 2020, Irish Centre for High End Computing (ICHEC), NUI Galway
-# Authors:
-#     Ciarán O'Rourke <ciaran.orourke@ichec.ie>,
-#     Sophie Wenzel-Teuber <sophie.wenzel-teuber@ichec.ie>
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 import boto3
+from botocore.client import Config
 import uuid
 import sys
 
-class S3_client:
+class S3Client:
     def __init__(self, server_url):
         self.session = boto3.session.Session(
             aws_access_key_id="OPEN_KEY", aws_secret_access_key="SECRET_KEY")
-        self.client = self.session.client(service_name='s3',
-                                          endpoint_url=server_url)
+        self.client = self.session.client(service_name='s3', endpoint_url=server_url, config=Config(s3={'addressing_style': 'path'}))
 
     def put(self, filename, bucket_name, key, meta_data={}):
         self.client.upload_file(Filename=filename,
@@ -42,3 +34,26 @@ class S3_client:
 
     def delete_object(self, bucket_name, key):
         return self.client.delete_object(Bucket=bucket_name, Key=key)
+    
+if __name__ == "__main__":
+
+    client = S3Client("http://127.0.0.1:8080")
+
+    buckets = client.list_buckets()
+    print("Got: " + str(len(buckets)) + " buckets")
+
+    client.create_bucket("my_bucket")
+
+    buckets = client.list_buckets()
+    print("Got: " + str(len(buckets)) + " buckets")
+
+    objects = client.list_objects("my_bucket")
+
+
+
+    # client.put('test_data/EmperorWu.txt', "my_bucket", "my_obj")
+
+
+
+
+

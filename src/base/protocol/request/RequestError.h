@@ -54,4 +54,27 @@ class RequestError : public BaseRequestError {
     std::string m_message;
     ErrorCode m_code;
 };
+
+enum class CrudErrorCode {
+    NO_ERROR,
+    ERROR,
+    STL_EXCEPTION,
+    UNKNOWN_EXCEPTION,
+    UNSUPPORTED_REQUEST_METHOD,
+    TIER_NOT_FOUND,
+    MAX_ERROR
+};
+
+class CrudRequestError : public RequestError<CrudErrorCode> {
+  public:
+    CrudRequestError() = default;
+
+    CrudRequestError(CrudErrorCode code, const std::string& message) :
+        RequestError(code, message)
+    {
+    }
+    virtual ~CrudRequestError() = default;
+};
+
+
 }  // namespace hestia

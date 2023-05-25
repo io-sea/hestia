@@ -3,16 +3,19 @@
 #include "S3Service.h"
 #include "S3ViewUtils.h"
 
+#include "Logger.h"
 #include <sstream>
 
 namespace hestia {
 S3ContainerListView::S3ContainerListView(S3Service* service) :
     m_service(service)
 {
+    LOG_INFO("Loaded S3ContainerListView");
 }
 
 HttpResponse::Ptr S3ContainerListView::on_get(const HttpRequest& request)
 {
+    LOG_INFO("S3ContainerListView:on_get");
     (void)request;
 
     std::stringstream sstr;
@@ -36,6 +39,9 @@ HttpResponse::Ptr S3ContainerListView::on_get(const HttpRequest& request)
 
     auto response = HttpResponse::create();
     response->set_body(sstr.str());
+
+    LOG_INFO("Returning body: " << response->body());
+
     return response;
 }
 }  // namespace hestia

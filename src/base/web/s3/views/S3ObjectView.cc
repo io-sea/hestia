@@ -13,7 +13,11 @@
 #include <sstream>
 
 namespace hestia {
-S3ObjectView::S3ObjectView(S3Service* service) : m_service(service) {}
+S3ObjectView::S3ObjectView(S3Service* service) : m_service(service)
+{
+
+    LOG_INFO("Loaded object view");
+}
 
 HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request)
 {

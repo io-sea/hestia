@@ -79,7 +79,7 @@ bool S3AuthorisationSession::parse_authorisation_info(
     m_object.m_signature = signature;
 
     parse_signed_headers(signed_headers);
-    parse_queries(request.get_queries());
+    parse_queries(request);
     parse_credentials(credentials);
     return true;
 }
@@ -100,18 +100,12 @@ void S3AuthorisationSession::parse_signed_headers(
     m_object.sort_headers();
 }
 
-void S3AuthorisationSession::parse_queries(const std::string& input_queries)
+void S3AuthorisationSession::parse_queries(const HttpRequest& request)
 {
-    if (input_queries.empty()) {
-        return;
-    }
-    size_t index        = 0;
-    std::string queries = input_queries;
-    while (index != queries.npos) {
-        index = queries.find('&');
-        m_object.add_query(queries.substr(0, index));
-        queries = queries.substr(index + 1);
-    }
+    auto on_item = [this](const std::string& key, const std::string& value) {
+        m_object.add_query({key, value});
+    };
+    request.get_queries().for_each_item(on_item);
     m_object.sort_queries();
 }
 

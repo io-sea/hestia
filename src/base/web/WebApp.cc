@@ -31,6 +31,9 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     }
 
     LOG_INFO("Requested path: " + request_context->get_request().get_path());
+    LOG_INFO(
+        "Requested method: "
+        + request_context->get_request().get_method_as_string());
 
     auto view =
         m_url_router->get_view(request_context->get_request().get_path());

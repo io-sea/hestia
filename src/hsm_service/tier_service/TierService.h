@@ -1,6 +1,8 @@
 #pragma once
 
+#include "KeyValueCrudService.h"
 #include "StorageTier.h"
+
 #include <vector>
 
 namespace hestia {
@@ -11,23 +13,19 @@ struct TierServiceConfig {
     std::string m_tier_key{"tier"};
 };
 
-class TierService {
+class TierService : public KeyValueCrudService<StorageTier> {
   public:
     TierService(
         const TierServiceConfig& config, KeyValueStoreClient* kv_store_client);
 
-    void add_tier(const StorageTier& tier) const;
+    virtual ~TierService() = default;
 
-    void add_tiers(const std::vector<StorageTier>& tiers) const;
+    void to_string(const StorageTier& item, std::string& output) const override;
 
-    void get_tiers(std::vector<StorageTier>& tiers) const;
-
-    void get_tier(uint8_t tier_id, StorageTier& tier) const;
+    void from_string(
+        const std::string& output, StorageTier& item) const override;
 
   private:
-    std::string get_key_prefix() const;
-
     TierServiceConfig m_config;
-    KeyValueStoreClient* m_kv_store_client{nullptr};
 };
 }  // namespace hestia

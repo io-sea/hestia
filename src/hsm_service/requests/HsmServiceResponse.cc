@@ -2,19 +2,50 @@
 
 namespace hestia {
 HsmServiceResponse::HsmServiceResponse(const HsmServiceRequest& request) :
-    hestia::Response<HsmServiceErrorCode>(request)
+    hestia::Response<HsmServiceErrorCode>(request),
+    m_object_response(std::make_unique<ObjectServiceResponse>(request)),
+    m_tier_response(std::make_unique<TierServiceResponse>(request))
 {
 }
 
 HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request, BaseResponse::Ptr child_response) :
+    const HsmServiceRequest& request,
+    HsmObjectStoreResponse::Ptr object_store_response) :
     hestia::Response<HsmServiceErrorCode>(request),
-    m_child_response(std::move(child_response))
+    m_object_store_response(std::move(object_store_response))
 {
-    if (!m_child_response->ok()) {
+    if (!m_object_store_response->ok()) {
         on_error(
             {HsmServiceErrorCode::ERROR,
-             m_child_response->get_base_error().to_string()});
+             m_object_store_response->get_base_error().to_string()});
+    }
+}
+
+HsmServiceResponse::HsmServiceResponse(
+    const HsmServiceRequest& request,
+    ObjectServiceResponsePtr object_service_response) :
+    hestia::Response<HsmServiceErrorCode>(request),
+    m_object_response(std::move(object_service_response)),
+    m_tier_response(std::make_unique<TierServiceResponse>(request))
+{
+    if (!m_object_response->ok()) {
+        on_error(
+            {HsmServiceErrorCode::ERROR,
+             m_object_response->get_base_error().to_string()});
+    }
+}
+
+HsmServiceResponse::HsmServiceResponse(
+    const HsmServiceRequest& request,
+    TierServiceResponsePtr tier_service_response) :
+    hestia::Response<HsmServiceErrorCode>(request),
+    m_object_response(std::make_unique<ObjectServiceResponse>(request)),
+    m_tier_response(std::move(tier_service_response))
+{
+    if (!m_tier_response->ok()) {
+        on_error(
+            {HsmServiceErrorCode::ERROR,
+             m_tier_response->get_base_error().to_string()});
     }
 }
 
@@ -25,10 +56,27 @@ HsmServiceResponse::Ptr HsmServiceResponse::create(
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request, BaseResponse::Ptr child_response)
+    const HsmServiceRequest& request,
+    HsmObjectStoreResponse::Ptr object_store_response)
 {
     return std::make_unique<HsmServiceResponse>(
-        request, std::move(child_response));
+        request, std::move(object_store_response));
+}
+
+HsmServiceResponse::Ptr HsmServiceResponse::create(
+    const HsmServiceRequest& request,
+    ObjectServiceResponsePtr object_service_response)
+{
+    return std::make_unique<HsmServiceResponse>(
+        request, std::move(object_service_response));
+}
+
+HsmServiceResponse::Ptr HsmServiceResponse::create(
+    const HsmServiceRequest& request,
+    TierServiceResponsePtr tier_service_response)
+{
+    return std::make_unique<HsmServiceResponse>(
+        request, std::move(tier_service_response));
 }
 
 const std::string& HsmServiceResponse::query_result() const
@@ -36,13 +84,33 @@ const std::string& HsmServiceResponse::query_result() const
     return m_query_result;
 }
 
-const std::vector<hestia::Uuid>& HsmServiceResponse::objects() const
+const std::vector<HsmObject>& HsmServiceResponse::objects() const
 {
-    return m_object_ids;
+    return m_object_response->items();
 }
 
-const std::vector<uint8_t>& HsmServiceResponse::tiers() const
+const std::vector<StorageTier>& HsmServiceResponse::tiers() const
 {
-    return m_tiers;
+    return m_tier_response->items();
+}
+
+const HsmObject& HsmServiceResponse::object() const
+{
+    return m_object_response->item();
+}
+
+HsmObject& HsmServiceResponse::object()
+{
+    return m_object_response->item();
+}
+
+bool HsmServiceResponse::object_found() const
+{
+    return m_object_response->found();
+}
+
+void HsmServiceResponse::set_object_found(bool found)
+{
+    m_object_response->set_found(found);
 }
 }  // namespace hestia

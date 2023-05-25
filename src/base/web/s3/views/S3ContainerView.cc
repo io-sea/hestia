@@ -7,11 +7,16 @@
 #include "S3Path.h"
 #include "XmlUtils.h"
 
+#include "Logger.h"
+
 #include <iostream>
 #include <sstream>
 
 namespace hestia {
-S3ContainerView::S3ContainerView(S3Service* service) : m_service(service) {}
+S3ContainerView::S3ContainerView(S3Service* service) : m_service(service)
+{
+    LOG_INFO("Loaded S3ContainerListView");
+}
 
 HttpResponse::Ptr S3ContainerView::on_get(const HttpRequest& request)
 {

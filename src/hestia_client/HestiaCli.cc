@@ -399,6 +399,7 @@ OpStatus HestiaCli::run_server()
 
     WebApp::Ptr web_app;
     if (m_config.m_server_config.m_web_app == "hestia::HsmService") {
+        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
         HestiaServiceConfig service_config;
         auto hsm_service = ApplicationContext::get().get_hsm_service();
         auto kv_store    = std::make_unique<FileKeyValueStoreClient>();
@@ -413,11 +414,18 @@ OpStatus HestiaCli::run_server()
         web_app = std::make_unique<HestiaWebApp>(hestia_service.get());
     }
     else if (m_config.m_server_config.m_web_app == "hestia::HsmS3Service") {
+        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
         hsm_s3_service = std::make_unique<HsmS3Service>(
-            ApplicationContext::get().get_hsm_service());
-        web_app = std::make_unique<HestiaS3WebApp>(hsm_s3_service.get());
+            ApplicationContext::get().get_hsm_service(),
+            ApplicationContext::get().get_kv_store_client());
+
+        HestiaS3WebAppConfig config;
+        web_app =
+            std::make_unique<HestiaS3WebApp>(config, hsm_s3_service.get());
     }
     else if (m_config.m_server_config.m_web_app == "hestia::CopyTool") {
+        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
+
         web_app = std::make_unique<CopyToolWebApp>();
     }
 

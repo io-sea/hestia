@@ -63,7 +63,7 @@ HttpHeader& HttpRequest::get_header()
     return m_header;
 }
 
-std::string HttpRequest::get_path() const
+const std::string& HttpRequest::get_path() const
 {
     return m_preamble.m_path;
 }

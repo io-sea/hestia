@@ -12,7 +12,6 @@ add_module(
         model/HsmActionAdapter.h
         model/CompositeLayer.h
         object_service/ObjectService.h
-        object_service/ObjectServiceRequest.h
         object_service/model/HsmObject.h 
         object_service/model/HsmObjectAdapter.h 
         requests/HsmServiceResponse.h 
@@ -29,7 +28,6 @@ add_module(
         model/HsmActionAdapter.cc
         model/CompositeLayer.cc
         object_service/ObjectService.cc
-        object_service/ObjectServiceRequest.cc
         object_service/model/HsmObject.cc
         object_service/model/HsmObjectAdapter.cc
         requests/HsmServiceResponse.cc

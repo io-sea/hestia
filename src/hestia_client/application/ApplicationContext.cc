@@ -24,6 +24,11 @@ HsmService* ApplicationContext::get_hsm_service() const
     return m_hsm_service.get();
 }
 
+KeyValueStoreClient* ApplicationContext::get_kv_store_client() const
+{
+    return m_kv_store_client.get();
+}
+
 void ApplicationContext::set_kv_store_client(
     std::unique_ptr<KeyValueStoreClient> kv_store_client)
 {

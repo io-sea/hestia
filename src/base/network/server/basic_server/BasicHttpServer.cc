@@ -54,6 +54,8 @@ BasicHttpServer::Status BasicHttpServer::start()
 void BasicHttpServer::on_connection(Socket* socket)
 {
     auto message = socket->recieve();
+    LOG_INFO("Got message: " + message);
+
     if (socket->connected()) {
         HttpRequest request(message);
         std::string extra_bytes;

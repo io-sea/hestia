@@ -4,9 +4,12 @@
 #include "Metadata.h"
 #include "S3Path.h"
 
+#include "Logger.h"
+
 #define FAIL_CHECK(query)                                                      \
     {                                                                          \
         if (const auto status = query; !status.ok()) {                         \
+            LOG_ERROR(status.m_message);                                       \
             return HttpResponse::create(500, "Internal Server Error");         \
         }                                                                      \
     }
@@ -15,6 +18,7 @@
     {                                                                          \
         auto [status, exists] = m_service->exists(item);                       \
         if (!status.ok()) {                                                    \
+            LOG_ERROR(status.m_message);                                       \
             return HttpResponse::create(500, "Internal Server Error");         \
         }                                                                      \
         if (!exists) {                                                         \
@@ -26,6 +30,7 @@
     {                                                                          \
         auto [status, exists] = m_service->exists(item);                       \
         if (!status.ok()) {                                                    \
+            LOG_ERROR(status.m_message);                                       \
             return HttpResponse::create(500, "Internal Server Error");         \
         }                                                                      \
         if (exists) {                                                          \

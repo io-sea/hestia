@@ -4,6 +4,7 @@
 #include "RequestError.h"
 
 #include <memory>
+#include <vector>
 
 namespace hestia {
 
@@ -50,4 +51,41 @@ class Response : public BaseResponse {
   protected:
     RequestError<ErrorCode> m_error;
 };
+
+template<typename ItemType, typename ErrorCode>
+class CrudResponse : public Response<ErrorCode> {
+  public:
+    CrudResponse(const CrudRequest<ItemType>& request) :
+        Response<ErrorCode>(request), m_item(request.item())
+    {
+    }
+
+    CrudResponse(const BaseRequest& request) : Response<ErrorCode>(request) {}
+
+    virtual ~CrudResponse() = default;
+
+    const std::string& query_result() const { return m_query_result; };
+
+    const std::vector<ItemType>& items() const { return m_items; };
+
+    std::vector<ItemType>& items() { return m_items; }
+
+    const ItemType& item() const { return m_item; }
+
+    ItemType& item() { return m_item; }
+
+    bool found() const { return m_found; }
+
+    void set_found(bool found) { m_found = found; }
+
+  private:
+    std::string m_query_result;
+    std::vector<ItemType> m_items;
+    ItemType m_item;
+    bool m_found{false};
+
+  protected:
+    RequestError<ErrorCode> m_error;
+};
+
 }  // namespace hestia
