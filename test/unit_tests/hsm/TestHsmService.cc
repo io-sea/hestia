@@ -48,10 +48,10 @@ class HsmServiceTestFixture {
         m_kv_store_client->initialize(config);
 
         hestia::ObjectServiceConfig object_config;
-        auto object_service = std::make_unique<hestia::ObjectService>(
+        auto object_service = hestia::ObjectService::create(
             object_config, m_kv_store_client.get());
 
-        auto tier_service = std::make_unique<hestia::TierService>(
+        auto tier_service = hestia::TierService::create(
             hestia::TierServiceConfig(), m_kv_store_client.get());
 
         auto client_factory =

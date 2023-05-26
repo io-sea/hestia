@@ -8,7 +8,9 @@ class DataPlacementEngine;
 namespace hestia {
 class MultiBackendHsmObjectStoreClient;
 class KeyValueStoreClient;
+
 class TierService;
+class ObjectService;
 
 class HestiaConfigurator {
   public:

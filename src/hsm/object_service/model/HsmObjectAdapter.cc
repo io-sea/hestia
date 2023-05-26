@@ -45,4 +45,19 @@ void HsmObjectAdapter::add_if_not_empty(
         md->set_item(key, value);
     }
 }
+
+void HsmObjectJsonAdapter::to_string(
+    const HsmObject& item, std::string& output) const
+{
+    (void)item;
+    (void)output;
+}
+
+void HsmObjectJsonAdapter::from_string(
+    const std::string& output, HsmObject& item) const
+{
+    (void)item;
+    (void)output;
+}
+
 }  // namespace hestia

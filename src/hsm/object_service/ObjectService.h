@@ -1,35 +1,36 @@
 #pragma once
 
+#include "CrudService.h"
 #include "HsmObject.h"
-#include "KeyValueCrudService.h"
 
 #include <memory>
 
 namespace hestia {
+
 class KeyValueStoreClient;
 class HttpClient;
-class HsmObjectAdapter;
 
 struct ObjectServiceConfig {
     std::string m_endpoint;
+    std::string m_global_prefix;
+    std::string m_item_prefix{"object"};
 };
 
-class ObjectService : public KeyValueCrudService<HsmObject> {
+class ObjectService : public CrudService<HsmObject> {
   public:
     using Ptr = std::unique_ptr<ObjectService>;
     ObjectService(
         const ObjectServiceConfig& config,
-        KeyValueStoreClient* kv_store_client,
-        HttpClient* http_client                          = nullptr,
-        std::unique_ptr<HsmObjectAdapter> object_adatper = nullptr);
+        std::unique_ptr<CrudClient<HsmObject>> client);
 
     virtual ~ObjectService();
 
-    void to_string(const HsmObject& item, std::string& output) const override;
+    static Ptr create(
+        const ObjectServiceConfig& config, KeyValueStoreClient* client);
 
-    void from_string(const std::string& output, HsmObject& item) const override;
+    static Ptr create(const ObjectServiceConfig& config, HttpClient* client);
 
-    HttpClient* m_http_client{nullptr};
-    std::unique_ptr<HsmObjectAdapter> m_object_adapter;
+  private:
+    ObjectServiceConfig m_config;
 };
 }  // namespace hestia

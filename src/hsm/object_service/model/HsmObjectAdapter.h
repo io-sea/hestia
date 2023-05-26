@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HsmObject.h"
+#include "StringAdapter.h"
 
 #include <memory>
 #include <sstream>
@@ -28,4 +29,12 @@ class HsmObjectAdapter {
     static constexpr char dataset_key[]       = "dataset";
     static constexpr char tiers_key[]         = "tiers";
 };
+
+class HsmObjectJsonAdapter : public StringAdapter<HsmObject> {
+  public:
+    void to_string(const HsmObject& item, std::string& output) const override;
+
+    void from_string(const std::string& output, HsmObject& item) const override;
+};
+
 }  // namespace hestia

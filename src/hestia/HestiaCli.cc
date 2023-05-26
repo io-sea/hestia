@@ -5,10 +5,13 @@
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
 
-#include "HestiaNodeService.h"
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
+#include "HsmNodeService.h"
 #include "HsmS3Service.h"
 #include "HsmService.h"
+
+#include "HttpCrudClient.h"
+#include "KeyValueCrudClient.h"
 
 #include "S3Service.h"
 #include "S3WebApp.h"
@@ -395,25 +398,42 @@ OpStatus HestiaCli::run_hsm()
 
 OpStatus HestiaCli::run_server()
 {
-    std::unique_ptr<HestiaService> hestia_service;
+    std::unique_ptr<DistributedHsmService> hestia_service;
     std::unique_ptr<HsmS3Service> hsm_s3_service;
 
     WebApp::Ptr web_app;
     if (m_config.m_server_config.m_web_app == "hestia::HsmService") {
         LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
-        HestiaServiceConfig service_config;
+
         auto hsm_service = ApplicationContext::get().get_hsm_service();
 
         CurlClientConfig http_client_config;
         auto http_client = std::make_unique<CurlClient>(http_client_config);
 
-        HestiaNodeServiceConfig node_service_config;
-        auto node_service = std::make_unique<HestiaNodeService>(
-            node_service_config,
-            ApplicationContext::get().get_kv_store_client());
+        std::unique_ptr<HsmNodeService> node_service;
+        HsmNodeServiceConfig node_service_config;
+        node_service_config.m_global_prefix = "hestia";
+        if (m_config.m_server_config.m_controller) {
+            node_service = HsmNodeService::create(
+                node_service_config,
+                ApplicationContext::get().get_kv_store_client());
+        }
+        else {
+            node_service = HsmNodeService::create(
+                node_service_config,
+                ApplicationContext::get().get_http_client());
+        }
 
-        hestia_service = std::make_unique<HestiaService>(
+        DistributedHsmServiceConfig service_config;
+        service_config.m_self.m_app_type = m_config.m_server_config.m_web_app;
+        service_config.m_self.m_port     = m_config.m_server_config.m_port;
+        service_config.m_self.m_is_controller =
+            m_config.m_server_config.m_controller;
+
+        hestia_service = std::make_unique<DistributedHsmService>(
             service_config, hsm_service, std::move(node_service));
+
+        hestia_service->register_self();
 
         web_app = std::make_unique<HestiaWebApp>(hestia_service.get());
     }

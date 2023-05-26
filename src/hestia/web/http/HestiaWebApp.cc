@@ -8,7 +8,7 @@
 #include "Logger.h"
 
 namespace hestia {
-HestiaWebApp::HestiaWebApp(HestiaService* hestia_service) : WebApp()
+HestiaWebApp::HestiaWebApp(DistributedHsmService* hestia_service) : WebApp()
 {
     LOG_INFO("Creating HestiaWebApp");
     const std::string api_prefix = "/api/v1/";

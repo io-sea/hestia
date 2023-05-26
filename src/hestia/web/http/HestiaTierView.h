@@ -4,11 +4,11 @@
 #include <memory>
 
 namespace hestia {
-class HestiaService;
+class DistributedHsmService;
 
 class HestiaTierView : public WebView {
   public:
-    HestiaTierView(HestiaService* hestia_service);
+    HestiaTierView(DistributedHsmService* hestia_service);
 
     HttpResponse::Ptr on_get(const HttpRequest& request) override;
 
@@ -19,6 +19,6 @@ class HestiaTierView : public WebView {
     HttpResponse::Ptr on_head(const HttpRequest& request) override;
 
   private:
-    HestiaService* m_hestia_service{nullptr};
+    DistributedHsmService* m_hestia_service{nullptr};
 };
 }  // namespace hestia

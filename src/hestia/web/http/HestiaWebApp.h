@@ -4,11 +4,11 @@
 
 namespace hestia {
 
-class HestiaService;
+class DistributedHsmService;
 
 class HestiaWebApp : public WebApp {
 
   public:
-    HestiaWebApp(HestiaService* hestia_service);
+    HestiaWebApp(DistributedHsmService* hestia_service);
 };
 }  // namespace hestia

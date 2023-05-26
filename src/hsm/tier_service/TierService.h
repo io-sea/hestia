@@ -1,28 +1,35 @@
 #pragma once
 
-#include "KeyValueCrudService.h"
+#include "CrudService.h"
 #include "StorageTier.h"
 
-#include <vector>
+#include <memory>
 
 namespace hestia {
+
 class KeyValueStoreClient;
+class HttpClient;
 
 struct TierServiceConfig {
     std::string m_endpoint;
+    std::string m_global_prefix;
+    std::string m_item_prefix{"tier"};
 };
 
-class TierService : public KeyValueCrudService<StorageTier> {
+class TierService : public CrudService<StorageTier> {
   public:
+    using Ptr = std::unique_ptr<TierService>;
+
     TierService(
-        const TierServiceConfig& config, KeyValueStoreClient* kv_store_client);
+        const TierServiceConfig& config,
+        std::unique_ptr<CrudClient<StorageTier>> client);
+
+    static Ptr create(
+        const TierServiceConfig& config, KeyValueStoreClient* client);
+
+    static Ptr create(const TierServiceConfig& config, HttpClient* client);
 
     virtual ~TierService() = default;
-
-    void to_string(const StorageTier& item, std::string& output) const override;
-
-    void from_string(
-        const std::string& output, StorageTier& item) const override;
 
   private:
     TierServiceConfig m_config;

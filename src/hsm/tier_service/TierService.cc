@@ -1,30 +1,46 @@
 #include "TierService.h"
 
+#include "HttpClient.h"
+#include "HttpCrudClient.h"
+#include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
-#include "Metadata.h"
 
-#include "JsonUtils.h"
+#include "StorageTierAdapter.h"
 
 namespace hestia {
 
 TierService::TierService(
-    const TierServiceConfig& config, KeyValueStoreClient* kv_store_client) :
-    KeyValueCrudService<StorageTier>(
-        {"hestia", "tier", config.m_endpoint}, kv_store_client),
-    m_config(config)
+    const TierServiceConfig& config,
+    std::unique_ptr<CrudClient<StorageTier>> client) :
+    CrudService<StorageTier>(std::move(client)), m_config(config)
 {
 }
 
-void TierService::to_string(const StorageTier& item, std::string& output) const
+TierService::Ptr TierService::create(
+    const TierServiceConfig& config, KeyValueStoreClient* client)
 {
-    (void)item;
-    (void)output;
+    auto adapter = std::make_unique<StorageTierJsonAdapter>();
+
+    KeyValueCrudClientConfig crud_client_config;
+    crud_client_config.m_item_prefix = config.m_item_prefix;
+    crud_client_config.m_prefix      = config.m_global_prefix;
+    auto crud_client = std::make_unique<KeyValueCrudClient<StorageTier>>(
+        crud_client_config, std::move(adapter), client);
+
+    return std::make_unique<TierService>(config, std::move(crud_client));
 }
 
-void TierService::from_string(
-    const std::string& output, StorageTier& item) const
+TierService::Ptr TierService::create(
+    const TierServiceConfig& config, HttpClient* client)
 {
-    (void)item;
-    (void)output;
+    auto adapter = std::make_unique<StorageTierJsonAdapter>();
+
+    HttpCrudClientConfig crud_client_config;
+    crud_client_config.m_item_prefix = config.m_item_prefix;
+    crud_client_config.m_prefix      = config.m_global_prefix;
+    auto crud_client = std::make_unique<HttpCrudClient<StorageTier>>(
+        crud_client_config, std::move(adapter), client);
+
+    return std::make_unique<TierService>(config, std::move(crud_client));
 }
 }  // namespace hestia

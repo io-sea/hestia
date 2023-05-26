@@ -5,6 +5,10 @@
 
 #include "DataPlacementEngine.h"
 #include "EventFeed.h"
+
+#include "CurlClient.h"
+#include "HttpCrudClient.h"
+#include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
 #include "ApplicationContext.h"
@@ -28,9 +32,11 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         LOG_ERROR(e.what());
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
-
-    auto raw_object_store_client = object_store.get();
     ApplicationContext::get().set_object_store_client(std::move(object_store));
+
+    CurlClientConfig http_client_config;
+    auto http_client = std::make_unique<CurlClient>(http_client_config);
+    ApplicationContext::get().set_http_client(std::move(http_client));
 
     std::unique_ptr<KeyValueStoreClient> kv_store_client;
     try {
@@ -40,13 +46,33 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         LOG_ERROR(e.what());
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
-
-    auto raw_kv_store_client = kv_store_client.get();
     ApplicationContext::get().set_kv_store_client(std::move(kv_store_client));
 
-    TierServiceConfig tier_config;
-    auto tier_service =
-        std::make_unique<TierService>(tier_config, raw_kv_store_client);
+    std::unique_ptr<TierService> tier_service;
+    TierServiceConfig tier_service_config;
+    tier_service_config.m_global_prefix = "hestia";
+    if (m_config.m_server_config.m_controller) {
+        tier_service = TierService::create(
+            tier_service_config,
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        tier_service = TierService::create(
+            tier_service_config, ApplicationContext::get().get_http_client());
+    }
+
+    std::unique_ptr<ObjectService> object_service;
+    ObjectServiceConfig object_service_config;
+    object_service_config.m_global_prefix = "hestia";
+    if (m_config.m_server_config.m_controller) {
+        object_service = ObjectService::create(
+            object_service_config,
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        object_service = ObjectService::create(
+            object_service_config, ApplicationContext::get().get_http_client());
+    }
 
     std::unique_ptr<DataPlacementEngine> dpe;
     try {
@@ -56,10 +82,6 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         LOG_ERROR(e.what());
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
-
-    ObjectServiceConfig object_config;
-    auto object_service =
-        std::make_unique<ObjectService>(object_config, raw_kv_store_client);
 
     std::unique_ptr<EventFeed> event_feed;
     try {
@@ -72,7 +94,8 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 
     auto hsm_service = std::make_unique<HsmService>(
         std::move(object_service), std::move(tier_service),
-        raw_object_store_client, std::move(dpe), std::move(event_feed));
+        ApplicationContext::get().get_object_store_client(), std::move(dpe),
+        std::move(event_feed));
 
     ApplicationContext::get().set_hsm_service(std::move(hsm_service));
     return {};

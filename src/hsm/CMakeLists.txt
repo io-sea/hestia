@@ -8,6 +8,10 @@ add_module(
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
+        distributed_hsm_service/DistributedHsmService.h
+        distributed_hsm_service/HsmNodeService.h
+        distributed_hsm_service/model/HsmNode.h
+        distributed_hsm_service/model/HsmNodeAdapter.h
         hsm_service/HsmService.h
         hsm_service/model/HsmAction.h
         hsm_service/model/HsmActionAdapter.h
@@ -21,9 +25,14 @@ add_module(
         object_service/model/HsmObjectAdapter.h 
         tier_service/TierService.h 
         tier_service/model/StorageTier.h
+        tier_service/model/StorageTierAdapter.h
+        s3_service/HsmS3Service.h
     SOURCES
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
+        distributed_hsm_service/DistributedHsmService.cc
+        distributed_hsm_service/HsmNodeService.cc
+        distributed_hsm_service/model/HsmNodeAdapter.cc
         hsm_service/HsmService.cc
         hsm_service/model/HsmAction.cc
         hsm_service/model/HsmActionAdapter.cc
@@ -36,8 +45,12 @@ add_module(
         object_service/model/HsmObject.cc
         object_service/model/HsmObjectAdapter.cc
         tier_service/TierService.cc 
+        tier_service/model/StorageTierAdapter.cc
+        s3_service/HsmS3Service.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
+        distributed_hsm_service
+        distributed_hsm_service/model/
         hsm_service
         hsm_service/model
         hsm_service/requests
@@ -46,6 +59,7 @@ add_module(
         object_service/model
         tier_service
         tier_service/model
+        s3_service
     INTERNAL_DEPENDENCIES 
         hsm_object_store
         event_feed

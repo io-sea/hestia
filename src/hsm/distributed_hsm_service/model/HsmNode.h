@@ -9,9 +9,9 @@ class ObjectStoreBackend {
     std::string m_identifier;
 };
 
-class HestiaNode {
+class HsmNode {
   public:
-    HestiaNode(const std::string& id = {}) : m_id(id) {}
+    HsmNode(const std::string& id = {}) : m_id(id) {}
 
     const std::string& id() const { return m_id; }
 
@@ -19,6 +19,7 @@ class HestiaNode {
 
     std::string m_id;
     std::string m_host_address;
+    std::string m_port;
     std::string m_tag;
     std::string m_version;
     std::string m_app_type;

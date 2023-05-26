@@ -1,37 +1,49 @@
 #include "ObjectService.h"
 
-#include "HsmObjectAdapter.h"
-#include "JsonUtils.h"
+#include "HttpClient.h"
+#include "HttpCrudClient.h"
+#include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
-#include "Logger.h"
+
+#include "HsmObjectAdapter.h"
 
 namespace hestia {
+
 ObjectService::ObjectService(
     const ObjectServiceConfig& config,
-    KeyValueStoreClient* kv_store_client,
-    HttpClient* http_client,
-    std::unique_ptr<HsmObjectAdapter> object_adatper) :
-    KeyValueCrudService<HsmObject>(
-        {"hestia", "object", config.m_endpoint}, kv_store_client),
-    m_http_client(http_client),
-    m_object_adapter(
-        object_adatper ? std::move(object_adatper) : HsmObjectAdapter::create())
+    std::unique_ptr<CrudClient<HsmObject>> client) :
+    CrudService<HsmObject>(std::move(client)), m_config(config)
 {
-    (void)m_http_client;
 }
 
 ObjectService::~ObjectService() {}
 
-void ObjectService::to_string(const HsmObject& item, std::string& output) const
+ObjectService::Ptr ObjectService::create(
+    const ObjectServiceConfig& config, KeyValueStoreClient* client)
 {
-    output = JsonUtils::to_json(item.object().m_metadata);
+    auto adapter = std::make_unique<HsmObjectJsonAdapter>();
+
+    KeyValueCrudClientConfig crud_client_config;
+    crud_client_config.m_item_prefix = config.m_item_prefix;
+    crud_client_config.m_prefix      = config.m_global_prefix;
+    auto crud_client = std::make_unique<KeyValueCrudClient<HsmObject>>(
+        crud_client_config, std::move(adapter), client);
+
+    return std::make_unique<ObjectService>(config, std::move(crud_client));
 }
 
-void ObjectService::from_string(
-    const std::string& output, HsmObject& item) const
+ObjectService::Ptr ObjectService::create(
+    const ObjectServiceConfig& config, HttpClient* client)
 {
-    JsonUtils::from_json(output, item.object().m_metadata);
-}
+    auto adapter = std::make_unique<HsmObjectJsonAdapter>();
 
+    HttpCrudClientConfig crud_client_config;
+    crud_client_config.m_item_prefix = config.m_item_prefix;
+    crud_client_config.m_prefix      = config.m_global_prefix;
+    auto crud_client = std::make_unique<HttpCrudClient<HsmObject>>(
+        crud_client_config, std::move(adapter), client);
+
+    return std::make_unique<ObjectService>(config, std::move(crud_client));
+}
 
 }  // namespace hestia

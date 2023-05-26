@@ -1,9 +1,9 @@
 #include "HestiaObjectView.h"
 
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
 
 namespace hestia {
-HestiaObjectView::HestiaObjectView(HestiaService* hestia_service) :
+HestiaObjectView::HestiaObjectView(DistributedHsmService* hestia_service) :
     WebView(), m_hestia_service(hestia_service)
 {
     (void)m_hestia_service;

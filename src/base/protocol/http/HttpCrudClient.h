@@ -1,12 +1,14 @@
 #pragma once
 
-#include "KeyValueStoreClient.h"
-#include "Service.h"
+#include "CrudClient.h"
+#include "HttpClient.h"
 
 namespace hestia {
-struct KeyValueCrudServiceConfig {
+struct HttpCrudClientConfig {
 
-    KeyValueCrudServiceConfig(
+    HttpCrudClientConfig() = default;
+
+    HttpCrudClientConfig(
         const std::string& prefix,
         const std::string& item_prefix,
         const std::string& endpoint = {}) :
@@ -14,26 +16,32 @@ struct KeyValueCrudServiceConfig {
     {
     }
 
-    std::string m_prefix{"kv_crud_service"};
+    std::string m_prefix{"http_crud_client"};
     std::string m_item_prefix{"item"};
     std::string m_endpoint;
 };
 
 template<typename ItemT>
-class KeyValueCrudService : public CrudService<ItemT> {
+class HttpCrudClient : public CrudClient<ItemT> {
   public:
-    KeyValueCrudService(
-        const KeyValueCrudServiceConfig& config, KeyValueStoreClient* client) :
-        CrudService<ItemT>(), m_config(config), m_client(client){};
+    HttpCrudClient(
+        const HttpCrudClientConfig& config,
+        std::unique_ptr<StringAdapter<ItemT>> adapter,
+        HttpClient* client) :
+        CrudClient<ItemT>(std::move(adapter)),
+        m_config(config),
+        m_client(client){};
 
-    virtual ~KeyValueCrudService() = default;
+    virtual ~HttpCrudClient() = default;
 
   protected:
-    KeyValueCrudServiceConfig m_config;
+    HttpCrudClientConfig m_config;
 
   private:
     void get(ItemT& item) const override
     {
+        (void)item;
+        /*
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_GET, get_item_key(item),
              m_config.m_endpoint});
@@ -44,10 +52,13 @@ class KeyValueCrudService : public CrudService<ItemT> {
                      + response->get_error().to_string()});
         }
         from_string(response->item(), item);
+        */
     }
 
     void multi_get(std::vector<ItemT>& items) const override
     {
+        (void)items;
+        /*
         std::vector<std::string> ids;
         list(ids);
 
@@ -67,10 +78,13 @@ class KeyValueCrudService : public CrudService<ItemT> {
             from_string(item_data, item);
             items.push_back(item);
         }
+        */
     }
 
     void put(const ItemT& item) const override
     {
+        (void)item;
+        /*
         std::string content;
         to_string(item, content);
 
@@ -93,10 +107,13 @@ class KeyValueCrudService : public CrudService<ItemT> {
                 "Error in kv_store SET_ADD: "
                 + response->get_error().to_string());
         }
+        */
     }
 
     bool exists(const ItemT& item) const override
     {
+        (void)item;
+        /*
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(item),
              m_config.m_endpoint});
@@ -106,10 +123,14 @@ class KeyValueCrudService : public CrudService<ItemT> {
                 + response->get_error().to_string());
         }
         return response->found();
+        */
+        return false;
     }
 
     void remove(const ItemT& item) const override
     {
+        (void)item;
+        /*
         const auto string_response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(item),
              m_config.m_endpoint});
@@ -127,10 +148,13 @@ class KeyValueCrudService : public CrudService<ItemT> {
                 "Error in kv_store SET_REMOVE: "
                 + set_response->get_error().to_string());
         }
+        */
     }
 
     void list(std::vector<std::string>& ids) const override
     {
+        (void)ids;
+        /*
         LOG_INFO("Have client: " << bool(m_client));
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
@@ -145,11 +169,8 @@ class KeyValueCrudService : public CrudService<ItemT> {
             LOG_INFO("Adding id: " + id);
             ids.push_back(id);
         }
+        */
     }
-
-    virtual void to_string(const ItemT& item, std::string& output) const = 0;
-
-    virtual void from_string(const std::string& output, ItemT& item) const = 0;
 
     std::string get_item_key(const ItemT& item) const
     {
@@ -172,6 +193,6 @@ class KeyValueCrudService : public CrudService<ItemT> {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + "s";
     }
 
-    KeyValueStoreClient* m_client{nullptr};
+    HttpClient* m_client{nullptr};
 };
 }  // namespace hestia

@@ -5,8 +5,8 @@
 #include "FileKeyValueStoreClient.h"
 
 #include "CopyToolInterface.h"
-#include "HestiaNodeService.h"
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
+#include "HsmNodeService.h"
 #include "HsmObjectStoreClientManager.h"
 #include "HsmObjectStoreClientSpec.h"
 #include "HsmService.h"
@@ -18,11 +18,11 @@
 
 #include <iostream>
 
-class HestiaServiceTestFixture {
+class DistributedHsmServiceTestFixture {
   public:
-    ~HestiaServiceTestFixture()
+    ~DistributedHsmServiceTestFixture()
     {
-        // std::filesystem::remove_all(get_store_path());
+        std::filesystem::remove_all(get_store_path());
     }
 
     void init(const std::string& test_name)
@@ -37,10 +37,10 @@ class HestiaServiceTestFixture {
         m_kv_store_client->initialize(config);
 
         hestia::ObjectServiceConfig object_config;
-        auto object_service = std::make_unique<hestia::ObjectService>(
+        auto object_service = hestia::ObjectService::create(
             object_config, m_kv_store_client.get());
 
-        auto tier_service = std::make_unique<hestia::TierService>(
+        auto tier_service = hestia::TierService::create(
             hestia::TierServiceConfig(), m_kv_store_client.get());
 
         auto client_factory =
@@ -70,12 +70,12 @@ class HestiaServiceTestFixture {
             std::move(object_service), std::move(tier_service),
             m_object_store_client.get(), std::move(placement_engine));
 
-        hestia::HestiaNodeServiceConfig node_config;
-        auto node_service = std::make_unique<hestia::HestiaNodeService>(
+        hestia::HsmNodeServiceConfig node_config;
+        auto node_service = hestia::HsmNodeService::create(
             node_config, m_kv_store_client.get());
 
-        hestia::HestiaServiceConfig hestia_config;
-        m_hestia_service = std::make_unique<hestia::HestiaService>(
+        hestia::DistributedHsmServiceConfig hestia_config;
+        m_hestia_service = std::make_unique<hestia::DistributedHsmService>(
             hestia_config, m_hsm_service.get(), std::move(node_service));
     }
 
@@ -89,20 +89,22 @@ class HestiaServiceTestFixture {
     std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient>
         m_object_store_client;
     std::unique_ptr<hestia::HsmService> m_hsm_service;
-    std::unique_ptr<hestia::HestiaService> m_hestia_service;
+    std::unique_ptr<hestia::DistributedHsmService> m_hestia_service;
 };
 
 TEST_CASE_METHOD(
-    HestiaServiceTestFixture, "Hestia Service test", "[hestia-service]")
+    DistributedHsmServiceTestFixture,
+    "Distributed Hsm Service test",
+    "[dist-hsm-service]")
 {
-    init("TestHestiaService");
+    init("TestDistributedHsmService");
 
-    std::vector<hestia::HestiaNode> nodes;
+    std::vector<hestia::HsmNode> nodes;
     m_hestia_service->get(nodes);
 
     REQUIRE(nodes.empty());
 
-    hestia::HestiaNode node("01234");
+    hestia::HsmNode node("01234");
     node.m_host_address = "127.0.0.1";
 
     m_hestia_service->put(node);

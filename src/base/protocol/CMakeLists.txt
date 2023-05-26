@@ -16,6 +16,8 @@ add_module(
         request/RequestError.h
         request/RequestException.h
         request/Service.h
+        request/CrudClient.h
+        request/CrudService.h
         s3/S3Error.h
         s3/S3Path.h
         s3/S3Object.h

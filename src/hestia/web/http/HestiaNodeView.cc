@@ -1,15 +1,15 @@
 #include "HestiaNodeView.h"
 
-#include "HestiaNode.h"
-#include "HestiaNodeAdapter.h"
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
+#include "HsmNode.h"
+#include "HsmNodeAdapter.h"
 
 #include "StringUtils.h"
 
 #include "Logger.h"
 
 namespace hestia {
-HestiaNodeView::HestiaNodeView(HestiaService* hestia_service) :
+HestiaNodeView::HestiaNodeView(DistributedHsmService* hestia_service) :
     WebView(), m_hestia_service(hestia_service)
 {
     (void)m_hestia_service;
@@ -27,9 +27,9 @@ HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
     LOG_INFO("Relative path: " + relative_path);
 
     if (relative_path.empty() || relative_path == "/") {
-        std::vector<HestiaNode> nodes;
+        std::vector<HsmNode> nodes;
         m_hestia_service->get(nodes);
-        response->set_body(HestiaNodeAdapter::to_json(nodes));
+        response->set_body(HsmNodeJsonAdapter::to_json(nodes));
     }
     return response;
 }
@@ -44,13 +44,13 @@ HttpResponse::Ptr HestiaNodeView::on_put(const HttpRequest& request)
 
     if (relative_path.empty() || relative_path == "/") {
         if (!request.body().empty()) {
-            HestiaNode node;
+            HsmNode node;
             LOG_INFO("Trying to serialize: " << request.body());
-            HestiaNodeAdapter::from_json(request.body(), node);
+            HsmNodeJsonAdapter().from_string(request.body(), node);
             m_hestia_service->put(node);
 
             std::string body;
-            HestiaNodeAdapter::to_json(node, body);
+            HsmNodeJsonAdapter().to_string(node, body);
             response->set_body(body);
         }
     }

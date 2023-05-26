@@ -1,11 +1,11 @@
-#include "HestiaNodeAdapter.h"
+#include "HsmNodeAdapter.h"
 
 #include "JsonUtils.h"
 #include "Metadata.h"
 
 namespace hestia {
 
-std::string HestiaNodeAdapter::to_json(const std::vector<HestiaNode>& nodes)
+std::string HsmNodeJsonAdapter::to_json(const std::vector<HsmNode>& nodes)
 {
     std::vector<Metadata> node_data;
     for (const auto& node : nodes) {
@@ -19,7 +19,7 @@ std::string HestiaNodeAdapter::to_json(const std::vector<HestiaNode>& nodes)
     return JsonUtils::to_json(node_data);
 }
 
-void HestiaNodeAdapter::to_json(const HestiaNode& node, std::string& json)
+void HsmNodeJsonAdapter::to_string(const HsmNode& node, std::string& json) const
 {
     Metadata data;
     data.set_item("id", node.id());
@@ -28,7 +28,8 @@ void HestiaNodeAdapter::to_json(const HestiaNode& node, std::string& json)
     json = JsonUtils::to_json(data);
 }
 
-void HestiaNodeAdapter::from_json(const std::string& json, HestiaNode& node)
+void HsmNodeJsonAdapter::from_string(
+    const std::string& json, HsmNode& node) const
 {
     Metadata data;
     JsonUtils::from_json(json, data);
