@@ -1,6 +1,6 @@
 ---
 !upsert
-id: !!binary MV8w
+id: !!binary MV8wMA==
 statx:
   attributes:
     append: !!bool n
@@ -14,14 +14,13 @@ statx:
     verity: !!bool n
   mode: 0777
   size: !uint64 44
-  type: file
-symlink: !!bool n
+  type: !!str file
 xattrs:
   tier: !uint32 0
 ...
 ---
 !upsert
-id: !!binary MV8w
+id: !!binary MV8wMQ==
 statx:
   attributes:
     append: !!bool n
@@ -35,8 +34,7 @@ statx:
     verity: !!bool n
   mode: 0777
   size: !uint64 0
-  type: file
-symlink: !!bool n
+  type: !!str file
 xattrs:
   source_tier: !uint32 0
   target_tier: !uint32 1
@@ -47,7 +45,7 @@ id: !!binary MV8wMQ==
 ...
 ---
 !upsert
-id: !!binary MV8w
+id: !!binary MV8wMg==
 statx:
   attributes:
     append: !!bool n
@@ -61,8 +59,7 @@ statx:
     verity: !!bool n
   mode: 0777
   size: !uint64 0
-  type: file
-symlink: !!bool n
+  type: !!str file
 xattrs:
   tier: !uint32 2
 ...

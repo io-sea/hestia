@@ -80,6 +80,18 @@ Hestia currently supports two server backends with the `backend` option:
 * `basic` : Use a simple (custom written) server implementation - this is very basic - only intended for local development and testing
 * `proxygen` : User a server built on the [Proxygen](https://github.com/facebook/proxygen) library
 
+## Event Feed
+
+Hestia will log object-altering events to a YAML file specified by `event_feed_path` in the general config as shown below. This can be turned off if not using Hestia with [Robinhood](https://github.com/cea-hpc/librobinhood/), but is necessary for Robinhood to be aware of Hestia events.  
+
+```yaml
+event_feed:
+  event_feed_path: event_feed.yaml
+  event_feed_active: y
+```
+
+For an annotated example of the output of this event logger please see [here](Markdown/event_feed_format.md).  
+
 # Command Line Interface
 
 The command line interface (CLI) provides a HSM API for the Object Store backends specified in the `yaml` config file. It can be used as follows:

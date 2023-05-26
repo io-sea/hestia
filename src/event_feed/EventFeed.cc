@@ -78,7 +78,7 @@ void convert_put(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
     Metadata meta;  // TODO: Handle overwrite put as remove then put
-    meta.set_item("id", event.m_id);
+    meta.set_item("id", event.m_id + std::to_string(event.m_target_tier));
     meta.set_item("size", std::to_string(event.m_length));
     meta.set_item("tier", std::to_string(event.m_target_tier));
 
@@ -107,7 +107,7 @@ void convert_copy(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
     Metadata meta;
-    meta.set_item("id", event.m_id);
+    meta.set_item("id", event.m_id + std::to_string(event.m_target_tier));
     meta.set_item("size", std::to_string(event.m_length));
     meta.set_item("source_tier", std::to_string(event.m_source_tier));
     meta.set_item("target_tier", std::to_string(event.m_target_tier));

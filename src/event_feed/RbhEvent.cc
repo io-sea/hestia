@@ -162,9 +162,6 @@ void RbhEvent::upsert(Dictionary& dict) const
     // ID Field
     set_id(dict, m_meta.get_item("id"));
 
-    // Symlink
-    add_scalar(dict, "symlink", "n", "bool", "!!");
-
     // Xattrs
     set_xattrs(dict, m_meta);
 
@@ -172,7 +169,9 @@ void RbhEvent::upsert(Dictionary& dict) const
     dict.set_map_item("statx", Dictionary::create(Dictionary::Type::MAP));
     auto statx = dict.get_map_item("statx");
 
-    add_scalar(*statx, "type", "file");  // TODO: Do we support other types?
+    add_scalar(
+        *statx, "type", "file", "str",
+        "!!");                           // TODO: Do we support other types?
     add_scalar(*statx, "mode", "0777");  // TODO: Do we support permissions?
 
     // TODO: Do we have this data?
