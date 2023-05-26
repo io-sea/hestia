@@ -17,6 +17,38 @@ DistributedHsmService::DistributedHsmService(
 {
 }
 
+DistributedHsmService::Ptr DistributedHsmService::create(
+    DistributedHsmServiceConfig config,
+    HsmService* hsm_service,
+    KeyValueStoreClient* client)
+{
+    HsmNodeServiceConfig node_service_config;
+    node_service_config.m_global_prefix = config.m_app_name;
+    auto node_service = HsmNodeService::create(node_service_config, client);
+
+    auto service = std::make_unique<DistributedHsmService>(
+        config, hsm_service, std::move(node_service));
+
+    service->register_self();
+    return service;
+}
+
+DistributedHsmService::Ptr DistributedHsmService::create(
+    DistributedHsmServiceConfig config,
+    HsmService* hsm_service,
+    HttpClient* client)
+{
+    HsmNodeServiceConfig node_service_config;
+    node_service_config.m_global_prefix = config.m_app_name;
+    auto node_service = HsmNodeService::create(node_service_config, client);
+
+    auto service = std::make_unique<DistributedHsmService>(
+        config, hsm_service, std::move(node_service));
+
+    service->register_self();
+    return service;
+}
+
 void DistributedHsmService::register_self()
 {
     put(m_config.m_self);

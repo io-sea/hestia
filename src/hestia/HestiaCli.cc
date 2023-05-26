@@ -5,24 +5,8 @@
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
 
-#include "DistributedHsmService.h"
-#include "HsmNodeService.h"
-#include "HsmS3Service.h"
+#include "HestiaService.h"
 #include "HsmService.h"
-
-#include "HttpCrudClient.h"
-#include "KeyValueCrudClient.h"
-
-#include "S3Service.h"
-#include "S3WebApp.h"
-#include "Server.h"
-
-#include "BasicHttpServer.h"
-#include "CopyToolWebApp.h"
-#include "CurlClient.h"
-#include "FileKeyValueStoreClient.h"
-#include "HestiaS3WebApp.h"
-#include "HestiaWebApp.h"
 
 #include "DaemonManager.h"
 
@@ -260,7 +244,7 @@ OpStatus HestiaCli::run()
         return run_hsm();
     }
     else if (m_command == Command::SERVER) {
-        return run_server();
+        return run_server(m_config.m_server_config);
     }
     else if (m_command == Command::DAEMON_START) {
         return start_daemon();
@@ -396,71 +380,10 @@ OpStatus HestiaCli::run_hsm()
     return {};
 }
 
-OpStatus HestiaCli::run_server()
+OpStatus HestiaCli::run_server(const ServerConfig& config)
 {
-    std::unique_ptr<DistributedHsmService> hestia_service;
-    std::unique_ptr<HsmS3Service> hsm_s3_service;
-
-    WebApp::Ptr web_app;
-    if (m_config.m_server_config.m_web_app == "hestia::HsmService") {
-        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
-
-        auto hsm_service = ApplicationContext::get().get_hsm_service();
-
-        CurlClientConfig http_client_config;
-        auto http_client = std::make_unique<CurlClient>(http_client_config);
-
-        std::unique_ptr<HsmNodeService> node_service;
-        HsmNodeServiceConfig node_service_config;
-        node_service_config.m_global_prefix = "hestia";
-        if (m_config.m_server_config.m_controller) {
-            node_service = HsmNodeService::create(
-                node_service_config,
-                ApplicationContext::get().get_kv_store_client());
-        }
-        else {
-            node_service = HsmNodeService::create(
-                node_service_config,
-                ApplicationContext::get().get_http_client());
-        }
-
-        DistributedHsmServiceConfig service_config;
-        service_config.m_self.m_app_type = m_config.m_server_config.m_web_app;
-        service_config.m_self.m_port     = m_config.m_server_config.m_port;
-        service_config.m_self.m_is_controller =
-            m_config.m_server_config.m_controller;
-
-        hestia_service = std::make_unique<DistributedHsmService>(
-            service_config, hsm_service, std::move(node_service));
-
-        hestia_service->register_self();
-
-        web_app = std::make_unique<HestiaWebApp>(hestia_service.get());
-    }
-    else if (m_config.m_server_config.m_web_app == "hestia::HsmS3Service") {
-        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
-        hsm_s3_service = std::make_unique<HsmS3Service>(
-            ApplicationContext::get().get_hsm_service(),
-            ApplicationContext::get().get_kv_store_client());
-
-        HestiaS3WebAppConfig config;
-        web_app =
-            std::make_unique<HestiaS3WebApp>(config, hsm_s3_service.get());
-    }
-    else if (m_config.m_server_config.m_web_app == "hestia::CopyTool") {
-        LOG_INFO("Running: " << m_config.m_server_config.m_web_app);
-
-        web_app = std::make_unique<CopyToolWebApp>();
-    }
-
-    Server::Config server_config;
-    server_config.m_ip        = m_config.m_server_config.m_host;
-    server_config.m_http_port = std::stoi(m_config.m_server_config.m_port);
-    server_config.m_block_on_launch = true;
-
-    BasicHttpServer server(server_config, web_app.get());
-    server.initialize();
-    server.start();
+    HestiaService hestia_service(config);
+    hestia_service.run();
 
     return {};
 }
@@ -481,7 +404,7 @@ OpStatus HestiaCli::start_daemon()
             OpStatus::Status::ERROR, 0, "Error starting hestia Daemon");
     }
 
-    return run_server();
+    return run_server(m_config.m_server_config);
 }
 
 OpStatus HestiaCli::stop_daemon()

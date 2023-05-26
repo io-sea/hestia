@@ -8,19 +8,12 @@
 #include "HsmObjectStoreClientFactory.h"
 #include "KeyValueStoreClientFactory.h"
 #include "Logger.h"
+#include "ServerConfig.h"
 
 #include <string>
 #include <unordered_map>
 
 namespace hestia {
-
-struct HestiaServerConfig {
-    std::string m_host{"127.0.0.1"};
-    std::string m_port{"8080"};
-    std::string m_backend{"hestia::Basic"};
-    std::string m_web_app{"hestia::HsmService"};
-    bool m_controller{true};
-};
 
 class HestiaConfig {
 
@@ -33,7 +26,7 @@ class HestiaConfig {
 
     std::string m_cache_path{"hestia_cache"};
 
-    HestiaServerConfig m_server_config;
+    ServerConfig m_server_config;
 
     // HSM
     TierBackendRegistry m_tier_backend_registry;

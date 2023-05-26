@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Dictionary.h"
 #include "Metadata.h"
 
 #include <filesystem>
@@ -31,6 +32,10 @@ class JsonUtils {
      */
     static std::string to_json(const Metadata& metadata);
 
+    static std::string to_json(const Dictionary& dict);
+
+    static std::unique_ptr<Dictionary> from_json(const std::string& str);
+
     static std::string to_json(
         const std::vector<Metadata>& metadata, const std::string& key = {});
 
@@ -41,6 +46,9 @@ class JsonUtils {
      * @param metadata to populate
      */
     static void from_json(const std::string& json, Metadata& metadata);
+
+    static void from_json(
+        const std::string& json, std::vector<Metadata>& metadata);
 
     static void get_value(
         const std::filesystem::path& path,

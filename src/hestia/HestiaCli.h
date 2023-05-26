@@ -12,6 +12,7 @@ class App;
 }
 
 namespace hestia {
+
 class HestiaCli {
   public:
     enum class Command { UNKNOWN, HSM, DAEMON_START, DAEMON_STOP, SERVER };
@@ -62,7 +63,7 @@ class HestiaCli {
     void add_list_tiers_options(CLI::App* command);
 
     OpStatus run_hsm();
-    OpStatus run_server();
+    OpStatus run_server(const ServerConfig& config);
     OpStatus start_daemon();
     OpStatus stop_daemon();
 };

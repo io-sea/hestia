@@ -8,8 +8,6 @@ add_module(
     SOURCES
         EventFeed.cc
         RbhEvent.cc
-    DEPENDENCIES
-        hestia::hestia
     INTERNAL_DEPENDENCIES
         common
 )

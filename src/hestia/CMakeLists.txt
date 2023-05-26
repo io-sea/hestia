@@ -8,6 +8,8 @@ add_module(
         application/ApplicationContext.h
         application/HestiaConfig.h
         application/HestiaConfigurator.h
+        application/HestiaService.h
+        application/ServerConfig.h
         web/http/HestiaWebApp.h 
         web/http/HestiaObjectView.h 
         web/http/HestiaTierView.h 
@@ -19,6 +21,8 @@ add_module(
         application/ApplicationContext.cc
         application/HestiaConfig.cc
         application/HestiaConfigurator.cc
+        application/HestiaService.cc
+        application/ServerConfig.cc
         web/http/HestiaWebApp.cc 
         web/http/HestiaObjectView.cc 
         web/http/HestiaTierView.cc 
@@ -31,7 +35,9 @@ add_module(
     INTERNAL_DEPENDENCIES 
         headers
         hsm
-        web      
+        server     
+        cli 
+        http_client
 )
 
 target_include_directories(hestia_app SYSTEM PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>)

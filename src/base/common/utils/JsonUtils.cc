@@ -37,11 +37,117 @@ std::string JsonUtils::to_json(
     return json.dump();
 }
 
+void to_json_internal(
+    nlohmann::json& json, const Dictionary& dict, const std::string& key = {})
+{
+    if (dict.get_type() == Dictionary::Type::SCALAR) {
+        if (key.empty()) {
+            json = dict.get_scalar();
+        }
+        else {
+            json[key] = dict.get_scalar();
+        }
+        return;
+    }
+    else if (dict.get_type() == Dictionary::Type::SEQUENCE) {
+        std::vector<nlohmann::json> dict_items;
+        for (const auto& item : dict.get_sequence()) {
+            nlohmann::json dict_json;
+            to_json_internal(dict_json, *item);
+            dict_items.push_back(dict_json);
+        }
+        if (key.empty()) {
+            json = dict_items;
+        }
+        else {
+            json[key] = dict_items;
+        }
+        return;
+    }
+    else if (dict.get_type() == Dictionary::Type::MAP) {
+        for (const auto& [key, dict_item] : dict.get_map()) {
+            nlohmann::json dict_json;
+            to_json_internal(dict_json, *dict_item);
+            json[key] = dict_json;
+        }
+        return;
+    }
+}
+
+std::string JsonUtils::to_json(const Dictionary& dict)
+{
+    nlohmann::json json;
+    to_json_internal(json, dict);
+    return json.dump();
+}
+
+void from_json_internal(
+    const nlohmann::json& j,
+    Dictionary* dict,
+    const std::string& parent_key = {})
+{
+    if (j.is_array()) {
+        auto array_dict =
+            std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+        for (const auto& [key, value] : j.items()) {
+            from_json_internal(value, array_dict.get());
+        }
+        dict->set_map_item(parent_key, std::move(array_dict));
+    }
+    else if (j.is_object()) {
+        if (dict->get_type() == Dictionary::Type::SEQUENCE) {
+            auto map_dict = std::make_unique<Dictionary>();
+            for (const auto& [key, value] : j.items()) {
+                from_json_internal(value, map_dict.get(), key);
+            }
+            dict->add_sequence_item(std::move(map_dict));
+        }
+        else if (parent_key.empty()) {
+            for (const auto& [key, value] : j.items()) {
+                from_json_internal(value, dict, key);
+            }
+        }
+        else {
+            auto map_dict = std::make_unique<Dictionary>();
+            for (const auto& [key, value] : j.items()) {
+                from_json_internal(value, map_dict.get(), key);
+            }
+            dict->set_map_item(parent_key, std::move(map_dict));
+        }
+    }
+    else {
+        auto scalar_dict =
+            std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
+        scalar_dict->set_scalar(j);
+        dict->set_map_item(parent_key, std::move(scalar_dict));
+    }
+}
+
+std::unique_ptr<Dictionary> JsonUtils::from_json(const std::string& str)
+{
+    const auto json = nlohmann::json::parse(str);
+    auto dict       = std::make_unique<Dictionary>();
+
+    from_json_internal(json, dict.get());
+    return dict;
+}
+
 void JsonUtils::from_json(const std::string& json_str, Metadata& metadata)
 {
     const auto json = nlohmann::json::parse(json_str);
     for (const auto& [key, value] : json.items()) {
         metadata.set_item(key, value);
+    }
+}
+
+void JsonUtils::from_json(
+    const std::string& json_str, std::vector<Metadata>& metadata)
+{
+    const auto json = nlohmann::json::parse(json_str);
+    for (const auto& [key, value] : json.items()) {
+        Metadata data;
+        from_json(value, data);
+        metadata.push_back(data);
     }
 }
 

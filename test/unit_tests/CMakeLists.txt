@@ -32,7 +32,9 @@ set(UNIT_TEST_SOURCES
     hsm/TestMockMotrHsm.cc
     hsm/TestMotrHsmClient.cc
     hsm/TestHsmService.cc
+    hsm/TestHsmNodeAdapter.cc
     hsm/TestObjectService.cc
+    hsm/TestTierService.cc
 )
 
 add_executable(${UNIT_TEST_MODULE} 

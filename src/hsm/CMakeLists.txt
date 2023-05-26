@@ -63,4 +63,5 @@ add_module(
     INTERNAL_DEPENDENCIES 
         hsm_object_store
         event_feed
+        s3app
 )

@@ -15,6 +15,16 @@ MultiBackendHsmObjectStoreClient::MultiBackendHsmObjectStoreClient(
 
 MultiBackendHsmObjectStoreClient::~MultiBackendHsmObjectStoreClient() {}
 
+MultiBackendHsmObjectStoreClient::Ptr MultiBackendHsmObjectStoreClient::create()
+{
+    auto client_factory =
+        std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
+    auto client_manager = std::make_unique<hestia::HsmObjectStoreClientManager>(
+        std::move(client_factory));
+    return std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
+        std::move(client_manager));
+}
+
 void MultiBackendHsmObjectStoreClient::do_initialize(
     const TierBackendRegistry& tier_backend_regsitry,
     const CopyToolConfig& copy_tool_config)

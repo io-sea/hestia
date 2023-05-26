@@ -36,47 +36,26 @@ class DistributedHsmServiceTestFixture {
         m_kv_store_client = std::make_unique<hestia::FileKeyValueStoreClient>();
         m_kv_store_client->initialize(config);
 
-        hestia::ObjectServiceConfig object_config;
-        auto object_service = hestia::ObjectService::create(
-            object_config, m_kv_store_client.get());
-
-        auto tier_service = hestia::TierService::create(
-            hestia::TierServiceConfig(), m_kv_store_client.get());
-
-        auto client_factory =
-            std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
-        auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(
-                std::move(client_factory));
         m_object_store_client =
-            std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
-                std::move(client_manager));
+            hestia::MultiBackendHsmObjectStoreClient::create();
 
-        hestia::HsmObjectStoreClientSpec my_spec(
+        hestia::HsmObjectStoreClientSpec object_store_backend(
             hestia::HsmObjectStoreClientSpec::Type::HSM,
             hestia::HsmObjectStoreClientSpec::Source::BUILT_IN,
             "hestia::FileHsmObjectStoreClient");
-        my_spec.m_extra_config.set_item("root", get_store_path());
-        hestia::TierBackendRegistry g_all_file_backend_example;
-        g_all_file_backend_example.emplace(0, my_spec);
-        g_all_file_backend_example.emplace(1, my_spec);
+        object_store_backend.m_extra_config.set_item("root", get_store_path());
 
-        m_object_store_client->do_initialize(g_all_file_backend_example, {});
-        auto placement_engine =
-            std::make_unique<hestia::BasicDataPlacementEngine>(
-                tier_service.get());
+        hestia::TierBackendRegistry backends;
+        backends.emplace(0, object_store_backend);
+        backends.emplace(1, object_store_backend);
+        m_object_store_client->do_initialize(backends, {});
 
-        m_hsm_service = std::make_unique<hestia::HsmService>(
-            std::move(object_service), std::move(tier_service),
-            m_object_store_client.get(), std::move(placement_engine));
-
-        hestia::HsmNodeServiceConfig node_config;
-        auto node_service = hestia::HsmNodeService::create(
-            node_config, m_kv_store_client.get());
+        m_hsm_service = hestia::HsmService::create(
+            m_kv_store_client.get(), m_object_store_client.get());
 
         hestia::DistributedHsmServiceConfig hestia_config;
-        m_hestia_service = std::make_unique<hestia::DistributedHsmService>(
-            hestia_config, m_hsm_service.get(), std::move(node_service));
+        m_dist_hsm_service = hestia::DistributedHsmService::create(
+            hestia_config, m_hsm_service.get(), m_kv_store_client.get());
     }
 
     std::string get_store_path() const
@@ -89,7 +68,7 @@ class DistributedHsmServiceTestFixture {
     std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient>
         m_object_store_client;
     std::unique_ptr<hestia::HsmService> m_hsm_service;
-    std::unique_ptr<hestia::DistributedHsmService> m_hestia_service;
+    std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
 };
 
 TEST_CASE_METHOD(
@@ -100,17 +79,22 @@ TEST_CASE_METHOD(
     init("TestDistributedHsmService");
 
     std::vector<hestia::HsmNode> nodes;
-    m_hestia_service->get(nodes);
+    m_dist_hsm_service->get(nodes);
 
-    REQUIRE(nodes.empty());
+    REQUIRE(nodes.size() == 1);
 
     hestia::HsmNode node("01234");
     node.m_host_address = "127.0.0.1";
 
-    m_hestia_service->put(node);
+    hestia::ObjectStoreBackend backend;
+    backend.m_identifier = "my_backend";
+    node.m_backends.push_back(backend);
 
-    m_hestia_service->get(nodes);
+    m_dist_hsm_service->put(node);
 
-    REQUIRE(nodes.size() == 1);
-    REQUIRE(nodes[0].m_host_address == node.m_host_address);
+    m_dist_hsm_service->get(nodes);
+
+    REQUIRE(nodes.size() == 2);
+    REQUIRE(nodes[1].m_host_address == node.m_host_address);
+    REQUIRE(nodes[1].m_backends.size() == 1);
 }

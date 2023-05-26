@@ -15,8 +15,8 @@ class StorageTier {
     const std::string& id() const { return m_id; }
 
     tier_storage_class m_type{tier_storage_class::ssd_nvme};
-    std::size_t capacity{0};
-    std::size_t bandwith{0};
+    std::size_t m_capacity{0};
+    std::size_t m_bandwith{0};
     std::string m_id;
     std::string m_backend;
 };

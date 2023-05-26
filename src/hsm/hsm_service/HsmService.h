@@ -18,6 +18,7 @@ using ObjectServiceRequest = CrudRequest<HsmObject>;
 class TierService;
 class HsmStoreInterface;
 class HsmActionAdapter;
+class KeyValueStoreClient;
 
 class HsmService {
   public:
@@ -36,6 +37,10 @@ class HsmService {
         MultiBackendHsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<EventFeed> event_feed = nullptr);
+
+    static Ptr create(
+        KeyValueStoreClient* client,
+        MultiBackendHsmObjectStoreClient* object_store);
 
     virtual ~HsmService();
 

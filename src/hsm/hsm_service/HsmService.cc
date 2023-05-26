@@ -1,5 +1,6 @@
 #include "HsmService.h"
 
+#include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
 #include "MultiBackendHsmObjectStoreClient.h"
 #include "ObjectService.h"
@@ -35,6 +36,19 @@ HsmService::HsmService(
     m_event_feed(std::move(event_feed))
 {
     LOG_INFO("Creating HsmService");
+}
+
+HsmService::Ptr HsmService::create(
+    KeyValueStoreClient* client, MultiBackendHsmObjectStoreClient* object_store)
+{
+    auto object_service = ObjectService::create(ObjectServiceConfig(), client);
+    auto tier_service   = TierService::create(TierServiceConfig(), client);
+    auto placement_engine =
+        std::make_unique<BasicDataPlacementEngine>(tier_service.get());
+
+    return create(
+        std::move(object_service), std::move(tier_service), object_store,
+        std::move(placement_engine));
 }
 
 HsmService::Ptr HsmService::create(
