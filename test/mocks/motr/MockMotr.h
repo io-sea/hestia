@@ -6,14 +6,15 @@
 namespace hestia::mock::motr {
 class Motr {
   public:
-    int m0_client_init(Client* client, MotrConfig* config, bool init_motr);
+    int m0_client_init(
+        Client* client, MotrConfig* config, bool init_motr) const;
 
     static int m0_client_fini(Client* client, bool fini_motr);
 
     int m0_container_init(
-        Container* container, Realm* parent, Id* id, Client* client);
+        Container* container, Realm* parent, Id* id, Client* client) const;
 
-    Layout* m0_client_layout_alloc(Layout::Type layout_type);
+    Layout* m0_client_layout_alloc(Layout::Type layout_type) const;
 
     static int m0_composite_layer_add(
         Layout* layout, Obj* sub_obj, int priority);
@@ -30,14 +31,14 @@ class Motr {
 
     static Client* m0__obj_instance(const Obj* obj);
 
-    MotrBackend* backend() { return &m_backend; }
+    const MotrBackend* backend() const { return &m_backend; }
 
   private:
     Realm* get_realm();
 
-    Client* m_client{nullptr};
+    mutable Client* m_client{nullptr};
     Realm m_default_realm;
-    Realm* m_realm{nullptr};
+    mutable Realm* m_realm{nullptr};
 
     MotrBackend m_backend;
 };

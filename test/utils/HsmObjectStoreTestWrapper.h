@@ -13,9 +13,14 @@ class HsmObjectStoreTestWrapper {
     static Ptr create(const std::string& plugin_name);
 
     void put(
-        const hestia::StorageObject& obj, hestia::Stream* stream = nullptr);
+        const hestia::StorageObject& obj,
+        hestia::Stream* stream = nullptr,
+        uint8_t tier           = 0);
 
-    void get(hestia::StorageObject& obj, hestia::Stream* stream = nullptr);
+    void get(
+        hestia::StorageObject& obj,
+        hestia::Stream* stream = nullptr,
+        uint8_t tier           = 0);
 
     void exists(const hestia::StorageObject& obj, bool should_exist);
 

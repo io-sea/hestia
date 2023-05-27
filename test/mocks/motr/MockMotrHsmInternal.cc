@@ -1,5 +1,7 @@
 #include "MockMotrHsmInternal.h"
 
+#include "Logger.h"
+
 namespace hestia::mock::motr {
 uint32_t HsmInternal::hsm_priority(uint32_t generation, uint8_t tier_idx)
 {
@@ -26,7 +28,7 @@ uint8_t HsmInternal::hsm_prio2tier(uint32_t priority)
     return priority & 0xFF;
 }
 
-hestia::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx)
+hestia::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx) const
 {
     if (m_hsm_pools.size() < tier_idx) {
         return nullptr;
@@ -39,7 +41,7 @@ hestia::Uuid* HsmInternal::hsm_tier2pool(uint8_t tier_idx)
 }
 
 int HsmInternal::create_obj(
-    Id id, Obj* obj, bool close_entity, uint8_t tier_idx)
+    Id id, Obj* obj, bool close_entity, uint8_t tier_idx) const
 {
     (void)close_entity;
 
@@ -50,6 +52,10 @@ int HsmInternal::create_obj(
     if (tier_idx != hsm_any_tier) {
         pool = hsm_tier2pool(tier_idx);
         if (pool == nullptr) {
+            LOG_ERROR(
+                "Failed to find pool for tier: " << std::to_string(tier_idx)
+                                                 << ". Pool size is: "
+                                                 << m_hsm_pools.size());
             return -1;
         }
     }
@@ -77,7 +83,7 @@ void HsmInternal::layout_top_prio(
     }
 }
 
-CompositeLayer* HsmInternal::layer_get_by_prio(Layout* layout, int prio)
+CompositeLayer* HsmInternal::layer_get_by_prio(Layout* layout, int prio) const
 {
     for (const auto& layer : layout->m_layers) {
         if (layer->m_priority == static_cast<uint32_t>(prio)) {
@@ -105,7 +111,7 @@ int HsmInternal::check_top_layer_writable(
     return 0;
 }
 
-int HsmInternal::layout_get(Id id, Layout** layout)
+int HsmInternal::layout_get(Id id, Layout** layout) const
 {
     Obj obj;
     Motr::m0_obj_init(
@@ -117,7 +123,7 @@ int HsmInternal::layout_get(Id id, Layout** layout)
     return rc;
 }
 
-int HsmInternal::obj_layout_get(Obj* obj, Layout** layout)
+int HsmInternal::obj_layout_get(Obj* obj, Layout** layout) const
 {
     auto obj_layout = motr()->backend()->get_layout(obj->m_layout_id);
     if (obj_layout == nullptr) {
@@ -127,19 +133,19 @@ int HsmInternal::obj_layout_get(Obj* obj, Layout** layout)
     return 0;
 }
 
-int HsmInternal::layout_set(Id id, Layout* layout)
+int HsmInternal::layout_set(Id id, Layout* layout) const
 {
     Obj obj;
     Motr::m0_obj_init(
         &obj, m_uber_realm, &id, Motr::m0_client_layout_id(m_client));
 
-    motr()->m0_entity_open(&obj);
+    Motr::m0_entity_open(&obj);
 
     obj_layout_set(&obj, layout);
     return 0;
 }
 
-int HsmInternal::obj_layout_set(Obj* obj, Layout* layout)
+int HsmInternal::obj_layout_set(Obj* obj, Layout* layout) const
 {
     motr()->backend()->get_object(obj->m_realm, obj->m_id)->m_layout_id =
         layout->m_id;
@@ -148,7 +154,7 @@ int HsmInternal::obj_layout_set(Obj* obj, Layout* layout)
 }
 
 int HsmInternal::top_layer_add_read_extent(
-    Obj* obj, const hestia::Extent& extent)
+    Obj* obj, const hestia::Extent& extent) const
 {
     Layout* layout{nullptr};
     obj_layout_get(obj, &layout);
@@ -175,7 +181,7 @@ int HsmInternal::top_layer_add_read_extent(
 }
 
 int HsmInternal::layer_extent_add(
-    Id subobjid, const hestia::Extent& ext, bool write, bool overwrite)
+    Id subobjid, const hestia::Extent& ext, bool write, bool overwrite) const
 {
     auto layer = motr()->backend()->get_layer(subobjid);
     if (layer == nullptr) {
@@ -184,7 +190,7 @@ int HsmInternal::layer_extent_add(
     return layer->add_extent(ext, write, overwrite);
 }
 
-int HsmInternal::layer_extent_del(Id subobjid, off_t offset, bool write)
+int HsmInternal::layer_extent_del(Id subobjid, off_t offset, bool write) const
 {
     auto layer = motr()->backend()->get_layer(subobjid);
     if (layer == nullptr) {
@@ -199,7 +205,7 @@ int HsmInternal::layer_extent_del(Id subobjid, off_t offset, bool write)
 }
 
 int HsmInternal::delete_obj_set_parent_layout(
-    Id id, Id parent_id, Layout* parent_layout)
+    Id id, Id parent_id, Layout* parent_layout) const
 {
     Obj obj;
     Motr::m0_obj_init(
@@ -214,7 +220,7 @@ int HsmInternal::delete_obj_set_parent_layout(
 }
 
 int HsmInternal::layer_clean(
-    Id parent_id, Layout* layout, CompositeLayer* layer)
+    Id parent_id, Layout* layout, CompositeLayer* layer) const
 {
     auto sub_obj_id = layer->m_id;
     layout->delete_layer(sub_obj_id);
@@ -224,7 +230,7 @@ int HsmInternal::layer_clean(
 }
 
 int HsmInternal::layer_check_clean(
-    Id parent_id, Layout* layout, CompositeLayer* layer)
+    Id parent_id, Layout* layout, CompositeLayer* layer) const
 {
     if (layer->has_read_extents()) {
         return -ENOTEMPTY;
@@ -232,7 +238,8 @@ int HsmInternal::layer_check_clean(
     return layer_clean(parent_id, layout, layer);
 }
 
-int HsmInternal::layout_layer_clean(Id parent_id, Layout* layout, Id subobj_id)
+int HsmInternal::layout_layer_clean(
+    Id parent_id, Layout* layout, Id subobj_id) const
 {
     for (auto& layer : layout->m_layers) {
         if (!(layer->m_id == subobj_id)) {
@@ -243,7 +250,7 @@ int HsmInternal::layout_layer_clean(Id parent_id, Layout* layout, Id subobj_id)
     return -ENOENT;
 }
 
-int HsmInternal::layout_add_top_layer(Id id, Layout* layout, uint8_t tier)
+int HsmInternal::layout_add_top_layer(Id id, Layout* layout, uint8_t tier) const
 {
     // Highest generation - lowest tier in this layout
     Id old_id;
@@ -383,7 +390,8 @@ int HsmInternal::check_min_gen_exists(
     return 0;
 }
 
-void HsmInternal::print_layout(std::string& sink, Layout* layout, bool details)
+void HsmInternal::print_layout(
+    std::string& sink, Layout* layout, bool details) const
 {
     if (details) {
         sink += std::to_string(layout->m_layers.size()) + " layers:\n";
@@ -403,7 +411,7 @@ void HsmInternal::print_layout(std::string& sink, Layout* layout, bool details)
 }
 
 void HsmInternal::print_layer(
-    std::string& sink, CompositeLayer* layer, bool details)
+    std::string& sink, CompositeLayer* layer, bool details) const
 {
     auto gen  = hsm_prio2gen(layer->m_priority);
     auto tier = hsm_prio2tier(layer->m_priority);
@@ -441,7 +449,7 @@ int HsmInternal::m0hsm_release_maxgen(
     off_t offset,
     size_t len,
     hsm_rls_flags flags,
-    bool user_display)
+    bool user_display) const
 {
     (void)flags;
     (void)user_display;
@@ -480,7 +488,7 @@ int HsmInternal::on_layer_match_for_release(
     Layout* layout,
     CompositeLayer* layer,
     hestia::Extent* match,
-    bool* stop)
+    bool* stop) const
 {
     (void)stop;
 
@@ -560,17 +568,18 @@ int HsmInternal::map_io_ctx(
     return 0;
 }
 
-int HsmInternal::write_blocks(const Obj& obj, const IoContext& ctx)
+int HsmInternal::write_blocks(const Obj& obj, const IoContext& ctx) const
 {
     return motr()->backend()->write_object(obj, ctx.m_extents, ctx.m_data);
 }
 
-int HsmInternal::read_blocks(const Obj& obj, const IoContext& ctx)
+int HsmInternal::read_blocks(const Obj& obj, const IoContext& ctx) const
 {
     return motr()->backend()->read_object(obj, ctx.m_extents, ctx.m_data);
 }
 
-int HsmInternal::copy_extent_data(Id src_id, Id tgt_id, hestia::Extent* range)
+int HsmInternal::copy_extent_data(
+    Id src_id, Id tgt_id, hestia::Extent* range) const
 {
     Obj src_obj;
     Obj tgt_obj;

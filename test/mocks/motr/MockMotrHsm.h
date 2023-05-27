@@ -13,13 +13,14 @@ struct HsmOptions {
 
 class Hsm {
   public:
-    int m0hsm_init(Client* client, Realm* realm, HsmOptions* options);
+    int m0hsm_init(Client* client, Realm* realm, HsmOptions* options) const;
 
-    int m0hsm_create(Id id, Obj* obj, int tier, bool keep_open);
+    int m0hsm_create(Id id, Obj* obj, int tier, bool keep_open) const;
 
-    int m0hsm_pwrite(Obj* obj, void* buf, std::size_t len, std::size_t offset);
+    int m0hsm_pwrite(
+        Obj* obj, void* buf, std::size_t len, std::size_t offset) const;
 
-    int m0hsm_set_write_tier(Id id, uint8_t tier_idx);
+    int m0hsm_set_write_tier(Id id, uint8_t tier_idx) const;
 
     enum hsm_cp_flags {
         HSM_MOVE          = (1 << 0),
@@ -32,46 +33,47 @@ class Hsm {
         uint8_t target_tier,
         off_t offset,
         size_t length,
-        hsm_cp_flags flags);
+        hsm_cp_flags flags) const;
 
     int m0hsm_release(
         Id obj_id,
         uint8_t tier_idx,
         off_t offset,
         size_t length,
-        hsm_rls_flags flags);
+        hsm_rls_flags flags) const;
 
     int m0hsm_stage(
         Id obj_id,
         uint8_t target_tier,
         off_t offset,
         size_t length,
-        hsm_cp_flags flags);
+        hsm_cp_flags flags) const;
 
     int m0hsm_archive(
         Id obj_id,
         uint8_t target_tier,
         off_t offset,
         size_t length,
-        hsm_cp_flags flags);
+        hsm_cp_flags flags) const;
 
     int m0hsm_multi_release(
         Id obj_id,
         uint8_t max_tier,
         off_t offset,
         size_t length,
-        hsm_rls_flags flags);
+        hsm_rls_flags flags) const;
 
-    int m0hsm_dump(std::string& sink, Id obj_id, bool details);
+    int m0hsm_dump(std::string& sink, Id obj_id, bool details) const;
 
     // Below not in Motr provided API but needed for mock or real impl
-    int m0hsm_set_read_tier(Id obj_id, uint8_t tier_idx);
+    int m0hsm_set_read_tier(Id obj_id, uint8_t tier_idx) const;
 
-    int m0hsm_read(Id obj_id, void* buf, std::size_t len, std::size_t offset);
+    int m0hsm_read(
+        Id obj_id, void* buf, std::size_t len, std::size_t offset) const;
 
-    Motr* motr() { return m_impl.motr(); }
+    const Motr* motr() const { return m_impl.motr(); }
 
-    HsmInternal* impl() { return &m_impl; }
+    const HsmInternal* impl() const { return &m_impl; }
 
   private:
     struct CopyContext {
@@ -87,26 +89,26 @@ class Hsm {
         Layout* layout,
         CompositeLayer* src_layer,
         hestia::Extent* match,
-        bool* stop);
+        bool* stop) const;
     int on_layer_match_for_stage(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
         hestia::Extent* match,
-        bool* stop);
+        bool* stop) const;
     int on_layer_match_for_archive(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
         hestia::Extent* match,
-        bool* stop);
+        bool* stop) const;
 
     int on_release_post_copy(
         CopyContext* ctx,
         Layout* layout,
         CompositeLayer* src_layer,
         hestia::Extent* match,
-        int gen);
+        int gen) const;
 
     HsmInternal m_impl;
     static constexpr int max_block_count{200};

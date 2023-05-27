@@ -12,3 +12,31 @@ add_module(
     INTERNAL_DEPENDENCIES 
         hsm_object_store_client
 )
+
+if(HESTIA_WITH_MOTR)
+
+    include(FindPkgConfig)
+
+    set(MOTR_SRC_DIR "" CACHE PATH "Path to motr src checkout - needed for hsm includes")
+    pkg_check_modules(motr REQUIRED motr)
+
+    add_library(${PROJECT_NAME}_motr_plugin SHARED
+        MotrInterfaceImpl.h 
+        MotrInterfaceImpl.cc
+        MotrClientPlugin.cc
+        ${MOTR_SRC_DIR}/hsm/m0hsm_api.c
+    )
+
+    target_include_directories(${PROJECT_NAME}_motr_plugin PRIVATE 
+        ${motr_INCLUDE_DIRS}
+        ${MOTR_SRC_DIR}
+    )
+
+    target_link_libraries(${PROJECT_NAME}_motr_plugin PRIVATE 
+        hestia_motr_object_store_client
+        ${motr_LINK_LIBRARIES})
+
+    target_compile_options(${PROJECT_NAME}_motr_plugin PUBLIC ${motr_CFLAGS})
+    target_compile_definitions(${PROJECT_NAME}_motr_plugin PUBLIC HAS_MOTR)
+
+endif()

@@ -22,8 +22,7 @@ class MotrBackendTestFixture {
 
         std::vector<unsigned> pool_fids{0, 1, 2, 3, 4};
         for (auto id : pool_fids) {
-            hestia::Uuid pool_version_fid{id};
-            m_client.add_pool(pool_version_fid);
+            m_client.add_pool(hestia::Uuid(id));
         }
         m_backend.set_client(&m_client);
     }
@@ -38,7 +37,6 @@ TEST_CASE_METHOD(
     "Test Mock Motr Backend - Standard Object",
     "[motr-backend]")
 {
-    return;
     auto layout =
         m_backend.allocate_layout(hestia::mock::motr::Layout::Type::DEFAULT);
 
@@ -81,7 +79,6 @@ TEST_CASE_METHOD(
     "Test Mock Motr Backend - Composite Object",
     "[motr-backend]")
 {
-    return;
     auto composite_layout =
         m_backend.allocate_layout(hestia::mock::motr::Layout::Type::COMPOSITE);
 

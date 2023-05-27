@@ -41,7 +41,9 @@ void InMemoryObjectStoreClient::get(
     if (stream != nullptr) {
         auto source_func =
             [this, object, extent](
-                WriteableBufferView& buffer) -> InMemoryStreamSource::Status {
+                WriteableBufferView& buffer,
+                std::size_t offset) -> InMemoryStreamSource::Status {
+            (void)offset;
             const auto status = m_data.read(object.id(), extent, buffer);
             return {status.is_ok(), status.m_bytes_read};
         };

@@ -1,5 +1,7 @@
 #include "MockMotrHsm.h"
 
+#include "Logger.h"
+
 #include <algorithm>
 #include <iostream>
 
@@ -7,7 +9,7 @@
 
 namespace hestia::mock::motr {
 
-int Hsm::m0hsm_init(Client* client, Realm* realm, HsmOptions* options)
+int Hsm::m0hsm_init(Client* client, Realm* realm, HsmOptions* options) const
 {
     impl()->set_realm(realm);
     impl()->set_pools(options->m_pool_fids);
@@ -15,7 +17,7 @@ int Hsm::m0hsm_init(Client* client, Realm* realm, HsmOptions* options)
     return 0;
 }
 
-int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
+int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open) const
 {
     (void)keep_open;
 
@@ -24,6 +26,7 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
     auto rc = impl()->create_obj(
         HsmInternal::hsm_subobj_id(id, 0, tier), &sub_object, false, tier);
     if (rc != 0) {
+        LOG_ERROR("Impl create object failed: " << rc);
         return rc;
     }
 
@@ -36,6 +39,10 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
     impl()->layer_extent_add(sub_object.m_id, full_ext, true, false);
 
     rc = impl()->create_obj(id, obj, false, HsmInternal::hsm_any_tier);
+    if (rc != 0) {
+        LOG_ERROR("Impl create object failed: " << rc);
+        return rc;
+    }
 
     impl()->layout_set(id, layout);
     obj->m_layout_id = layout->m_id;
@@ -43,8 +50,10 @@ int Hsm::m0hsm_create(Id id, Obj* obj, int tier, bool keep_open)
 }
 
 int Hsm::m0hsm_pwrite(
-    Obj* obj, void* buffer, std::size_t length, std::size_t offset)
+    Obj* obj, void* buffer, std::size_t length, std::size_t offset) const
 {
+    LOG_INFO("Into write for object: " << obj->m_id.to_string());
+
     hestia::Extent write_extent;
     write_extent.m_offset = offset;
     write_extent.m_length = length;
@@ -95,15 +104,17 @@ int Hsm::m0hsm_pwrite(
     return rc;
 }
 
-int Hsm::m0hsm_set_read_tier(Id obj_id, uint8_t tier_idx)
+int Hsm::m0hsm_set_read_tier(Id obj_id, uint8_t tier_idx) const
 {
     (void)obj_id;
     (void)tier_idx;
     return 0;
 }
 
-int Hsm::m0hsm_read(Id obj_id, void* buf, std::size_t len, std::size_t offset)
+int Hsm::m0hsm_read(
+    Id obj_id, void* buf, std::size_t len, std::size_t offset) const
 {
+    LOG_INFO("Doing m0hsm read with len: " << len << " and offset " << offset);
     Obj obj;
     motr()->m0_obj_init(
         &obj, impl()->get_realm(), &obj_id,
@@ -148,7 +159,7 @@ int Hsm::m0hsm_read(Id obj_id, void* buf, std::size_t len, std::size_t offset)
     return rc;
 }
 
-int Hsm::m0hsm_set_write_tier(Id obj_id, uint8_t tier_idx)
+int Hsm::m0hsm_set_write_tier(Id obj_id, uint8_t tier_idx) const
 {
     Layout* layout{nullptr};
     impl()->layout_get(obj_id, &layout);
@@ -168,7 +179,7 @@ int Hsm::m0hsm_copy(
     uint8_t tgt_tier,
     off_t offset,
     std::size_t length,
-    hsm_cp_flags flags)
+    hsm_cp_flags flags) const
 {
     Layout* layout{nullptr};
     if (auto rc = impl()->layout_get(obj_id, &layout); rc != 0) {
@@ -204,7 +215,7 @@ int Hsm::on_layer_match_for_copy(
     Layout* layout,
     CompositeLayer* src_layer,
     hestia::Extent* match,
-    bool* stop)
+    bool* stop) const
 {
     (void)stop;
 
@@ -288,7 +299,7 @@ int Hsm::on_release_post_copy(
     Layout* layout,
     CompositeLayer* src_layer,
     hestia::Extent* match,
-    int gen)
+    int gen) const
 {
     if ((ctx->flags & HSM_MOVE) != 0) {
         HsmInternal::ReleaseContext rls_ctx;
@@ -318,7 +329,11 @@ int Hsm::on_release_post_copy(
 }
 
 int Hsm::m0hsm_release(
-    Id obj_id, uint8_t tier, off_t offset, size_t length, hsm_rls_flags flags)
+    Id obj_id,
+    uint8_t tier,
+    off_t offset,
+    size_t length,
+    hsm_rls_flags flags) const
 {
     return impl()->m0hsm_release_maxgen(
         obj_id, tier, -1, offset, length, flags, true);
@@ -329,7 +344,7 @@ int Hsm::on_layer_match_for_stage(
     Layout* layout,
     CompositeLayer* src_layer,
     hestia::Extent* match,
-    bool* stop)
+    bool* stop) const
 {
     const auto tier = HsmInternal::hsm_prio2tier(src_layer->m_priority);
     if (tier <= ctx->tgt_tier) {
@@ -347,7 +362,7 @@ int Hsm::m0hsm_stage(
     uint8_t target_tier,
     off_t offset,
     size_t length,
-    hsm_cp_flags flags)
+    hsm_cp_flags flags) const
 {
     Layout* layout{nullptr};
     if (auto rc = impl()->layout_get(obj_id, &layout); rc) {
@@ -384,7 +399,7 @@ int Hsm::on_layer_match_for_archive(
     Layout* layout,
     CompositeLayer* src_layer,
     hestia::Extent* match,
-    bool* stop)
+    bool* stop) const
 {
     const auto tier = HsmInternal::hsm_prio2tier(src_layer->m_priority);
     if (tier >= ctx->tgt_tier) {
@@ -402,7 +417,7 @@ int Hsm::m0hsm_archive(
     uint8_t target_tier,
     off_t offset,
     size_t length,
-    hsm_cp_flags flags)
+    hsm_cp_flags flags) const
 {
     Layout* layout{nullptr};
     if (auto rc = impl()->layout_get(obj_id, &layout); rc) {
@@ -439,7 +454,7 @@ int Hsm::m0hsm_multi_release(
     uint8_t max_tier,
     off_t offset,
     size_t length,
-    hsm_rls_flags flags)
+    hsm_rls_flags flags) const
 {
     (void)flags;
 
@@ -472,7 +487,7 @@ int Hsm::m0hsm_multi_release(
     return rc;
 }
 
-int Hsm::m0hsm_dump(std::string& sink, Id obj_id, bool details)
+int Hsm::m0hsm_dump(std::string& sink, Id obj_id, bool details) const
 {
     Layout* layout{nullptr};
     auto rc = impl()->layout_get(obj_id, &layout);

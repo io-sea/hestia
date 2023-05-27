@@ -10,8 +10,9 @@ class InMemoryStreamSource : public StreamSource {
   public:
     using Ptr = std::unique_ptr<InMemoryStreamSource>;
 
-    using Status     = std::pair<bool, std::size_t>;
-    using sourceFunc = std::function<Status(WriteableBufferView& buffer)>;
+    using Status = std::pair<bool, std::size_t>;
+    using sourceFunc =
+        std::function<Status(WriteableBufferView& buffer, std::size_t offset)>;
 
     InMemoryStreamSource(const ReadableBufferView& buffer);
     InMemoryStreamSource(sourceFunc source);

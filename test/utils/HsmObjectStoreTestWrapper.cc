@@ -33,18 +33,20 @@ HsmObjectStoreTestWrapper::Ptr HsmObjectStoreTestWrapper::create(
 }
 
 void HsmObjectStoreTestWrapper::put(
-    const hestia::StorageObject& obj, hestia::Stream* stream)
+    const hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::PUT);
+    request.set_target_tier(tier);
     REQUIRE(m_client->make_request(request, stream)->ok());
 }
 
 void HsmObjectStoreTestWrapper::get(
-    hestia::StorageObject& obj, hestia::Stream* stream)
+    hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::GET);
+    request.set_source_tier(tier);
     auto repsonse = m_client->make_request(request, stream);
     REQUIRE(repsonse->ok());
     obj = repsonse->object();

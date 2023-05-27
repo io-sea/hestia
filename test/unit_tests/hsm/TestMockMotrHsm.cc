@@ -43,8 +43,6 @@ TEST_CASE_METHOD(
     "Test Mock Motr HSM - Write and Read",
     "[mock-motr-hsm]")
 {
-    return;
-
     std::vector<hestia::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
     set_up_pools(pool_fids);
 
@@ -64,8 +62,6 @@ TEST_CASE_METHOD(
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
 
-    std::cerr << "m0hsm_create: \n" << dump_target;
-
     std::string content = "The quick brown fox jumps over the lazy dog.";
 
     auto buffer = to_buffer(content);
@@ -75,7 +71,6 @@ TEST_CASE_METHOD(
     dump_target.clear();
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
-    std::cerr << "m0hsm_pwrite: \n" << dump_target;
 
     std::vector<char> sink(content.length());
     auto read_buffer = to_buffer(sink);
@@ -89,8 +84,6 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     MotrHsmTestFixture, "Test Mock Motr HSM - Copy", "[mock-motr-hsm]")
 {
-    return;
-
     std::vector<hestia::Uuid> pool_fids = {{0}, {1}, {2}, {3}, {4}};
     set_up_pools(pool_fids);
 
@@ -110,8 +103,6 @@ TEST_CASE_METHOD(
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
 
-    std::cerr << "m0hsm_create: \n" << dump_target;
-
     std::string content = "The quick brown fox jumps over the lazy dog.";
 
     void* buffer = reinterpret_cast<void*>(content.data());
@@ -121,7 +112,6 @@ TEST_CASE_METHOD(
     dump_target.clear();
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
-    std::cerr << "m0hsm_pwrite: \n" << dump_target;
 
     int src_tier    = 2;
     int tgt_tier    = 3;
@@ -133,5 +123,4 @@ TEST_CASE_METHOD(
     dump_target.clear();
     rc = m_hsm.m0hsm_dump(dump_target, obj_id, false);
     REQUIRE_FALSE(rc);
-    std::cerr << "m0hsm_copy: \n" << dump_target;
 }

@@ -59,7 +59,10 @@ IOResult InMemoryStreamSource::read_from_buffer(
 IOResult InMemoryStreamSource::read_from_source_func(
     WriteableBufferView& writeable_buffer)
 {
-    const auto& [status, bytes_read] = m_source_func(writeable_buffer);
+    const auto& [status, bytes_read] =
+        m_source_func(writeable_buffer, m_read_buffer_offset);
+    m_read_buffer_offset += bytes_read;
+
     if (!status) {
         set_state(StreamState::State::ERROR);
         return {get_state(), 0};

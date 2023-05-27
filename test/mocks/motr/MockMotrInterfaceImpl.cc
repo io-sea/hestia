@@ -3,7 +3,9 @@
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 
-#include <iostream>
+#include "Logger.h"
+
+#include <stdexcept>
 
 namespace hestia {
 class MotrObject {
@@ -14,7 +16,7 @@ class MotrObject {
 
     mock::motr::Id get_motr_id() const { return to_motr_id(m_id); }
 
-    mock::motr::Obj* get_motr_obj() const { return m_handle; }
+    mock::motr::Obj* get_motr_obj() { return &m_handle; }
 
     static mock::motr::Id to_motr_id(const hestia::Uuid& id)
     {
@@ -26,7 +28,7 @@ class MotrObject {
 
   private:
     hestia::Uuid m_id;
-    mock::motr::Obj* m_handle;
+    mock::motr::Obj m_handle;
 };
 
 
@@ -40,6 +42,7 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
         &m_container, nullptr, &realm_id, &m_client);
 
     std::size_t pool_count{0};
+    LOG_INFO("Initializing with: " << config.m_tier_info.size() << " pools.");
     for (const auto& entry : config.m_tier_info) {
         (void)entry;
         m_client.add_pool({pool_count});
@@ -69,31 +72,51 @@ void MockMotrInterfaceImpl::initialize_hsm(
 void MockMotrInterfaceImpl::put(
     const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
-    (void)request;
-    (void)stream;
-    /*
-    MotrObject motr_obj(request.object().id());
+    Uuid id;
+    id.from_string(request.object().id());
 
-    auto rc = mHsm.m0hsm_create(motr_obj.getMotrId(), motr_obj.getMotrObj(),
-    request.targetTier(), false); if (rc < 0)
-    {
-        std::cerr << "hsm obj create failed." << std::endl;
-        return rc;
+    MotrObject motr_obj(id);
+
+    auto rc = m_hsm.m0hsm_create(
+        motr_obj.get_motr_id(), motr_obj.get_motr_obj(), request.target_tier(),
+        false);
+    if (rc < 0) {
+        const std::string msg =
+            "Failed to create object: " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
 
-    rc = mHsm.m0hsm_set_write_tier(motr_obj.getMotrId(), request.targetTier());
-    if (rc < 0)
-    {
-        std::cerr << "Failed to set write tier." << std::endl;
-        return rc;
+    rc = m_hsm.m0hsm_set_write_tier(
+        motr_obj.get_motr_id(), request.target_tier());
+    if (rc < 0) {
+        const std::string msg =
+            "Failed to set write tier: " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
 
-    auto sink = hestia::InMemoryStreamSink::Create();
+    auto sink_func = [this, motr_obj](
+                         const ReadableBufferView& buffer,
+                         std::size_t offset) -> InMemoryStreamSink::Status {
+        LOG_INFO(
+            "Writing buffer with size: " << buffer.length() << " and offset "
+                                         << offset);
+        auto working_obj = motr_obj;
+        auto rc          = m_hsm.m0hsm_pwrite(
+            working_obj.get_motr_obj(), const_cast<void*>(buffer.as_void()),
+            buffer.length(), offset);
+        if (rc < 0) {
+            std::string msg =
+                "Error writing buffer at offset " + std::to_string(offset);
+            LOG_ERROR(msg);
+            return {false, 0};
+        }
+        return {true, buffer.length()};
+    };
 
-    rc = mHsm.m0hsm_pwrite(motr_obj.getMotrObj(), buffer->asVoid(),
-    buffer->length(), request.extent().mOffset);
-
-    */
+    auto sink = InMemoryStreamSink::create(sink_func);
+    stream->set_sink(std::move(sink));
 }
 
 void MockMotrInterfaceImpl::get(
@@ -101,25 +124,37 @@ void MockMotrInterfaceImpl::get(
     hestia::StorageObject& object,
     hestia::Stream* stream) const
 {
-    (void)request;
     (void)object;
-    (void)stream;
-    /*
-    MotrObject motr_obj(request.object().id());
 
-    auto rc = mHsm.m0hsm_set_read_tier(motr_obj.getMotrId(),
-    request.sourceTier()); if (rc < 0)
-    {
-        std::cerr << "Failed to set read tier." << std::endl;
-        return rc;
+    Uuid id;
+    id.from_string(request.object().id());
+    MotrObject motr_obj(id);
+
+    auto rc = m_hsm.m0hsm_set_read_tier(
+        motr_obj.get_motr_id(), request.source_tier());
+    if (rc < 0) {
+        const std::string msg =
+            "Failed to set read tier: " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
 
-    auto source = hestia::InMemoryStreamSource::Create();
+    auto source_func = [this, motr_obj](
+                           WriteableBufferView& buffer,
+                           std::size_t offset) -> InMemoryStreamSource::Status {
+        auto rc = m_hsm.m0hsm_read(
+            motr_obj.get_motr_id(), buffer.as_void(), buffer.length(), offset);
+        if (rc < 0) {
+            std::string msg =
+                "Error writing buffer at offset " + std::to_string(offset);
+            LOG_ERROR(msg);
+            return {false, 0};
+        }
+        return {true, buffer.length()};
+    };
 
-    rc = mHsm.m0hsm_read(motr_obj.getMotrId(),
-    const_cast<void*>(buffer->asVoid()), buffer->length(),
-    request.extent().mOffset);
-    */
+    auto source = hestia::InMemoryStreamSource::create(source_func);
+    stream->set_source(std::move(source));
 }
 
 void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const

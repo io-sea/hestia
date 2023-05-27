@@ -15,35 +15,35 @@ class MotrBackend {
     enum class IoType { READ, WRITE };
 
     int read_object(
-        const Obj& obj, const IndexVec& extents, const BufferVec& data);
+        const Obj& obj, const IndexVec& extents, const BufferVec& data) const;
 
     int write_object(
-        const Obj& obj, const IndexVec& extents, const BufferVec& data);
+        const Obj& obj, const IndexVec& extents, const BufferVec& data) const;
 
-    Layout* allocate_layout(Layout::Type layout_type);
+    Layout* allocate_layout(Layout::Type layout_type) const;
 
-    Layout* get_layout(Id id);
+    Layout* get_layout(Id id) const;
 
-    CompositeLayer* get_layer(Id id);
+    CompositeLayer* get_layer(Id id) const;
 
     static void set_layout(Realm* realm, Id obj_id, Layout* layout);
 
-    void set_client(Client* client);
+    void set_client(Client* client) const;
 
   private:
     int do_object_io(
         const Obj& obj,
         const IndexVec& extents,
         const BufferVec& data,
-        IoType io_type);
+        IoType io_type) const;
 
     int do_composite_io(
         const Obj& obj,
         const IndexVec& extents,
         const BufferVec& data,
-        IoType io_type);
+        IoType io_type) const;
 
     static hestia::Uuid obj_id_to_fid(Id id);
-    Client* m_client{nullptr};
+    mutable Client* m_client{nullptr};
 };
 }  // namespace hestia::mock::motr

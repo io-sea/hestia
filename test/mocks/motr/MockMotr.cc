@@ -13,12 +13,13 @@ int Motr::m0_composite_layer_add(Layout* layout, Obj* sub_obj, int priority)
     return 0;
 }
 
-Layout* Motr::m0_client_layout_alloc(Layout::Type layout_type)
+Layout* Motr::m0_client_layout_alloc(Layout::Type layout_type) const
 {
     return m_backend.allocate_layout(layout_type);
 }
 
-int Motr::m0_client_init(Client* client, MotrConfig* config, bool init_motr)
+int Motr::m0_client_init(
+    Client* client, MotrConfig* config, bool init_motr) const
 {
     (void)config;
     (void)init_motr;
@@ -31,7 +32,7 @@ int Motr::m0_client_init(Client* client, MotrConfig* config, bool init_motr)
 }
 
 int Motr::m0_container_init(
-    Container* container, Realm* parent, Id* id, Client* client)
+    Container* container, Realm* parent, Id* id, Client* client) const
 {
     (void)parent;
     (void)id;

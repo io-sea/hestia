@@ -165,7 +165,7 @@ int MotrBackend::do_composite_io(
     const Obj& obj,
     const IndexVec& input_extents,
     const BufferVec& data,
-    IoType io_type)
+    IoType io_type) const
 {
     auto layout = get_layout(obj.m_layout_id);
 
@@ -207,13 +207,13 @@ int MotrBackend::do_composite_io(
 }
 
 int MotrBackend::read_object(
-    const Obj& obj, const IndexVec& ext, const BufferVec& data)
+    const Obj& obj, const IndexVec& ext, const BufferVec& data) const
 {
     return do_object_io(obj, ext, data, IoType::READ);
 }
 
 int MotrBackend::write_object(
-    const Obj& obj, const IndexVec& ext, const BufferVec& data)
+    const Obj& obj, const IndexVec& ext, const BufferVec& data) const
 {
     return do_object_io(obj, ext, data, IoType::WRITE);
 }
@@ -222,7 +222,7 @@ int MotrBackend::do_object_io(
     const Obj& obj,
     const IndexVec& extents,
     const BufferVec& data,
-    IoType io_type)
+    IoType io_type) const
 {
     auto layout = get_layout(obj.m_layout_id);
     if (layout->m_type == Layout::Type::COMPOSITE) {
@@ -247,7 +247,7 @@ int MotrBackend::do_object_io(
             pool->read(obj.m_id.to_string(), {offset, length}, buffer);
         }
         else {
-            hestia::ReadableBufferView buffer(buf_loc);
+            hestia::ReadableBufferView buffer(buf_loc, length);
             pool->write(obj.m_id.to_string(), {offset, length}, buffer);
         }
     }
@@ -265,7 +265,7 @@ void MotrBackend::set_layout(Realm* realm, Id obj_id, Layout* layout)
     obj->m_layout_id = layout->m_id;
 }
 
-Layout* MotrBackend::allocate_layout(Layout::Type layout_type)
+Layout* MotrBackend::allocate_layout(Layout::Type layout_type) const
 {
     auto layout     = std::make_unique<Layout>();
     auto layout_raw = layout.get();
@@ -277,7 +277,7 @@ Layout* MotrBackend::allocate_layout(Layout::Type layout_type)
     return layout_raw;
 }
 
-Layout* MotrBackend::get_layout(Id id)
+Layout* MotrBackend::get_layout(Id id) const
 {
     for (auto& layout : m_client->m_request_handler.m_layout_domain.m_layouts) {
         if (layout->m_id == id) {
@@ -287,7 +287,7 @@ Layout* MotrBackend::get_layout(Id id)
     return nullptr;
 }
 
-CompositeLayer* MotrBackend::get_layer(Id subobj_id)
+CompositeLayer* MotrBackend::get_layer(Id subobj_id) const
 {
     for (auto& layout : m_client->m_request_handler.m_layout_domain.m_layouts) {
         if (auto layer = layout->get_layer(subobj_id); layer) {
@@ -297,7 +297,7 @@ CompositeLayer* MotrBackend::get_layer(Id subobj_id)
     return nullptr;
 }
 
-void MotrBackend::set_client(Client* client)
+void MotrBackend::set_client(Client* client) const
 {
     m_client = client;
 }
