@@ -16,6 +16,25 @@ class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
 
         m_client->initialize(config);
     }
+
+    void get_and_check(
+        const std::string& obj_id, const std::string& content, uint8_t tier)
+    {
+        hestia::Stream stream;
+        std::vector<char> returned_buffer(content.length());
+        hestia::WriteableBufferView write_buffer(returned_buffer);
+        auto sink = hestia::InMemoryStreamSink::create(write_buffer);
+        stream.set_sink(std::move(sink));
+
+        hestia::StorageObject obj(obj_id);
+        obj.m_size = content.size();
+        get(obj, &stream, tier);
+        REQUIRE(stream.flush().ok());
+
+        std::string returned_content =
+            std::string(returned_buffer.begin(), returned_buffer.end());
+        REQUIRE(returned_content == content);
+    }
 };
 
 TEST_CASE_METHOD(MockMotrTestFixture, "Motr client write and read", "[motr]")
@@ -33,17 +52,9 @@ TEST_CASE_METHOD(MockMotrTestFixture, "Motr client write and read", "[motr]")
     put(obj, &stream, 1);
     REQUIRE(stream.flush().ok());
 
-    std::vector<char> returned_buffer(content.length());
-    hestia::WriteableBufferView write_buffer(returned_buffer);
-    auto sink = hestia::InMemoryStreamSink::create(write_buffer);
-    stream.set_sink(std::move(sink));
+    get_and_check("0000", content, 1);
 
-    return;
+    copy(obj, 1, 2);
 
-    get(obj, &stream, 1);
-    REQUIRE(stream.flush().ok());
-
-    std::string returned_content =
-        std::string(returned_buffer.begin(), returned_buffer.end());
-    REQUIRE(returned_content == content);
+    get_and_check("0000", content, 2);
 }

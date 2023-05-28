@@ -1,5 +1,7 @@
 #include "MotrInterfaceImpl.h"
 
+#include "Logger.h"
+
 #include <iostream>
 
 #ifdef HAS_MOTR
@@ -19,7 +21,7 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
 
     const auto rc = m0_client_init(&m_client_instance, &m0tr_config, true);
     if (rc < 0) {
-        std::cerr << "m0 client init failed." << std::endl;
+        LOG_ERROR("m0 client init failed: " << rc);
     }
 }
 
@@ -39,7 +41,7 @@ void MotrInterfaceImpl::initialize_hsm()
     hsm_options.log_stream  = stderr;
 
     if (!std::filesystem::is_regular_file(m_config.m_hsm_config_path)) {
-        std::cerr << "No hsm config file found - bailing out." << std::endl;
+        LOG_ERROR("No hsm config file found - bailing out.");
         return;
     }
 
@@ -49,14 +51,14 @@ void MotrInterfaceImpl::initialize_hsm()
     m0_container_init(&m_container, nullptr, &M0_UBER_REALM, m_client_instance);
     auto rc = m_container.co_realm.re_entity.en_sm.sm_rc;
     if (rc != 0) {
-        std::cerr << "m0_container_init() failed" << std::endl;
+        LOG_ERROR("m0_container_init init failed: " << rc);
         return;
     }
     m_realm = m_container.co_realm;
 
     rc = m0hsm_init(m_client_instance, &m_realm, &hsm_options);
     if (rc < 0) {
-        std::cerr << "m0hsm: error: m0hsm_init() failed." << std::endl;
+        LOG_ERROR("m0hsm_init init failed: " << rc);
     }
 
     ::fclose(f_in);
@@ -65,13 +67,51 @@ void MotrInterfaceImpl::initialize_hsm()
 int MotrInterfaceImpl::put(
     const HsmObjectStoreRequest& request, hestia::Stream* stream)
 {
-    auto motr_obj = std::make_unique<MotrObject>(id);
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
 
     auto rc = m0hsm_create(
-        motr_obj->getMotrFid(), &motr_obj->getMotrObj(), tier, false);
+        motr_obj.get_motr_id(), motr_obj.get_motr_obj(), request.target_tier(),
+        false);
     if (rc < 0) {
-        std::cerr << "hsm obj create failed." << std::endl;
+        const std::string msg =
+            "Failed to create object: " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
+
+    rc = m0hsm_set_write_tier(motr_obj.get_motr_id(), request.target_tier());
+    if (rc < 0) {
+        const std::string msg =
+            "Failed to set write tier: " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
+    auto sink_func = [this, motr_obj](
+                         const ReadableBufferView& buffer,
+                         std::size_t offset) -> InMemoryStreamSink::Status {
+        LOG_INFO(
+            "Writing buffer with size: " << buffer.length() << " and offset "
+                                         << offset);
+
+        auto working_obj = motr_obj;
+        auto rc          = m0hsm_pwrite(
+            working_obj.get_motr_obj(), const_cast<void*>(buffer.as_void()),
+            buffer.length(), offset);
+        if (rc < 0) {
+            std::string msg =
+                "Error writing buffer at offset " + std::to_string(offset);
+            LOG_ERROR(msg);
+            return {false, 0};
+        }
+        return {true, buffer.length()};
+    };
+
+    auto sink = InMemoryStreamSink::create(sink_func);
+    stream->set_sink(std::move(sink));
 }
 
 int MotrInterfaceImpl::get(
@@ -79,22 +119,102 @@ int MotrInterfaceImpl::get(
     hestia::StorageObject& object,
     hestia::Stream* stream)
 {
-    return 0;
+    (void)object;
+
+    Uuid id;
+    id.from_string(request.object().id());
+    MotrObject motr_obj(id);
+    motr_obj.m_size = request.object().m_size;
+
+    auto source_func = [this, motr_obj](
+                           WriteableBufferView& buffer,
+                           std::size_t offset) -> InMemoryStreamSource::Status {
+        if (offset >= motr_obj.m_size) {
+            return {true, 0};
+        }
+
+        auto read_size = buffer.length();
+        if (offset + buffer.length() > motr_obj.m_size) {
+            read_size = motr_obj.m_size - offset;
+        }
+
+        auto rc = m0hsm_read(
+            motr_obj.get_motr_id(), buffer.as_void(), read_size, offset);
+        if (rc < 0) {
+            std::string msg =
+                "Error writing buffer at offset " + std::to_string(offset);
+            LOG_ERROR(msg);
+            return {false, 0};
+        }
+        return {true, read_size};
+    };
+
+    auto source = hestia::InMemoryStreamSource::create(source_func);
+    stream->set_source(std::move(source));
 }
 
 int MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request)
 {
-    return 0;
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
+
+    std::size_t offset{0};
+    std::size_t length{IMotrInterfaceImpl::max_obj_length};
+    auto rc = m0hsm_release(
+        motr_obj.get_motr_id(), request.source_tier(), offset, length, 0);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_release" + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 
 int MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request)
 {
-    return 0;
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
+    std::size_t length = request.extent().m_length;
+    if (length == 0) {
+        length = IMotrInterfaceImpl::max_obj_length;
+    }
+
+    // mock::motr::Hsm::hsm_cp_flags flags =
+    // mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
+    auto rc = m0hsm_copy(
+        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        request.extent().m_offset, length, 0);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 
 int MotrInterfaceImpl::move(const HsmObjectStoreRequest& request)
 {
-    return 0;
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
+    std::size_t length = request.extent().m_length;
+    if (length == 0) {
+        length = IMotrInterfaceImpl::max_obj_length;
+    }
+
+    // mock::motr::Hsm::hsm_cp_flags flags =
+    // mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
+    auto rc = m_hsm.m0hsm_copy(
+        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        request.extent().m_offset, length, 0);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 }  // namespace hestia
 #endif

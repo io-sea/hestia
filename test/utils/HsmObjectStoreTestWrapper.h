@@ -28,6 +28,16 @@ class HsmObjectStoreTestWrapper {
         const hestia::Metadata::Query& query,
         std::vector<hestia::StorageObject>& result);
 
+    void copy(
+        const hestia::StorageObject& obj,
+        uint8_t source_tier,
+        uint8_t target_tier);
+
+    void move(
+        const hestia::StorageObject& obj,
+        uint8_t source_tier,
+        uint8_t target_tier);
+
     void remove(const hestia::StorageObject& obj);
 
     hestia::HsmObjectStoreClient* m_client{nullptr};

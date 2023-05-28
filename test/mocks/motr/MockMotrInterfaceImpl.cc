@@ -26,6 +26,8 @@ class MotrObject {
         return motr_id;
     }
 
+    std::size_t m_size{0};
+
   private:
     hestia::Uuid m_id;
     mock::motr::Obj m_handle;
@@ -102,6 +104,7 @@ void MockMotrInterfaceImpl::put(
         LOG_INFO(
             "Writing buffer with size: " << buffer.length() << " and offset "
                                          << offset);
+
         auto working_obj = motr_obj;
         auto rc          = m_hsm.m0hsm_pwrite(
             working_obj.get_motr_obj(), const_cast<void*>(buffer.as_void()),
@@ -129,6 +132,7 @@ void MockMotrInterfaceImpl::get(
     Uuid id;
     id.from_string(request.object().id());
     MotrObject motr_obj(id);
+    motr_obj.m_size = request.object().m_size;
 
     auto rc = m_hsm.m0hsm_set_read_tier(
         motr_obj.get_motr_id(), request.source_tier());
@@ -142,15 +146,24 @@ void MockMotrInterfaceImpl::get(
     auto source_func = [this, motr_obj](
                            WriteableBufferView& buffer,
                            std::size_t offset) -> InMemoryStreamSource::Status {
+        if (offset >= motr_obj.m_size) {
+            return {true, 0};
+        }
+
+        auto read_size = buffer.length();
+        if (offset + buffer.length() > motr_obj.m_size) {
+            read_size = motr_obj.m_size - offset;
+        }
+
         auto rc = m_hsm.m0hsm_read(
-            motr_obj.get_motr_id(), buffer.as_void(), buffer.length(), offset);
+            motr_obj.get_motr_id(), buffer.as_void(), read_size, offset);
         if (rc < 0) {
             std::string msg =
                 "Error writing buffer at offset " + std::to_string(offset);
             LOG_ERROR(msg);
             return {false, 0};
         }
-        return {true, buffer.length()};
+        return {true, read_size};
     };
 
     auto source = hestia::InMemoryStreamSource::create(source_func);
@@ -159,49 +172,67 @@ void MockMotrInterfaceImpl::get(
 
 void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
-    (void)request;
-    /*
-    MotrObject motr_obj(request.object().id());
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
 
     std::size_t offset{0};
-    std::size_t length{IMotrInterfaceImpl::MAX_OBJ_LENGTH};
-
+    std::size_t length{IMotrInterfaceImpl::max_obj_length};
     mock::motr::hsm_rls_flags flags =
-    mock::motr::hsm_rls_flags::HSM_KEEP_LATEST; auto rc =
-    mHsm.m0hsm_release(motr_obj.getMotrId(), request.sourceTier(), offset,
-    length, flags);
-
-    */
+        mock::motr::hsm_rls_flags::HSM_KEEP_LATEST;
+    auto rc = m_hsm.m0hsm_release(
+        motr_obj.get_motr_id(), request.source_tier(), offset, length, flags);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_release" + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 
 void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    (void)request;
-    /*
-    MotrObject motr_obj(request.object().id());
-    // std::size_t length{IMotrInterfaceImpl::MAX_OBJ_LENGTH};
+    Uuid id;
+    id.from_string(request.object().id());
+
+    MotrObject motr_obj(id);
+    std::size_t length = request.extent().m_length;
+    if (length == 0) {
+        length = IMotrInterfaceImpl::max_obj_length;
+    }
 
     mock::motr::Hsm::hsm_cp_flags flags =
-    mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS; auto rc =
-    mHsm.m0hsm_copy(motr_obj.getMotrId(), request.sourceTier(),
-    request.targetTier(), request.extent().mOffset, request.extent().mLength,
-    flags);
-    */
+        mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
+    auto rc = m_hsm.m0hsm_copy(
+        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        request.extent().m_offset, length, flags);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 
 void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    (void)request;
-    /*
-    MotrObject motr_obj(request.object().id());
+    Uuid id;
+    id.from_string(request.object().id());
 
-    //std::size_t length{IMotrInterfaceImpl::MAX_OBJ_LENGTH};
+    MotrObject motr_obj(id);
+    std::size_t length = request.extent().m_length;
+    if (length == 0) {
+        length = IMotrInterfaceImpl::max_obj_length;
+    }
 
     mock::motr::Hsm::hsm_cp_flags flags =
-    mock::motr::Hsm::hsm_cp_flags::HSM_MOVE; auto rc =
-    mHsm.m0hsm_copy(motr_obj.getMotrId(), request.sourceTier(),
-    request.targetTier(), request.extent().mOffset, request.extent().mLength,
-    flags);
-    */
+        mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
+    auto rc = m_hsm.m0hsm_copy(
+        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        request.extent().m_offset, length, flags);
+    if (rc < 0) {
+        std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 }
 }  // namespace hestia

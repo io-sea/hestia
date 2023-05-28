@@ -62,6 +62,28 @@ void HsmObjectStoreTestWrapper::exists(
     REQUIRE(response->object_found() == should_exist);
 }
 
+void HsmObjectStoreTestWrapper::copy(
+    const hestia::StorageObject& obj, uint8_t source_tier, uint8_t target_tier)
+{
+    hestia::HsmObjectStoreRequest request(
+        obj, hestia::HsmObjectStoreRequestMethod::COPY);
+    request.set_source_tier(source_tier);
+    request.set_target_tier(target_tier);
+    const auto response = m_client->make_request(request);
+    REQUIRE(response->ok());
+}
+
+void HsmObjectStoreTestWrapper::move(
+    const hestia::StorageObject& obj, uint8_t source_tier, uint8_t target_tier)
+{
+    hestia::HsmObjectStoreRequest request(
+        obj, hestia::HsmObjectStoreRequestMethod::MOVE);
+    request.set_source_tier(source_tier);
+    request.set_target_tier(target_tier);
+    const auto response = m_client->make_request(request);
+    REQUIRE(response->ok());
+}
+
 void HsmObjectStoreTestWrapper::list(
     const hestia::Metadata::Query& query,
     std::vector<hestia::StorageObject>& result)
