@@ -49,4 +49,4 @@ class KeyValueStoreRequest :
     std::vector<std::string> m_keys;
     Metadata::Query m_query;
 };
-};  // namespace hestia
+}  // namespace hestia

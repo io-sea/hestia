@@ -12,4 +12,4 @@ class HestiaService {
   private:
     ServerConfig m_config;
 };
-};  // namespace hestia
+}  // namespace hestia

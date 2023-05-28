@@ -12,7 +12,7 @@ std::string DataPlacementEngineFactory::to_string(
         default:
             return "UNKNOWN";
     }
-};
+}
 
 bool DataPlacementEngineFactory::is_placement_engine_available(
     PlacementEngineType placement_engine_type)
@@ -29,7 +29,7 @@ bool DataPlacementEngineFactory::is_placement_engine_available(
         default:
             return false;
     }
-};
+}
 
 
 std::unique_ptr<DataPlacementEngine> DataPlacementEngineFactory::get_engine(
@@ -47,5 +47,5 @@ std::unique_ptr<DataPlacementEngine> DataPlacementEngineFactory::get_engine(
         default:
             return nullptr;
     }
-};
+}
 }  // namespace hestia

@@ -6,9 +6,11 @@ add_module(
         MotrHsmClient.h
         MotrInterface.h 
         IMotrInterfaceImpl.h
+        MotrConfig.h
     SOURCES
         MotrHsmClient.cc
         MotrInterface.cc 
+        MotrConfig.cc
     INTERNAL_DEPENDENCIES 
         hsm_object_store_client
 )
@@ -36,7 +38,12 @@ if(HESTIA_WITH_MOTR)
         hestia_motr_object_store_client
         ${motr_LINK_LIBRARIES})
 
-    target_compile_options(${PROJECT_NAME}_motr_plugin PUBLIC ${motr_CFLAGS})
+    target_compile_options(${PROJECT_NAME}_motr_plugin PUBLIC ${motr_CFLAGS}
+        -Wno-error=unused-parameter 
+        -Wno-error=pedantic 
+        -Wno-error=sign-compare
+        -Wno-error=missing-field-initializers
+    )
     target_compile_definitions(${PROJECT_NAME}_motr_plugin PUBLIC HAS_MOTR)
 
 endif()

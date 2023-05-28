@@ -18,6 +18,7 @@ struct WebAppConfig {
             case Interface::HTTP:
                 return "http";
         }
+        return {};
     }
 
     std::string m_identifier{"hestia::HsmService"};

@@ -125,6 +125,7 @@ bool Dictionary::is_empty() const
         case Type::SCALAR:
             return m_scalar.empty();
     }
+    return true;
 }
 
 bool Dictionary::operator==(const Dictionary& rhs) const

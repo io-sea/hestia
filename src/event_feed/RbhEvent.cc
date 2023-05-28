@@ -26,6 +26,7 @@ std::string RbhEvent::type_to_string(const RbhTypes& event_type)
         case RbhTypes::INODE_XATTR:
             return "inode_xattr";
     }
+    return {};
 }
 
 RbhEvent::RbhEvent(const RbhTypes& event_type, const Metadata& meta)

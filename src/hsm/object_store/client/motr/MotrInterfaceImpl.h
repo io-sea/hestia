@@ -36,7 +36,7 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
   private:
     void finish();
 
-    void initialize_hsm();
+    void initialize_hsm(const std::vector<MotrHsmTierInfo>& tier_info) override;
 
     MotrConfig m_config;
     m0_client* m_client_instance{nullptr};

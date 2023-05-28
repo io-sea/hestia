@@ -271,7 +271,7 @@ OpStatus HestiaCli::run_hsm()
         request = std::make_unique<hestia::HsmServiceRequest>(
             hestia::StorageObject(m_hsm_command.m_object_id),
             hestia::HsmServiceRequestMethod::GET);
-        request->set_target_tier(m_hsm_command.m_target_tier);
+        request->set_source_tier(m_hsm_command.m_source_tier);
 
         stream    = hestia::Stream::create();
         auto sink = hestia::FileStreamSink::create(m_hsm_command.m_path);
@@ -284,7 +284,7 @@ OpStatus HestiaCli::run_hsm()
         request = std::make_unique<hestia::HsmServiceRequest>(
             hestia::StorageObject(m_hsm_command.m_object_id),
             hestia::HsmServiceRequestMethod::PUT);
-        request->set_source_tier(m_hsm_command.m_source_tier);
+        request->set_target_tier(m_hsm_command.m_target_tier);
 
         stream      = hestia::Stream::create();
         auto source = hestia::FileStreamSource::create(m_hsm_command.m_path);

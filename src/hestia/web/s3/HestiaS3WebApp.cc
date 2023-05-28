@@ -37,4 +37,4 @@ void HestiaS3WebApp::set_up_middleware()
 {
     auto auth_middleware = std::make_unique<S3AuthenticationMiddleware>();
 }
-};  // namespace hestia
+}  // namespace hestia

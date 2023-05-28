@@ -9,8 +9,8 @@
 
 extern "C" hestia::HsmObjectStoreClient* create()
 {
-    return new hestia::MotrHsmClient(
-        std::make_unique<MotrInterface>(std::make_unique<MotrInterfaceImpl>()));
+    return new hestia::MotrHsmClient(std::make_unique<hestia::MotrInterface>(
+        std::make_unique<hestia::MotrInterfaceImpl>()));
 }
 
 #endif
