@@ -1,5 +1,3 @@
-image: rockylinux:8
-
 stages:   
   - static analysis 
   - build
@@ -8,7 +6,7 @@ stages:
 # CI variables
 .variables:
   default_variables: &default_variables 
-    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
+    HESTIA_CI_REGISTRY: "harbor.core.ichec.ie/hestia"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: Release 
     CXX: g++
@@ -22,22 +20,12 @@ stages:
 
 # CI code snippets
 .snippets: 
-  - &update_distro
-    yum check-update -q || true;
-    yum update -qy;
-    yum install -qy epel-release;
-    yum config-manager -q --set-enabled powertools;
-  - &install_base_dependencies
-    yum install -qy $(cat ${HESTIA_DEPS}/base);
-    ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
-  - &install_phobos_dependencies
-    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
   - &configure 
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR} 
+      cmake ${CI_PROJECT_DIR} 
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
       -DCMAKE_CXX_COMPILER="${CXX}" 
@@ -52,12 +40,6 @@ stages:
   - &test
     make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
 
-.cache:
-  cmake_install_cache: &cmake_install_cache
-    key: "cmake_3.26.3"
-    paths:
-      - .cache/cmake/
-
 .artifacts:
   build_artifacts: &build_artifacts
     name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
@@ -65,27 +47,40 @@ stages:
       - build/
     expire_in: 30 min
 
+Image_build:
+  stage: .pre
+  tags:
+    - docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  variables:
+    <<: *default_variables 
+  before_script:
+    - cp $DOCKER_AUTH_CONFIG /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/infra/containers/rocky8/ci-base.Dockerfile"
+      --destination "${HESTIA_CI_REGISTRY}/ci-base:${CI_COMMIT_BRANCH}"
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      when: manual
+      allow_failure: false
+
 .default_job: &default_job 
+  image: ${HESTIA_CI_REGISTRY}/ci-base:latest
   tags: 
     - docker
   variables:
     <<: *default_variables 
-  before_script: 
-    - *update_distro
-    - *install_base_dependencies
-    - *install_phobos_dependencies
   script: 
     - *configure 
     - *build
-  cache:
-    <<: *cmake_install_cache
 
 Format: 
   <<: *default_job
   stage: static analysis
-  before_script: 
-    - *update_distro
-    - yum install -qy $(cat ${HESTIA_DEPS}/format)
   script: 
     - ./infra/scripts/run_format.sh
       && git status 
@@ -103,10 +98,6 @@ Lint:
     CC: clang
     HESTIA_BUILD_TESTS: "ON" 
   before_script:
-    - *update_distro
-    - *install_base_dependencies
-    - *install_phobos_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
     - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies
   script:
@@ -141,11 +132,6 @@ Unit_test:
     CC: clang
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
-  before_script:
-    - *update_distro
-    - *install_base_dependencies
-    - *install_phobos_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
@@ -158,9 +144,5 @@ E2E_test:
   stage: test
   dependencies: 
     - Release
-  before_script:
-    - *update_distro
-    - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
-    - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-0.0.1-Linux.rpm
