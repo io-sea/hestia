@@ -18,26 +18,25 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
 
     m_config = config;
 
-    m0_config m0tr_config;
-    m0tr_config.mc_is_oostore     = true;
-    m0tr_config.mc_is_read_verify = false;
+    m_m0tr_config.mc_is_oostore     = true;
+    m_m0tr_config.mc_is_read_verify = false;
 
-    m0tr_config.mc_local_addr  = m_config.m_local_address.c_str();
-    m0tr_config.mc_ha_addr     = m_config.m_ha_address.c_str();
-    m0tr_config.mc_profile     = m_config.m_profile.c_str();
-    m0tr_config.mc_process_fid = m_config.m_proc_fid.c_str();
+    m_m0tr_config.mc_local_addr  = m_config.m_local_address.c_str();
+    m_m0tr_config.mc_ha_addr     = m_config.m_ha_address.c_str();
+    m_m0tr_config.mc_profile     = m_config.m_profile.c_str();
+    m_m0tr_config.mc_process_fid = m_config.m_proc_fid.c_str();
 
-    m0tr_config.mc_tm_recv_queue_min_len = 64;
-    m0tr_config.mc_max_rpc_msg_size      = 65536;
+    m_m0tr_config.mc_tm_recv_queue_min_len = 64;
+    m_m0tr_config.mc_max_rpc_msg_size      = 65536;
 
-    m0tr_config.mc_layout_id = 0;
+    m_m0tr_config.mc_layout_id = 0;
 
-    m0tr_config.mc_idx_service_id = M0_IDX_DIX;
+    m_m0tr_config.mc_idx_service_id = M0_IDX_DIX;
     struct m0_idx_dix_config dix_conf;
-    dix_conf.kc_create_meta         = false;
-    m0tr_config.mc_idx_service_conf = &dix_conf;
+    dix_conf.kc_create_meta           = false;
+    m_m0tr_config.mc_idx_service_conf = &dix_conf;
 
-    const auto rc = m0_client_init(&m_client_instance, &m0tr_config, true);
+    const auto rc = m0_client_init(&m_client_instance, &m_m0tr_config, true);
     if (rc < 0) {
         LOG_ERROR("m0 client init failed: " << rc);
     }
@@ -129,20 +128,21 @@ void MotrInterfaceImpl::put(
             "Writing buffer with size: " << buffer.length() << " and offset "
                                          << offset);
 
-        /*
-        auto working_obj = motr_obj;
-        auto rc          = m0hsm_pwrite(
-            &working_obj, const_cast<void*>(buffer.as_void()),
-            buffer.length(), offset);
-        if (rc < 0) {
-            std::string msg =
-                "Error writing buffer at offset " + std::to_string(offset);
-            LOG_ERROR(msg);
-            return {false, 0};
-        }
-        */
+
+        //     struct m0_obj working_obj = motr_obj;
+        //     auto rc          = m0hsm_pwrite(
+        //         &working_obj, const_cast<void*>(buffer.as_void()),
+        //         buffer.length(), offset);
+        // // auto rc = m0hsm_test_write();
+        //     if (rc < 0) {
+        //         std::string msg =
+        //             "Error writing buffer at offset " +
+        //             std::to_string(offset);
+        //         LOG_ERROR(msg);
+        //         return {false, 0};
+        //     }
         return {false, 0};
-        // return {true, buffer.length()};
+        //     return {true, buffer.length()};
     };
 
     auto sink = InMemoryStreamSink::create(sink_func);

@@ -109,7 +109,7 @@ std::pair<uint64_t, uint64_t> StringUtils::string_to_id(
 
     const auto loc = input.find(delimiter);
     if (loc == std::string::npos) {
-        return {to_int(input), 0};
+        return {to_int(input, as_hex), 0};
     }
     else {
         const auto lo_str = input.substr(0, loc);

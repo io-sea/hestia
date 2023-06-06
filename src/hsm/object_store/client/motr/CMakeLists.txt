@@ -38,7 +38,7 @@ if(HESTIA_WITH_MOTR)
         hestia_motr_object_store_client
         ${motr_LINK_LIBRARIES})
 
-    target_compile_options(${PROJECT_NAME}_motr_plugin PUBLIC ${motr_CFLAGS}
+    target_compile_options(${PROJECT_NAME}_motr_plugin PUBLIC  ${motr_CFLAGS}
         -Wno-error=unused-parameter 
         -Wno-error=pedantic 
         -Wno-error=sign-compare
