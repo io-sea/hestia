@@ -31,10 +31,9 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
 
     m_m0tr_config.mc_layout_id = 0;
 
-    m_m0tr_config.mc_idx_service_id = M0_IDX_DIX;
-    struct m0_idx_dix_config dix_conf;
-    dix_conf.kc_create_meta           = false;
-    m_m0tr_config.mc_idx_service_conf = &dix_conf;
+    m_m0tr_config.mc_idx_service_id   = M0_IDX_DIX;
+    m_dix_conf.kc_create_meta         = false;
+    m_m0tr_config.mc_idx_service_conf = &m_dix_conf;
 
     const auto rc = m0_client_init(&m_client_instance, &m_m0tr_config, true);
     if (rc < 0) {
@@ -46,7 +45,7 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
 
 void MotrInterfaceImpl::finish()
 {
-    if (m_client_instance) {
+    if (m_client_instance != nullptr) {
         m0_client_fini(m_client_instance, false);
         m_client_instance = nullptr;
     }
@@ -100,49 +99,38 @@ void MotrInterfaceImpl::put(
     id.u_hi              = 0;
     id.u_lo += uuid.m_lo;
 
-    struct m0_obj motr_obj;
-    memset(&motr_obj, 0, sizeof(m0_obj));
-
-    LOG_INFO("Creating object with id: [" << id.u_hi << ", " << id.u_lo << "]");
-    auto rc = m0hsm_create(id, &motr_obj, request.target_tier(), false);
-    if (rc < 0) {
-        const std::string msg =
-            "Failed to create object: " + std::to_string(rc);
-        LOG_ERROR(msg);
-        throw std::runtime_error(msg);
-    }
-
-    LOG_INFO("Setting write tier: " << request.target_tier());
-    rc = m0hsm_set_write_tier(id, request.target_tier());
-    if (rc < 0) {
-        const std::string msg =
-            "Failed to set write tier: " + std::to_string(rc);
-        LOG_ERROR(msg);
-        throw std::runtime_error(msg);
-    }
-
-    auto sink_func = [this, motr_obj](
+    auto sink_func = [request, id](
                          const ReadableBufferView& buffer,
                          std::size_t offset) -> InMemoryStreamSink::Status {
+        struct m0_obj motr_obj;
+        memset(&motr_obj, 0, sizeof(m0_obj));
+
+        LOG_INFO(
+            "Creating object with id: [" << id.u_hi << ", " << id.u_lo << "]"
+                                         << " with write tier "
+                                         << request.target_tier());
+        auto rc = m0hsm_create(id, &motr_obj, request.target_tier(), true);
+        if (rc < 0) {
+            const std::string msg =
+                "Failed to create object: " + std::to_string(rc);
+            LOG_ERROR(msg);
+            throw std::runtime_error(msg);
+        }
+
         LOG_INFO(
             "Writing buffer with size: " << buffer.length() << " and offset "
                                          << offset);
 
-
-        //     struct m0_obj working_obj = motr_obj;
-        //     auto rc          = m0hsm_pwrite(
-        //         &working_obj, const_cast<void*>(buffer.as_void()),
-        //         buffer.length(), offset);
-        // // auto rc = m0hsm_test_write();
-        //     if (rc < 0) {
-        //         std::string msg =
-        //             "Error writing buffer at offset " +
-        //             std::to_string(offset);
-        //         LOG_ERROR(msg);
-        //         return {false, 0};
-        //     }
-        return {false, 0};
-        //     return {true, buffer.length()};
+        rc = m0hsm_pwrite(
+            &motr_obj, const_cast<void*>(buffer.as_void()), buffer.length(),
+            offset);
+        if (rc < 0) {
+            std::string msg =
+                "Error writing buffer at offset " + std::to_string(offset);
+            LOG_ERROR(msg);
+            return {false, 0};
+        }
+        return {true, buffer.length()};
     };
 
     auto sink = InMemoryStreamSink::create(sink_func);
@@ -165,7 +153,7 @@ void MotrInterfaceImpl::get(
 
     std::size_t size = request.object().m_size;
 
-    auto source_func = [this, id, size](
+    auto source_func = [size](
                            WriteableBufferView& buffer,
                            std::size_t offset) -> InMemoryStreamSource::Status {
         if (offset >= size) {
