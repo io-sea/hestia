@@ -22,7 +22,8 @@ std::string StringUtils::remove_prefix(
     }
 
     if (const auto iter = str.find(prefix); iter != std::string::npos) {
-        return str.substr(iter, str.length());
+        return str.substr(
+            iter + prefix.length(), str.length() - prefix.length());
     }
     else {
         return str;

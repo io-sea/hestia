@@ -20,3 +20,12 @@ TEST_CASE("Test StringUtils - int conversion", "[common]")
 
     REQUIRE(hestia::StringUtils::to_lower("QuickBrownFox") == "quickbrownfox");
 }
+
+TEST_CASE("Test StringUtils - Remove prefix", "[common]")
+{
+    std::string test_string = "hestia::tiers";
+    std::string prefix      = "hestia::";
+    auto without_prefix =
+        hestia::StringUtils::remove_prefix(test_string, prefix);
+    REQUIRE(without_prefix == "tiers");
+}

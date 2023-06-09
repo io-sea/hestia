@@ -18,9 +18,9 @@ class HsmObject {
 
     const std::string& id() const { return m_storage_object.id(); }
 
-    void add_tier(uint8_t tier_id);
+    void add_tier(uint8_t tier_id, bool sort = true);
 
-    void remove_tier(uint8_t tier_id) { (void)tier_id; }
+    void remove_tier(uint8_t tier_id, bool sort = true);
 
     void remove_all_but_one_tiers() {}
 
