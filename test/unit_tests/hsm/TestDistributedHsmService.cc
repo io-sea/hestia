@@ -53,9 +53,9 @@ class DistributedHsmServiceTestFixture {
         m_hsm_service = hestia::HsmService::create(
             m_kv_store_client.get(), m_object_store_client.get());
 
-        hestia::DistributedHsmServiceConfig hestia_config;
+        hestia::DistributedHsmServiceConfig dist_hsm_config;
         m_dist_hsm_service = hestia::DistributedHsmService::create(
-            hestia_config, m_hsm_service.get(), m_kv_store_client.get());
+            dist_hsm_config, m_hsm_service.get(), m_kv_store_client.get());
     }
 
     std::string get_store_path() const

@@ -68,6 +68,8 @@ class StringUtils {
      */
     static std::string to_lower(const std::string& str);
 
+    static bool starts_with(const std::string& str, const std::string& prefix);
+
     static std::string remove_prefix(
         const std::string& str, const std::string& prefix);
 

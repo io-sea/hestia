@@ -77,7 +77,7 @@ hestia start --config=hestia.yaml
 Add an object `00001234` to tier `0`:
 
 ```bash
-curl -X PUT --upload-file "my_file.dat" \ $HESTIA_ENDPOINT/api/v1/hsm/tiers/0/objects/000012345/data
+curl -X PUT --upload-file "my_file.dat" $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/0
 ```
 
 Copy it to another tier, tier `1`:
@@ -85,13 +85,13 @@ Copy it to another tier, tier `1`:
 ```bash
 curl -X PUT -H "hestia-hsm-method: copy" \ 
             -H "hestia-hsm-source-tier: 0" \
-            $HESTIA_ENDPOINT/api/v1/hsm/tiers/1/objects/000012345
+            $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/1
 ```
 
 Retrieve the version on tier `1`:
 
 ```bash
-curl $HESTIA_ENDPOINT/api/v1/hsm/tiers/1/objects/000012345/data
+curl $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/1/data
 ```
 
 List the hestia nodes in the system:

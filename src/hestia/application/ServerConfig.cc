@@ -38,11 +38,17 @@ void ServerConfig::load(const Dictionary& config)
         else if (key == "host_port") {
             m_port = value;
         }
+        else if (key == "controller_address") {
+            m_controller_address = value;
+        }
         else if (key == "web_app") {
             web_app_identifier = value;
         }
         else if (key == "backend") {
             m_backend = value;
+        }
+        else if (key == "tag") {
+            m_tag = value;
         }
         else if (key == "controller") {
             m_controller = (value != "false");

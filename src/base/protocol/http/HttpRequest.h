@@ -19,6 +19,8 @@ class HttpRequest {
 
     const std::string& body() const;
 
+    std::string& body() { return m_body; }
+
     HttpHeader& get_header();
 
     const std::string& get_path() const;

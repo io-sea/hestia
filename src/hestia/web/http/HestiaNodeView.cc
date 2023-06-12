@@ -29,7 +29,9 @@ HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
     if (relative_path.empty() || relative_path == "/") {
         std::vector<HsmNode> nodes;
         m_hestia_service->get(nodes);
-        response->set_body(HsmNodeJsonAdapter::to_json(nodes));
+        std::string body;
+        HsmNodeJsonAdapter().to_string(nodes, body);
+        response->set_body(body);
     }
     return response;
 }

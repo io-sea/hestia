@@ -52,10 +52,43 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         CrudClient<ItemT>::from_string(response->item(), item);
     }
 
-    void multi_get(std::vector<ItemT>& items) const override
+    void list(
+        const Metadata& query, std::vector<std::string>& ids) const override
+    {
+        KeyValueStoreResponsePtr response;
+        response = m_client->make_request(
+            {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
+             m_config.m_endpoint});
+        if (!response->ok()) {
+            throw std::runtime_error(
+                "Error in kv_store SET_LIST: "
+                + response->get_error().to_string());
+        }
+        if (!query.empty()) {
+            std::vector<ItemT> items;
+            for (const auto& id : response->ids()) {
+                items.push_back(ItemT(id));
+            }
+            multi_get({}, items);
+            for (const auto& item : items) {
+                if (this->matches_query(item, query)) {
+                    ids.push_back(item.id());
+                }
+            }
+        }
+        else {
+            for (const auto& id : response->ids()) {
+                LOG_INFO("Adding id: " + id);
+                ids.push_back(id);
+            }
+        }
+    }
+
+    void multi_get(
+        const Metadata& query, std::vector<ItemT>& items) const override
     {
         std::vector<std::string> ids;
-        list(ids);
+        list(query, ids);
 
         std::vector<std::string> keys;
         get_item_keys(ids, keys);
@@ -75,10 +108,15 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
     }
 
-    void put(const ItemT& item) const override
+    void put(const ItemT& item, bool do_generate_id = false) const override
     {
         std::string content;
-        CrudClient<ItemT>::to_string(item, content);
+        if (do_generate_id) {
+            CrudClient<ItemT>::to_string(item, content, generate_id());
+        }
+        else {
+            CrudClient<ItemT>::to_string(item, content);
+        }
 
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_SET,
@@ -101,10 +139,17 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
     }
 
-    bool exists(const ItemT& item) const override
+    std::string generate_id() const override
+    {
+        std::vector<std::string> ids;
+        list({}, ids);
+        return std::to_string(ids.size());
+    }
+
+    bool exists(const std::string& id) const override
     {
         const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(item),
+            {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(id),
              m_config.m_endpoint});
         if (!response->ok()) {
             throw std::runtime_error(
@@ -114,10 +159,10 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         return response->found();
     }
 
-    void remove(const ItemT& item) const override
+    void remove(const std::string& id) const override
     {
         const auto string_response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(item),
+            {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(id),
              m_config.m_endpoint});
         if (!string_response->ok()) {
             throw std::runtime_error(
@@ -127,7 +172,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
 
         const auto set_response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_REMOVE,
-             Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
+             Metadata::Query(get_set_key(), id), m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_REMOVE: "
@@ -135,28 +180,15 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
     }
 
-    void list(std::vector<std::string>& ids) const override
-    {
-        LOG_INFO("Have client: " << bool(m_client));
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
-             m_config.m_endpoint});
-        if (!response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store SET_LIST: "
-                + response->get_error().to_string());
-        }
-
-        for (const auto& id : response->ids()) {
-            LOG_INFO("Adding id: " + id);
-            ids.push_back(id);
-        }
-    }
-
     std::string get_item_key(const ItemT& item) const
     {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
                + item.id();
+    }
+
+    std::string get_item_key(const std::string& id) const
+    {
+        return m_config.m_prefix + ":" + m_config.m_item_prefix + ":" + id;
     }
 
     void get_item_keys(

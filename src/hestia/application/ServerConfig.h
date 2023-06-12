@@ -32,6 +32,8 @@ struct ServerConfig {
     std::string m_host{"127.0.0.1"};
     std::string m_port{"8080"};
     std::string m_backend{"hestia::Basic"};
+    std::string m_tag;
+    std::string m_controller_address;
     bool m_controller{true};
     WebAppConfig m_web_app_config;
 };

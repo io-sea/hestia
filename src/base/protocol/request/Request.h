@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "Metadata.h"
 
 namespace hestia {
 class BaseRequest {
@@ -53,6 +53,13 @@ class CrudRequest : public BaseRequest, public MethodRequest<CrudMethod> {
     {
     }
 
+    CrudRequest(const Metadata& query) :
+        BaseRequest(),
+        MethodRequest<CrudMethod>(CrudMethod::LIST),
+        m_query(query)
+    {
+    }
+
     virtual ~CrudRequest() = default;
 
     std::string method_as_string() const override
@@ -77,9 +84,16 @@ class CrudRequest : public BaseRequest, public MethodRequest<CrudMethod> {
 
     const ItemT& item() const { return m_item; };
 
+    const Metadata& query() const { return m_query; };
+
+    void set_generate_id(bool generate) { m_generate_id = generate; }
+
+    bool should_generate_id() const { return m_generate_id; }
+
   private:
+    bool m_generate_id{false};
     ItemT m_item;
-    std::string m_query;
+    Metadata m_query;
 };
 
 }  // namespace hestia

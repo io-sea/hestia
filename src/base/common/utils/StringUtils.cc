@@ -30,6 +30,17 @@ std::string StringUtils::remove_prefix(
     }
 }
 
+bool StringUtils::starts_with(const std::string& str, const std::string& prefix)
+{
+    if (str == prefix) {
+        return true;
+    }
+    if (prefix.empty()) {
+        return false;
+    }
+    return str.find(prefix) == 0;
+}
+
 void StringUtils::split(
     const std::string& str, char delimiter, std::vector<std::string>& elements)
 {

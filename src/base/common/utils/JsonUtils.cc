@@ -126,9 +126,24 @@ void from_json_internal(
 std::unique_ptr<Dictionary> JsonUtils::from_json(const std::string& str)
 {
     const auto json = nlohmann::json::parse(str);
-    auto dict       = std::make_unique<Dictionary>();
 
-    from_json_internal(json, dict.get());
+    std::unique_ptr<Dictionary> dict;
+    if (json.is_array()) {
+        dict = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+        for (const auto& [key, value] : json.items()) {
+            from_json_internal(value, dict.get());
+        }
+    }
+    else if (json.is_object()) {
+        dict = std::make_unique<Dictionary>();
+        for (const auto& [key, value] : json.items()) {
+            from_json_internal(value, dict.get(), key);
+        }
+    }
+    else {
+        dict = std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
+        dict->set_scalar(json);
+    }
     return dict;
 }
 
