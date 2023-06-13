@@ -59,10 +59,16 @@ class HsmServiceResponse : public Response<HsmServiceErrorCode> {
 
     void set_object_found(bool found);
 
+    void add_tier(const StorageTier& tier);
+
+    void add_object(const HsmObject& object);
+
   private:
     std::string m_query_result;
     ObjectServiceResponsePtr m_object_response;
     TierServiceResponsePtr m_tier_response;
     HsmObjectStoreResponse::Ptr m_object_store_response;
+    std::vector<StorageTier> m_tiers;
+    std::vector<HsmObject> m_objects;
 };
 }  // namespace hestia

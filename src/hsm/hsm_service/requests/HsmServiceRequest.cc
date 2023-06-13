@@ -16,6 +16,12 @@ HsmServiceRequest::HsmServiceRequest(
 {
 }
 
+HsmServiceRequest::HsmServiceRequest(
+    const uint8_t& tier, HsmServiceRequestMethod method) :
+    hestia::MethodRequest<HsmServiceRequestMethod>(method), m_tier(tier)
+{
+}
+
 HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
     hestia::MethodRequest<HsmServiceRequestMethod>(method)
 {
@@ -87,6 +93,16 @@ const hestia::StorageObject& HsmServiceRequest::object() const
 StorageObject& HsmServiceRequest::object()
 {
     return m_object;
+}
+
+const uint8_t& HsmServiceRequest::tier() const
+{
+    return m_tier;
+}
+
+uint8_t& HsmServiceRequest::tier()
+{
+    return m_tier;
 }
 
 std::string HsmServiceRequest::to_string() const

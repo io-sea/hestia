@@ -32,6 +32,9 @@ class HsmServiceRequest :
     HsmServiceRequest(
         const StorageObject& object, HsmServiceRequestMethod method);
 
+    HsmServiceRequest(
+        const uint8_t& tier, HsmServiceRequestMethod method);
+
     HsmServiceRequest(HsmServiceRequestMethod method);
 
     const Extent& extent() const { return m_extent; }
@@ -39,6 +42,10 @@ class HsmServiceRequest :
     const StorageObject& object() const;
 
     StorageObject& object();
+
+    const uint8_t& tier() const;
+
+    uint8_t& tier();
 
     const std::string& query() const { return m_query; }
 
@@ -67,6 +74,7 @@ class HsmServiceRequest :
     uint8_t m_source_tier{0};
     hestia::Extent m_extent;
     hestia::StorageObject m_object;
+    uint8_t m_tier;
 
     std::string m_query;
     bool m_overwrite_if_existing{false};

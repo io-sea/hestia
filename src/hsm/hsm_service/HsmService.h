@@ -14,6 +14,7 @@ class DataPlacementEngine;
 
 class ObjectService;
 using ObjectServiceRequest = CrudRequest<HsmObject>;
+using TierServiceRequest = CrudRequest<StorageTier>;
 
 class TierService;
 class HsmStoreInterface;
@@ -59,9 +60,10 @@ class HsmService {
     HsmServiceResponse::Ptr remove_all(
         const HsmServiceRequest& request) noexcept;
 
-    void list_attributes(HsmObject& object);
-    void list_objects(uint8_t tier, std::vector<HsmObject>& objects);
-    void list_tiers(HsmObject& object, std::vector<uint8_t>& tiers);
+    HsmServiceResponse::Ptr list_objects(const HsmServiceRequest& request) noexcept;
+    HsmServiceResponse::Ptr list_tiers(const HsmServiceRequest& request) noexcept;
+    
+    void list_attributes(HsmObject& object, std::string& attributes);
 
     std::unique_ptr<ObjectService> m_object_service;
     std::unique_ptr<TierService> m_tier_service;

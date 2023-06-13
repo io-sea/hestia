@@ -16,6 +16,8 @@ class HsmObject {
 
     const hestia::Uuid& uuid() const { return m_id; }
 
+    //HsmObject(const std::string& id) : m_storage_object.id()(id) {}
+
     const std::string& id() const { return m_storage_object.id(); }
 
     void add_tier(uint8_t tier_id);
