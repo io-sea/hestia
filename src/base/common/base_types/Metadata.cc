@@ -15,6 +15,11 @@ bool Metadata::has_key_and_value(const Query& query) const
     return get_item(query.first) == query.second;
 }
 
+bool Metadata::empty() const
+{
+    return m_data.empty();
+}
+
 bool Metadata::key_contains(
     const std::string& key, const std::string& search_term) const
 {

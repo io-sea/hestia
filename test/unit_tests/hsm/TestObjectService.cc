@@ -21,31 +21,32 @@ class ObjectServiceTestFixture {
         m_kv_store_client->initialize(config);
 
         hestia::ObjectServiceConfig object_config;
-        m_object_service = hestia::ObjectService::create(
+        object_config.m_global_prefix = "hestia";
+        m_object_service              = hestia::ObjectService::create(
             object_config, m_kv_store_client.get());
     }
 
     ~ObjectServiceTestFixture()
     {
-        // std::filesystem::remove_all(get_store_path());
+        std::filesystem::remove_all(get_store_path());
     }
 
-    void put(const hestia::StorageObject& obj)
+    void put(const hestia::HsmObject& obj)
     {
         auto response =
             m_object_service->make_request({obj, hestia::CrudMethod::PUT});
         REQUIRE(response->ok());
     }
 
-    void get(hestia::StorageObject& obj)
+    void get(hestia::HsmObject& obj)
     {
         auto response =
             m_object_service->make_request({obj, hestia::CrudMethod::GET});
         REQUIRE(response->ok());
-        obj = response->item().object();
+        obj = response->item();
     }
 
-    bool exists(const hestia::StorageObject& obj)
+    bool exists(const hestia::HsmObject& obj)
     {
         auto response =
             m_object_service->make_request({obj, hestia::CrudMethod::EXISTS});
@@ -61,7 +62,7 @@ class ObjectServiceTestFixture {
         ids = response->ids();
     }
 
-    void remove(const hestia::StorageObject& obj)
+    void remove(const hestia::HsmObject& obj)
     {
         auto response =
             m_object_service->make_request({obj, hestia::CrudMethod::REMOVE});
@@ -85,13 +86,16 @@ TEST_CASE_METHOD(
 {
     init("TestObjectService");
 
-    hestia::StorageObject object0("01234");
-    object0.m_metadata.set_item("key0", "value0");
-    object0.m_metadata.set_item("key1", "value1");
-    object0.m_metadata.set_item("key2", "value2");
+    hestia::HsmObject object0(1234);
+    object0.object().m_metadata.set_item("key0", "value0");
+    object0.object().m_metadata.set_item("key1", "value1");
+    object0.object().m_metadata.set_item("key2", "value2");
 
-    hestia::StorageObject object1("56789");
-    hestia::StorageObject object2("abcde");
+    object0.add_tier(1);
+    object0.add_tier(2);
+
+    hestia::HsmObject object1(56789);
+    hestia::HsmObject object2(4321);
 
     put(object0);
     put(object1);
@@ -100,11 +104,13 @@ TEST_CASE_METHOD(
     REQUIRE(exists(object1));
     REQUIRE_FALSE(exists(object2));
 
-    hestia::StorageObject retrieved_object0("01234");
+    hestia::HsmObject retrieved_object0(1234);
     get(retrieved_object0);
-    // REQUIRE(retrieved_object0.m_metadata.get_item("key0") == "value0");
-    // REQUIRE(retrieved_object0.m_metadata.get_item("key1") == "value1");
-    // REQUIRE(retrieved_object0.m_metadata.get_item("key2") == "value2");
+    REQUIRE(retrieved_object0.object().m_metadata.get_item("key0") == "value0");
+    REQUIRE(retrieved_object0.object().m_metadata.get_item("key1") == "value1");
+    REQUIRE(retrieved_object0.object().m_metadata.get_item("key2") == "value2");
+
+    REQUIRE(retrieved_object0.tiers().size() == 2);
 
     std::vector<std::string> ids;
     list(ids);

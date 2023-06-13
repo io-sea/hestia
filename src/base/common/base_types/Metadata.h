@@ -18,6 +18,8 @@ class Metadata {
     using onItem =
         std::function<void(const std::string& key, const std::string& value)>;
 
+    bool empty() const;
+
     /**
      * Call func for each value in the container - if a key_prefix is specified
      * only operate on values corresponding to keys with this prefix.

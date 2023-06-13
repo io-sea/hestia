@@ -12,6 +12,8 @@
 #include "HestiaS3WebApp.h"
 #include "HestiaWebApp.h"
 
+#include "ProjectConfig.h"
+
 #include "Logger.h"
 
 namespace hestia {
@@ -23,8 +25,18 @@ void HestiaService::run()
     service_config.m_self.m_app_type =
         WebAppConfig::to_string(m_config.m_web_app_config.m_interface);
     service_config.m_self.m_port          = m_config.m_port;
+    service_config.m_self.m_host_address  = m_config.m_host;
     service_config.m_self.m_is_controller = m_config.m_controller;
-    service_config.m_app_name             = "hestia";
+
+    std::string tag = m_config.m_tag;
+    if (tag.empty()) {
+        tag = "endpoint";
+    }
+    service_config.m_self.m_tag =
+        tag + "_" + m_config.m_host + "_" + m_config.m_port;
+    service_config.m_self.m_version     = project_config::get_project_version();
+    service_config.m_app_name           = project_config::get_project_name();
+    service_config.m_controller_address = m_config.m_controller_address;
 
     std::unique_ptr<DistributedHsmService> hsm_service;
     if (m_config.m_controller) {

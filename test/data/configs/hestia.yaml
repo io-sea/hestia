@@ -4,6 +4,7 @@ server:
   web_app: hestia::HsmService
   backend: hestia::Basic
   controller: true
+  tag: controller0
 
 web_apps:
   - identitifier: hestia::HsmService

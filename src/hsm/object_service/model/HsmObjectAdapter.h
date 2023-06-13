@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Dictionary.h"
 #include "HsmObject.h"
 #include "StringAdapter.h"
 
@@ -7,34 +8,41 @@
 #include <sstream>
 
 namespace hestia {
-class HsmObjectAdapter {
-  public:
-    using Ptr = std::unique_ptr<HsmObjectAdapter>;
-
-    static Ptr create();
-
-    void serialize(HsmObject& hsm_object);
-
-    void parse_tiers(HsmObject& hsm_object);
-
-    void sync(
-        const HsmObject& hsm_object, hestia::StorageObject& storage_object);
-
-  private:
-    void add_if_not_empty(
-        hestia::Metadata* md, const std::string& key, const std::string& value);
-
-    static constexpr char last_modified_key[] = "last_modified";
-    static constexpr char created_key[]       = "creation_time";
-    static constexpr char dataset_key[]       = "dataset";
-    static constexpr char tiers_key[]         = "tiers";
-};
 
 class HsmObjectJsonAdapter : public StringAdapter<HsmObject> {
   public:
-    void to_string(const HsmObject& item, std::string& output) const override;
+    HsmObjectJsonAdapter(const std::string& internal_key_prefix);
+
+    void to_string(
+        const HsmObject& item,
+        std::string& output,
+        const std::string& id = {}) const override;
+
+    void to_string(const std::vector<HsmObject>& items, std::string& output)
+        const override;
 
     void from_string(const std::string& output, HsmObject& item) const override;
+
+    void from_string(
+        const std::string& json, std::vector<HsmObject>& item) const override;
+
+    bool matches_query(
+        const HsmObject& item, const Metadata& query) const override
+    {
+        (void)item;
+        (void)query;
+        return true;
+    };
+
+  private:
+    void to_dict(
+        const HsmObject& node,
+        Dictionary& dict,
+        const std::string& id = {}) const;
+
+    void from_dict(const Dictionary& dict, HsmObject& node) const;
+
+    std::string m_internal_prefix{"_internal_"};
 };
 
 }  // namespace hestia

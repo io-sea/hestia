@@ -56,31 +56,31 @@ class CrudService :
                 break;
             case CrudMethod::MULTI_GET:
                 try {
-                    multi_get(response->items());
+                    multi_get(request.query(), response->items());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
             case CrudMethod::PUT:
                 try {
-                    put(request.item());
+                    put(request.item(), request.should_generate_id());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
             case CrudMethod::EXISTS:
                 try {
-                    response->set_found(exists(request.item()));
+                    response->set_found(exists(request.item().id()));
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
             case CrudMethod::LIST:
                 try {
-                    list(response->ids());
+                    list(request.query(), response->ids());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
             case CrudMethod::REMOVE:
                 try {
-                    remove(request.item());
+                    remove(request.item().id());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
@@ -100,24 +100,29 @@ class CrudService :
   protected:
     virtual void get(ItemT& item) const { m_client->get(item); }
 
-    virtual bool exists(const ItemT& item) const
+    virtual bool exists(const std::string& id) const
     {
-        return m_client->exists(item);
+        return m_client->exists(id);
     }
 
-    virtual void list(std::vector<std::string>& ids) const
+    virtual void list(
+        const Metadata& query, std::vector<std::string>& ids) const
     {
-        m_client->list(ids);
+        m_client->list(query, ids);
     }
 
-    virtual void multi_get(std::vector<ItemT>& items) const
+    virtual void multi_get(
+        const Metadata& query, std::vector<ItemT>& items) const
     {
-        m_client->multi_get(items);
+        m_client->multi_get(query, items);
     }
 
-    virtual void put(const ItemT& item) const { m_client->put(item); }
+    virtual void put(const ItemT& item, bool generate_id = false) const
+    {
+        m_client->put(item, generate_id);
+    }
 
-    virtual void remove(const ItemT& item) const { m_client->remove(item); }
+    virtual void remove(const std::string& id) const { m_client->remove(id); }
 
   private:
     void on_exception(

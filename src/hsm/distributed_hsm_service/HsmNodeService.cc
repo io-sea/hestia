@@ -45,6 +45,7 @@ HsmNodeService::Ptr HsmNodeService::create(
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
     crud_client_config.m_prefix      = config.m_global_prefix;
+    crud_client_config.m_endpoint    = config.m_endpoint;
     auto crud_client = std::make_unique<HttpCrudClient<HsmNode>>(
         crud_client_config, std::move(adapter), client);
 

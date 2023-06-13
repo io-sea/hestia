@@ -258,9 +258,6 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
-    auto obj = req.object();
-    HsmObject hsm_object(obj);
-
     HsmObjectStoreRequest copy_data_request(
         req.object(), HsmObjectStoreRequestMethod::COPY);
     copy_data_request.set_extent(req.extent());
@@ -270,10 +267,18 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response);
 
+    auto get_response =
+        m_object_service->make_request({req.object(), CrudMethod::GET});
+    ERROR_CHECK(get_response);
+
+    auto hsm_object = get_response->item();
     hsm_object.add_tier(req.target_tier());
 
-    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
-    auto object_put_response = m_object_service->make_request(obj_put_request);
+    // Should also update last modified time here
+
+    auto put_response =
+        m_object_service->make_request({hsm_object, CrudMethod::PUT});
+    ERROR_CHECK(put_response);
 
     LOG_INFO("Finished HSMService COPY");
 
@@ -287,7 +292,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
         m_event_feed->log_event(event);
     }
 
-    return HsmServiceResponse::create(req, std::move(object_put_response));
+    return HsmServiceResponse::create(req, std::move(put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
@@ -301,9 +306,6 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
         const std::string msg = "Requested Object Not Found.";
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
-
-    auto obj = req.object();
-    HsmObject hsm_object(obj);
 
     HsmObjectStoreRequest move_request(
         req.object(), HsmObjectStoreRequestMethod::MOVE);
@@ -330,7 +332,19 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
         m_event_feed->log_event(event);
     }
 
-    return HsmServiceResponse::create(req, std::move(object_response));
+    auto get_response =
+        m_object_service->make_request({req.object(), CrudMethod::GET});
+    ERROR_CHECK(get_response);
+
+    auto hsm_object = get_response->item();
+
+    hsm_object.replace_tier(req.source_tier(), req.target_tier());
+
+    auto put_response =
+        m_object_service->make_request({hsm_object, CrudMethod::PUT});
+
+    LOG_INFO("Finished HSMService MOVE - PUT METADATA");
+    return HsmServiceResponse::create(req, std::move(put_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove(

@@ -22,11 +22,23 @@ std::string StringUtils::remove_prefix(
     }
 
     if (const auto iter = str.find(prefix); iter != std::string::npos) {
-        return str.substr(iter, str.length());
+        return str.substr(
+            iter + prefix.length(), str.length() - prefix.length());
     }
     else {
         return str;
     }
+}
+
+bool StringUtils::starts_with(const std::string& str, const std::string& prefix)
+{
+    if (str == prefix) {
+        return true;
+    }
+    if (prefix.empty()) {
+        return false;
+    }
+    return str.find(prefix) == 0;
 }
 
 void StringUtils::split(

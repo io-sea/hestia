@@ -13,6 +13,7 @@ set(UNIT_TEST_SOURCES
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
+    base/protocol/TestHttpCrudClient.cc
     base/protocol/TestHttpRequest.cc
     base/protocol/TestS3Path.cc
     base/protocol/TestS3Error.cc

@@ -40,6 +40,7 @@ DistributedHsmService::Ptr DistributedHsmService::create(
 {
     HsmNodeServiceConfig node_service_config;
     node_service_config.m_global_prefix = config.m_app_name;
+    node_service_config.m_endpoint = config.m_controller_address + "/api/v1";
     auto node_service = HsmNodeService::create(node_service_config, client);
 
     auto service = std::make_unique<DistributedHsmService>(
@@ -51,6 +52,17 @@ DistributedHsmService::Ptr DistributedHsmService::create(
 
 void DistributedHsmService::register_self()
 {
+    // Check if the node exists already
+    Metadata query;
+    query.set_item("tag", m_config.m_self.m_tag);
+    LOG_INFO(
+        "Checking for pre-registered endpoint with tag: "
+        << m_config.m_self.m_tag);
+    auto response = m_node_service->make_request(query);
+    if (!response->items().empty()) {
+        LOG_INFO("Found endpoint with id: " << response->items()[0].id());
+        m_config.m_self.m_id = response->items()[0].id();
+    }
     put(m_config.m_self);
 }
 
@@ -73,7 +85,11 @@ void DistributedHsmService::put(const HsmNode& node) const
 {
     LOG_INFO("Calling Node service put");
 
-    const auto response = m_node_service->make_request({node, CrudMethod::PUT});
+    CrudRequest<HsmNode> request(node, CrudMethod::PUT);
+    if (node.m_id.empty() && m_config.m_self.m_is_controller) {
+        request.set_generate_id(true);
+    }
+    const auto response = m_node_service->make_request(request);
     (void)response;
 
     LOG_INFO("Finished Node service put");

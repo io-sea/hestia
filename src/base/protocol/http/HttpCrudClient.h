@@ -2,6 +2,10 @@
 
 #include "CrudClient.h"
 #include "HttpClient.h"
+#include "RequestError.h"
+#include "RequestException.h"
+
+#include <sstream>
 
 namespace hestia {
 struct HttpCrudClientConfig {
@@ -34,102 +38,80 @@ class HttpCrudClient : public CrudClient<ItemT> {
 
     virtual ~HttpCrudClient() = default;
 
-  protected:
-    HttpCrudClientConfig m_config;
+    std::string generate_id() const override
+    {
+        throw std::runtime_error(
+            "Id generation not supported for http client - the server should do this.");
+    }
 
-  private:
+    bool exists(const std::string& id) const override
+    {
+        const auto path =
+            m_config.m_endpoint + "/" + m_config.m_item_prefix + "s/" + id;
+        HttpRequest request(path, HttpRequest::Method::GET);
+        const auto response = m_client->make_request(request);
+
+        return !response->error();
+    }
+
     void get(ItemT& item) const override
     {
-        (void)item;
-        /*
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_GET, get_item_key(item),
-             m_config.m_endpoint});
-        if (!response->ok()) {
+        const auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix
+                          + "s/" + item.id();
+        HttpRequest request(path, HttpRequest::Method::GET);
+
+        const auto response = m_client->make_request(request);
+        if (response->error()) {
             throw RequestException<CrudRequestError>(
                 {CrudErrorCode::ERROR,
-                 "Error in kv_store STRING_GET: "
-                     + response->get_error().to_string()});
+                 "Error in http client GET: " + response->to_string()});
         }
-        from_string(response->item(), item);
-        */
+
+        this->from_string(response->body(), item);
     }
 
-    void multi_get(std::vector<ItemT>& items) const override
+    void multi_get(
+        const Metadata& query, std::vector<ItemT>& items) const override
     {
-        (void)items;
-        /*
-        std::vector<std::string> ids;
-        list(ids);
+        auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix + "s";
+        HttpRequest request(path, HttpRequest::Method::GET);
 
-        std::vector<std::string> keys;
-        get_item_keys(ids, keys);
-
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_MULTI_GET, keys,
-             m_config.m_endpoint});
-        if (!response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store STRING_MULTI_GET: "
-                + response->get_error().to_string());
+        if (!query.empty()) {
+            request.set_queries(query);
         }
-        for (const auto& item_data : response->items()) {
-            ItemT item;
-            from_string(item_data, item);
-            items.push_back(item);
-        }
-        */
-    }
 
-    void put(const ItemT& item) const override
-    {
-        (void)item;
-        /*
-        std::string content;
-        to_string(item, content);
-
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_SET,
-             Metadata::Query(get_item_key(item), content),
-             m_config.m_endpoint});
-        if (!response->ok()) {
+        const auto response = m_client->make_request(request);
+        if (response->error()) {
             throw RequestException<CrudRequestError>(
                 {CrudErrorCode::ERROR,
-                 "Error in kv_store STRING_SET: "
-                     + response->get_error().to_string()});
+                 "Error in http client GET: " + response->to_string()});
         }
-
-        const auto set_response = m_client->make_request(
-            {KeyValueStoreRequestMethod::SET_ADD,
-             Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
-        if (!set_response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store SET_ADD: "
-                + response->get_error().to_string());
-        }
-        */
+        this->from_string(response->body(), items);
     }
 
-    bool exists(const ItemT& item) const override
+    void put(const ItemT& item, bool do_generate_id) const override
     {
-        (void)item;
-        /*
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(item),
-             m_config.m_endpoint});
-        if (!response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store STRING_EXISTS: "
-                + response->get_error().to_string());
+        (void)do_generate_id;
+
+        auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix + "s";
+        if (!item.id().empty()) {
+            path += "/" + item.id();
         }
-        return response->found();
-        */
-        return false;
+
+        HttpRequest request(path, HttpRequest::Method::PUT);
+        this->to_string(item, request.body());
+
+        const auto response = m_client->make_request(request);
+        if (response->error()) {
+            throw RequestException<CrudRequestError>(
+                {CrudErrorCode::ERROR,
+                 "Error in http client PUT: " + response->to_string()});
+        }
     }
 
-    void remove(const ItemT& item) const override
+    void remove(const std::string& id) const override
     {
-        (void)item;
+        (void)id;
         /*
         const auto string_response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(item),
@@ -151,8 +133,10 @@ class HttpCrudClient : public CrudClient<ItemT> {
         */
     }
 
-    void list(std::vector<std::string>& ids) const override
+    void list(
+        const Metadata& query, std::vector<std::string>& ids) const override
     {
+        (void)query;
         (void)ids;
         /*
         LOG_INFO("Have client: " << bool(m_client));
@@ -172,7 +156,7 @@ class HttpCrudClient : public CrudClient<ItemT> {
         */
     }
 
-    std::string get_item_key(const ItemT& item) const
+    std::string get_item_path(const ItemT& item) const
     {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
                + item.id();
@@ -193,6 +177,8 @@ class HttpCrudClient : public CrudClient<ItemT> {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + "s";
     }
 
+  protected:
+    HttpCrudClientConfig m_config;
     HttpClient* m_client{nullptr};
 };
 }  // namespace hestia
