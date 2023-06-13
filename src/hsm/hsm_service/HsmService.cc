@@ -11,9 +11,6 @@
 
 #include "Logger.h"
 
-#include <vector>
-#include <algorithm>
-
 #define ERROR_CHECK(response)                                                  \
     if (!response->ok()) {                                                     \
         return hestia::HsmServiceResponse::create(req, std::move(response));   \
@@ -266,6 +263,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response);
+    LOG_INFO("Finished HSMService COPY - COPY DATA");
 
     auto get_response =
         m_object_service->make_request({req.object(), CrudMethod::GET});
@@ -280,7 +278,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
         m_object_service->make_request({hsm_object, CrudMethod::PUT});
     ERROR_CHECK(put_response);
 
-    LOG_INFO("Finished HSMService COPY");
+    LOG_INFO("Finished HSMService COPY - PUT METADATA");
 
     if (m_event_feed) {
         EventFeed::Event event;
@@ -315,12 +313,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     auto move_data_response = m_object_store->make_request(move_request);
     ERROR_CHECK(move_data_response);
-    hsm_object.add_tier(req.target_tier());
-
-    ObjectServiceRequest obj_request(req.object(), CrudMethod::PUT);
-    auto object_response = m_object_service->make_request(obj_request);
-
-    LOG_INFO("Finished HSMService MOVE");
+    LOG_INFO("Finished HSMService MOVE - MOVE DATA");
 
     if (m_event_feed) {
         EventFeed::Event event;
@@ -373,9 +366,9 @@ HsmServiceResponse::Ptr HsmService::remove(
     ERROR_CHECK(remove_data_response);
     hsm_object.remove_tier(req.source_tier());
 
-    ObjectServiceRequest obj_request(req.object(), CrudMethod::REMOVE);
-    auto object_response = m_object_service->make_request(obj_request);
-    ERROR_CHECK(object_response);
+    ObjectServiceRequest obj_remove_request(req.object(), CrudMethod::REMOVE);
+    auto object_remove_response = m_object_service->make_request(obj_remove_request);
+    ERROR_CHECK(object_remove_response);
 
     LOG_INFO("Finished HSMService REMOVE");
 
@@ -387,7 +380,7 @@ HsmServiceResponse::Ptr HsmService::remove(
         m_event_feed->log_event(event);
     }
 
-    return HsmServiceResponse::create(req, std::move(object_response));
+    return HsmServiceResponse::create(req, std::move(object_remove_response));
 }
 
 HsmServiceResponse::Ptr HsmService::remove_all(
@@ -403,8 +396,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
         ON_ERROR(OBJECT_NOT_FOUND, msg);
     }
 
-    auto obj = req.object();
-    HsmObject hsm_object(obj);
+    HsmObject hsm_object(req.object());
 
     HsmObjectStoreRequest removal_all_request(
         req.object(), HsmObjectStoreRequestMethod::REMOVE_ALL);
@@ -415,8 +407,8 @@ HsmServiceResponse::Ptr HsmService::remove_all(
     ERROR_CHECK(remove_data_response);
     hsm_object.remove_all_but_one_tiers();
 
-    ObjectServiceRequest obj_request(req.object(), CrudMethod::REMOVE);
-    auto object_response = m_object_service->make_request(obj_request);
+    ObjectServiceRequest obj_remove_request(req.object(), CrudMethod::REMOVE);
+    auto object_remove_response = m_object_service->make_request(obj_remove_request);
 
     LOG_INFO("Finished HSMService REMOVE_ALL");
 
@@ -427,7 +419,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
         m_event_feed->log_event(event);  // TODO: Get remaining tier
     }
 
-    return HsmServiceResponse::create(req, std::move(object_response));
+    return HsmServiceResponse::create(req, std::move(object_remove_response));
 }
 
 HsmServiceResponse::Ptr HsmService::list_objects(const HsmServiceRequest& req) noexcept
@@ -446,8 +438,8 @@ HsmServiceResponse::Ptr HsmService::list_objects(const HsmServiceRequest& req) n
         auto get_object_response = m_object_service->make_request(get_object_request);
         ERROR_CHECK(get_object_response);
         //std::find(begin(get_object_response->item().tiers()), end(get_object_response->item().tiers()), req.tier());
-        for(uint8_t i=0; i<get_object_response->item().tiers().size(); i++){
-          if(req.tier()==get_object_response->item().tiers().id()){
+        for(const auto& tier_id: get_object_response->item().tiers()){
+          if(req.tier()==std::stoi(std::to_string(tier_id))){//get_object_response->item().tiers().id()){
             response->add_object(get_object_response->item());
             break;
           }
@@ -482,14 +474,9 @@ HsmServiceResponse::Ptr HsmService::list_tiers(const HsmServiceRequest& req) noe
     return response;
 }
 
-void HsmService::list_attributes(HsmObject& object, std::string& attributes)
+void HsmService::list_attributes(HsmObject& object)
 {
-    LOG_INFO("Starting HSMService LIST_ATTRIBUTES");
     (void)object;
-    (void)attributes;
-
-
-    LOG_INFO("Finished HSMService LIST_ATTRIBUTES");
 }
 
 }  // namespace hestia
