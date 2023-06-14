@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CopyToolConfig.h"
 #include "HsmObjectStoreClient.h"
 #include "HsmObjectStoreClientFactory.h"
 
@@ -8,22 +7,21 @@
 
 namespace hestia {
 class HsmObjectStoreClientManager;
-class CopyToolInterface;
+class DistributedHsmService;
 
-class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
+class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
   public:
-    using Ptr = std::unique_ptr<MultiBackendHsmObjectStoreClient>;
+    using Ptr = std::unique_ptr<DistributedHsmObjectStoreClient>;
 
-    MultiBackendHsmObjectStoreClient(
+    DistributedHsmObjectStoreClient(
         std::unique_ptr<HsmObjectStoreClientManager> client_manager);
 
-    static Ptr create();
+    static Ptr create(
+        const std::vector<std::filesystem::path>& plugin_paths = {});
 
-    virtual ~MultiBackendHsmObjectStoreClient();
+    virtual ~DistributedHsmObjectStoreClient();
 
-    void do_initialize(
-        const TierBackendRegistry& tier_backend_regsitry,
-        const CopyToolConfig& copy_tool_config);
+    void do_initialize(DistributedHsmService* hsm_service);
 
     [[nodiscard]] HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,
@@ -61,7 +59,7 @@ class MultiBackendHsmObjectStoreClient : public HsmObjectStoreClient {
         (void)request;
     };
 
-    std::unique_ptr<CopyToolInterface> m_copy_tool_interface;
+    DistributedHsmService* m_hsm_service{nullptr};
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
 };
 }  // namespace hestia

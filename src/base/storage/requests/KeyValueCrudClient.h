@@ -111,8 +111,10 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
     void put(const ItemT& item, bool do_generate_id = false) const override
     {
         std::string content;
+        std::string working_id = item.id();
         if (do_generate_id) {
-            CrudClient<ItemT>::to_string(item, content, generate_id());
+            working_id = generate_id();
+            CrudClient<ItemT>::to_string(item, content, working_id);
         }
         else {
             CrudClient<ItemT>::to_string(item, content);
@@ -120,7 +122,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
 
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_SET,
-             Metadata::Query(get_item_key(item), content),
+             Metadata::Query(get_item_key(working_id), content),
              m_config.m_endpoint});
         if (!response->ok()) {
             throw RequestException<CrudRequestError>(
@@ -131,7 +133,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
 
         const auto set_response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_ADD,
-             Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
+             Metadata::Query(get_set_key(), working_id), m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_ADD: "

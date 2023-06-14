@@ -42,6 +42,9 @@ void StorageTierJsonAdapter::from_dict(
         if (key == "backend" && !value.empty()) {
             item.m_backend = value;
         }
+        else if (key == "id" && !value.empty()) {
+            item.m_id = value;
+        }
     };
     scalar_data.for_each_item(on_item);
 }

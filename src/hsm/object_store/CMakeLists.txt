@@ -2,17 +2,13 @@ include(AddModule)
 
 add_subdirectory(common)
 add_subdirectory(client)
-add_subdirectory(copytool)
 
 add_module(
-    MODULE_NAME hsm_object_store 
+    MODULE_NAME distributed_hsm_object_store 
     HEADERS
-        CopyToolInterface.h
-        MultiBackendHsmObjectStoreClient.h      
+        DistributedHsmObjectStoreClient.h      
     SOURCES
-        CopyToolInterface.cc
-        MultiBackendHsmObjectStoreClient.cc
+        DistributedHsmObjectStoreClient.cc
     INTERNAL_DEPENDENCIES 
-        copytool_lib
-        hsm_object_store_client
+        hsm
 )

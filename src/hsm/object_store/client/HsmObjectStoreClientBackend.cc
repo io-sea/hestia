@@ -1,14 +1,14 @@
-#include "HsmObjectStoreClientSpec.h"
+#include "HsmObjectStoreClientBackend.h"
 
 namespace hestia {
-HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(
+HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
     Type client_type, Source source, const std::string& identifier) :
     m_type(client_type), m_source(source), m_identifier(identifier)
 {
 }
 
-HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(
-    const HsmObjectStoreClientSpec& other)
+HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
+    const HsmObjectStoreClientBackend& other)
 {
     m_type         = other.m_type;
     m_source       = other.m_source;
@@ -16,7 +16,8 @@ HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(
     m_extra_config = other.m_extra_config;
 }
 
-HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(const Dictionary& config)
+HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
+    const Dictionary& config)
 {
     if (const auto identifier_dict = config.get_map_item("identifier")) {
         m_identifier = identifier_dict->get_scalar();
@@ -32,7 +33,7 @@ HsmObjectStoreClientSpec::HsmObjectStoreClientSpec(const Dictionary& config)
     config.get_map_items(m_extra_config, {"identifier", "source", "type"});
 }
 
-void HsmObjectStoreClientSpec::set_source(const std::string& source)
+void HsmObjectStoreClientBackend::set_source(const std::string& source)
 {
     if (source == "built_in") {
         m_source = Source::BUILT_IN;
@@ -45,7 +46,7 @@ void HsmObjectStoreClientSpec::set_source(const std::string& source)
     }
 }
 
-void HsmObjectStoreClientSpec::set_type(const std::string& type)
+void HsmObjectStoreClientBackend::set_type(const std::string& type)
 {
     if (type == "basic") {
         m_type = Type::BASIC;
@@ -55,12 +56,12 @@ void HsmObjectStoreClientSpec::set_type(const std::string& type)
     }
 }
 
-bool HsmObjectStoreClientSpec::is_hsm() const
+bool HsmObjectStoreClientBackend::is_hsm() const
 {
     return m_type == Type::HSM;
 }
 
-std::string HsmObjectStoreClientSpec::to_string() const
+std::string HsmObjectStoreClientBackend::to_string() const
 {
     const std::string type_str = m_type == Type::BASIC ? "Basic" : "HSM";
     std::string source_str;

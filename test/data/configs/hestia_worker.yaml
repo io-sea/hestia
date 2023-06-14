@@ -26,15 +26,3 @@ key_value_store:
 key_value_store_clients:
   - identifier: hestia::FileKeyValueStoreClient
     root: key_value_store
-
-tier_registry:
-  - identifier: 0
-    client_identifier: hestia::FileHsmObjectStoreClient
-  - identifier: 1
-    client_identifier: hestia::FileHsmObjectStoreClient
-  - identifier: 2
-    client_identifier: hestia::FileHsmObjectStoreClient
-
-event_feed:
-  event_feed_path: event_feed.yaml
-  event_feed_active: y

@@ -8,11 +8,11 @@ set(LINK_MODULES_FOR_EXPORT
         s3app
         hsm
         event_feed
-        copytool_lib
         http_client
+        hsm_base_types
         hsm_object_store_common
         hsm_object_store_client
-        hsm_object_store
+        distributed_hsm_object_store
         app
         headers
 )

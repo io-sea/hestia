@@ -4,13 +4,12 @@
 #include "DataPlacementEngine.h"
 #include "FileKeyValueStoreClient.h"
 
-#include "CopyToolInterface.h"
+#include "DistributedHsmObjectStoreClient.h"
 #include "DistributedHsmService.h"
 #include "HsmNodeService.h"
+#include "HsmObjectStoreClientBackend.h"
 #include "HsmObjectStoreClientManager.h"
-#include "HsmObjectStoreClientSpec.h"
 #include "HsmService.h"
-#include "MultiBackendHsmObjectStoreClient.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -37,25 +36,24 @@ class DistributedHsmServiceTestFixture {
         m_kv_store_client->initialize(config);
 
         m_object_store_client =
-            hestia::MultiBackendHsmObjectStoreClient::create();
+            hestia::DistributedHsmObjectStoreClient::create();
 
-        hestia::HsmObjectStoreClientSpec object_store_backend(
-            hestia::HsmObjectStoreClientSpec::Type::HSM,
-            hestia::HsmObjectStoreClientSpec::Source::BUILT_IN,
+        auto hsm_service = hestia::HsmService::create(
+            m_kv_store_client.get(), m_object_store_client.get());
+
+        hestia::HsmObjectStoreClientBackend object_store_backend(
+            hestia::HsmObjectStoreClientBackend::Type::HSM,
+            hestia::HsmObjectStoreClientBackend::Source::BUILT_IN,
             "hestia::FileHsmObjectStoreClient");
         object_store_backend.m_extra_config.set_item("root", get_store_path());
 
-        hestia::TierBackendRegistry backends;
-        backends.emplace(0, object_store_backend);
-        backends.emplace(1, object_store_backend);
-        m_object_store_client->do_initialize(backends, {});
-
-        m_hsm_service = hestia::HsmService::create(
-            m_kv_store_client.get(), m_object_store_client.get());
-
         hestia::DistributedHsmServiceConfig dist_hsm_config;
+        dist_hsm_config.m_self.m_backends = {object_store_backend};
+
         m_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, m_hsm_service.get(), m_kv_store_client.get());
+            dist_hsm_config, std::move(hsm_service), m_kv_store_client.get());
+
+        m_object_store_client->do_initialize(m_dist_hsm_service.get());
     }
 
     std::string get_store_path() const
@@ -65,9 +63,8 @@ class DistributedHsmServiceTestFixture {
 
     std::string m_test_name;
     std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
-    std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient>
+    std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
         m_object_store_client;
-    std::unique_ptr<hestia::HsmService> m_hsm_service;
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
 };
 
@@ -78,23 +75,27 @@ TEST_CASE_METHOD(
 {
     init("TestDistributedHsmService");
 
-    std::vector<hestia::HsmNode> nodes;
-    m_dist_hsm_service->get(nodes);
-
-    REQUIRE(nodes.size() == 1);
+    auto get_response = m_dist_hsm_service->make_request(
+        hestia::DistributedHsmServiceRequestMethod::GET);
+    REQUIRE(get_response->ok());
+    REQUIRE(get_response->items().size() == 1);
 
     hestia::HsmNode node("01234");
     node.m_host_address = "127.0.0.1";
 
-    hestia::ObjectStoreBackend backend;
+    hestia::HsmObjectStoreClientBackend backend;
     backend.m_identifier = "my_backend";
     node.m_backends.push_back(backend);
 
-    m_dist_hsm_service->put(node);
+    auto put_response = m_dist_hsm_service->make_request(
+        {node, hestia::DistributedHsmServiceRequestMethod::PUT});
+    REQUIRE(put_response->ok());
 
-    m_dist_hsm_service->get(nodes);
+    auto get_response2 = m_dist_hsm_service->make_request(
+        hestia::DistributedHsmServiceRequestMethod::GET);
+    REQUIRE(get_response2->ok());
 
-    REQUIRE(nodes.size() == 2);
-    REQUIRE(nodes[1].m_host_address == node.m_host_address);
-    REQUIRE(nodes[1].m_backends.size() == 1);
+    REQUIRE(get_response2->items().size() == 2);
+    REQUIRE(get_response2->items()[1].m_host_address == node.m_host_address);
+    REQUIRE(get_response2->items()[1].m_backends.size() == 1);
 }

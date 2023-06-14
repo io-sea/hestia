@@ -2,7 +2,7 @@
 
 #include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
-#include "MultiBackendHsmObjectStoreClient.h"
+#include "HsmObjectStoreClient.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -25,7 +25,7 @@ namespace hestia {
 HsmService::HsmService(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
-    MultiBackendHsmObjectStoreClient* object_store,
+    HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed) :
     m_object_service(std::move(object_service)),
@@ -39,7 +39,7 @@ HsmService::HsmService(
 }
 
 HsmService::Ptr HsmService::create(
-    KeyValueStoreClient* client, MultiBackendHsmObjectStoreClient* object_store)
+    KeyValueStoreClient* client, HsmObjectStoreClient* object_store)
 {
     auto object_service = ObjectService::create(ObjectServiceConfig(), client);
     auto tier_service   = TierService::create(TierServiceConfig(), client);
@@ -54,7 +54,7 @@ HsmService::Ptr HsmService::create(
 HsmService::Ptr HsmService::create(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
-    MultiBackendHsmObjectStoreClient* object_store,
+    HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed)
 {
@@ -67,6 +67,11 @@ HsmService::Ptr HsmService::create(
 HsmService::~HsmService()
 {
     LOG_INFO("Destroying HsmService");
+}
+
+TierService* HsmService::get_tier_service()
+{
+    return m_tier_service.get();
 }
 
 HsmServiceResponse::Ptr HsmService::make_request(

@@ -81,7 +81,6 @@ void FileKeyValueStoreClient::set_add(
 void FileKeyValueStoreClient::set_list(
     const std::string& key, std::vector<std::string>& values) const
 {
-    LOG_INFO("FileKeyValueStoreClient SET LIST");
     const auto prefix = StringUtils::replace(key, ':', '_');
     const auto path   = m_store / (prefix + "_set.meta");
 

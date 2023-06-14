@@ -49,7 +49,7 @@ void HsmNodeJsonAdapter::to_dict(
         {"port", node.m_port},
         {"tag", node.m_tag},
         {"version", node.m_version},
-        {"contoller", std::to_string(static_cast<int>(node.m_is_controller))},
+        {"controller", std::to_string(static_cast<int>(node.m_is_controller))},
     });
 
     auto backend_seq = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
@@ -100,7 +100,7 @@ void HsmNodeJsonAdapter::from_dict(const Dictionary& dict, HsmNode& node)
         else if (key == "version") {
             node.m_version = value;
         }
-        else if (key == "contoller") {
+        else if (key == "controller") {
             node.m_is_controller = value == "1";
         }
     };
@@ -112,7 +112,7 @@ void HsmNodeJsonAdapter::from_dict(const Dictionary& dict, HsmNode& node)
             Metadata backend_data;
             backend_dict->get_map_items(backend_data);
 
-            ObjectStoreBackend backend;
+            HsmObjectStoreClientBackend backend;
             auto on_each_backend_item =
                 [&backend](const std::string& key, const std::string& value) {
                     if (key == "identifier") {

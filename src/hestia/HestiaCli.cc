@@ -5,12 +5,15 @@
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
 
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
+#include "HestiaServer.h"
 #include "HsmService.h"
+#include "HsmServiceRequest.h"
 
 #include "DaemonManager.h"
 
 #include "Logger.h"
+#include "Stream.h"
 
 #include <filesystem>
 #include <iostream>
@@ -348,9 +351,10 @@ OpStatus HestiaCli::run_hsm()
     }
 
     if (request) {
-        auto response =
-            hestia::ApplicationContext::get().get_hsm_service()->make_request(
-                *(request.get()), stream.get());
+        auto response = hestia::ApplicationContext::get()
+                            .get_hsm_service()
+                            ->get_hsm_service()
+                            ->make_request(*(request.get()), stream.get());
 
         if (!response->ok()) {
             const std::string msg =
@@ -382,8 +386,8 @@ OpStatus HestiaCli::run_hsm()
 
 OpStatus HestiaCli::run_server(const ServerConfig& config)
 {
-    HestiaService hestia_service(config);
-    hestia_service.run();
+    HestiaServer hestia_server(config);
+    hestia_server.run();
 
     return {};
 }

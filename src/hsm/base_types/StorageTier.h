@@ -12,7 +12,17 @@ class StorageTier {
 
     StorageTier(const std::string& id) : m_id(id) {}
 
+    StorageTier(uint8_t id) : m_id(std::to_string(id)) {}
+
     const std::string& id() const { return m_id; }
+
+    uint8_t id_uint() const
+    {
+        if (m_id.empty()) {
+            return 0;
+        }
+        return std::stoul(m_id);
+    }
 
     tier_storage_class m_type{tier_storage_class::ssd_nvme};
     std::size_t m_capacity{0};

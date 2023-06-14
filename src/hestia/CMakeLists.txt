@@ -8,7 +8,7 @@ add_module(
         application/ApplicationContext.h
         application/HestiaConfig.h
         application/HestiaConfigurator.h
-        application/HestiaService.h
+        application/HestiaServer.h
         application/ServerConfig.h
         web/http/HestiaWebApp.h 
         web/http/HestiaObjectView.h 
@@ -21,7 +21,7 @@ add_module(
         application/ApplicationContext.cc
         application/HestiaConfig.cc
         application/HestiaConfigurator.cc
-        application/HestiaService.cc
+        application/HestiaServer.cc
         application/ServerConfig.cc
         web/http/HestiaWebApp.cc 
         web/http/HestiaObjectView.cc 
@@ -35,6 +35,7 @@ add_module(
     INTERNAL_DEPENDENCIES 
         headers
         hsm
+        distributed_hsm_object_store
         server     
         cli 
         http_client

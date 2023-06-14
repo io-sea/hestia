@@ -1,14 +1,11 @@
 #pragma once
 
+#include "HsmObjectStoreClientBackend.h"
+
 #include <string>
 #include <vector>
 
 namespace hestia {
-
-class ObjectStoreBackend {
-  public:
-    std::string m_identifier;
-};
 
 class HsmNode {
   public:
@@ -24,6 +21,6 @@ class HsmNode {
     std::string m_tag;
     std::string m_version;
     std::string m_app_type;
-    std::vector<ObjectStoreBackend> m_backends;
+    std::vector<HsmObjectStoreClientBackend> m_backends;
 };
 }  // namespace hestia

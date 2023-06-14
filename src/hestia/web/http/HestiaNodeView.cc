@@ -12,7 +12,6 @@ namespace hestia {
 HestiaNodeView::HestiaNodeView(DistributedHsmService* hestia_service) :
     WebView(), m_hestia_service(hestia_service)
 {
-    (void)m_hestia_service;
 }
 
 HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
@@ -27,10 +26,15 @@ HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
     LOG_INFO("Relative path: " + relative_path);
 
     if (relative_path.empty() || relative_path == "/") {
-        std::vector<HsmNode> nodes;
-        m_hestia_service->get(nodes);
+
+        auto get_response = m_hestia_service->make_request(
+            DistributedHsmServiceRequestMethod::GET);
+        if (!get_response->ok()) {
+            return HttpResponse::create(500, "Internal Server Error");
+        }
+
         std::string body;
-        HsmNodeJsonAdapter().to_string(nodes, body);
+        HsmNodeJsonAdapter().to_string(get_response->items(), body);
         response->set_body(body);
     }
     return response;
@@ -49,7 +53,12 @@ HttpResponse::Ptr HestiaNodeView::on_put(const HttpRequest& request)
             HsmNode node;
             LOG_INFO("Trying to serialize: " << request.body());
             HsmNodeJsonAdapter().from_string(request.body(), node);
-            m_hestia_service->put(node);
+
+            auto put_response = m_hestia_service->make_request(
+                {node, DistributedHsmServiceRequestMethod::PUT});
+            if (!put_response->ok()) {
+                return HttpResponse::create(500, "Internal Server Error");
+            }
 
             std::string body;
             HsmNodeJsonAdapter().to_string(node, body);

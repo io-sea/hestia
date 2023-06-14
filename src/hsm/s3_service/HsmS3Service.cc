@@ -1,5 +1,6 @@
 #include "HsmS3Service.h"
 
+#include "DistributedHsmService.h"
 #include "HsmService.h"
 #include "KeyValueStoreClient.h"
 #include "S3ContainerAdapter.h"
@@ -9,13 +10,12 @@
 
 namespace hestia {
 HsmS3Service::HsmS3Service(
-    HsmService* hsm_service, KeyValueStoreClient* kv_store_client) :
+    DistributedHsmService* hsm_service, KeyValueStoreClient* kv_store_client) :
     S3Service({}),
     m_hsm_service(hsm_service),
     m_kv_store_client(kv_store_client)
 {
     LOG_INFO("Creating HsmS3Service");
-    (void)m_hsm_service;
 }
 
 HsmS3Service::~HsmS3Service()
@@ -37,7 +37,8 @@ std::pair<S3Service::Status, bool> HsmS3Service::exists(
 {
     HsmServiceRequest request(
         StorageObject(object_id), HsmServiceRequestMethod::EXISTS);
-    if (const auto response = m_hsm_service->make_request(request);
+    if (const auto response =
+            m_hsm_service->get_hsm_service()->make_request(request);
         response->ok()) {
         return {{}, response->object_found()};
     }
@@ -56,7 +57,8 @@ S3Service::Status HsmS3Service::get(S3Container& container) const noexcept
 
     HsmServiceRequest request(
         StorageObject(container.m_name), HsmServiceRequestMethod::GET);
-    if (const auto response = m_hsm_service->make_request(request);
+    if (const auto response =
+            m_hsm_service->get_hsm_service()->make_request(request);
         response->ok()) {
         m_container_adapter->to_s3(container, response->object().object());
     }
@@ -77,7 +79,8 @@ S3Service::Status HsmS3Service::get(S3Container& container) const noexcept
         StorageObject(container.m_name), HsmServiceRequestMethod::PUT);
     m_container_adapter->from_s3(request.object(), container);
 
-    if (const auto response = m_hsm_service->make_request(request);
+    if (const auto response =
+            m_hsm_service->get_hsm_service()->make_request(request);
         !response->ok()) {
         return {
             S3Service::Status::Code::ERROR, response->get_error().to_string()};

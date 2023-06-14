@@ -5,18 +5,20 @@
 #include <string>
 
 namespace hestia {
-class HsmObjectStoreClientSpec {
+class HsmObjectStoreClientBackend {
   public:
     enum class Type { HSM, BASIC };
 
     enum class Source { BUILT_IN, PLUGIN, MOCK };
 
-    HsmObjectStoreClientSpec(
+    HsmObjectStoreClientBackend() = default;
+
+    HsmObjectStoreClientBackend(
         Type client_type, Source source, const std::string& identifier);
 
-    HsmObjectStoreClientSpec(const Dictionary& config);
+    HsmObjectStoreClientBackend(const Dictionary& config);
 
-    HsmObjectStoreClientSpec(const HsmObjectStoreClientSpec& other);
+    HsmObjectStoreClientBackend(const HsmObjectStoreClientBackend& other);
 
     void set_source(const std::string& source);
 
@@ -26,7 +28,8 @@ class HsmObjectStoreClientSpec {
 
     std::string to_string() const;
 
-    HsmObjectStoreClientSpec& operator=(const HsmObjectStoreClientSpec& other)
+    HsmObjectStoreClientBackend& operator=(
+        const HsmObjectStoreClientBackend& other)
     {
         if (this != &other) {
             m_type         = other.m_type;
@@ -42,4 +45,5 @@ class HsmObjectStoreClientSpec {
     std::string m_identifier;
     Metadata m_extra_config;
 };
+
 }  // namespace hestia

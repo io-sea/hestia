@@ -29,7 +29,6 @@ object_store_clients:
     source: plugin
     type: basic
     plugin_path: libhestia_s3_plugin
-    host: 127.0.0.1:8000
   - identifier: hestia::PhobosClient
     source: plugin
     type: basic

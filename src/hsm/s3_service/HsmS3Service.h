@@ -3,12 +3,14 @@
 #include "S3Service.h"
 
 namespace hestia {
-class HsmService;
+class DistributedHsmService;
 class KeyValueStoreClient;
 
 class HsmS3Service : public S3Service {
   public:
-    HsmS3Service(HsmService* hsm_service, KeyValueStoreClient* kv_store_client);
+    HsmS3Service(
+        DistributedHsmService* hsm_service,
+        KeyValueStoreClient* kv_store_client);
 
     virtual ~HsmS3Service();
 
@@ -28,7 +30,7 @@ class HsmS3Service : public S3Service {
   private:
     std::pair<Status, bool> exists(const std::string& object_id) const override;
 
-    HsmService* m_hsm_service{nullptr};
+    DistributedHsmService* m_hsm_service{nullptr};
     KeyValueStoreClient* m_kv_store_client{nullptr};
 };
 }  // namespace hestia

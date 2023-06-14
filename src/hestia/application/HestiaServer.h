@@ -3,9 +3,9 @@
 #include "ServerConfig.h"
 
 namespace hestia {
-class HestiaService {
+class HestiaServer {
   public:
-    HestiaService(const ServerConfig& config);
+    HestiaServer(const ServerConfig& config);
 
     void run();
 

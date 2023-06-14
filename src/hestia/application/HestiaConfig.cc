@@ -25,7 +25,7 @@ std::string HestiaConfig::load(const std::string& path)
     const auto root = dict.get_map_item("root");
     load(*root);
 
-    if (m_tier_backend_registry.empty()) {
+    if (m_backends.empty()) {
         load_object_store_defaults();
     }
     return config_path;
@@ -46,13 +46,17 @@ void HestiaConfig::load_defaults()
 void HestiaConfig::load_object_store_defaults()
 {
     std::string default_root = m_cache_path + "/hsm_object_store";
+
+    HsmObjectStoreClientBackend client_config(
+        HsmObjectStoreClientBackend::Type::HSM,
+        HsmObjectStoreClientBackend::Source::BUILT_IN,
+        "hestia::FileHsmObjectStoreClient");
+    m_backends.emplace(client_config.m_identifier, client_config);
+
     for (uint8_t idx = 0; idx < 5; idx++) {
-        HsmObjectStoreClientSpec client_config(
-            HsmObjectStoreClientSpec::Type::HSM,
-            HsmObjectStoreClientSpec::Source::BUILT_IN,
-            "hestia::FileHsmObjectStoreClient");
-        client_config.m_extra_config.set_item("root", default_root);
-        m_tier_backend_registry.emplace(idx, client_config);
+        StorageTier tier(idx);
+        tier.m_backend = client_config.m_identifier;
+        m_tiers.emplace(idx, tier);
     }
 }
 
@@ -140,11 +144,11 @@ void HestiaConfig::load(const Dictionary& dict)
         m_cache_path = cache_loc->get_scalar();
     }
 
-    auto object_store_config  = dict.get_map_item("object_store_clients");
-    auto tier_client_registry = dict.get_map_item("tier_registry");
+    auto backends = dict.get_map_item("object_store_clients");
+    auto tiers    = dict.get_map_item("tier_registry");
 
-    if ((object_store_config != nullptr) && (tier_client_registry != nullptr)) {
-        load_object_store_clients(*object_store_config, *tier_client_registry);
+    if ((backends != nullptr) && (tiers != nullptr)) {
+        load_object_store_clients(*backends, *tiers);
     }
 
     auto kv_store_config   = dict.get_map_item("key_value_store");
@@ -169,26 +173,20 @@ void HestiaConfig::load(const Dictionary& dict)
 }
 
 void HestiaConfig::load_object_store_clients(
-    const Dictionary& object_store_config,
-    const Dictionary& tier_client_registry)
+    const Dictionary& backends, const Dictionary& tiers)
 {
-    std::unordered_map<std::string, HsmObjectStoreClientSpec>
-        object_store_clients;
-
-    for (const auto& store : object_store_config.get_sequence()) {
+    for (const auto& store : backends.get_sequence()) {
         std::string identifier;
         if (const auto identifier_dict = store->get_map_item("identifier");
             identifier_dict != nullptr) {
             identifier = identifier_dict->get_scalar();
         }
-        object_store_clients.emplace(
-            identifier, HsmObjectStoreClientSpec(*store));
+        m_backends.emplace(identifier, HsmObjectStoreClientBackend(*store));
     }
 
-    for (const auto& registry_entry : tier_client_registry.get_sequence()) {
+    for (const auto& tier : tiers.get_sequence()) {
         uint8_t identifier{0};
-        if (const auto identifier_dict =
-                registry_entry->get_map_item("identifier");
+        if (const auto identifier_dict = tier->get_map_item("identifier");
             identifier_dict != nullptr) {
             identifier =
                 static_cast<uint8_t>(std::stoi(identifier_dict->get_scalar()));
@@ -196,14 +194,15 @@ void HestiaConfig::load_object_store_clients(
 
         std::string client_identifier;
         if (const auto identifier_dict =
-                registry_entry->get_map_item("client_identifier");
+                tier->get_map_item("client_identifier");
             identifier_dict != nullptr) {
             client_identifier = identifier_dict->get_scalar();
         }
 
-        if (auto iter = object_store_clients.find(client_identifier);
-            iter != object_store_clients.end()) {
-            m_tier_backend_registry.emplace(identifier, iter->second);
+        if (!client_identifier.empty()) {
+            StorageTier tier_obj(identifier);
+            tier_obj.m_backend = client_identifier;
+            m_tiers.emplace(identifier, tier_obj);
         }
     }
 }
