@@ -55,6 +55,16 @@ class StringUtils {
     static std::pair<std::string, std::string> split_on_first(
         const std::string& str, char delimiter);
 
+    /**
+     * Split the string on the first occurence of the substring
+     *
+     * @param str the string to split
+     * @param substr substring
+     * @return the elements of the string before and after the substring, either can be empty.
+     */
+    static std::pair<std::string, std::string> split_on_first(
+        const std::string& str, const std::string& substr);
+
     static void split(
         const std::string& str,
         char delimiter,

@@ -14,6 +14,20 @@ DistributedHsmServiceRequest::DistributedHsmServiceRequest(
 {
 }
 
+DistributedHsmServiceRequest::DistributedHsmServiceRequest(
+    const Metadata& query) :
+    MethodRequest<DistributedHsmServiceRequestMethod>(
+        DistributedHsmServiceRequestMethod::LIST),
+    m_query(query)
+
+{
+}
+
+const Metadata& DistributedHsmServiceRequest::query() const
+{
+    return m_query;
+}
+
 std::string DistributedHsmServiceRequest::method_as_string() const
 {
     switch (m_method) {
@@ -21,6 +35,8 @@ std::string DistributedHsmServiceRequest::method_as_string() const
             return "PUT";
         case DistributedHsmServiceRequestMethod::GET:
             return "GET";
+        case DistributedHsmServiceRequestMethod::LIST:
+            return "LIST";
         default:
             return "UNKNOWN";
     }

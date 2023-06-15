@@ -11,6 +11,8 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
+#include "HttpObjectStoreClient.h"
+
 #include "ApplicationContext.h"
 #include "DistributedHsmService.h"
 #include "HsmService.h"
@@ -27,10 +29,18 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 {
     m_config = config;
 
+    CurlClientConfig http_client_config;
+    auto http_client = std::make_unique<CurlClient>(http_client_config);
+    ApplicationContext::get().set_http_client(std::move(http_client));
+
+    auto http_object_store_client = std::make_unique<HttpObjectStoreClient>(
+        ApplicationContext::get().get_http_client());
+
     std::vector<std::filesystem::path> search_paths;
     DistributedHsmObjectStoreClient::Ptr object_store;
     try {
-        object_store = DistributedHsmObjectStoreClient::create(search_paths);
+        object_store = DistributedHsmObjectStoreClient::create(
+            std::move(http_object_store_client), search_paths);
     }
     catch (const std::exception& e) {
         LOG_ERROR(e.what());
@@ -39,10 +49,6 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 
     auto dist_object_store_client = object_store.get();
     ApplicationContext::get().set_object_store_client(std::move(object_store));
-
-    CurlClientConfig http_client_config;
-    auto http_client = std::make_unique<CurlClient>(http_client_config);
-    ApplicationContext::get().set_http_client(std::move(http_client));
 
     std::unique_ptr<KeyValueStoreClient> kv_store_client;
     try {
@@ -133,8 +139,6 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         dist_hsm_service = DistributedHsmService::create(
             service_config, std::move(hsm_service),
             ApplicationContext::get().get_kv_store_client());
-
-        // Register tiers
     }
     else {
         dist_hsm_service = DistributedHsmService::create(

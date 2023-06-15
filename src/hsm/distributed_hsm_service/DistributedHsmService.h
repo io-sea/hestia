@@ -55,6 +55,9 @@ class DistributedHsmService {
     DistributedHsmServiceResponse::Ptr put(
         const DistributedHsmServiceRequest& req) const;
 
+    DistributedHsmServiceResponse::Ptr list(
+        const DistributedHsmServiceRequest& req) const;
+
     DistributedHsmServiceConfig m_config;
     std::unique_ptr<HsmService> m_hsm_service;
     std::unique_ptr<HsmNodeService> m_node_service;

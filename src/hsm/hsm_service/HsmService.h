@@ -45,6 +45,8 @@ class HsmService {
 
     TierService* get_tier_service();
 
+    ObjectService* get_object_service();
+
     [[nodiscard]] HsmServiceResponse::Ptr make_request(
         const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
 
@@ -62,7 +64,7 @@ class HsmService {
 
     void list_attributes(HsmObject& object);
     void list_objects(uint8_t tier, std::vector<HsmObject>& objects);
-    void list_tiers(HsmObject& object, std::vector<uint8_t>& tiers);
+    HsmServiceResponse::Ptr list_tiers(const HsmServiceRequest& request);
 
     std::unique_ptr<ObjectService> m_object_service;
     std::unique_ptr<TierService> m_tier_service;

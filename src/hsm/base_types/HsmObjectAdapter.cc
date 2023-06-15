@@ -2,6 +2,7 @@
 
 #include "JsonUtils.h"
 #include "StringUtils.h"
+#include "Uuid.h"
 
 #include <iostream>
 
@@ -54,6 +55,9 @@ void HsmObjectJsonAdapter::to_dict(
         }
         data[m_internal_prefix + "::tiers"] = sstr.str();
     }
+    else {
+        data[m_internal_prefix + "::tiers"] = "";
+    }
     data.insert(
         item.object().m_metadata.get_raw_data().begin(),
         item.object().m_metadata.get_raw_data().end());
@@ -82,6 +86,11 @@ void HsmObjectJsonAdapter::from_dict(
             }
             else if (without_prefix == "size" && !value.empty()) {
                 item.object().m_size = std::stoul(value);
+            }
+            else if (without_prefix == "id" && !value.empty()) {
+                if (item.object().m_id.empty()) {
+                    item.object().m_id = value;
+                }
             }
             else if (without_prefix == "tiers" && !value.empty()) {
                 std::vector<std::string> tier_ids;

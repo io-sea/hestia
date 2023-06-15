@@ -21,6 +21,8 @@ class HsmObjectStoreClientManager {
 
     HsmObjectStoreClient* get_hsm_client(uint8_t tier_id) const;
 
+    std::string get_client_backend(uint8_t tier_id) const;
+
     bool has_client(uint8_t tier_id) const;
 
     bool have_same_client_types(uint8_t tier_id0, uint8_t tier_id1) const;

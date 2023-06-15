@@ -1,8 +1,11 @@
 #pragma once
 
+#include "CurlHandle.h"
 #include "HttpClient.h"
 
-#include <curl/curl.h>
+#include <atomic>
+#include <thread>
+#include <unordered_map>
 
 namespace hestia {
 struct CurlClientConfig {
@@ -29,7 +32,8 @@ class CurlClient : public HttpClient {
      * @param request the http request
      * @return the http response
      */
-    HttpResponse::Ptr make_request(const HttpRequest& request) override;
+    HttpResponse::Ptr make_request(
+        const HttpRequest& request, Stream* stream = nullptr) override;
 
   private:
     static size_t curl_write_data(
@@ -42,16 +46,11 @@ class CurlClient : public HttpClient {
 
     size_t on_read(char* buffer, size_t nmemb);
 
-    void prepare_put(const HttpRequest& request);
-
-    void prepare_get(const HttpRequest& request);
+    void setup_handle(CurlHandle* handle);
 
     CurlClientConfig m_config;
-    HttpResponse::Ptr m_working_response;
-    HttpRequest m_working_request;
-    std::size_t m_read_offset{0};
+    std::atomic<bool> m_initialized{false};
 
-    std::string m_error_buffer;
-    CURL* m_handle{nullptr};
+    std::unordered_map<std::thread::id, CurlHandle*> m_handles;
 };
 }  // namespace hestia

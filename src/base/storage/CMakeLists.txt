@@ -14,6 +14,7 @@ add_module(
         block_store/BlockStore.h
         clients/file/FileObjectStoreClient.h
         clients/file/FileKeyValueStoreClient.h
+        clients/http/HttpObjectStoreClient.h
         clients/memory/InMemoryObjectStoreClient.h
         clients/redis/RedisKeyValueStoreClient.h
         requests/ObjectStoreRequest.h
@@ -29,6 +30,7 @@ add_module(
         block_store/BlockStore.cc
         clients/file/FileObjectStoreClient.cc
         clients/file/FileKeyValueStoreClient.cc
+        clients/http/HttpObjectStoreClient.cc
         clients/memory/InMemoryObjectStoreClient.cc
         clients/redis/RedisKeyValueStoreClient.cc
         requests/ObjectStoreRequest.cc
@@ -38,12 +40,14 @@ add_module(
     INTERNAL_INCLUDE_DIRS
         block_store
         clients/file
+        clients/http
         clients/memory
         clients/redis
         requests
     INTERNAL_DEPENDENCIES 
         common
         protocol
+        http_client
     PRIVATE_DEPENDENCIES
         hiredis::hiredis_static
     WITH_FILESYSTEM

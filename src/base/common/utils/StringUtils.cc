@@ -14,6 +14,27 @@ std::pair<std::string, std::string> StringUtils::split_on_first(
     return {str.substr(0, loc), str.substr(loc + 1, str.size() - loc)};
 }
 
+std::pair<std::string, std::string> StringUtils::split_on_first(
+    const std::string& str, const std::string& substr)
+{
+    if (str.empty()) {
+        return {{}, {}};
+    }
+
+    if (substr.empty()) {
+        return {str, {}};
+    }
+
+    const auto loc = str.find(substr);
+    if (loc == str.npos) {
+        return {str, {}};
+    }
+    return {
+        str.substr(0, loc),
+        str.substr(loc + substr.size(), str.size() - loc - substr.size())};
+}
+
+
 std::string StringUtils::remove_prefix(
     const std::string& str, const std::string& prefix)
 {

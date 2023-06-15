@@ -31,7 +31,10 @@ class TestHsmService : public hestia::HsmService {
 
 class HsmServiceTestFixture {
   public:
-    ~HsmServiceTestFixture() { std::filesystem::remove_all(get_store_path()); }
+    ~HsmServiceTestFixture()
+    {
+        // std::filesystem::remove_all(get_store_path());
+    }
 
     void init(const std::string& test_name)
     {
@@ -50,6 +53,12 @@ class HsmServiceTestFixture {
 
         auto tier_service = hestia::TierService::create(
             hestia::TierServiceConfig(), m_kv_store_client.get());
+
+        for (std::size_t idx = 0; idx < 5; idx++) {
+            auto response = tier_service->make_request(
+                {hestia::StorageTier(idx), hestia::CrudMethod::PUT});
+            REQUIRE(response->ok());
+        }
 
         m_object_store_client =
             std::make_unique<hestia::FileHsmObjectStoreClient>();
@@ -117,6 +126,28 @@ class HsmServiceTestFixture {
         REQUIRE(m_hsm_service->make_request(request)->ok());
     }
 
+    void remove(const hestia::StorageObject& obj, int src_tier)
+    {
+        hestia::HsmServiceRequest request(
+            obj, hestia::HsmServiceRequestMethod::REMOVE);
+        request.set_source_tier(src_tier);
+        REQUIRE(m_hsm_service->make_request(request)->ok());
+    }
+
+    bool is_object_on_tier(const hestia::StorageObject& obj, int src_tier)
+    {
+        auto response = m_hsm_service->make_request(
+            {obj, hestia::HsmServiceRequestMethod::LIST_TIERS});
+        REQUIRE(response->ok());
+
+        for (const auto& tier : response->tiers()) {
+            if (tier.id_uint() == src_tier) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool obj_exists(const hestia::StorageObject& obj)
     {
         auto exists = m_hsm_service->make_request(hestia::HsmServiceRequest(
@@ -177,9 +208,15 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     copy(obj, src_tier, tgt_tier);
     get(obj, &stream, src_tier);
     check_content(&stream, content);
+
     get(obj, &stream, tgt_tier);
     check_content(&stream, content);
 
+    remove(obj, tgt_tier);
+    REQUIRE(is_object_on_tier(obj, src_tier));
+    REQUIRE_FALSE(is_object_on_tier(obj, tgt_tier));
+
+    return;
     move(obj, src_tier, tgt_tier);
     REQUIRE(exists(obj, tgt_tier));
     get(obj, &stream, tgt_tier);

@@ -5,19 +5,26 @@
 
 #include "DistributedHsmService.h"
 #include "HsmService.h"
+#include "HttpObjectStoreClient.h"
 #include "Logger.h"
 #include "TierService.h"
 
+#include "HttpClient.h"
+
 namespace hestia {
 DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
+    std::unique_ptr<HttpObjectStoreClient> http_client,
     std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
-    HsmObjectStoreClient(), m_client_manager(std::move(client_manager))
+    HsmObjectStoreClient(),
+    m_http_client(std::move(http_client)),
+    m_client_manager(std::move(client_manager))
 {
 }
 
 DistributedHsmObjectStoreClient::~DistributedHsmObjectStoreClient() {}
 
 DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
+    std::unique_ptr<HttpObjectStoreClient> http_client,
     const std::vector<std::filesystem::path>& plugin_paths)
 {
     auto plugin_handler =
@@ -27,7 +34,7 @@ DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
     auto client_manager = std::make_unique<HsmObjectStoreClientManager>(
         std::move(client_factory));
     return std::make_unique<DistributedHsmObjectStoreClient>(
-        std::move(client_manager));
+        std::move(http_client), std::move(client_manager));
 }
 
 void DistributedHsmObjectStoreClient::do_initialize(
@@ -74,8 +81,62 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
             }
         }
         else {
-            // Pull from remote
-            return nullptr;
+            Metadata query;
+            query.set_item(
+                "backend",
+                m_client_manager->get_client_backend(request.source_tier()));
+            auto list_response = m_hsm_service->make_request(query);
+            if (!list_response->ok()) {
+                auto response = HsmObjectStoreResponse::create(request);
+                response->on_error(
+                    {HsmObjectStoreErrorCode::ERROR,
+                     "Failed to list available backends"});
+                return response;
+            }
+
+            if (list_response->items().empty()) {
+                auto response = HsmObjectStoreResponse::create(request);
+                response->on_error(
+                    {HsmObjectStoreErrorCode::ERROR,
+                     "No suitable backends found for this tier in system."});
+                return response;
+            }
+
+            auto address = list_response->items()[0].m_host_address;
+            auto port    = list_response->items()[0].m_port;
+
+            HttpObjectStoreClientConfig http_config;
+            http_config.m_endpoint =
+                address + ":" + port + "/api/v1/hsm/object";
+            http_config.m_endpoint_suffix = "data";
+
+            ObjectStoreRequest get_request(
+                request.object(), ObjectStoreRequestMethod::GET);
+            auto get_response =
+                m_http_client->make_request(get_request, stream);
+
+            if (!get_response->ok()) {
+                LOG_ERROR(
+                    "Failed in remote get request: "
+                    << get_response->get_error().to_string());
+                return HsmObjectStoreResponse::create(
+                    request, std::move(get_response));
+            }
+
+            if (stream != nullptr && stream->has_content()) {
+                auto stream_state = stream->flush();
+                if (!stream_state.ok()) {
+                    auto response = HsmObjectStoreResponse::create(
+                        request, std::move(get_response));
+                    response->on_error(
+                        {HsmObjectStoreErrorCode::ERROR,
+                         "Failed in stream flush: "
+                             + stream_state.to_string()});
+                    return response;
+                }
+            }
+            return HsmObjectStoreResponse::create(
+                request, std::move(get_response));
         }
     }
     else if (

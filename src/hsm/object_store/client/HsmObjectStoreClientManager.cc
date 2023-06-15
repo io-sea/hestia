@@ -57,11 +57,9 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
 
 bool HsmObjectStoreClientManager::is_hsm_client(uint8_t tier_id) const
 {
-    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
-        if (const auto backend_iter = m_backends.find(iter->second.m_backend);
-            backend_iter != m_backends.end()) {
-            return backend_iter->second.is_hsm();
-        }
+    if (const auto backend_iter = m_backends.find(get_client_backend(tier_id));
+        backend_iter != m_backends.end()) {
+        return backend_iter->second.is_hsm();
     }
     return false;
 }
@@ -74,6 +72,17 @@ ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     }
     else {
         return nullptr;
+    }
+}
+
+std::string HsmObjectStoreClientManager::get_client_backend(
+    uint8_t tier_id) const
+{
+    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
+        return iter->second.m_backend;
+    }
+    else {
+        return {};
     }
 }
 
@@ -90,11 +99,9 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
 
 bool HsmObjectStoreClientManager::has_client(uint8_t tier_id) const
 {
-    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
-        if (const auto backend_iter = m_backends.find(iter->second.m_backend);
-            backend_iter != m_backends.end()) {
-            return true;
-        }
+    if (const auto backend_iter = m_backends.find(get_client_backend(tier_id));
+        backend_iter != m_backends.end()) {
+        return true;
     }
     return false;
 }

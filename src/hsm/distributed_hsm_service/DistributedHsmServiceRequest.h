@@ -8,7 +8,7 @@
 #include "HsmNode.h"
 
 namespace hestia {
-enum class DistributedHsmServiceRequestMethod { PUT, GET };
+enum class DistributedHsmServiceRequestMethod { PUT, GET, LIST };
 
 class DistributedHsmServiceRequest :
     public BaseRequest,
@@ -21,11 +21,16 @@ class DistributedHsmServiceRequest :
 
     DistributedHsmServiceRequest(DistributedHsmServiceRequestMethod method);
 
+    DistributedHsmServiceRequest(const Metadata& query);
+
     std::string method_as_string() const override;
 
     const HsmNode& item() const;
 
+    const Metadata& query() const;
+
   private:
+    Metadata m_query;
     HsmNode m_item;
 };
 

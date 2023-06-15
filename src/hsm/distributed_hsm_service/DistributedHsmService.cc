@@ -116,6 +116,8 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::make_request(
             return get(req);
         case DistributedHsmServiceRequestMethod::PUT:
             return put(req);
+        case DistributedHsmServiceRequestMethod::LIST:
+            return list(req);
         default:
             return nullptr;
     }
@@ -136,6 +138,39 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::get(
     auto response     = DistributedHsmServiceResponse::create(req);
     response->items() = get_response->items();
     LOG_INFO("Finished Node service multi get");
+    return response;
+}
+
+DistributedHsmServiceResponse::Ptr DistributedHsmService::list(
+    const DistributedHsmServiceRequest& req) const
+{
+    LOG_INFO("Calling Node service list");
+    const auto get_response =
+        m_node_service->make_request(CrudMethod::MULTI_GET);
+    if (!get_response->ok()) {
+        ON_ERROR(
+            ERROR, "Error in DistributedHsmService::get: "
+                       + get_response->get_error().to_string());
+    }
+
+    auto response = DistributedHsmServiceResponse::create(req);
+    if (auto backend_query = req.query().get_item("backend");
+        !backend_query.empty()) {
+        std::vector<HsmNode> matches;
+        for (const auto& node : get_response->items()) {
+            for (const auto& backend : node.m_backends) {
+                if (backend.m_identifier == backend_query) {
+                    matches.push_back(node);
+                    break;
+                }
+            }
+        }
+        response->items() = matches;
+    }
+    else {
+        response->items() = get_response->items();
+    }
+    LOG_INFO("Finished Node service list");
     return response;
 }
 

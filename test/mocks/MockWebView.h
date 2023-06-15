@@ -25,6 +25,7 @@ class MockWebView : public WebView {
 
     HttpResponse::Ptr on_put(const HttpRequest& request) override
     {
+        LOG_INFO("Have headers: " << request.get_header().to_string());
         const auto content_length = request.get_header().get_content_length();
         m_service->set_data(
             std::stoi(content_length), request.get_context()->get_stream());

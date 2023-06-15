@@ -74,6 +74,11 @@ TierService* HsmService::get_tier_service()
     return m_tier_service.get();
 }
 
+ObjectService* HsmService::get_object_service()
+{
+    return m_object_service.get();
+}
+
 HsmServiceResponse::Ptr HsmService::make_request(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
@@ -92,9 +97,11 @@ HsmServiceResponse::Ptr HsmService::make_request(
             return remove(req);
         case HsmServiceRequestMethod::REMOVE_ALL:
             return remove_all(req);
+        case HsmServiceRequestMethod::LIST_TIERS:
+            return list_tiers(req);
         case HsmServiceRequestMethod::GET_TIERS:
         case HsmServiceRequestMethod::LIST:
-        case HsmServiceRequestMethod::LIST_TIERS:
+
         default:
             return nullptr;
     }
@@ -346,12 +353,8 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 HsmServiceResponse::Ptr HsmService::remove(
     const HsmServiceRequest& req) noexcept
 {
-    auto obj = req.object();
-
-    HsmObject hsm_object(obj);
-
     HsmObjectStoreRequest remove_data_request(
-        req.object(), HsmObjectStoreRequestMethod::REMOVE_ALL);
+        req.object(), HsmObjectStoreRequestMethod::REMOVE);
     remove_data_request.set_extent(req.extent());
     remove_data_request.set_source_tier(req.source_tier());
 
@@ -359,10 +362,14 @@ HsmServiceResponse::Ptr HsmService::remove(
         m_object_store->make_request(remove_data_request);
     ERROR_CHECK(remove_data_response);
 
+    auto obj_get_request =
+        m_object_service->make_request({req.object(), CrudMethod::GET});
+
+    auto hsm_object = obj_get_request->item();
     hsm_object.remove_tier(req.source_tier());
 
-    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
-    auto object_put_response = m_object_service->make_request(obj_put_request);
+    auto object_put_response =
+        m_object_service->make_request({hsm_object, CrudMethod::PUT});
 
     if (m_event_feed) {
         EventFeed::Event event;
@@ -413,20 +420,24 @@ void HsmService::list_objects(uint8_t tier, std::vector<HsmObject>& objects)
     /*/
 }
 
-void HsmService::list_tiers(HsmObject& object, std::vector<uint8_t>& tiers)
+HsmServiceResponse::Ptr HsmService::list_tiers(const HsmServiceRequest& request)
 {
-    (void)tiers;
-    (void)object;
-    /*
-    if (!m_key_value_store->exists(object.mStorageObject))
-    {
-        throw std::runtime_error("Requested non-existing object");
-    }
+    auto obj_get_response =
+        m_object_service->make_request({request.object(), CrudMethod::GET});
+    auto all_tiers_response =
+        m_tier_service->make_request(CrudMethod::MULTI_GET);
 
-    m_key_value_store->fetch(object.mStorageObject, {"tiers"});
-    HsmObjectAdapter::parseTiers(object);
-    tiers = object.mTierIds;
-    */
+    auto list_response =
+        std::make_unique<CrudResponse<StorageTier, CrudErrorCode>>(request);
+    for (const auto& tier_id : obj_get_response->item().tiers()) {
+        for (const auto& tier : all_tiers_response->items()) {
+            if (tier_id == tier.id_uint()) {
+                list_response->items().push_back(tier);
+                break;
+            }
+        }
+    }
+    return HsmServiceResponse::create(request, std::move(list_response));
 }
 
 void HsmService::list_attributes(HsmObject& object)

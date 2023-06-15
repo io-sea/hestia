@@ -4,12 +4,15 @@
 #include "DataPlacementEngine.h"
 #include "FileKeyValueStoreClient.h"
 
-#include "DistributedHsmObjectStoreClient.h"
 #include "DistributedHsmService.h"
+#include "FileHsmObjectStoreClient.h"
+#include "HttpObjectStoreClient.h"
+
 #include "HsmNodeService.h"
 #include "HsmObjectStoreClientBackend.h"
 #include "HsmObjectStoreClientManager.h"
 #include "HsmService.h"
+#include "HttpClient.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -35,8 +38,8 @@ class DistributedHsmServiceTestFixture {
         m_kv_store_client = std::make_unique<hestia::FileKeyValueStoreClient>();
         m_kv_store_client->initialize(config);
 
-        m_object_store_client =
-            hestia::DistributedHsmObjectStoreClient::create();
+        m_object_store_client = hestia::FileHsmObjectStoreClient::create();
+        m_object_store_client->initialize(config);
 
         auto hsm_service = hestia::HsmService::create(
             m_kv_store_client.get(), m_object_store_client.get());
@@ -45,15 +48,12 @@ class DistributedHsmServiceTestFixture {
             hestia::HsmObjectStoreClientBackend::Type::HSM,
             hestia::HsmObjectStoreClientBackend::Source::BUILT_IN,
             "hestia::FileHsmObjectStoreClient");
-        object_store_backend.m_extra_config.set_item("root", get_store_path());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.m_backends = {object_store_backend};
 
         m_dist_hsm_service = hestia::DistributedHsmService::create(
             dist_hsm_config, std::move(hsm_service), m_kv_store_client.get());
-
-        m_object_store_client->do_initialize(m_dist_hsm_service.get());
     }
 
     std::string get_store_path() const
@@ -63,8 +63,7 @@ class DistributedHsmServiceTestFixture {
 
     std::string m_test_name;
     std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
-    std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
-        m_object_store_client;
+    std::unique_ptr<hestia::FileHsmObjectStoreClient> m_object_store_client;
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
 };
 

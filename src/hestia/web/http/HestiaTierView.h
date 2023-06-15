@@ -5,10 +5,13 @@
 
 namespace hestia {
 class DistributedHsmService;
+class StorageTierJsonAdapter;
 
 class HestiaTierView : public WebView {
   public:
     HestiaTierView(DistributedHsmService* hestia_service);
+
+    ~HestiaTierView();
 
     HttpResponse::Ptr on_get(const HttpRequest& request) override;
 
@@ -20,5 +23,6 @@ class HestiaTierView : public WebView {
 
   private:
     DistributedHsmService* m_hestia_service{nullptr};
+    std::unique_ptr<StorageTierJsonAdapter> m_tier_adapter;
 };
 }  // namespace hestia
