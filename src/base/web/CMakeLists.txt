@@ -6,12 +6,14 @@ add_module(
         WebApp.h 
         WebView.h 
         ApplicationMiddleware.h 
+        StaticContentView.h 
         UrlRouter.h 
         authentication/AuthenticationMiddleware.h 
         authentication/AuthenticationSession.h 
         authentication/User.h 
         authentication/UserService.h
     SOURCES
+        StaticContentView.cc 
         WebApp.cc
         WebView.cc
         UrlRouter.cc

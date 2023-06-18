@@ -1,0 +1,48 @@
+server:
+  host_address: 127.0.0.1
+  host_port: 8080
+  static_resource_path: web_content
+  cache_static_resources: false
+  web_app: hestia::HsmService
+  backend: hestia::Basic
+  controller: true
+  tag: controller0
+
+web_apps:
+  - identitifier: hestia::HsmService
+    interface: http
+  - identitifier: hestia::HsmServiceS3
+    interface: s3
+
+server_backends:
+  - identifier: hestia::Basic
+  - identifier: hestia::Proxygen
+
+object_store_clients:
+  - identifier: hestia::FileHsmObjectStoreClient
+    source: built_in
+    type: hsm
+    root: hsm_object_store
+  - identifier: hestia::FileObjectStoreClient
+    source: built_in
+    type: basic
+    root: object_store
+
+key_value_store:
+  client_identifier: hestia::FileKeyValueStoreClient
+
+key_value_store_clients:
+  - identifier: hestia::FileKeyValueStoreClient
+    root: key_value_store
+
+tier_registry:
+  - identifier: 0
+    client_identifier: hestia::FileHsmObjectStoreClient
+  - identifier: 1
+    client_identifier: hestia::FileHsmObjectStoreClient
+  - identifier: 2
+    client_identifier: hestia::FileHsmObjectStoreClient
+
+event_feed:
+  event_feed_path: event_feed.yaml
+  event_feed_active: y

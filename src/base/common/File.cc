@@ -67,8 +67,7 @@ std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
 
     if (m_in_stream.bad()) {
         return {
-            {OpStatus::Status::ERROR, 0,
-             "In stream in bad state before write."},
+            {OpStatus::Status::ERROR, 0, "In stream in bad state before read."},
             {}};
     }
 
@@ -79,6 +78,26 @@ std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
     }
     read_state.m_size_read = static_cast<std::size_t>(m_in_stream.gcount());
     return {{}, read_state};
+}
+
+OpStatus File::read(std::string& buffer)
+{
+    if (!m_in_stream.is_open()) {
+        if (const auto status = open_for_read(); !status.ok()) {
+            return {OpStatus::Status::ERROR, 0, status.message()};
+        }
+    }
+
+    if (m_in_stream.bad()) {
+        return {
+            OpStatus::Status::ERROR, 0, "In stream in bad state before read."};
+    }
+
+    buffer.assign(
+        (std::istreambuf_iterator<char>(m_in_stream)),
+        (std::istreambuf_iterator<char>()));
+
+    return {};
 }
 
 std::pair<OpStatus, File::ReadState> File::read_lines(

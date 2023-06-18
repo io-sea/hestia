@@ -43,12 +43,12 @@ class S3Service {
     [[nodiscard]] virtual std::pair<Status, bool> exists(
         const S3Container& container) const noexcept;
 
-    [[nodiscard]] std::pair<Status, bool> exists(
+    [[nodiscard]] virtual std::pair<Status, bool> exists(
         const S3Object& object) const noexcept;
 
     [[nodiscard]] virtual Status get(S3Container& container) const noexcept;
 
-    [[nodiscard]] Status get(
+    [[nodiscard]] virtual Status get(
         S3Object& object,
         const Extent& extent = {},
         Stream* stream       = nullptr) const noexcept;
@@ -60,7 +60,7 @@ class S3Service {
 
     [[nodiscard]] virtual Status put(const S3Container& container) noexcept;
 
-    [[nodiscard]] Status put(
+    [[nodiscard]] virtual Status put(
         const S3Container& container,
         const S3Object& object,
         const Extent& extent = {},

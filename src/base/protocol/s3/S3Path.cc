@@ -26,7 +26,18 @@ void S3Path::from_path_only(const std::string& path)
         return;
     }
 
-    const auto path_no_slash = path.substr(1, path.size());
+    auto non_slash_index = 0;
+    for (const auto c : path) {
+        if (c == '/') {
+            non_slash_index++;
+        }
+        else {
+            break;
+        }
+    }
+    const auto path_no_slash =
+        path.substr(non_slash_index, path.size() - non_slash_index);
+
     if (auto slash_index = path_no_slash.find('/');
         slash_index == path_no_slash.npos) {
         m_container_name = path_no_slash;
@@ -35,6 +46,12 @@ void S3Path::from_path_only(const std::string& path)
         m_container_name = path_no_slash.substr(0, slash_index);
         m_object_id =
             path_no_slash.substr(slash_index + 1, path_no_slash.size());
+    }
+
+    if (!m_container_name.empty()
+        && m_container_name[m_container_name.size() - 1] == '/') {
+        m_container_name =
+            m_container_name.substr(0, m_container_name.size() - 1);
     }
 }
 

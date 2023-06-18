@@ -1,10 +1,10 @@
 set(INTEGRATION_TEST_MODULE ${PROJECT_NAME}_integration_tests)
 
 set(INTEGRATION_TEST_SOURCES     
-    base/storage/TestS3Client_Integration.cc
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
     hestia/TestHestiaWebApp.cc
+    hestia/TestHestiaS3WebApp.cc
     main.cc
     )
 

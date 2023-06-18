@@ -34,6 +34,8 @@ struct ServerConfig {
     std::string m_backend{"hestia::Basic"};
     std::string m_tag;
     std::string m_controller_address;
+    std::string m_static_resource_path;
+    bool m_cache_static_resources{true};
     bool m_controller{true};
     WebAppConfig m_web_app_config;
 };

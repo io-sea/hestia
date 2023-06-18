@@ -32,6 +32,15 @@ std::pair<S3Service::Status, bool> HsmS3Service::exists(
     return status;
 }
 
+[[nodiscard]] std::pair<HsmS3Service::Status, bool> HsmS3Service::exists(
+    const S3Object& object) const noexcept
+{
+    LOG_INFO("Starting exists request for object: " << object.m_key);
+    const auto status = exists(object.m_key);
+    LOG_INFO("Finished exists request: exists " << status.second);
+    return status;
+}
+
 std::pair<S3Service::Status, bool> HsmS3Service::exists(
     const std::string& object_id) const
 {
@@ -70,6 +79,37 @@ S3Service::Status HsmS3Service::get(S3Container& container) const noexcept
     return {};
 }
 
+[[nodiscard]] HsmS3Service::Status HsmS3Service::get(
+    S3Object& object, const Extent& extent, Stream* stream) const noexcept
+{
+    LOG_INFO("Starting object get request for: " << object.m_key);
+    HsmServiceRequest request(object.m_key, HsmServiceRequestMethod::GET);
+    request.set_extent(extent);
+
+    const std::string tier_key = "hestia:tier";
+    auto tier_str              = object.m_user_metadata.get_item(tier_key);
+    uint8_t tier               = 0;
+    if (!tier_str.empty()) {
+        tier = std::stoul(tier_str);
+    }
+    request.set_target_tier(tier);
+
+    if (const auto response =
+            m_hsm_service->get_hsm_service()->make_request(request, stream);
+        response->ok()) {
+        m_object_adapter->to_s3(object, response->object().object());
+        if (stream != nullptr) {
+            stream->set_source_size(std::stoi(object.m_content_length));
+        }
+    }
+    else {
+        return {
+            S3Service::Status::Code::ERROR, response->get_error().to_string()};
+    }
+    LOG_INFO("Finished object get request");
+    return {};
+}
+
 [[nodiscard]] S3Service::Status HsmS3Service::put(
     const S3Container& container) noexcept
 {
@@ -101,6 +141,51 @@ S3Service::Status HsmS3Service::get(S3Container& container) const noexcept
     return {};
 }
 
+[[nodiscard]] S3Service::Status HsmS3Service::put(
+    const S3Container& container,
+    const S3Object& object,
+    const Extent& extent,
+    Stream* stream) noexcept
+{
+    LOG_INFO(
+        "Starting object put request for: " << object.m_key << " in container "
+                                            << container.m_name);
+
+    HsmServiceRequest request(
+        StorageObject(container.m_name), HsmServiceRequestMethod::PUT);
+    request.set_extent(extent);
+
+    m_object_adapter->from_s3(request.object(), container, object);
+    const std::string tier_key = "hestia:tier";
+    auto tier_str              = object.m_user_metadata.get_item(tier_key);
+    uint8_t tier               = 0;
+    if (!tier_str.empty()) {
+        tier = std::stoul(tier_str);
+    }
+    request.set_target_tier(tier);
+
+    if (const auto response =
+            m_hsm_service->get_hsm_service()->make_request(request, stream);
+        !response->ok()) {
+        return {
+            S3Service::Status::Code::ERROR, response->get_error().to_string()};
+    }
+
+    const std::string key = "hestia:bucket:" + container.m_name + ":objects";
+    const Metadata::Query query{key, object.m_key};
+
+    KeyValueStoreRequest kv_set_add_request(
+        KeyValueStoreRequestMethod::SET_ADD, query);
+    const auto response = m_kv_store_client->make_request(kv_set_add_request);
+    if (!response->ok()) {
+        return {
+            S3Service::Status::Code::ERROR, response->get_error().to_string()};
+    }
+
+    LOG_INFO("Finished object put request");
+    return {};
+}
+
 S3Service::Status HsmS3Service::list(std::vector<S3Container>& fetched) const
 {
     LOG_INFO("Starting container list request");
@@ -128,17 +213,15 @@ S3Service::Status HsmS3Service::list(
         "Starting object list request for container: " << container.m_name);
 
     const std::string key = "hestia:bucket:" + container.m_name + ":objects";
-    const Metadata::Query query{key, ""};
-
-    KeyValueStoreRequest request(KeyValueStoreRequestMethod::SET_LIST, query);
+    KeyValueStoreRequest request(KeyValueStoreRequestMethod::SET_LIST, key);
     const auto response = m_kv_store_client->make_request(request);
     if (!response->ok()) {
         return {
             S3Service::Status::Code::ERROR, response->get_error().to_string()};
     }
 
-    for (const auto& item : response->items()) {
-        fetched.push_back(S3Object(item));
+    for (const auto& id : response->ids()) {
+        fetched.push_back(S3Object(id));
     }
     LOG_INFO("Finished object list request: found " << fetched.size());
     return {};

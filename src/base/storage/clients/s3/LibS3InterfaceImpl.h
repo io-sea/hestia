@@ -5,6 +5,8 @@
 namespace hestia {
 class LibS3InterfaceImpl : public IS3InterfaceImpl {
   public:
+    ~LibS3InterfaceImpl();
+
     void initialize(const S3Config& config) override;
 
     int put(const S3Object& obj, const Extent& extent, Stream* stream) override;

@@ -7,15 +7,18 @@ add_module(
     HEADERS
         ObjectStoreTestWrapper.h
         HsmObjectStoreTestWrapper.h
+        DistributedHsmServiceTestWrapper.h
         TestContext.h
         TestUtils.h
     SOURCES
         ObjectStoreTestWrapper.cc
         HsmObjectStoreTestWrapper.cc
+        DistributedHsmServiceTestWrapper.cc
         TestContext.cc
     INTERNAL_DEPENDENCIES 
         web
         hsm_object_store_client
+        hsm
     DEPENDENCIES 
         Catch2::Catch2
 )

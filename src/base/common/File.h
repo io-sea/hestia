@@ -49,6 +49,8 @@ class File {
      */
     std::pair<OpStatus, ReadState> read(char* data, std::size_t length);
 
+    OpStatus read(std::string& buffer);
+
     std::pair<OpStatus, ReadState> read_lines(std::vector<std::string>& lines);
 
     /**

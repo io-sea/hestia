@@ -48,10 +48,35 @@ HttpResponse::Ptr HestiaTierView::on_get(const HttpRequest& request)
 
 HttpResponse::Ptr HestiaTierView::on_put(const HttpRequest& request)
 {
-    (void)request;
-    auto response = HttpResponse::create();
-    response->set_body("Hello world");
-    return response;
+    auto tier_service = m_hestia_service->get_hsm_service()->get_tier_service();
+    const auto path =
+        StringUtils::split_on_first(request.get_path(), "/tiers").second;
+
+    if (path.empty() || path == "/") {
+        LOG_INFO("Creating tier");
+        StorageTier tier;
+        if (!request.body().empty()) {
+            m_tier_adapter->from_string(request.body(), tier);
+        }
+
+        auto put_response = tier_service->make_request({tier, CrudMethod::PUT});
+        if (!put_response->ok()) {
+            LOG_ERROR(
+                "Failed to put tier: "
+                << put_response->get_error().to_string());
+            return HttpResponse::create(500, "Internal Server Error.");
+        }
+        auto response = HttpResponse::create();
+        std::string body;
+        m_tier_adapter->to_string(put_response->item(), body);
+        response->set_body(body);
+        return response;
+    }
+    else {
+        auto response = HttpResponse::create();
+        response->set_body("Hello world");
+        return response;
+    }
 }
 
 HttpResponse::Ptr HestiaTierView::on_delete(const HttpRequest& request)
@@ -62,8 +87,12 @@ HttpResponse::Ptr HestiaTierView::on_delete(const HttpRequest& request)
 
 HttpResponse::Ptr HestiaTierView::on_head(const HttpRequest& request)
 {
-    (void)request;
-    return HttpResponse::create();
+    const auto path =
+        StringUtils::split_on_first(request.get_path(), "/tiers").second;
+    if (path.empty() || path == "/") {
+        return HttpResponse::create();
+    }
+    return HttpResponse::create(404, "Not Found.");
 }
 
 }  // namespace hestia

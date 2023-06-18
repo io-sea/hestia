@@ -20,6 +20,8 @@ class Uuid {
      */
     Uuid(uint64_t lo = 0, uint64_t hi = 0);
 
+    Uuid(const std::string& id, char delimiter, bool as_hex);
+
     /**
      * Update the UUID based on the provided string - format is
      * {HIGH}{DELIMITER}{LOW} with {HIGH} and {LOW} representing the higher and

@@ -6,6 +6,12 @@
 #include <stdexcept>
 
 namespace hestia {
+
+LibS3InterfaceImpl::~LibS3InterfaceImpl()
+{
+    S3_deinitialize();
+}
+
 void LibS3InterfaceImpl::initialize(const S3Config& config)
 {
     auto status = S3_initialize(
@@ -26,12 +32,25 @@ int LibS3InterfaceImpl::put(
 {
     (void)extent;
 
-    S3BucketContext bucket = {0,  "default", S3ProtocolHTTP, S3UriStylePath, "",
-                              "", "",        nullptr};
+    std::string bucket_name = "default";
+    if (!obj.m_container.empty()) {
+        bucket_name = obj.m_container;
+    }
+
+    S3BucketContext bucket = {
+        0,      bucket_name.c_str(), S3ProtocolHTTP, S3UriStylePath, "", "", "",
+        nullptr};
 
     CallbackContext cb_context;
     cb_context.m_response_status = S3Status::S3StatusOK;
     cb_context.m_stream          = stream;
+
+    auto on_response_properties = [](const S3ResponseProperties* properties,
+                                     void* callback_data) {
+        (void)callback_data;
+        LOG_INFO("Got response with length: " << properties->contentLength);
+        return S3Status::S3StatusOK;
+    };
 
     auto on_response_complete = [](S3Status status,
                                    const S3ErrorDetails* error_details,
@@ -51,8 +70,9 @@ int LibS3InterfaceImpl::put(
     };
 
     S3PutObjectHandler put_handler;
-    put_handler.responseHandler.completeCallback = on_response_complete;
-    put_handler.putObjectDataCallback            = on_put_data;
+    put_handler.responseHandler.propertiesCallback = on_response_properties;
+    put_handler.responseHandler.completeCallback   = on_response_complete;
+    put_handler.putObjectDataCallback              = on_put_data;
 
     LOG_INFO("Starting LibS3 put");
     S3_put_object(

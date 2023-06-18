@@ -14,6 +14,7 @@
 
 #include "ProjectConfig.h"
 
+#include <filesystem>
 #include <set>
 
 #include "Logger.h"
@@ -38,8 +39,19 @@ void HestiaServer::run()
     }
     else {
         LOG_INFO("Running http interface");
+
+        HestiaWebAppConfig app_config;
+        app_config.m_cache_static_resources = m_config.m_cache_static_resources;
+
+        if (!m_config.m_static_resource_path.empty()) {
+            auto full_path = std::filesystem::current_path()
+                             / m_config.m_static_resource_path;
+            if (std::filesystem::is_directory(full_path)) {
+                app_config.m_static_resource_dir = full_path.string();
+            }
+        }
         web_app = std::make_unique<HestiaWebApp>(
-            ApplicationContext::get().get_hsm_service());
+            ApplicationContext::get().get_hsm_service(), app_config);
     }
 
     Server::Config server_config;

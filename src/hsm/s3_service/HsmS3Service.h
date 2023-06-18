@@ -17,7 +17,15 @@ class HsmS3Service : public S3Service {
     [[nodiscard]] std::pair<Status, bool> exists(
         const S3Container& container) const noexcept override;
 
+    [[nodiscard]] std::pair<Status, bool> exists(
+        const S3Object& object) const noexcept override;
+
     [[nodiscard]] Status get(S3Container& container) const noexcept override;
+
+    [[nodiscard]] Status get(
+        S3Object& object,
+        const Extent& extent = {},
+        Stream* stream       = nullptr) const noexcept override;
 
     [[nodiscard]] Status list(std::vector<S3Container>& fetched) const override;
 
@@ -26,6 +34,12 @@ class HsmS3Service : public S3Service {
         std::vector<S3Object>& fetched) const override;
 
     [[nodiscard]] Status put(const S3Container& container) noexcept override;
+
+    [[nodiscard]] Status put(
+        const S3Container& container,
+        const S3Object& object,
+        const Extent& extent = {},
+        Stream* stream       = nullptr) noexcept override;
 
   private:
     std::pair<Status, bool> exists(const std::string& object_id) const override;
