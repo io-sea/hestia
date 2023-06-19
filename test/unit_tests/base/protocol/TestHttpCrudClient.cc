@@ -11,7 +11,7 @@
 class MockHttpClient : public hestia::HttpClient {
   public:
     hestia::HttpResponse::Ptr make_request(
-        const hestia::HttpRequest& request) override
+        const hestia::HttpRequest& request, hestia::Stream*) override
     {
         const auto expected_prefix = "127.0.0.1/api/v2/abc/my_item_types";
         if (!hestia::StringUtils::starts_with(

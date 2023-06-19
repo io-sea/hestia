@@ -24,7 +24,7 @@ class MockWebService {
         stream->set_sink(InMemoryStreamSink::create(m_buffer));
     }
 
-  private:
+  public:
     std::vector<char> m_buffer;
 };
 }  // namespace hestia::mock

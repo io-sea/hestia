@@ -33,6 +33,7 @@ set(UNIT_TEST_SOURCES
     hsm/TestMockMotrHsm.cc
     hsm/TestMotrHsmClient.cc
     hsm/TestHsmService.cc
+    hsm/TestS3HsmService.cc
     hsm/TestHsmNodeAdapter.cc
     hsm/TestObjectService.cc
     hsm/TestTierService.cc

@@ -10,7 +10,7 @@ TEST_CASE("Test HsmNodeAdapter", "[hsm]")
     hestia::HsmNode node;
     node.m_host_address = "127.0.0.1:8000";
 
-    hestia::ObjectStoreBackend backend;
+    hestia::HsmObjectStoreClientBackend backend;
     backend.m_identifier = "my_backend";
     node.m_backends.push_back(backend);
 

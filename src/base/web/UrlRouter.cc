@@ -1,5 +1,7 @@
 #include "UrlRouter.h"
 
+#include "StringUtils.h"
+
 namespace hestia {
 
 void UrlRouter::add_pattern(
@@ -12,7 +14,7 @@ void UrlRouter::add_pattern(
 WebView* UrlRouter::get_view(const std::string& path)
 {
     for (auto& pattern : m_views) {
-        if (pattern.first == path) {
+        if (StringUtils::starts_with(path, pattern.first)) {
             return pattern.second.get();
         }
     }

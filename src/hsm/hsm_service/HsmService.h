@@ -9,7 +9,7 @@
 #include "Stream.h"
 
 namespace hestia {
-class MultiBackendHsmObjectStoreClient;
+class HsmObjectStoreClient;
 class DataPlacementEngine;
 
 class ObjectService;
@@ -28,22 +28,25 @@ class HsmService {
     HsmService(
         std::unique_ptr<ObjectService> object_service,
         std::unique_ptr<TierService> tier_service,
-        MultiBackendHsmObjectStoreClient* object_store,
+        HsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<EventFeed> event_feed = nullptr);
 
     static Ptr create(
         std::unique_ptr<ObjectService> object_service,
         std::unique_ptr<TierService> tier_service,
-        MultiBackendHsmObjectStoreClient* object_store,
+        HsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<EventFeed> event_feed = nullptr);
 
     static Ptr create(
-        KeyValueStoreClient* client,
-        MultiBackendHsmObjectStoreClient* object_store);
+        KeyValueStoreClient* client, HsmObjectStoreClient* object_store);
 
     virtual ~HsmService();
+
+    TierService* get_tier_service();
+
+    ObjectService* get_object_service();
 
     [[nodiscard]] HsmServiceResponse::Ptr make_request(
         const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
@@ -67,7 +70,7 @@ class HsmService {
 
     std::unique_ptr<ObjectService> m_object_service;
     std::unique_ptr<TierService> m_tier_service;
-    MultiBackendHsmObjectStoreClient* m_object_store;
+    HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;
     std::unique_ptr<HsmActionAdapter> m_action_adapter;
 

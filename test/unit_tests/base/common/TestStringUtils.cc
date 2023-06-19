@@ -29,3 +29,12 @@ TEST_CASE("Test StringUtils - Remove prefix", "[common]")
         hestia::StringUtils::remove_prefix(test_string, prefix);
     REQUIRE(without_prefix == "tiers");
 }
+
+TEST_CASE("Test StringUtils - Split on substring", "[common]")
+{
+    std::string path = "127.0.0.1:8000/api/v1/hsm/objects/12345";
+    const auto& [first, second] =
+        hestia::StringUtils::split_on_first(path, "/objects");
+    REQUIRE(first == "127.0.0.1:8000/api/v1/hsm");
+    REQUIRE(second == "/12345");
+}

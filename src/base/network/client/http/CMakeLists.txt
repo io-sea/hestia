@@ -7,8 +7,14 @@ set(OPTIONAL_INCLUDE_DIRS)
 
 find_package(CURL QUIET)
 if(${CURL_FOUND})
-    list(APPEND OPTIONAL_HEADERS curl/CurlClient.h)
-    list(APPEND OPTIONAL_SOURCES curl/CurlClient.cc)
+    list(APPEND OPTIONAL_HEADERS 
+        curl/CurlClient.h
+        curl/CurlHandle.h
+        )
+    list(APPEND OPTIONAL_SOURCES 
+        curl/CurlClient.cc
+        curl/CurlHandle.cc
+        )
     list(APPEND OPTIONAL_DEPENDENCIES CURL::libcurl)
     list(APPEND OPTIONAL_INCLUDE_DIRS curl)
 else()

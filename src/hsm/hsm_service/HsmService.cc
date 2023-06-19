@@ -2,7 +2,7 @@
 
 #include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
-#include "MultiBackendHsmObjectStoreClient.h"
+#include "HsmObjectStoreClient.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -27,7 +27,7 @@ namespace hestia {
 HsmService::HsmService(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
-    MultiBackendHsmObjectStoreClient* object_store,
+    HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed) :
     m_object_service(std::move(object_service)),
@@ -41,7 +41,7 @@ HsmService::HsmService(
 }
 
 HsmService::Ptr HsmService::create(
-    KeyValueStoreClient* client, MultiBackendHsmObjectStoreClient* object_store)
+    KeyValueStoreClient* client, HsmObjectStoreClient* object_store)
 {
     auto object_service = ObjectService::create(ObjectServiceConfig(), client);
     auto tier_service   = TierService::create(TierServiceConfig(), client);
@@ -56,7 +56,7 @@ HsmService::Ptr HsmService::create(
 HsmService::Ptr HsmService::create(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
-    MultiBackendHsmObjectStoreClient* object_store,
+    HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed)
 {
@@ -69,6 +69,16 @@ HsmService::Ptr HsmService::create(
 HsmService::~HsmService()
 {
     LOG_INFO("Destroying HsmService");
+}
+
+TierService* HsmService::get_tier_service()
+{
+    return m_tier_service.get();
+}
+
+ObjectService* HsmService::get_object_service()
+{
+    return m_object_service.get();
 }
 
 HsmServiceResponse::Ptr HsmService::make_request(
@@ -115,7 +125,7 @@ HsmServiceResponse::Ptr HsmService::put(
 
     if (stream != nullptr) {
         const auto chosen_tier = m_placement_engine->choose_tier(
-            req.extent().m_length, req.target_tier());
+            req.object().m_size, req.target_tier());
 
         HsmObjectStoreRequest data_put_request(
             req.object(), HsmObjectStoreRequestMethod::PUT);
@@ -148,7 +158,7 @@ HsmServiceResponse::Ptr HsmService::put(
         if (m_event_feed) {
             EventFeed::Event event;
             event.m_id          = req.object().id();
-            event.m_length      = req.extent().m_length;
+            event.m_length      = req.object().m_size;
             event.m_method      = EventFeed::Event::Method::PUT;
             event.m_target_tier = req.target_tier();
             m_event_feed->log_event(event);
@@ -285,7 +295,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = req.object().id();
-        event.m_length      = req.extent().m_length;
+        event.m_length      = req.object().m_size;
         event.m_method      = EventFeed::Event::Method::COPY;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();
@@ -320,7 +330,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = req.object().id();
-        event.m_length      = req.extent().m_length;
+        event.m_length      = req.object().m_size;
         event.m_method      = EventFeed::Event::Method::MOVE;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();

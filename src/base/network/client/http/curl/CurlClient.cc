@@ -5,19 +5,28 @@
 #include <stdexcept>
 
 namespace hestia {
+
 CurlClient::CurlClient(const CurlClientConfig& config) : m_config(config) {}
 
 CurlClient::~CurlClient()
 {
     LOG_INFO("Shutting Down");
-    if (m_handle != nullptr) {
-        curl_easy_cleanup(m_handle);
-        m_handle = nullptr;
-    }
-
     if (m_config.m_do_global_init) {
         curl_global_cleanup();
     }
+}
+
+void CurlClient::initialize()
+{
+    LOG_INFO("Initializing curl");
+    if (m_config.m_do_global_init) {
+        auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
+        if (rc != 0) {
+            throw std::runtime_error("Failed curl global init");
+        }
+    }
+    m_initialized = true;
+    LOG_INFO("Curl intialized");
 }
 
 size_t CurlClient::curl_write_data(
@@ -34,15 +43,29 @@ size_t CurlClient::curl_write_data(
 
 size_t CurlClient::on_write(void* buffer, size_t nmemb)
 {
-    auto char_buf = reinterpret_cast<char*>(buffer);
-    std::vector<char> body(nmemb);
-    for (std::size_t idx = 0; idx < nmemb; idx++) {
-        body[idx] = char_buf[idx];
+    auto handle        = m_handles[std::this_thread::get_id()];
+    size_t num_written = nmemb;
+
+    if (handle->m_request_context.m_stream != nullptr) {
+        ReadableBufferView buffer_view(const_cast<void*>(buffer), nmemb);
+        auto result = handle->m_request_context.m_stream->write(buffer_view);
+        if (!result.ok()) {
+            LOG_ERROR("Error populating stream");
+        }
+        num_written = result.m_num_transferred;
+    }
+    else {
+        auto char_buf = reinterpret_cast<char*>(buffer);
+        std::vector<char> body(nmemb);
+        for (std::size_t idx = 0; idx < nmemb; idx++) {
+            body[idx] = char_buf[idx];
+        }
+        handle->m_request_context.m_response->append_to_body(
+            {body.begin(), body.end()});
     }
 
-    m_working_response->append_to_body({body.begin(), body.end()});
     LOG_INFO("Got response with size: " << nmemb);
-    return nmemb;
+    return num_written;
 }
 
 size_t CurlClient::curl_read_data(
@@ -59,131 +82,116 @@ size_t CurlClient::curl_read_data(
 
 size_t CurlClient::on_read(char* buffer, size_t nmemb)
 {
+    auto handle      = m_handles[std::this_thread::get_id()];
     auto num_to_read = nmemb;
-    if (m_read_offset + nmemb > m_working_request.body().size()) {
-        num_to_read = m_working_request.body().size();
+    if (handle->m_request_context.m_stream != nullptr) {
+        if (handle->m_request_context.m_stream->has_content()) {
+            WriteableBufferView buffer_view(buffer, num_to_read);
+            auto result = handle->m_request_context.m_stream->read(buffer_view);
+            if (!result.ok()) {
+                LOG_ERROR("Error reading from stream");
+            }
+            return result.m_num_transferred;
+        }
+        else {
+            return 0;
+        }
     }
-    LOG_INFO("Returning " << num_to_read << " bytes ");
-    for (std::size_t idx = 0; idx < num_to_read; idx++) {
-        buffer[idx] = m_working_request.body()[m_read_offset + idx];
+    else {
+        if (handle->m_request_context.m_read_offset + nmemb
+            > handle->m_request_context.m_request->body().size()) {
+            num_to_read = handle->m_request_context.m_request->body().size();
+        }
+        LOG_INFO("Returning " << num_to_read << " bytes ");
+        for (std::size_t idx = 0; idx < num_to_read; idx++) {
+            buffer[idx] =
+                handle->m_request_context.m_request
+                    ->body()[handle->m_request_context.m_read_offset + idx];
+        }
+        handle->m_request_context.m_read_offset += num_to_read;
+        LOG_INFO(
+            "New offset is " << handle->m_request_context.m_read_offset
+                             << " bytes ");
     }
-    m_read_offset += num_to_read;
-    LOG_INFO("New offset is " << m_read_offset << " bytes ");
     return num_to_read;
 }
 
-void CurlClient::initialize()
+void CurlClient::setup_handle(CurlHandle* handle)
 {
-    LOG_INFO("Initializing curl");
-    if (m_config.m_do_global_init) {
-        auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
-        if (rc != 0) {
-            throw std::runtime_error("Failed curl global init");
-        }
-    }
-
-    m_handle = curl_easy_init();
-    if (m_handle == nullptr) {
-        throw std::runtime_error("Failed to initialize curl session");
-    }
-
-    m_error_buffer = std::string(CURL_ERROR_SIZE, ' ');
-
-    auto rc =
-        curl_easy_setopt(m_handle, CURLOPT_ERRORBUFFER, m_error_buffer.data());
-    if (rc != CURLE_OK) {
-        throw std::runtime_error("Failed to set curl error buffer");
-    }
-
-    rc = curl_easy_setopt(m_handle, CURLOPT_WRITEFUNCTION, curl_write_data);
+    auto rc = curl_easy_setopt(
+        handle->m_handle, CURLOPT_WRITEFUNCTION, curl_write_data);
     if (rc != CURLE_OK) {
         throw std::runtime_error(
-            "Failed to set curl writefunction with error: " + m_error_buffer);
+            "Failed to set curl writefunction with error: "
+            + handle->m_error_buffer);
     }
 
-    rc = curl_easy_setopt(m_handle, CURLOPT_WRITEDATA, this);
+    rc = curl_easy_setopt(handle->m_handle, CURLOPT_WRITEDATA, this);
     if (rc != CURLE_OK) {
         throw std::runtime_error(
-            "Failed to set curl writedata with error: " + m_error_buffer);
+            "Failed to set curl writedata with error: "
+            + handle->m_error_buffer);
     }
 
-    rc = curl_easy_setopt(m_handle, CURLOPT_READFUNCTION, curl_read_data);
+    rc = curl_easy_setopt(
+        handle->m_handle, CURLOPT_READFUNCTION, curl_read_data);
     if (rc != CURLE_OK) {
         throw std::runtime_error(
-            "Failed to set curl readfunction with error: " + m_error_buffer);
+            "Failed to set curl readfunction with error: "
+            + handle->m_error_buffer);
     }
 
-    rc = curl_easy_setopt(m_handle, CURLOPT_READDATA, this);
+    rc = curl_easy_setopt(handle->m_handle, CURLOPT_READDATA, this);
     if (rc != CURLE_OK) {
         throw std::runtime_error(
-            "Failed to set curl readdata with error: " + m_error_buffer);
-    }
-
-    rc = curl_easy_setopt(m_handle, CURLOPT_FOLLOWLOCATION, 1L);
-    if (rc != CURLE_OK) {
-        throw std::runtime_error(
-            "Failed to set curl writedata with error: " + m_error_buffer);
+            "Failed to set curl readdata with error: "
+            + handle->m_error_buffer);
     }
 }
 
-void CurlClient::prepare_put(const HttpRequest& request)
+HttpResponse::Ptr CurlClient::make_request(
+    const HttpRequest& request, Stream* stream)
 {
-    auto rc = curl_easy_setopt(m_handle, CURLOPT_UPLOAD, 1L);
-    if (rc != CURLE_OK) {
-        throw std::runtime_error(
-            "Failed to set curl to upload mode with error: " + m_error_buffer);
-    }
-
-    if (!request.body().empty()) {
-        rc = curl_easy_setopt(
-            m_handle, CURLOPT_INFILESIZE, request.body().size());
-        if (rc != CURLE_OK) {
-            throw std::runtime_error(
-                "Failed to set curl request body size with error: "
-                + m_error_buffer);
-        }
-    }
-}
-
-void CurlClient::prepare_get(const HttpRequest&)
-{
-    auto rc = curl_easy_setopt(m_handle, CURLOPT_HTTPGET, 1L);
-    if (rc != CURLE_OK) {
-        throw std::runtime_error(
-            "Failed to set curl to get mode with error: " + m_error_buffer);
-    }
-}
-
-HttpResponse::Ptr CurlClient::make_request(const HttpRequest& request)
-{
-    if (m_handle == nullptr) {
+    if (!m_initialized) {
         initialize();
     }
 
+    auto handle                           = std::make_unique<CurlHandle>();
+    m_handles[std::this_thread::get_id()] = handle.get();
+
+    setup_handle(handle.get());
+
     if (request.get_method() == HttpRequest::Method::GET) {
-        prepare_get(request);
+        handle->prepare_get();
     }
     else if (request.get_method() == HttpRequest::Method::PUT) {
-        prepare_put(request);
+        handle->prepare_put(request, stream);
     }
 
-    m_working_response = HttpResponse::create();
-    m_working_request  = request;
+    handle->prepare_headers(request.get_header());
+
+    auto response = HttpResponse::create();
+
+    handle->m_request_context.m_request  = &request;
+    handle->m_request_context.m_response = response.get();
+    handle->m_request_context.m_stream   = stream;
 
     const auto url = request.get_path();
-    curl_easy_setopt(m_handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(handle->m_handle, CURLOPT_URL, url.c_str());
 
     LOG_INFO("Making request to: " << url);
     LOG_INFO(request.to_string());
-    auto rc = curl_easy_perform(m_handle);
+    auto rc = curl_easy_perform(handle->m_handle);
     if (rc != CURLE_OK) {
         throw std::runtime_error(
-            "Failed request with error: " + m_error_buffer);
+            "Failed request with error: " + handle->m_error_buffer);
     }
+
+    m_handles.erase(std::this_thread::get_id());
 
     LOG_INFO("Request all done");
 
-    return std::move(m_working_response);
+    return response;
 }
 
 }  // namespace hestia

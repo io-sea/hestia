@@ -1,7 +1,7 @@
 #include "HestiaConfigurator.h"
 
+#include "DistributedHsmObjectStoreClient.h"
 #include "HsmObjectStoreClientManager.h"
-#include "MultiBackendHsmObjectStoreClient.h"
 
 #include "DataPlacementEngine.h"
 #include "EventFeed.h"
@@ -11,10 +11,15 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
+#include "HttpObjectStoreClient.h"
+
 #include "ApplicationContext.h"
+#include "DistributedHsmService.h"
 #include "HsmService.h"
 #include "ObjectService.h"
 #include "TierService.h"
+
+#include "ProjectConfig.h"
 
 #include "Logger.h"
 #include <memory>
@@ -24,19 +29,26 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 {
     m_config = config;
 
-    std::unique_ptr<MultiBackendHsmObjectStoreClient> object_store;
+    CurlClientConfig http_client_config;
+    auto http_client = std::make_unique<CurlClient>(http_client_config);
+    ApplicationContext::get().set_http_client(std::move(http_client));
+
+    auto http_object_store_client = std::make_unique<HttpObjectStoreClient>(
+        ApplicationContext::get().get_http_client());
+
+    std::vector<std::filesystem::path> search_paths;
+    DistributedHsmObjectStoreClient::Ptr object_store;
     try {
-        object_store = set_up_object_store();
+        object_store = DistributedHsmObjectStoreClient::create(
+            std::move(http_object_store_client), search_paths);
     }
     catch (const std::exception& e) {
         LOG_ERROR(e.what());
         return {OpStatus::Status::ERROR, -1, e.what()};
     }
-    ApplicationContext::get().set_object_store_client(std::move(object_store));
 
-    CurlClientConfig http_client_config;
-    auto http_client = std::make_unique<CurlClient>(http_client_config);
-    ApplicationContext::get().set_http_client(std::move(http_client));
+    auto dist_object_store_client = object_store.get();
+    ApplicationContext::get().set_object_store_client(std::move(object_store));
 
     std::unique_ptr<KeyValueStoreClient> kv_store_client;
     try {
@@ -55,6 +67,7 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         tier_service = TierService::create(
             tier_service_config,
             ApplicationContext::get().get_kv_store_client());
+        set_up_tiers(tier_service.get());
     }
     else {
         tier_service = TierService::create(
@@ -97,27 +110,60 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
         ApplicationContext::get().get_object_store_client(), std::move(dpe),
         std::move(event_feed));
 
-    ApplicationContext::get().set_hsm_service(std::move(hsm_service));
+
+    DistributedHsmServiceConfig service_config;
+    service_config.m_self.m_app_type = WebAppConfig::to_string(
+        m_config.m_server_config.m_web_app_config.m_interface);
+    service_config.m_self.m_port         = m_config.m_server_config.m_port;
+    service_config.m_self.m_host_address = m_config.m_server_config.m_host;
+    service_config.m_self.m_is_controller =
+        m_config.m_server_config.m_controller;
+
+    for (const auto& [id, backend] : m_config.m_backends) {
+        service_config.m_self.m_backends.push_back(backend);
+    }
+
+    std::string tag = m_config.m_server_config.m_tag;
+    if (tag.empty()) {
+        tag = "endpoint";
+    }
+    service_config.m_self.m_tag = tag + "_" + m_config.m_server_config.m_host
+                                  + "_" + m_config.m_server_config.m_port;
+    service_config.m_self.m_version = project_config::get_project_version();
+    service_config.m_app_name       = project_config::get_project_name();
+    service_config.m_controller_address =
+        m_config.m_server_config.m_controller_address;
+
+    std::unique_ptr<DistributedHsmService> dist_hsm_service;
+    if (m_config.m_server_config.m_controller) {
+        dist_hsm_service = DistributedHsmService::create(
+            service_config, std::move(hsm_service),
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        dist_hsm_service = DistributedHsmService::create(
+            service_config, std::move(hsm_service),
+            ApplicationContext::get().get_http_client());
+    }
+
+    ApplicationContext::get().set_hsm_service(std::move(dist_hsm_service));
+
+    dist_object_store_client->do_initialize(
+        ApplicationContext::get().get_hsm_service());
     return {};
 }
 
-std::unique_ptr<MultiBackendHsmObjectStoreClient>
-HestiaConfigurator::set_up_object_store()
+bool HestiaConfigurator::set_up_tiers(TierService* tier_service)
 {
-    LOG_INFO("Setting up object store");
-    std::vector<std::filesystem::path> search_paths;
-    auto plugin_handler =
-        std::make_unique<ObjectStorePluginHandler>(search_paths);
-    auto client_registry = std::make_unique<HsmObjectStoreClientFactory>(
-        std::move(plugin_handler));
-    auto client_manager = std::make_unique<HsmObjectStoreClientManager>(
-        std::move(client_registry));
-
-    auto object_store = std::make_unique<MultiBackendHsmObjectStoreClient>(
-        std::move(client_manager));
-    object_store->do_initialize(
-        m_config.m_tier_backend_registry, m_config.m_copy_tool_config);
-    return object_store;
+    for (const auto& [id, tier] : m_config.m_tiers) {
+        LOG_INFO("Adding tier: " << std::to_string(id) << " to Tier service");
+        auto response = tier_service->make_request({tier, CrudMethod::PUT});
+        if (!response->ok()) {
+            LOG_ERROR("Failed to PUT tier in initialization.");
+            return false;
+        }
+    }
+    return true;
 }
 
 std::unique_ptr<KeyValueStoreClient>

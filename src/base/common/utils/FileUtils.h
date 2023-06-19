@@ -42,5 +42,12 @@ class FileUtils {
     static std::string get_filename_without_extension(const Path& path);
 
     static void empty_path(const Path& path);
+
+    /**
+     * Get a file's size in bytes.
+     *
+     * @param path the file path
+     */
+    static uintmax_t get_file_size(const Path& path);
 };
 }  // namespace hestia

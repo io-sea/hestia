@@ -47,6 +47,12 @@ void ServerConfig::load(const Dictionary& config)
         else if (key == "backend") {
             m_backend = value;
         }
+        else if (key == "static_resource_path") {
+            m_static_resource_path = value;
+        }
+        else if (key == "cache_static_resources") {
+            m_cache_static_resources = (value != "false");
+        }
         else if (key == "tag") {
             m_tag = value;
         }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HttpRequest.h"
+#include "Stream.h"
 
 namespace hestia {
 
@@ -16,8 +17,10 @@ class HttpClient {
     /**
      * Make a sync http request and wait for the response
      * @param request the http request
+     * @param stream if present will send or receive the message body
      * @return the http response
      */
-    virtual HttpResponse::Ptr make_request(const HttpRequest& request) = 0;
+    virtual HttpResponse::Ptr make_request(
+        const HttpRequest& request, Stream* stream = nullptr) = 0;
 };
 }  // namespace hestia

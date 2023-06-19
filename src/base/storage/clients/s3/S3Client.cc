@@ -68,10 +68,11 @@ void S3Client::do_initialize(const S3Config& config)
 void S3Client::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
-    LOG_INFO("Doing PUT with: " + object.to_string());
-
     S3Object s3_object;
     m_object_adapter->to_s3(s3_object, object);
+
+    LOG_INFO("Doing PUT with StorageObject: " + object.to_string());
+    LOG_INFO("Doing PUT with S3Object: " + s3_object.to_string());
     m_impl->put(s3_object, extent, stream);
 }
 

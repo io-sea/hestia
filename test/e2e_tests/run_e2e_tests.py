@@ -10,8 +10,9 @@ from hestia_tests.utils import BaseTest, install_package, find_package
 
 from hestia_tests.cli_tests import CliTests
 from hestia_tests.sample_app_tests import SampleAppTests
-from hestia_tests.server_tests import ServerTests
+# from hestia_tests.server_tests import ServerTests
 # from hestia_tests.s3_tests import S3Tests
+from hestia_tests.phobos_tests import PhobosTests
 
 class E2eTests(BaseTest):
     def __init__(self, source_dir: Path, work_dir: Path, package_path: Path):
@@ -33,7 +34,8 @@ class E2eTests(BaseTest):
                         CliTests(self.source_dir, self.work_dir, self.system_install), 
                         SampleAppTests(self.source_dir, self.work_dir, self.system_install),
                         # ServerTests(self.source_dir, self.work_dir, self.system_install),
-                        #S3Tests(self.source_dir, self.work_dir, self.system_install)
+                        #S3Tests(self.source_dir, self.work_dir, self.system_install),
+                        PhobosTests(self.source_dir, self.work_dir, self.system_install)
                     ]
         
         for eachTest in self.tests:
@@ -47,6 +49,8 @@ if __name__ == "__main__":
     parser.add_argument('--source_dir', type=str, default=os.getcwd())
     parser.add_argument('--build_dir', type=str, default=os.getcwd())
     parser.add_argument('--package_name', type=str)
+    parser.add_argument('--with_phobos', action="store_true")
+    parser.add_argument('--with_motr', action="store_true")
 
     args = parser.parse_args()
 
@@ -83,6 +87,11 @@ if __name__ == "__main__":
 
     e2e_tests = E2eTests(source_dir, work_dir, package_path)
     e2e_tests.setup_environment()
-    e2e_tests.run()
+    e2e_tests.run(
+        test_names = [ "cli_tests", "sample_app_tests",
+            ("phobos_tests" if args.with_phobos else ""),
+            ("motr_tests" if args.with_motr else ""),
+        ]
+    )
 
     logging.info("Finished E2E Tests")

@@ -49,6 +49,8 @@ class File {
      */
     std::pair<OpStatus, ReadState> read(char* data, std::size_t length);
 
+    OpStatus read(std::string& buffer);
+
     std::pair<OpStatus, ReadState> read_lines(std::vector<std::string>& lines);
 
     /**
@@ -60,6 +62,8 @@ class File {
     OpStatus write(const char* data, std::size_t length);
 
     OpStatus write_lines(const std::vector<std::string>& lines);
+
+    uintmax_t get_size() const;
 
   private:
     OpStatus open_for_read() noexcept;

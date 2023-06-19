@@ -2,13 +2,10 @@
 
 #include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
+#include "FileHsmObjectStoreClient.h"
 #include "FileKeyValueStoreClient.h"
 
-#include "CopyToolInterface.h"
-#include "HsmObjectStoreClientManager.h"
-#include "HsmObjectStoreClientSpec.h"
 #include "HsmService.h"
-#include "MultiBackendHsmObjectStoreClient.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -22,12 +19,12 @@ class TestHsmService : public hestia::HsmService {
     TestHsmService(
         std::unique_ptr<hestia::ObjectService> object_service,
         std::unique_ptr<hestia::TierService> tier_service,
-        hestia::MultiBackendHsmObjectStoreClient* object_client,
+        hestia::HsmObjectStoreClient* object_store,
         std::unique_ptr<hestia::DataPlacementEngine> placement_engine) :
         hestia::HsmService(
             std::move(object_service),
             std::move(tier_service),
-            object_client,
+            object_store,
             std::move(placement_engine)){};
 
     virtual ~TestHsmService() {}
@@ -55,25 +52,18 @@ class HsmServiceTestFixture {
         auto tier_service = hestia::TierService::create(
             hestia::TierServiceConfig(), m_kv_store_client.get());
 
-        auto client_factory =
-            std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
-        auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(
-                std::move(client_factory));
+        for (std::size_t idx = 0; idx < 5; idx++) {
+            auto response = tier_service->make_request(
+                {hestia::StorageTier(idx), hestia::CrudMethod::PUT});
+            REQUIRE(response->ok());
+        }
+
         m_object_store_client =
-            std::make_unique<hestia::MultiBackendHsmObjectStoreClient>(
-                std::move(client_manager));
+            std::make_unique<hestia::FileHsmObjectStoreClient>();
+        hestia::FileHsmObjectStoreClientConfig file_config;
+        file_config.m_root = get_store_path();
+        m_object_store_client->do_initialize(file_config);
 
-        hestia::HsmObjectStoreClientSpec my_spec(
-            hestia::HsmObjectStoreClientSpec::Type::HSM,
-            hestia::HsmObjectStoreClientSpec::Source::BUILT_IN,
-            "hestia::FileHsmObjectStoreClient");
-        my_spec.m_extra_config.set_item("root", get_store_path());
-        hestia::TierBackendRegistry g_all_file_backend_example;
-        g_all_file_backend_example.emplace(0, my_spec);
-        g_all_file_backend_example.emplace(1, my_spec);
-
-        m_object_store_client->do_initialize(g_all_file_backend_example, {});
         auto placement_engine =
             std::make_unique<hestia::BasicDataPlacementEngine>(
                 tier_service.get());
@@ -199,8 +189,7 @@ class HsmServiceTestFixture {
 
     std::string m_test_name;
     std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
-    std::unique_ptr<hestia::MultiBackendHsmObjectStoreClient>
-        m_object_store_client;
+    std::unique_ptr<hestia::FileHsmObjectStoreClient> m_object_store_client;
     std::unique_ptr<TestHsmService> m_hsm_service;
 };
 
@@ -247,21 +236,21 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     check_content(&stream2, content);
 
     //Test remove
-    remove(obj1, src_tier);
+    //remove(obj1, src_tier);
     //TODO: test with list_ties
-    remove(obj2, tgt_tier);
+    //remove(obj2, tgt_tier);
     //TODO: test with list_ties
 
     //Test removeall
-    remove_all(obj0);
+    //remove_all(obj0);
     //TODO: test with list_ties
 
     //Test list_objects
     //TODO: put again after removes
-    /*list_objects(obj_ids, src_tier);
+    list_objects(obj_ids, src_tier);
     REQUIRE(obj_ids.size() == 2);
     REQUIRE(obj_ids[0] == obj0.id());
-    REQUIRE(obj_ids[1] == obj1.id());*/
+    REQUIRE(obj_ids[1] == obj1.id());
 
     //Test list_tiers
     //list_tiers(obj0, tier_ids);

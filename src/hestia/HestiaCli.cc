@@ -5,12 +5,15 @@
 #include "FileStreamSource.h"
 #include "HestiaConfigurator.h"
 
-#include "HestiaService.h"
+#include "DistributedHsmService.h"
+#include "HestiaServer.h"
 #include "HsmService.h"
+#include "HsmServiceRequest.h"
 
 #include "DaemonManager.h"
 
 #include "Logger.h"
+#include "Stream.h"
 
 #include <filesystem>
 #include <iostream>
@@ -285,10 +288,10 @@ OpStatus HestiaCli::run_hsm()
             hestia::StorageObject(m_hsm_command.m_object_id),
             hestia::HsmServiceRequestMethod::PUT);
         request->set_target_tier(m_hsm_command.m_target_tier);
-
         stream      = hestia::Stream::create();
         auto source = hestia::FileStreamSource::create(m_hsm_command.m_path);
         stream->set_source(std::move(source));
+        request->object().m_size = stream->get_source_size();
     }
     else if (m_hsm_command.m_method == HsmCommand::Method::COPY) {
         LOG_INFO(
@@ -348,9 +351,10 @@ OpStatus HestiaCli::run_hsm()
     }
 
     if (request) {
-        auto response =
-            hestia::ApplicationContext::get().get_hsm_service()->make_request(
-                *(request.get()), stream.get());
+        auto response = hestia::ApplicationContext::get()
+                            .get_hsm_service()
+                            ->get_hsm_service()
+                            ->make_request(*(request.get()), stream.get());
 
         if (!response->ok()) {
             const std::string msg =
@@ -382,8 +386,8 @@ OpStatus HestiaCli::run_hsm()
 
 OpStatus HestiaCli::run_server(const ServerConfig& config)
 {
-    HestiaService hestia_service(config);
-    hestia_service.run();
+    HestiaServer hestia_server(config);
+    hestia_server.run();
 
     return {};
 }

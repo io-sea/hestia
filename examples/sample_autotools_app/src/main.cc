@@ -1,4 +1,5 @@
 #include "hestia/hestia.h"
+#include "hestia/Logger.h"
 
 #include <iostream>
 #include <string>
@@ -6,6 +7,15 @@
 
 int main(int argc, char** argv)
 {
+    hestia::Logger::Config logger_config;
+    logger_config.m_active       = true;
+    logger_config.m_level        = hestia::Logger::Level::INFO;
+    logger_config.m_console_only = true;
+    logger_config.m_assert       = false;
+    logger_config.m_log_prefix   = "hestia_atools_sampleapp";
+
+    hestia::Logger::get_instance().do_initialize(logger_config);
+
     if (argc == 2) {
         hestia::initialize(argv[1]);
     }
@@ -25,10 +35,13 @@ int main(int argc, char** argv)
 
     if (content == returned_content) {
         std::cout << "Sanity check OK" << std::endl;
+        hestia::finish();
         return 0;
     }
     else {
         std::cerr << "Sanity check failed" << std::endl;
+        hestia::finish();
         return -1;
     }
+    
 }

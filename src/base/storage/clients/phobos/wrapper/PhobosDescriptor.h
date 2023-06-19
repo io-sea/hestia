@@ -14,7 +14,7 @@ class PhobosDescriptor {
 
     struct Info {
         Info(
-            const std::string& object_id,
+            const std::string object_id,
             Operation op,
             int fd           = -1,
             std::size_t size = 0) :

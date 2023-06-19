@@ -1,5 +1,6 @@
 include(AddModule)
 
+add_subdirectory(base_types)
 add_subdirectory(object_store)
 
 add_module(
@@ -9,6 +10,7 @@ add_module(
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
         distributed_hsm_service/DistributedHsmService.h
+        distributed_hsm_service/DistributedHsmServiceRequest.h
         distributed_hsm_service/HsmNodeService.h
         distributed_hsm_service/model/HsmNode.h
         distributed_hsm_service/model/HsmNodeAdapter.h
@@ -21,16 +23,13 @@ add_module(
         hsm_service/requests/HsmServiceError.h 
         key_value_store/KeyValueStoreClientFactory.h
         object_service/ObjectService.h
-        object_service/model/HsmObject.h 
-        object_service/model/HsmObjectAdapter.h 
         tier_service/TierService.h 
-        tier_service/model/StorageTier.h
-        tier_service/model/StorageTierAdapter.h
         s3_service/HsmS3Service.h
     SOURCES
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
         distributed_hsm_service/DistributedHsmService.cc
+        distributed_hsm_service/DistributedHsmServiceRequest.cc
         distributed_hsm_service/HsmNodeService.cc
         distributed_hsm_service/model/HsmNodeAdapter.cc
         hsm_service/HsmService.cc
@@ -42,10 +41,7 @@ add_module(
         hsm_service/requests/HsmServiceError.cc
         key_value_store/KeyValueStoreClientFactory.cc
         object_service/ObjectService.cc
-        object_service/model/HsmObject.cc
-        object_service/model/HsmObjectAdapter.cc
         tier_service/TierService.cc 
-        tier_service/model/StorageTierAdapter.cc
         s3_service/HsmS3Service.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
@@ -56,12 +52,11 @@ add_module(
         hsm_service/requests
         key_value_store
         object_service
-        object_service/model
         tier_service
-        tier_service/model
         s3_service
     INTERNAL_DEPENDENCIES 
-        hsm_object_store
+        hsm_object_store_client
+        http_client
         event_feed
         s3app
 )

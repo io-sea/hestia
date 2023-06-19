@@ -1,0 +1,109 @@
+<html>
+
+<head>
+    <style>
+        .listViewTable {
+            color: blue;
+        }
+    </style>
+
+    <script>
+        var objects = [];
+        var nodes = [];
+        var tiers = [];
+
+        var object_labels = {"hestia::id" : "Id",
+                             "hestia::size" : "Size",
+                            }
+
+        var working_object = {"hestia::id" : 0,
+                              "hestia:size": 0};
+
+        async function loadObjects() {
+            const response = await fetch("api/v1/hsm/objects");
+            objects = await response.json();
+
+            var object_table = document.createElement("table");
+            objects.forEach(element => {
+                console.log(element);
+                var table_row = document.createElement("tr");
+                var row_content = document.createTextNode("Id: " + element["hestia::id"] + " - Size: " + element["hestia::size"]);
+                table_row.appendChild(row_content);
+                object_table.appendChild(table_row);
+            });
+            var object_list_div = document.getElementById("objectList");
+            object_list_div.replaceChildren(object_table);
+        }
+
+        async function loadTiers() {
+            const response = await fetch("api/v1/hsm/tiers");
+            tiers = await response.json();
+
+            var tier_table = document.createElement("table");
+            tiers.forEach(element => {
+                var table_row = document.createElement("tr");
+                var row_content = document.createTextNode("Id: " + element.id + " - Backend: " + element.backend);
+                table_row.appendChild(row_content);
+                tier_table.appendChild(table_row);
+            });
+            var tier_list_div = document.getElementById("tiersList");
+            tier_list_div.replaceChildren(tier_table);
+        }
+
+        async function loadNodes() {
+            const response = await fetch("api/v1/nodes");
+            nodes = await response.json();
+
+            var node_table = document.createElement("table");
+            node_table.classList.add("listViewTable");
+            nodes.forEach(element => {
+                var node_table_row = document.createElement("tr");
+                var row_content = document.createTextNode("Id: " + element.id + " - Tag: " + element.tag);
+                node_table_row.appendChild(row_content);
+                node_table.appendChild(node_table_row);
+            });
+            var node_list_div = document.getElementById("nodesList");
+            node_list_div.replaceChildren(node_table);
+        }
+
+        function loadObjectView(object){
+            var object_view_div = document.getElementById("objectView");
+            var view_content = document.createTextNode("Id: " + object["hestia::id"]);
+            object_view_div.replaceChildren(view_content);
+        }
+
+        function onLoad(){
+            loadNodes();
+            loadTiers();
+            loadObjects();
+
+            loadObjectView(working_object);
+        }
+
+    </script>
+
+
+</head>
+
+<body onload="onLoad()">
+<h1>Hestia</h1>
+
+<p>This is a Hestia (Hierarchical Storage Tiers Interface for Applications) based web app. See the repo <a href="https://git.ichec.ie/io-sea-internal/hestia"> README</a> for details.</p>
+
+<h2>System Overview</h2>
+
+<h3>Nodes</h3>
+<div id="nodesList">[]</div>
+
+<h3>Tiers</h3>
+<div id="tiersList">[]</div>
+
+<h3>Objects</h3>
+<div id="objectContainer">
+    <div id="objectList" style="display:inline-block">[]</div>
+    <div id="objectView" style="display:inline-block">
+    </div>
+</div>
+
+</body>
+</html>

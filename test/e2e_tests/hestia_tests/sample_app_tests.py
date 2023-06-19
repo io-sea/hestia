@@ -33,15 +33,18 @@ class SampleAppTests(hestia_tests.utils.BaseTest):
 
         runtime_path = self.work_dir / "sample_cmake_app"
         build_dir = runtime_path / "build"
+        runtime_env = os.environ.copy()
 
         if not self.system_install:
             project_dir = self.work_dir / self.project_name
             cmake_args = f"-D{self.project_name}_DIR={project_dir}/lib/cmake/{self.project_name} "
+            runtime_env["LD_LIBRARY_PATH"] = f"{project_dir}/lib"
         else:
             cmake_args = ""
+            runtime_env["LD_LIBRARY_PATH"] = "/usr/lib/hestia/"
 
-        cmd = f"mkdir {build_dir}; cd {build_dir}; cmake {cmake_args}../; make; ./{self.project_name}_sample_app"
-        subprocess.run(cmd, shell=True, cwd=runtime_path)
+        cmd = f"mkdir {build_dir}; cd {build_dir}; cmake {cmake_args} ../; make; ./{self.project_name}_sample_app"
+        subprocess.run(cmd, shell=True, cwd=runtime_path, env=runtime_env)
 
     def run_autotools_sample_app(self):
 
@@ -52,8 +55,11 @@ class SampleAppTests(hestia_tests.utils.BaseTest):
 
         if not self.system_install:
             project_dir = self.work_dir / self.project_name
-            pkgconfig_path = f"{project_dir}/lib/pkgconfig"
-            runtime_env["PKG_CONFIG_PATH"] = pkgconfig_path
+            runtime_env["PKG_CONFIG_PATH"] = f"{project_dir}"
+            runtime_env["LD_LIBRARY_PATH"] = f"{project_dir}/lib"
+        else:
+            runtime_env["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig/"
+            runtime_env["LD_LIBRARY_PATH"] = "/usr/lib/hestia/"
 
-        cmd = f"./autogen.sh; ./configure; make;"
+        cmd = f"./autogen.sh; ./configure; make; ./{self.project_name}_sample_app"
         subprocess.run(cmd, shell=True, cwd=runtime_path, env=runtime_env)

@@ -17,7 +17,8 @@ std::string FileUtils::get_filename_without_extension(const Path& path)
 void FileUtils::create_if_not_existing(const Path& path)
 {
     if (!std::filesystem::is_regular_file(path)) {
-        if (!std::filesystem::is_directory(path.parent_path())) {
+        if (path.has_parent_path()
+            && !std::filesystem::is_directory(path.parent_path())) {
             std::filesystem::create_directories(path.parent_path());
         }
     }
@@ -28,4 +29,10 @@ void FileUtils::empty_path(const Path& path)
     std::filesystem::remove_all(path);
     std::filesystem::create_directories(path);
 }
+
+uintmax_t FileUtils::get_file_size(const Path& path)
+{
+    return std::filesystem::file_size(path);
+}
+
 }  // namespace hestia
