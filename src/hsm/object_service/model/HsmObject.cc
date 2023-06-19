@@ -1,6 +1,7 @@
 #include "HsmObject.h"
 
 #include <algorithm>
+#include<iostream>
 
 namespace hestia {
 HsmObject::HsmObject(const hestia::Uuid& id) : m_storage_object(id.to_string())

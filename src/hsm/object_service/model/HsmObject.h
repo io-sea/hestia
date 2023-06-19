@@ -24,7 +24,7 @@ class HsmObject {
 
     void remove_tier(uint8_t tier_id, bool sort = true);
 
-    void remove_all_but_one_tiers() {}
+    void remove_all_but_one_tiers(){};
 
     void replace_tier(uint8_t old_id, uint8_t new_id);
 

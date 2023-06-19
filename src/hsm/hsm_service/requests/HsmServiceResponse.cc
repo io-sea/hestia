@@ -86,6 +86,9 @@ const std::string& HsmServiceResponse::query_result() const
 
 const std::vector<HsmObject>& HsmServiceResponse::objects() const
 {
+    if(m_object_response==nullptr){
+      return m_objects;
+    }
     return m_object_response->items();
 }
 
@@ -124,7 +127,7 @@ void HsmServiceResponse::add_tier(const StorageTier& tier)
 
 void HsmServiceResponse::add_object(const HsmObject& object)
 {
-   m_objects.push_back(object);
+   m_object_response->items().push_back(object);
 }
 
 }  // namespace hestia
