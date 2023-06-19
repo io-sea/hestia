@@ -30,6 +30,7 @@ int initialize(const char* config_path)
 
 void finish()
 {
+    LOG_INFO("Stopping hestia client");
     ApplicationContext::get().clear();
 }
 

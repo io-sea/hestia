@@ -63,6 +63,8 @@ class File {
 
     OpStatus write_lines(const std::vector<std::string>& lines);
 
+    uintmax_t get_size() const;
+
   private:
     OpStatus open_for_read() noexcept;
     OpStatus open_for_write() noexcept;

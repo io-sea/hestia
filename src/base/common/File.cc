@@ -200,4 +200,10 @@ OpStatus File::open_for_read() noexcept
     }
     return {};
 }
+
+uintmax_t File::get_size() const
+{
+    return FileUtils::get_file_size(m_path);
+}
+
 }  // namespace hestia

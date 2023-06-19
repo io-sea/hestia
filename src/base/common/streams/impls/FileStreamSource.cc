@@ -1,7 +1,10 @@
 #include "FileStreamSource.h"
 
 namespace hestia {
-FileStreamSource::FileStreamSource(const File::Path& path) : m_file(path) {}
+FileStreamSource::FileStreamSource(const File::Path& path) : m_file(path)
+{
+    m_size = m_file.get_size();
+}
 
 FileStreamSource::Ptr FileStreamSource::create(const File::Path& path)
 {

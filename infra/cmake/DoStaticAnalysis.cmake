@@ -38,7 +38,9 @@ function(add_clang_tidy)
         add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies Catch2::Catch2)
     endif()
     if(NOT APPLE AND ${HESTIA_WITH_PHOBOS})
-        add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies phobos)
+        if(TARGET phobos)
+            add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies phobos)
+        endif()
     endif()
 
     find_program(CLANG_TIDY_EXE clang-tidy 

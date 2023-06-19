@@ -288,10 +288,10 @@ OpStatus HestiaCli::run_hsm()
             hestia::StorageObject(m_hsm_command.m_object_id),
             hestia::HsmServiceRequestMethod::PUT);
         request->set_target_tier(m_hsm_command.m_target_tier);
-
         stream      = hestia::Stream::create();
         auto source = hestia::FileStreamSource::create(m_hsm_command.m_path);
         stream->set_source(std::move(source));
+        request->object().m_size = stream->get_source_size();
     }
     else if (m_hsm_command.m_method == HsmCommand::Method::COPY) {
         LOG_INFO(

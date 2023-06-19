@@ -123,7 +123,7 @@ HsmServiceResponse::Ptr HsmService::put(
 
     if (stream != nullptr) {
         const auto chosen_tier = m_placement_engine->choose_tier(
-            req.extent().m_length, req.target_tier());
+            req.object().m_size, req.target_tier());
 
         HsmObjectStoreRequest data_put_request(
             req.object(), HsmObjectStoreRequestMethod::PUT);
@@ -156,7 +156,7 @@ HsmServiceResponse::Ptr HsmService::put(
         if (m_event_feed) {
             EventFeed::Event event;
             event.m_id          = req.object().id();
-            event.m_length      = req.extent().m_length;
+            event.m_length      = req.object().m_size;
             event.m_method      = EventFeed::Event::Method::PUT;
             event.m_target_tier = req.target_tier();
             m_event_feed->log_event(event);
@@ -293,7 +293,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = req.object().id();
-        event.m_length      = req.extent().m_length;
+        event.m_length      = req.object().m_size;
         event.m_method      = EventFeed::Event::Method::COPY;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();
@@ -328,7 +328,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = req.object().id();
-        event.m_length      = req.extent().m_length;
+        event.m_length      = req.object().m_size;
         event.m_method      = EventFeed::Event::Method::MOVE;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();

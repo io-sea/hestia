@@ -4,7 +4,6 @@ server:
   web_app: hestia::HsmService
   backend: hestia::Basic
   controller: true
-  tag: controller0
 
 web_apps:
   - identitifier: hestia::HsmService
@@ -29,6 +28,7 @@ object_store_clients:
     source: plugin
     type: basic
     plugin_path: libhestia_s3_plugin
+    host: 127.0.0.1:8000
   - identifier: hestia::PhobosClient
     source: plugin
     type: basic
@@ -37,14 +37,6 @@ object_store_clients:
     source: mock
     type: basic
     plugin_path: libhestia_mock_phobos_plugin
-  - identifier: hestia::MockMotrClient
-    source: mock
-    type: hsm
-    plugin_path: libhestia_mock_motr_plugin
-  - identifier: hestia::MotrClient
-    source: plugin
-    type: hsm
-    plugin_path: libhestia_motr_plugin
 
 key_value_store:
   client_identifier: hestia::FileKeyValueStoreClient
@@ -55,10 +47,8 @@ key_value_store_clients:
 
 tier_registry:
   - identifier: 0
-    client_identifier: hestia::FileHsmObjectStoreClient
+    client_identifier: hestia::PhobosClient
   - identifier: 1
-    client_identifier: hestia::FileHsmObjectStoreClient
-  - identifier: 2
     client_identifier: hestia::FileHsmObjectStoreClient
 
 event_feed:

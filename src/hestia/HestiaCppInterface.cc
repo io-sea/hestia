@@ -56,6 +56,7 @@ int HestiaCppInterface::put(
 
     hestia::Stream stream;
     stream.set_source(hestia::InMemoryStreamSource::create(buffer));
+    request.object().m_size = stream.get_source_size();
 
     if (const auto response = ApplicationContext::get()
                                   .get_hsm_service()

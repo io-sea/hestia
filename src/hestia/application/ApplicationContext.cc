@@ -13,6 +13,7 @@ void ApplicationContext::clear()
     m_hsm_service.reset();
     m_kv_store_client.reset();
     m_object_store_client.reset();
+    m_http_client.reset();
 }
 
 ApplicationContext& ApplicationContext::get()
