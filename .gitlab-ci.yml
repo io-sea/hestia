@@ -114,14 +114,15 @@ Lint:
     CXX: clang++
     CC: clang
     HESTIA_BUILD_TESTS: "ON" 
+    HESTIA_WITH_PHOBOS: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
-    - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies
+    - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies -j$(nproc)
   script:
-    - ./infra/scripts/run_lint.sh "${CMAKE_BUILD_DIR}"
+    - make -C "${CMAKE_BUILD_DIR}" hestia_check_tidy -j$(nproc)
 
 Release:
   <<: *default_job

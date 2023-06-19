@@ -38,7 +38,9 @@ function(add_clang_tidy)
         add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies Catch2::Catch2)
     endif()
     if(NOT APPLE AND ${HESTIA_WITH_PHOBOS})
-        if(TARGET phobos)
+        find_package(phobos QUIET)    
+        if(NOT ${phobos_FOUND})
+            build_phobos()
             add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies phobos)
         endif()
     endif()
@@ -56,12 +58,12 @@ function(add_clang_tidy)
 
         add_custom_target(${PROJECT_NAME}_check_tidy)
         add_custom_command(TARGET ${PROJECT_NAME}_check_tidy PRE_BUILD
-            COMMAND ${CLANG_TIDY_EXE} -p ${PROJECT_BINARY_DIR} --header-filter=.* --quiet ${ALL_SOURCE_FILES}
+            COMMAND find ${ALL_SOURCE_FILES} -print0 | xargs -0 -P 0 ${CLANG_TIDY_EXE} -p ${PROJECT_BINARY_DIR} --quiet --header-filter=.* 
         )
 
         add_custom_target(${PROJECT_NAME}_do_tidy)
         add_custom_command(TARGET ${PROJECT_NAME}_do_tidy PRE_BUILD
-            COMMAND ${CLANG_TIDY_EXE} -p ${PROJECT_BINARY_DIR} --fix-errors --header-filter=.* ${ALL_SOURCE_FILES}
+            COMMAND find ${ALL_SOURCE_FILES} -print0 | xargs -0 -P 0 ${CLANG_TIDY_EXE} -p ${PROJECT_BINARY_DIR} --fix-errors --header-filter=.* 
         )   
     endif()
 endfunction()

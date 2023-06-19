@@ -24,7 +24,9 @@ add_module(
 
 if(HESTIA_WITH_PHOBOS)
     if(NOT APPLE)
-        find_package(phobos QUIET)
+        if(NOT ${phobos_FOUND})
+            find_package(phobos QUIET)
+        endif()
         if(NOT ${phobos_FOUND})
             build_phobos()
         endif()

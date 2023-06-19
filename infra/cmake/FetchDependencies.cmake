@@ -151,8 +151,10 @@ macro(build_phobos)
     GIT_TAG 2c32a8d7a56b14312ad0fb327d77f4b7430a27b7
     UPDATE_DISCONNECTED 1
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND patch -p1 --forward < ${PROJECT_SOURCE_DIR}/infra/cmake/patches/phobos_disable_systemd_install.patch || true
-    CONFIGURE_COMMAND <SOURCE_DIR>/autogen.sh COMMAND CFLAGS=-Wno-error <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --disable-dependency-tracking --disable-cli
+    PATCH_COMMAND   patch -p1 --forward < ${PROJECT_SOURCE_DIR}/infra/cmake/patches/phobos_ldm_common_page_size.patch 
+                    || patch -p1 --forward < ${PROJECT_SOURCE_DIR}/infra/cmake/patches/phobos_fix_db_conn.patch            
+                    || true
+    CONFIGURE_COMMAND <SOURCE_DIR>/autogen.sh COMMAND CFLAGS=-Wno-error <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --disable-dependency-tracking
     BUILD_COMMAND CFLAGS=-I/usr/lib/x86_64-linux-gnu/glib-2.0/include/ make
     )
 
