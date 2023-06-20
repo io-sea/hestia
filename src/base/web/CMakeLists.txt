@@ -9,6 +9,7 @@ add_module(
         StaticContentView.h 
         UrlRouter.h 
         authentication/AuthenticationMiddleware.h 
+        authentication/TokenAuthenticationMiddleware.h
         authentication/AuthenticationSession.h 
         authentication/UserAdapter.h
         authentication/UserService.h
@@ -19,6 +20,7 @@ add_module(
         UrlRouter.cc
         authentication/UserAdapter.cc
         authentication/UserService.cc
+        authentication/TokenAuthenticationMiddleware.cc
     INTERNAL_DEPENDENCIES 
         storage 
         protocol

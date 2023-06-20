@@ -4,7 +4,7 @@
 #include "StringUtils.h"
 #include "Uuid.h"
 
-#include <iostream>
+#include "Logger.h"
 
 namespace hestia {
 
@@ -23,6 +23,7 @@ void UserJsonAdapter::to_string(
         seq->add_sequence_item(std::move(dict));
     }
     output = JsonUtils::to_json(*seq);
+    LOG_INFO("Saving as: " << output);
 }
 
 void UserJsonAdapter::to_dict(
@@ -38,6 +39,7 @@ void UserJsonAdapter::to_dict(
 
     std::unordered_map<std::string, std::string> data{
         {"id", working_id},
+        {"password", item.m_password},
         {"last_modified", std::to_string(item.m_last_modified_time)},
         {"created", std::to_string(item.m_creation_time)}};
     dict.set_map(data);
@@ -52,6 +54,19 @@ void UserJsonAdapter::to_dict(
         dict.set_map_item("token", std::move(token_dict));
     }
 }
+
+bool UserJsonAdapter::matches_query(
+    const User& item, const Metadata& query) const
+{
+    LOG_INFO("Checking query: " << query.to_string());
+    if (auto token = query.get_item("token::value"); !token.empty()) {
+        LOG_INFO("Item value is: " << item.m_api_token.m_value);
+        if (item.m_api_token.m_value != token) {
+            return false;
+        }
+    }
+    return true;
+};
 
 void UserJsonAdapter::from_dict(const Dictionary& dict, User& item) const
 {
@@ -102,6 +117,7 @@ void UserJsonAdapter::to_string(
 
 void UserJsonAdapter::from_string(const std::string& input, User& item) const
 {
+    LOG_INFO("Loading as: " << input);
     auto dict = JsonUtils::from_json(input);
     from_dict(*dict, item);
 }

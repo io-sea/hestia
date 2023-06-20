@@ -55,6 +55,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
     void list(
         const Metadata& query, std::vector<std::string>& ids) const override
     {
+        LOG_INFO("Doing list with query: " << query.to_string());
         KeyValueStoreResponsePtr response;
         response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
@@ -66,9 +67,6 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
         if (!query.empty()) {
             std::vector<ItemT> items;
-            for (const auto& id : response->ids()) {
-                items.push_back(ItemT(id));
-            }
             multi_get({}, items);
             for (const auto& item : items) {
                 if (this->matches_query(item, query)) {
@@ -82,6 +80,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
                 ids.push_back(id);
             }
         }
+        LOG_INFO("Got : " << ids.size());
     }
 
     void multi_get(

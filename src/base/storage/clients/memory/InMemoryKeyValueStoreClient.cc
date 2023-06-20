@@ -48,19 +48,17 @@ void InMemoryKeyValueStoreClient::string_multi_get(
     const std::vector<std::string>& keys,
     std::vector<std::string>& values) const
 {
-    auto max_size = keys.size();
-    if (values.size() < keys.size()) {
-        max_size = values.size();
-    }
-
-    for (std::size_t idx = 0; idx < max_size; idx++) {
-        string_get(keys[idx], values[idx]);
+    for (const auto& key : keys) {
+        std::string value;
+        string_get(key, value);
+        values.push_back(value);
     }
 }
 
 void InMemoryKeyValueStoreClient::string_set(
     const std::string& key, const std::string& value) const
 {
+    LOG_INFO("Setting value: " << key << " | " << value);
     m_string_db[key] = value;
 }
 

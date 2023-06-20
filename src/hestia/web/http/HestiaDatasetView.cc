@@ -3,12 +3,15 @@
 #include "DatasetAdapter.h"
 #include "DatasetService.h"
 
+#include "DistributedHsmService.h"
+#include "HsmService.h"
+
 #include "StringUtils.h"
 
 namespace hestia {
-HestiaDatasetView::HestiaDatasetView(DatasetService* user_service) :
+HestiaDatasetView::HestiaDatasetView(DistributedHsmService* hsm_service) :
     WebView(),
-    m_dataset_service(user_service),
+    m_hsm_service(hsm_service),
     m_dataset_adapter(std::make_unique<DatasetJsonAdapter>())
 {
 }
@@ -27,8 +30,9 @@ HttpResponse::Ptr HestiaDatasetView::on_get(
 
     if (path.empty() || path == "/") {
         LOG_INFO("Listing available datasets");
-        auto get_response =
-            m_dataset_service->make_request(CrudMethod::MULTI_GET);
+        auto get_response = m_hsm_service->get_hsm_service()
+                                ->get_dataset_service()
+                                ->make_request(CrudMethod::MULTI_GET);
         if (!get_response->ok()) {
             LOG_ERROR(
                 "Failed to get datasets: "

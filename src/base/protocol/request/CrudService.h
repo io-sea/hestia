@@ -3,6 +3,8 @@
 #include "CrudClient.h"
 #include "Service.h"
 
+#include "Logger.h"
+
 #include <memory>
 #include <string>
 

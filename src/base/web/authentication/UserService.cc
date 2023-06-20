@@ -53,19 +53,41 @@ std::unique_ptr<UserServiceResponse> UserService::authenticate_user(
     CrudRequest<User> request(user, CrudMethod::GET);
     auto get_response = make_request(request);
     if (!get_response->ok()) {
+        LOG_ERROR("Couldn't find requested user");
         return get_response;
     }
 
     const auto hashed_password = get_hashed_password(username, password);
     if (hashed_password == get_response->item().m_password) {
+        LOG_INFO("Supplied password is ok");
         return get_response;
     }
     else {
+        LOG_ERROR(
+            "Supplied password doesn't match: "
+            << hashed_password << " | " << get_response->item().m_password);
         auto response = std::make_unique<UserServiceResponse>(request);
         response->on_error(
             {CrudErrorCode::NOT_AUTHENTICATED, "Failed to authenticate user"});
         return response;
     }
+}
+
+std::unique_ptr<UserServiceResponse> UserService::authenticate_with_token(
+    const std::string& token)
+{
+    Metadata query;
+    query.set_item("token::value", token);
+    auto list_response = make_request({query});
+    if (!list_response->ok()) {
+        LOG_ERROR("Failed to authenticate with token - error");
+    }
+
+    if (list_response->ids().empty()) {
+        LOG_ERROR("No matching user found.");
+    }
+
+    return make_request({list_response->ids()[0], CrudMethod::GET});
 }
 
 std::unique_ptr<UserServiceResponse> UserService::register_user(
@@ -90,6 +112,7 @@ std::unique_ptr<UserServiceResponse> UserService::register_user(
     user.m_api_token.m_value =
         HashUtils::base64_encode(HashUtils::do_rand_32());
 
+    LOG_INFO("Adding new user");
     auto put_response = make_request({user, CrudMethod::PUT});
     return put_response;
 }

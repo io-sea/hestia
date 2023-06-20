@@ -45,9 +45,10 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     }
 
     auto response = HttpResponse::create();
+    User user;
     if (m_middleware.empty()) {
         try {
-            response = view->get_response(request_context->get_request());
+            response = view->get_response(request_context->get_request(), user);
         }
         catch (const std::exception& e) {
             LOG_ERROR("Unhandled exception in view: " << e.what());
@@ -59,8 +60,8 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     }
     else {
         try {
-            response =
-                on_middleware_layer(view, 0, request_context->get_request());
+            response = on_middleware_layer(
+                view, user, 0, request_context->get_request());
         }
         catch (const std::exception& e) {
             response = HttpResponse::create(500, "Internal Server Error");
@@ -106,17 +107,21 @@ HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& request) const
 }
 
 HttpResponse::Ptr WebApp::on_middleware_layer(
-    WebView* view, std::size_t working_idx, const HttpRequest& request) const
+    WebView* view,
+    User& user,
+    std::size_t working_idx,
+    const HttpRequest& request) const
 {
     if (working_idx + 1 == m_middleware.size()) {
-        return view->get_response(request);
+        return view->get_response(request, user);
     }
     else {
-        auto response_provider = [this, view,
+        auto response_provider = [this, view, &user,
                                   working_idx](const HttpRequest& request) {
-            return on_middleware_layer(view, working_idx + 1, request);
+            return on_middleware_layer(view, user, working_idx + 1, request);
         };
-        return m_middleware[working_idx]->call(request, response_provider);
+        return m_middleware[working_idx]->call(
+            request, user, response_provider);
     }
 }
 

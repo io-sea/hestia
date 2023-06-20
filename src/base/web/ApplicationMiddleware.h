@@ -1,7 +1,6 @@
 #pragma once
 
 #include "HttpRequest.h"
-
 #include "UserService.h"
 
 namespace hestia {
@@ -15,7 +14,7 @@ class ApplicationMiddleware {
     void set_user_service(UserService* service) { m_user_service = service; }
 
     virtual HttpResponse::Ptr call(
-        const HttpRequest& request, responseProviderFunc func) = 0;
+        const HttpRequest& request, User& user, responseProviderFunc func) = 0;
 
   protected:
     UserService* m_user_service{nullptr};

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HttpRequest.h"
+#include "User.h"
 
 #include <functional>
 #include <memory>
@@ -35,6 +36,7 @@ class WebApp {
 
     HttpResponse::Ptr on_middleware_layer(
         WebView* view,
+        User& user,
         std::size_t working_idx,
         const HttpRequest& request) const;
 

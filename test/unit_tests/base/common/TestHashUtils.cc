@@ -2,9 +2,15 @@
 
 #include "HashUtils.h"
 
-TEST_CASE("Test Hashing", "[hash]")
+TEST_CASE("Test Hashing - sha256", "[hash]")
 {
     auto sha256 = hestia::HashUtils::do_sha256("Test");
+}
+
+TEST_CASE("Test Hashing - rand32", "[hash]")
+{
+    auto output = hestia::HashUtils::do_rand_32();
+    REQUIRE(output.length() == 32);
 }
 
 TEST_CASE("String encoding", "[hash]")

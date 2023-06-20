@@ -13,7 +13,7 @@ class TestWebApp : public hestia::WebApp {
     {
         m_url_router = std::make_unique<hestia::UrlRouter>();
         m_url_router->add_pattern(
-            "/", std::make_unique<hestia::mock::MockWebView>(&m_service));
+            {"/"}, std::make_unique<hestia::mock::MockWebView>(&m_service));
     }
 
   private:

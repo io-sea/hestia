@@ -5,6 +5,7 @@
 #include "FileHsmObjectStoreClient.h"
 #include "FileKeyValueStoreClient.h"
 
+#include "DatasetService.h"
 #include "HsmService.h"
 #include "ObjectService.h"
 #include "TierService.h"
@@ -18,11 +19,13 @@ class TestHsmService : public hestia::HsmService {
     TestHsmService(
         std::unique_ptr<hestia::ObjectService> object_service,
         std::unique_ptr<hestia::TierService> tier_service,
+        std::unique_ptr<hestia::DatasetService> dataset_service,
         hestia::HsmObjectStoreClient* object_store,
         std::unique_ptr<hestia::DataPlacementEngine> placement_engine) :
         hestia::HsmService(
             std::move(object_service),
             std::move(tier_service),
+            std::move(dataset_service),
             object_store,
             std::move(placement_engine)){};
 
@@ -54,6 +57,9 @@ class HsmServiceTestFixture {
         auto tier_service = hestia::TierService::create(
             hestia::TierServiceConfig(), m_kv_store_client.get());
 
+        auto dataset_service = hestia::DatasetService::create(
+            hestia::DatasetServiceConfig(), m_kv_store_client.get());
+
         for (std::size_t idx = 0; idx < 5; idx++) {
             auto response = tier_service->make_request(
                 {hestia::StorageTier(idx), hestia::CrudMethod::PUT});
@@ -72,7 +78,8 @@ class HsmServiceTestFixture {
 
         m_hsm_service = std::make_unique<TestHsmService>(
             std::move(object_service), std::move(tier_service),
-            m_object_store_client.get(), std::move(placement_engine));
+            std::move(dataset_service), m_object_store_client.get(),
+            std::move(placement_engine));
     }
 
     void put(const hestia::StorageObject& obj, hestia::Stream* stream)

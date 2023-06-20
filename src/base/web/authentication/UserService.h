@@ -35,6 +35,9 @@ class UserService : public CrudService<User> {
     std::unique_ptr<UserServiceResponse> authenticate_user(
         const std::string& username, const std::string& password);
 
+    std::unique_ptr<UserServiceResponse> authenticate_with_token(
+        const std::string& token);
+
     std::unique_ptr<UserServiceResponse> register_user(
         const std::string& username, const std::string& password);
 

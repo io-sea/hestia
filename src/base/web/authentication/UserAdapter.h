@@ -26,12 +26,7 @@ class UserJsonAdapter : public StringAdapter<User> {
     void from_string(
         const std::string& json, std::vector<User>& item) const override;
 
-    bool matches_query(const User& item, const Metadata& query) const override
-    {
-        (void)item;
-        (void)query;
-        return true;
-    };
+    bool matches_query(const User& item, const Metadata& query) const override;
 
   private:
     void to_dict(

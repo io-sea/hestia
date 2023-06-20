@@ -9,36 +9,32 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "Logger.h"
+
 namespace hestia {
 
 std::string HashUtils::do_rand_32()
 {
-    unsigned char* buffer = new unsigned char[32];
-    int rc                = RAND_bytes(buffer, 32);
+    std::vector<unsigned char> buffer(32);
+    int rc = RAND_bytes(buffer.data(), buffer.size());
     if (rc != 1) {
-        delete[] buffer;
         throw std::runtime_error(
             "SSL Error with code: " + std::to_string(ERR_get_error()));
     }
-
-    std::stringstream ss;
-    ss << reinterpret_cast<const char*>(buffer);
-    delete[] buffer;
-    return ss.str();
+    return {buffer.begin(), buffer.end()};
 }
 
 std::string HashUtils::base64_encode(const std::string& input)
 {
-    unsigned char* output = new unsigned char[EVP_MAX_MD_SIZE];
-
+    std::vector<unsigned char> buffer(EVP_MAX_MD_SIZE);
     EVP_EncodeBlock(
-        output, reinterpret_cast<const unsigned char*>(input.c_str()),
+        buffer.data(), reinterpret_cast<const unsigned char*>(input.c_str()),
         input.length());
 
-    std::stringstream ss;
-    ss << reinterpret_cast<const char*>(output);
-    delete[] output;
-    return ss.str();
+    std::string ret(buffer.begin(), buffer.end());
+    ret.erase(std::find(ret.begin(), ret.end(), '\0'), ret.end());
+
+    return ret;
 }
 
 std::string HashUtils::uri_encode(const std::string& input, bool encode_slash)

@@ -3,9 +3,10 @@
 #include "AuthenticationMiddleware.h"
 
 namespace hestia {
-class S3AuthenticationMiddleware : public AuthenticationMiddleware {
+class UserService;
+
+class TokenAuthenticationMiddleware : public AuthenticationMiddleware {
   public:
-    virtual ~S3AuthenticationMiddleware() = default;
     HttpResponse::Ptr call(
         const HttpRequest& request,
         User& user,

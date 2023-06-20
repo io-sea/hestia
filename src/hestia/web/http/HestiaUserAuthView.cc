@@ -3,6 +3,7 @@
 #include "UserAdapter.h"
 #include "UserService.h"
 
+#include "HttpParser.h"
 #include "StringUtils.h"
 
 namespace hestia {
@@ -23,8 +24,19 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
         path = path.substr(0, path.size() - 1);
     }
 
-    std::string username = request.get_queries().get_item("user");
-    std::string password = request.get_queries().get_item("password");
+    std::string username;
+    std::string password;
+    if (!request.get_queries().empty()) {
+        username = request.get_queries().get_item("user");
+        password = request.get_queries().get_item("password");
+    }
+    else {
+        Metadata form_data;
+        HttpParser::parse_form_data(request.body(), form_data);
+        username = form_data.get_item("user");
+        password = form_data.get_item("password");
+    }
+
     if (username.empty() || password.empty()) {
         return HttpResponse::create(400, "Bad Request");
     }
