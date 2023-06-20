@@ -457,26 +457,25 @@ HsmServiceResponse::Ptr HsmService::list_objects(const HsmServiceRequest& req) n
 HsmServiceResponse::Ptr HsmService::list_tiers(const HsmServiceRequest& req) noexcept
 {
     LOG_INFO("Starting HSMService LIST_TIERS");
-//TODO:TierService needs to be started.
-    auto response= HsmServiceResponse::create(req);
 
-    ObjectServiceRequest get_object_request(req.object(), CrudMethod::GET);
-    auto get_object_response = m_object_service->make_request(get_object_request);
-    ERROR_CHECK(get_object_response);
+    auto obj_get_response =
+        m_object_service->make_request({req.object(), CrudMethod::GET});
+    auto all_tiers_response =
+        m_tier_service->make_request(CrudMethod::MULTI_GET);
 
-    std::cout<<"get_object_response tiers size:"<<get_object_response->item().tiers().size()<<std::endl;
-    for (const auto& tier_id : get_object_response->item().tiers()) {
-       std::cout<<"  tier_id:"<<std::to_string(tier_id)<<std::endl;
-       StorageTier tier(std::to_string(tier_id));
-       TierServiceRequest get_tier_request(tier, CrudMethod::GET);
-       auto get_tier_response = m_tier_service->make_request(get_tier_request);
-       ERROR_CHECK(get_tier_response);
-       response->add_tier(get_tier_response->item());
+    auto list_response =
+        std::make_unique<CrudResponse<StorageTier, CrudErrorCode>>(req);
+    for (const auto& tier_id : obj_get_response->item().tiers()) {
+        for (const auto& tier : all_tiers_response->items()) {
+            if (tier_id == tier.id_uint()) {
+                list_response->items().push_back(tier);
+                break;
+            }
+        }
     }
-
     LOG_INFO("Finished HSMService LIST_TIERS");
 
-    return response;
+    return HsmServiceResponse::create(req, std::move(list_response));
 }
 
 void HsmService::list_attributes(HsmObject& object)

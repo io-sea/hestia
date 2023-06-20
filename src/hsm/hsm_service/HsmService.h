@@ -14,9 +14,10 @@ class DataPlacementEngine;
 
 class ObjectService;
 using ObjectServiceRequest = CrudRequest<HsmObject>;
-using TierServiceRequest = CrudRequest<StorageTier>;
 
 class TierService;
+using TierServiceRequest = CrudRequest<StorageTier>;
+
 class HsmStoreInterface;
 class HsmActionAdapter;
 class KeyValueStoreClient;

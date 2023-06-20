@@ -135,12 +135,12 @@ class HsmServiceTestFixture {
         REQUIRE(m_hsm_service->make_request(request)->ok());
     }
 
-    void list_objects(std::vector<std::string>& ids, int src_tier)
+    void list_objects(std::vector<std::string>& ids, uint8_t tier)
     {
         hestia::HsmServiceRequest request(
-            src_tier, hestia::HsmServiceRequestMethod::LIST);
-        request.set_source_tier(src_tier);
-        request.tier()=src_tier;
+            tier, hestia::HsmServiceRequestMethod::LIST);
+        request.set_source_tier(tier);
+        request.tier()=tier;
         auto response = m_hsm_service->make_request(request);
         REQUIRE(response->ok());
         for(const auto&  object_id: response->objects()){
@@ -153,21 +153,25 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
         auto response = m_hsm_service->make_request(request);
-        std::cout<<"response->ok():"<<response->ok()<<std::endl;
         REQUIRE(response->ok());
-        std::cout<<"response->tiers() size:"<<response->tiers().size()<<std::endl;
+
         for(const auto&  tier_id: response->tiers()){
-          std::cout<<"  id (tiers):"<<tier_id.id()<<std::endl;
           ids.push_back(tier_id.id());
         }
-        ids={"0", "1"};
-        /*int index=0;
-        for(auto i: response->tiers()){
-          ids[index]=i.id();
-          index=index+1;
-          std::cout<<"id (tiers):"<<i.id()<<std::endl;
+    }
+
+    bool is_object_on_tier(const hestia::StorageObject& obj, int tier)
+    {
+        hestia::HsmServiceRequest request(
+            obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
+        auto response = m_hsm_service->make_request(request);
+
+        for(const auto&  tier_id: response->tiers()) {
+            if(tier_id.id_uint() == tier) {
+            return true;
+            }
         }
-        std::cout<<"index (tiers):"<<index<<std::endl;*/
+        return false;
     }
 
     void check_content(hestia::Stream* stream, const std::string& content)
@@ -226,35 +230,35 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
 
     // Test copy() and move()
     copy(obj0, src_tier, tgt_tier);
-    //TODO: test with list_ties
+    REQUIRE(is_object_on_tier(obj0, tgt_tier));
     get(obj0, &stream0, tgt_tier);
     check_content(&stream0, content);
 
     move(obj2, src_tier, tgt_tier);
-    //TODO: test with list_ties
+    REQUIRE_FALSE(is_object_on_tier(obj2, src_tier));
     get(obj2, &stream2, tgt_tier);
     check_content(&stream2, content);
 
-    //Test remove
-    //remove(obj1, src_tier);
-    //TODO: test with list_ties
-    //remove(obj2, tgt_tier);
-    //TODO: test with list_ties
-
-    //Test removeall
-    //remove_all(obj0);
-    //TODO: test with list_ties
-
-    //Test list_objects
-    //TODO: put again after removes
+    //Test list_objects()
     list_objects(obj_ids, src_tier);
     REQUIRE(obj_ids.size() == 2);
     REQUIRE(obj_ids[0] == obj0.id());
     REQUIRE(obj_ids[1] == obj1.id());
 
+    //Test remove()
+    remove(obj1, src_tier);
+    REQUIRE_FALSE(is_object_on_tier(obj1, src_tier));
+    remove(obj2, tgt_tier);
+    REQUIRE_FALSE(is_object_on_tier(obj2, tgt_tier));
+
     //Test list_tiers
-    //list_tiers(obj0, tier_ids);
-    //REQUIRE(tier_ids.size() == 2);
-    //REQUIRE(tier_ids[0] == 0);
-    //REQUIRE(tier_ids[1] == 1);
+    list_tiers(obj0, tier_ids);
+    REQUIRE(tier_ids.size() == 2);
+    REQUIRE(tier_ids[0] == "0");
+    REQUIRE(tier_ids[1] == "1");
+
+    //Test removeall
+    remove_all(obj0);
+    REQUIRE_FALSE(is_object_on_tier(obj0, src_tier));
+    REQUIRE_FALSE(is_object_on_tier(obj0, tgt_tier));
 }
