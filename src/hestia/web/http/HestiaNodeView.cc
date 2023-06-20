@@ -14,7 +14,8 @@ HestiaNodeView::HestiaNodeView(DistributedHsmService* hestia_service) :
 {
 }
 
-HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
+HttpResponse::Ptr HestiaNodeView::on_get(
+    const HttpRequest& request, const User&)
 {
     auto response = HttpResponse::create();
 
@@ -40,7 +41,8 @@ HttpResponse::Ptr HestiaNodeView::on_get(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr HestiaNodeView::on_put(const HttpRequest& request)
+HttpResponse::Ptr HestiaNodeView::on_put(
+    const HttpRequest& request, const User&)
 {
     LOG_INFO("Into nodeview put");
     auto response = HttpResponse::create();
@@ -68,13 +70,15 @@ HttpResponse::Ptr HestiaNodeView::on_put(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr HestiaNodeView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr HestiaNodeView::on_delete(
+    const HttpRequest& request, const User&)
 {
     (void)request;
     return HttpResponse::create();
 }
 
-HttpResponse::Ptr HestiaNodeView::on_head(const HttpRequest& request)
+HttpResponse::Ptr HestiaNodeView::on_head(
+    const HttpRequest& request, const User&)
 {
     (void)request;
     return HttpResponse::create();

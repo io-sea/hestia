@@ -21,7 +21,8 @@ HestiaObjectView::HestiaObjectView(DistributedHsmService* hestia_service) :
 
 HestiaObjectView::~HestiaObjectView() {}
 
-HttpResponse::Ptr HestiaObjectView::on_get(const HttpRequest& request)
+HttpResponse::Ptr HestiaObjectView::on_get(
+    const HttpRequest& request, const User&)
 {
     auto object_service =
         m_hestia_service->get_hsm_service()->get_object_service();
@@ -113,7 +114,8 @@ HttpResponse::Ptr HestiaObjectView::on_get(const HttpRequest& request)
     }
 }
 
-HttpResponse::Ptr HestiaObjectView::on_put(const HttpRequest& request)
+HttpResponse::Ptr HestiaObjectView::on_put(
+    const HttpRequest& request, const User&)
 {
     auto object_service =
         m_hestia_service->get_hsm_service()->get_object_service();
@@ -199,13 +201,15 @@ HttpResponse::Ptr HestiaObjectView::on_put(const HttpRequest& request)
     }
 }
 
-HttpResponse::Ptr HestiaObjectView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr HestiaObjectView::on_delete(
+    const HttpRequest& request, const User&)
 {
     (void)request;
     return HttpResponse::create();
 }
 
-HttpResponse::Ptr HestiaObjectView::on_head(const HttpRequest& request)
+HttpResponse::Ptr HestiaObjectView::on_head(
+    const HttpRequest& request, const User&)
 {
     const auto path =
         StringUtils::split_on_first(request.get_path(), "/objects").second;

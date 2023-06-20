@@ -10,13 +10,14 @@ add_module(
         UrlRouter.h 
         authentication/AuthenticationMiddleware.h 
         authentication/AuthenticationSession.h 
-        authentication/User.h 
+        authentication/UserAdapter.h
         authentication/UserService.h
     SOURCES
         StaticContentView.cc 
         WebApp.cc
         WebView.cc
         UrlRouter.cc
+        authentication/UserAdapter.cc
         authentication/UserService.cc
     INTERNAL_DEPENDENCIES 
         storage 

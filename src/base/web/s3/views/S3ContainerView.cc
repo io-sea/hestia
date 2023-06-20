@@ -18,7 +18,8 @@ S3ContainerView::S3ContainerView(S3Service* service) : m_service(service)
     LOG_INFO("Loaded S3ContainerListView");
 }
 
-HttpResponse::Ptr S3ContainerView::on_get(const HttpRequest& request)
+HttpResponse::Ptr S3ContainerView::on_get(
+    const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 
@@ -60,7 +61,8 @@ HttpResponse::Ptr S3ContainerView::on_get(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr S3ContainerView::on_put(const HttpRequest& request)
+HttpResponse::Ptr S3ContainerView::on_put(
+    const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 
@@ -74,14 +76,16 @@ HttpResponse::Ptr S3ContainerView::on_put(const HttpRequest& request)
     return HttpResponse::create(201, "Created");
 }
 
-HttpResponse::Ptr S3ContainerView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr S3ContainerView::on_delete(
+    const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
     FAIL_CHECK(m_service->remove(S3Container(s3_path.m_container_name)));
     return {};
 }
 
-HttpResponse::Ptr S3ContainerView::on_head(const HttpRequest& request)
+HttpResponse::Ptr S3ContainerView::on_head(
+    const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
     S3Container container(s3_path.m_container_name);

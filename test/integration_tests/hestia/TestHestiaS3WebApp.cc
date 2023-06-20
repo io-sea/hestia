@@ -9,6 +9,7 @@
 
 #include "HestiaS3WebApp.h"
 #include "HsmService.h"
+#include "UserService.h"
 
 #include "HsmObjectAdapter.h"
 #include "StorageTierAdapter.h"
@@ -31,13 +32,16 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
             std::make_unique<DistributedHsmServiceTestWrapper>(
                 __FILE__, "TestHestiaS3WebWpp");
 
+        m_user_service = hestia::UserService::create(
+            {}, m_hsm_service_wrapper->get_kv_store_client());
+
         m_s3_service = std::make_unique<hestia::HsmS3Service>(
             m_hsm_service_wrapper->m_dist_hsm_service.get(),
             &m_hsm_service_wrapper->m_kv_store_client);
 
         hestia::HestiaS3WebAppConfig web_app_config;
         m_web_app = std::make_unique<hestia::HestiaS3WebApp>(
-            web_app_config, m_s3_service.get());
+            web_app_config, m_s3_service.get(), m_user_service.get());
 
         hestia::Server::Config server_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
@@ -55,6 +59,7 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
 
     std::unique_ptr<DistributedHsmServiceTestWrapper> m_hsm_service_wrapper;
     std::unique_ptr<hestia::HsmS3Service> m_s3_service;
+    std::unique_ptr<hestia::UserService> m_user_service;
 
     std::unique_ptr<hestia::HestiaS3WebApp> m_web_app;
     std::unique_ptr<hestia::BasicHttpServer> m_server;

@@ -4,14 +4,14 @@
 #include <memory>
 
 namespace hestia {
-class DistributedHsmService;
-class StorageTierJsonAdapter;
+class DatasetService;
+class DatasetJsonAdapter;
 
-class HestiaTierView : public WebView {
+class HestiaDatasetView : public WebView {
   public:
-    HestiaTierView(DistributedHsmService* hestia_service);
+    HestiaDatasetView(DatasetService* dataset_service);
 
-    ~HestiaTierView();
+    ~HestiaDatasetView();
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request, const User& user) override;
@@ -26,7 +26,7 @@ class HestiaTierView : public WebView {
         const HttpRequest& request, const User& user) override;
 
   private:
-    DistributedHsmService* m_hestia_service{nullptr};
-    std::unique_ptr<StorageTierJsonAdapter> m_tier_adapter;
+    DatasetService* m_dataset_service{nullptr};
+    std::unique_ptr<DatasetJsonAdapter> m_dataset_adapter;
 };
 }  // namespace hestia

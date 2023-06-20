@@ -148,14 +148,16 @@ bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
 {
     User user;
     user.m_identifier = m_object.m_user_identifier;
-    m_user_service->fetch_token(user);
-    if (user.m_identifier.empty()) {
+
+    auto response = m_user_service->make_request({user, CrudMethod::GET});
+
+    if (!response->ok()) {
         m_object.on_error(
             {S3Error::Code::_403_ACCESS_DENIED, request.get_path()});
         LOG_ERROR(m_object.to_string())
         return false;
     }
-    m_object.m_user_key = user.m_token;
+    m_object.m_user_key = response->item().m_api_token.m_value;
     return true;
 }
 

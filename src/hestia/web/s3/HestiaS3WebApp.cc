@@ -7,12 +7,16 @@
 #include "S3AuthenticationMiddleware.h"
 #include "S3UrlRouter.h"
 
+#include "UserService.h"
+
 #include "HsmS3Service.h"
 
 namespace hestia {
 HestiaS3WebApp::HestiaS3WebApp(
-    HestiaS3WebAppConfig config, HsmS3Service* s3_service) :
-    m_config(config), m_s3_service(s3_service)
+    HestiaS3WebAppConfig config,
+    HsmS3Service* s3_service,
+    UserService* user_service) :
+    WebApp(user_service), m_config(config), m_s3_service(s3_service)
 {
     (void)m_config;
     set_up_routing();

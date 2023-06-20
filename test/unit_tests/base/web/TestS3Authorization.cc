@@ -5,22 +5,36 @@
 #include "S3AuthorisationSession.h"
 
 #include "HttpRequest.h"
+#include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
 
-class MockUserService : public hestia::UserService {
+class TestS3AuthorizationFixture {
   public:
-    MockUserService() : hestia::UserService(nullptr) {}
-
-    void fetch_token(hestia::User& user) const override
+    TestS3AuthorizationFixture()
     {
-        if (m_has_user) {
-            user.m_token      = m_token;
-            user.m_identifier = m_identifier;
-        }
+        m_user.m_identifier        = "AKIAIOSFODNN7EXAMPLE";
+        m_user.m_api_token.m_value = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+
+        add_user();
     }
-    std::string m_identifier = "AKIAIOSFODNN7EXAMPLE";
-    std::string m_token      = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
-    bool m_has_user          = true;
+
+    void add_user()
+    {
+        REQUIRE(m_user_service->make_request({m_user, hestia::CrudMethod::PUT})
+                    ->ok());
+    }
+
+    void remove_user()
+    {
+        REQUIRE(
+            m_user_service->make_request({m_user, hestia::CrudMethod::REMOVE})
+                ->ok());
+    }
+
+    hestia::InMemoryKeyValueStoreClient m_kv_store_client;
+    std::unique_ptr<hestia::UserService> m_user_service;
+    hestia::User m_user;
 };
 
 std::string empty_body_hash =
@@ -28,14 +42,14 @@ std::string empty_body_hash =
 std::string bad_empty_body_hash =
     "e3b0544298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-TEST_CASE("S3 authorization - object", "[authorisation]")
+TEST_CASE_METHOD(
+    TestS3AuthorizationFixture, "S3 authorization - object", "[authorisation]")
 {
     hestia::HttpRequest request("/test.txt", hestia::HttpRequest::Method::GET);
     request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
     request.get_header().set_item("x-amz-date", "20130524T000000Z");
 
-    MockUserService user_service;
-    hestia::S3AuthorisationSession auth_session(&user_service);
+    hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
     GIVEN("A GET request")
     {
@@ -78,7 +92,7 @@ TEST_CASE("S3 authorization - object", "[authorisation]")
 
         WHEN("The signing user does not exist")
         {
-            user_service.m_has_user = false;
+            remove_user();
             request.get_header().set_item(
                 "x-amz-content-sha256", empty_body_hash);
 
@@ -91,7 +105,8 @@ TEST_CASE("S3 authorization - object", "[authorisation]")
     }
 }
 
-TEST_CASE("S3 authorization - bucket", "[authorisation]")
+TEST_CASE_METHOD(
+    TestS3AuthorizationFixture, "S3 authorization - bucket", "[authorisation]")
 {
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
     request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
@@ -102,8 +117,7 @@ TEST_CASE("S3 authorization - bucket", "[authorisation]")
         "AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request";
     const std::string headers = "host;x-amz-content-sha256;x-amz-date";
 
-    MockUserService user_service;
-    hestia::S3AuthorisationSession auth_session(&user_service);
+    hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
     WHEN("The GET request contains one empty valued query")
     {
@@ -146,7 +160,10 @@ TEST_CASE("S3 authorization - bucket", "[authorisation]")
     }
 }
 
-TEST_CASE("S3 authorization - put object", "[authorisation]")
+TEST_CASE_METHOD(
+    TestS3AuthorizationFixture,
+    "S3 authorization - put object",
+    "[authorisation]")
 {
     hestia::HttpRequest request(
         "/test$file.text", hestia::HttpRequest::Method::PUT);
@@ -166,8 +183,7 @@ TEST_CASE("S3 authorization - put object", "[authorisation]")
     const std::string sig =
         "98ad721746da40c64f1a55b78f14c238d841ea1380cd77a1b5971af0ece108bd";
 
-    MockUserService user_service;
-    hestia::S3AuthorisationSession auth_session(&user_service);
+    hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
     WHEN("The authorization header is not valid")
     {
@@ -221,10 +237,12 @@ TEST_CASE("S3 authorization - put object", "[authorisation]")
     }
 }
 
-TEST_CASE("S3 authorization - unsigned-payload", "[authorisation]")
+TEST_CASE_METHOD(
+    TestS3AuthorizationFixture,
+    "S3 authorization - unsigned-payload",
+    "[authorisation]")
 {
-    MockUserService user_service;
-    hestia::S3AuthorisationSession auth_session(&user_service);
+    hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
     hestia::HttpRequest request(
         "/lustre_hsm_4/0000000200000401_00000004_00000000.0",
@@ -243,8 +261,10 @@ TEST_CASE("S3 authorization - unsigned-payload", "[authorisation]")
     request.get_header().set_item("x-amz-meta-uid", "0");
     request.get_header().set_item("Content-Length", "52");
 
-    user_service.m_identifier = "OPEN_KEY";
-    user_service.m_token      = "SECRET_KEY";
+    m_user.m_identifier        = "OPEN_KEY";
+    m_user.m_api_token.m_value = "SECRET_KEY";
+    add_user();
+
     const std::string credential =
         "OPEN_KEY/20200612/us-east-1/s3/aws4_request";
     const std::string sig =

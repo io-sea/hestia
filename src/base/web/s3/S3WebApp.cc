@@ -15,8 +15,10 @@ namespace hestia {
 
 S3WebApp::S3WebApp(
     ObjectStoreClient* object_store,
+    UserService* user_service,
     const S3WebAppConfig& config,
-    S3Service::Ptr s3_service)
+    S3Service::Ptr s3_service) :
+    WebApp(user_service)
 {
     (void)config;
     m_object_store_client = object_store;

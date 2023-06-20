@@ -7,6 +7,8 @@ class HashUtils {
   public:
     static std::string do_sha256(const std::string& input);
 
+    static std::string do_rand_32();
+
     static std::string do_h_mac(
         const std::string& key, const std::string& code);
 

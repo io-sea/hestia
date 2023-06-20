@@ -9,11 +9,11 @@
 #include "Logger.h"
 
 namespace hestia {
-WebApp::WebApp(Database* db) : m_user_service(UserService::create(db)) {}
+WebApp::WebApp(UserService* user_service) : m_user_service(user_service) {}
 
-WebApp::Ptr WebApp::create(Database* db)
+WebApp::Ptr WebApp::create(UserService* user_service)
 {
-    return std::make_unique<WebApp>(db);
+    return std::make_unique<WebApp>(user_service);
 }
 
 WebApp::~WebApp() {}

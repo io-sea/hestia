@@ -10,7 +10,8 @@ StaticContentView::StaticContentView(const std::string& directory, bool cache) :
     LOG_INFO("Serving static content from: " << directory);
 }
 
-HttpResponse::Ptr StaticContentView::on_get(const HttpRequest& request)
+HttpResponse::Ptr StaticContentView::on_get(
+    const HttpRequest& request, const User&)
 {
     auto path = request.get_path();
     if (path.empty() || path == "/") {

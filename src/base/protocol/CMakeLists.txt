@@ -5,6 +5,7 @@ add_module(
     HEADERS
         AuthorizationContext.h   
         Model.h 
+        User.h
         http/HttpRequest.h
         http/HttpResponse.h
         http/HttpHeader.h

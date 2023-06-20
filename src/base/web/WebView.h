@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HttpRequest.h"
+#include "User.h"
 
 #include <memory>
 
@@ -13,18 +14,26 @@ class WebView {
 
     virtual ~WebView() = default;
 
-    virtual HttpResponse::Ptr get_response(const HttpRequest& request);
+    virtual HttpResponse::Ptr get_response(
+        const HttpRequest& request, const User& = {});
 
     void set_path(const std::string& path);
 
   protected:
-    virtual HttpResponse::Ptr on_get(const HttpRequest& request);
+    virtual HttpResponse::Ptr on_get(
+        const HttpRequest& request, const User& user);
 
-    virtual HttpResponse::Ptr on_put(const HttpRequest& request);
+    virtual HttpResponse::Ptr on_put(
+        const HttpRequest& request, const User& user);
 
-    virtual HttpResponse::Ptr on_delete(const HttpRequest& request);
+    virtual HttpResponse::Ptr on_post(
+        const HttpRequest& request, const User& user);
 
-    virtual HttpResponse::Ptr on_head(const HttpRequest& request);
+    virtual HttpResponse::Ptr on_delete(
+        const HttpRequest& request, const User& user);
+
+    virtual HttpResponse::Ptr on_head(
+        const HttpRequest& request, const User& user);
 
     virtual HttpResponse::Ptr on_not_supported(const HttpRequest& request);
 

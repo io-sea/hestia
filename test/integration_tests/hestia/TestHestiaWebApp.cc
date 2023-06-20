@@ -14,6 +14,7 @@
 #include "DistributedHsmService.h"
 #include "HestiaWebApp.h"
 #include "HsmService.h"
+#include "UserService.h"
 
 #include "HsmObjectAdapter.h"
 #include "StorageTierAdapter.h"
@@ -36,6 +37,8 @@ class TestHestiaWebAppFixture {
         m_kv_store_client.initialize(store_config);
         m_obj_store_client.initialize(store_config);
 
+        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+
         auto hsm_service =
             hestia::HsmService::create(&m_kv_store_client, &m_obj_store_client);
 
@@ -53,8 +56,8 @@ class TestHestiaWebAppFixture {
             std::make_unique<hestia::HsmObjectJsonAdapter>("hestia");
         m_tier_adapter = std::make_unique<hestia::StorageTierJsonAdapter>();
 
-        m_web_app =
-            std::make_unique<hestia::HestiaWebApp>(m_dist_hsm_service.get());
+        m_web_app = std::make_unique<hestia::HestiaWebApp>(
+            m_user_service.get(), m_dist_hsm_service.get());
 
         hestia::Server::Config server_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
@@ -143,6 +146,7 @@ class TestHestiaWebAppFixture {
     hestia::FileKeyValueStoreClient m_kv_store_client;
     hestia::FileHsmObjectStoreClient m_obj_store_client;
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
+    std::unique_ptr<hestia::UserService> m_user_service;
     std::unique_ptr<hestia::HsmObjectJsonAdapter> m_object_adapter;
     std::unique_ptr<hestia::StorageTierJsonAdapter> m_tier_adapter;
 

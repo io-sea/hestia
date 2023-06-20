@@ -19,7 +19,7 @@ S3ObjectView::S3ObjectView(S3Service* service) : m_service(service)
     LOG_INFO("Loaded object view");
 }
 
-HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request)
+HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 
@@ -39,7 +39,7 @@ HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request)
+HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 
@@ -60,7 +60,7 @@ HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request)
     return response;
 }
 
-HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request)
+HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 
@@ -77,7 +77,8 @@ HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request)
     return HttpResponse::create(201, "Created");
 }
 
-HttpResponse::Ptr S3ObjectView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr S3ObjectView::on_delete(
+    const HttpRequest& request, const User&)
 {
     const auto s3_path = S3Path(request.get_path());
 

@@ -8,6 +8,7 @@
 
 namespace hestia {
 class ObjectStoreClient;
+class UserService;
 
 struct S3WebAppConfig {
     std::filesystem::path m_object_store_path;
@@ -17,6 +18,7 @@ class S3WebApp : public WebApp {
   public:
     S3WebApp(
         ObjectStoreClient* object_store,
+        UserService* user_service,
         const S3WebAppConfig& config          = {},
         std::unique_ptr<S3Service> s3_service = nullptr);
 

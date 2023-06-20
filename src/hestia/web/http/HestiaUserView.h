@@ -4,19 +4,16 @@
 #include <memory>
 
 namespace hestia {
-class DistributedHsmService;
-class StorageTierJsonAdapter;
+class UserService;
+class UserJsonAdapter;
 
-class HestiaTierView : public WebView {
+class HestiaUserView : public WebView {
   public:
-    HestiaTierView(DistributedHsmService* hestia_service);
+    HestiaUserView(UserService* user_service);
 
-    ~HestiaTierView();
+    ~HestiaUserView();
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
-
-    HttpResponse::Ptr on_put(
         const HttpRequest& request, const User& user) override;
 
     HttpResponse::Ptr on_delete(
@@ -26,7 +23,7 @@ class HestiaTierView : public WebView {
         const HttpRequest& request, const User& user) override;
 
   private:
-    DistributedHsmService* m_hestia_service{nullptr};
-    std::unique_ptr<StorageTierJsonAdapter> m_tier_adapter;
+    UserService* m_user_service{nullptr};
+    std::unique_ptr<UserJsonAdapter> m_user_adapter;
 };
 }  // namespace hestia

@@ -10,8 +10,10 @@
 
 namespace hestia {
 HestiaWebApp::HestiaWebApp(
-    DistributedHsmService* hestia_service, HestiaWebAppConfig config) :
-    WebApp()
+    UserService* user_service,
+    DistributedHsmService* hestia_service,
+    HestiaWebAppConfig config) :
+    WebApp(user_service)
 {
     LOG_INFO("Creating HestiaWebApp");
     const std::string api_prefix = "/api/v1/";

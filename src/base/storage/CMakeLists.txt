@@ -16,6 +16,7 @@ add_module(
         clients/file/FileKeyValueStoreClient.h
         clients/http/HttpObjectStoreClient.h
         clients/memory/InMemoryObjectStoreClient.h
+        clients/memory/InMemoryKeyValueStoreClient.h
         clients/redis/RedisKeyValueStoreClient.h
         requests/ObjectStoreRequest.h
         requests/ObjectStoreResponse.h
@@ -32,6 +33,7 @@ add_module(
         clients/file/FileKeyValueStoreClient.cc
         clients/http/HttpObjectStoreClient.cc
         clients/memory/InMemoryObjectStoreClient.cc
+        clients/memory/InMemoryKeyValueStoreClient.cc
         clients/redis/RedisKeyValueStoreClient.cc
         requests/ObjectStoreRequest.cc
         requests/ObjectStoreResponse.cc

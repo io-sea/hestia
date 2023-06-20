@@ -11,16 +11,15 @@ class UserService;
 class ApplicationMiddleware;
 class RequestContext;
 class UrlRouter;
-class Database;
 class WebView;
 
 class WebApp {
   public:
     using Ptr = std::unique_ptr<WebApp>;
 
-    WebApp(Database* db = nullptr);
+    WebApp(UserService* user_service);
 
-    static Ptr create(Database* db = nullptr);
+    static Ptr create(UserService* user_service);
 
     virtual ~WebApp();
 
@@ -42,7 +41,7 @@ class WebApp {
     std::vector<std::unique_ptr<ApplicationMiddleware>> m_middleware;
     std::unique_ptr<UrlRouter> m_url_router;
 
-    std::unique_ptr<UserService> m_user_service;
+    UserService* m_user_service{nullptr};
     std::size_t m_body_chunk_size{4000};
 };
 }  // namespace hestia

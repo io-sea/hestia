@@ -11,7 +11,8 @@ class StaticContentView : public WebView {
     StaticContentView(const std::string& directory, bool cache = true);
 
   private:
-    HttpResponse::Ptr on_get(const HttpRequest& request) override;
+    HttpResponse::Ptr on_get(
+        const HttpRequest& request, const User& user) override;
 
     bool read(const std::string& path, std::string& content) const;
 

@@ -2,7 +2,9 @@
 
 #include "S3Service.h"
 #include "S3WebApp.h"
+#include "UserService.h"
 
+#include "InMemoryKeyValueStoreClient.h"
 #include "InMemoryObjectStoreClient.h"
 #include "RequestContext.h"
 
@@ -14,6 +16,8 @@ class WebAppTestFixture {
     {
         m_object_store = hestia::InMemoryObjectStoreClient::create();
 
+        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+
         hestia::S3ServiceConfig service_config;
         service_config.m_object_store_client = m_object_store.get();
         auto s3_service = std::make_unique<hestia::S3Service>(service_config);
@@ -21,7 +25,8 @@ class WebAppTestFixture {
         hestia::S3WebAppConfig config;
 
         m_web_app = std::make_unique<hestia::S3WebApp>(
-            m_object_store.get(), config, std::move(s3_service));
+            m_object_store.get(), m_user_service.get(), config,
+            std::move(s3_service));
     }
 
     hestia::HttpResponse* make_request(
@@ -104,6 +109,9 @@ class WebAppTestFixture {
     }
 
     std::unique_ptr<hestia::InMemoryObjectStoreClient> m_object_store;
+    hestia::InMemoryKeyValueStoreClient m_kv_store_client;
+
+    std::unique_ptr<hestia::UserService> m_user_service;
     std::unique_ptr<hestia::S3WebApp> m_web_app;
     std::unique_ptr<hestia::RequestContext> m_working_context;
 };

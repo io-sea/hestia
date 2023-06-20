@@ -34,8 +34,9 @@ void HestiaServer::run()
             ApplicationContext::get().get_kv_store_client());
 
         HestiaS3WebAppConfig config;
-        web_app =
-            std::make_unique<HestiaS3WebApp>(config, hsm_s3_service.get());
+        web_app = std::make_unique<HestiaS3WebApp>(
+            config, hsm_s3_service.get(),
+            ApplicationContext::get().get_user_service());
     }
     else {
         LOG_INFO("Running http interface");
@@ -51,6 +52,7 @@ void HestiaServer::run()
             }
         }
         web_app = std::make_unique<HestiaWebApp>(
+            ApplicationContext::get().get_user_service(),
             ApplicationContext::get().get_hsm_service(), app_config);
     }
 

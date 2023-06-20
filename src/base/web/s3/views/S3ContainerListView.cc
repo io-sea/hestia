@@ -13,7 +13,8 @@ S3ContainerListView::S3ContainerListView(S3Service* service) :
     LOG_INFO("Loaded S3ContainerListView");
 }
 
-HttpResponse::Ptr S3ContainerListView::on_get(const HttpRequest& request)
+HttpResponse::Ptr S3ContainerListView::on_get(
+    const HttpRequest& request, const User&)
 {
     LOG_INFO("S3ContainerListView:on_get");
     (void)request;

@@ -1,13 +1,32 @@
 #include "HashUtils.h"
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/rand.h>
 
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 
 namespace hestia {
+
+std::string HashUtils::do_rand_32()
+{
+    unsigned char* buffer = new unsigned char[32];
+    int rc                = RAND_bytes(buffer, 32);
+    if (rc != 1) {
+        delete[] buffer;
+        throw std::runtime_error(
+            "SSL Error with code: " + std::to_string(ERR_get_error()));
+    }
+
+    std::stringstream ss;
+    ss << reinterpret_cast<const char*>(buffer);
+    delete[] buffer;
+    return ss.str();
+}
+
 std::string HashUtils::base64_encode(const std::string& input)
 {
     unsigned char* output = new unsigned char[EVP_MAX_MD_SIZE];
