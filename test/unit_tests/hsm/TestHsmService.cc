@@ -160,6 +160,18 @@ class HsmServiceTestFixture {
         }
     }
 
+    void list_attributes(const hestia::StorageObject& obj, std::string& attrs)
+    {
+        hestia::HsmServiceRequest request(
+            obj, hestia::HsmServiceRequestMethod::LIST_ATTRIBUTES);
+        auto response = m_hsm_service->make_request(request);
+        std::cout<<response->ok()<<std::endl;
+        REQUIRE(response->ok());
+        attrs = "test metadata";
+
+        std::cout<<"metadata: "<< response->object().metadata() <<std::endl;
+    }
+
     bool is_object_on_tier(const hestia::StorageObject& obj, int tier)
     {
         hestia::HsmServiceRequest request(
@@ -207,6 +219,7 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     int src_tier = 0;
     int tgt_tier = 1;
     std::vector<std::string> obj_ids, tier_ids;
+    std::string attrs;
 
     put(obj0, &stream0, src_tier);
     put(obj1, &stream1, src_tier);
@@ -251,11 +264,15 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     remove(obj2, tgt_tier);
     REQUIRE_FALSE(is_object_on_tier(obj2, tgt_tier));
 
-    //Test list_tiers
+    //Test list_tiers()
     list_tiers(obj0, tier_ids);
     REQUIRE(tier_ids.size() == 2);
     REQUIRE(tier_ids[0] == "0");
     REQUIRE(tier_ids[1] == "1");
+
+    //Test list_attributes()
+    list_attributes(obj0, attrs);
+    //TODO:check
 
     //Test removeall
     remove_all(obj0);

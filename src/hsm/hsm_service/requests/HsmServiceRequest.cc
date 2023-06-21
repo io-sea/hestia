@@ -50,6 +50,8 @@ std::string HsmServiceRequest::method_as_string() const
             return "LIST";
         case HsmServiceRequestMethod::LIST_TIERS:
             return "LIST_TIERS";
+        case HsmServiceRequestMethod::LIST_ATTRIBUTES:
+            return "LIST_ATTRIBUTES";
         default:
             return "UNKNOWN";
     }

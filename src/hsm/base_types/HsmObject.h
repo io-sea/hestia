@@ -2,6 +2,7 @@
 
 #include "StorageObject.h"
 #include "Uuid.h"
+#include "Metadata.h"
 
 #include <vector>
 
@@ -19,6 +20,8 @@ class HsmObject {
     //HsmObject(const std::string& id) : m_storage_object.id()(id) {}
 
     const std::string& id() const { return m_storage_object.id(); }
+ 
+    const Metadata& metadata() const { return m_storage_object.metadata(); }
 
     void add_tier(uint8_t tier_id, bool sort = true);
 

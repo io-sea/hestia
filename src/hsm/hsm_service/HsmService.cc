@@ -11,6 +11,9 @@
 
 #include "Logger.h"
 
+#include "Metadata.h"
+#include "KeyValueStoreClient.h"
+
 #include<iostream>
 
 #define ERROR_CHECK(response)                                                  \
@@ -104,6 +107,8 @@ HsmServiceResponse::Ptr HsmService::make_request(
             return list_objects(req);
         case HsmServiceRequestMethod::LIST_TIERS:
             return list_tiers(req);
+        case HsmServiceRequestMethod::LIST_ATTRIBUTES:
+            return list_attributes(req);
         default:
             return nullptr;
     }
@@ -478,9 +483,26 @@ HsmServiceResponse::Ptr HsmService::list_tiers(const HsmServiceRequest& req) noe
     return HsmServiceResponse::create(req, std::move(list_response));
 }
 
-void HsmService::list_attributes(HsmObject& object)
+HsmServiceResponse::Ptr HsmService::list_attributes(const HsmServiceRequest& req) noexcept
 {
-    (void)object;
+    LOG_INFO("Starting HSMService LIST_ATTRIBUTES");
+
+    auto get_response =
+        m_object_service->make_request({req.object(), CrudMethod::GET});
+
+    /*auto hsm_object = get_response->item();
+
+    auto list_response =
+        m_object_service->make_request({hsm_object, CrudMethod::LIST});
+
+    std::cout<<"i: " << list_response->item().metadata()<< std::endl;*/
+    //for (const auto& attr : obj_get_response->item().metadata()) {
+
+    //}
+
+    LOG_INFO("Finished HSMService LIST_ATTRIBUTES");
+
+    return HsmServiceResponse::create(req, std::move(get_response));
 }
 
 }  // namespace hestia

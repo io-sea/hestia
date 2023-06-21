@@ -35,6 +35,8 @@ class StorageObject {
      */
     const std::string& id() const;
 
+    const Metadata& metadata() const;
+
     /**
      * Set the created and last-modified timestamps to current unix time
      */

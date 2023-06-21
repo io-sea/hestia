@@ -18,7 +18,8 @@ enum class HsmServiceRequestMethod {
     COPY,
     MOVE,
     LIST,
-    LIST_TIERS
+    LIST_TIERS,
+    LIST_ATTRIBUTES
 };
 
 class HsmServiceRequest :

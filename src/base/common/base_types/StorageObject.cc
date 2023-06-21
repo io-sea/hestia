@@ -19,6 +19,11 @@ const std::string& StorageObject::id() const
     return m_id;
 }
 
+const Metadata& StorageObject::metadata() const
+{
+    return m_metadata;
+}
+
 bool StorageObject::valid() const
 {
     return !m_id.empty();
