@@ -86,16 +86,16 @@ const std::string& HsmServiceResponse::query_result() const
 
 const std::vector<HsmObject>& HsmServiceResponse::objects() const
 {
-    if(m_object_response==nullptr){
-      return m_objects;
+    if (m_object_response == nullptr) {
+        return m_objects;
     }
     return m_object_response->items();
 }
 
 const std::vector<StorageTier>& HsmServiceResponse::tiers() const
 {
-    if(m_tier_response==nullptr){
-      return m_tiers;
+    if (m_tier_response == nullptr) {
+        return m_tiers;
     }
     return m_tier_response->items();
 }
@@ -122,12 +122,12 @@ void HsmServiceResponse::set_object_found(bool found)
 
 void HsmServiceResponse::add_tier(const StorageTier& tier)
 {
-   m_tiers.push_back(tier);
+    m_tiers.push_back(tier);
 }
 
 void HsmServiceResponse::add_object(const HsmObject& object)
 {
-   m_object_response->items().push_back(object);
+    m_object_response->items().push_back(object);
 }
 
 }  // namespace hestia

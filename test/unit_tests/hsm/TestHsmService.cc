@@ -35,7 +35,8 @@ class TestHsmService : public hestia::HsmService {
 
 class HsmServiceTestFixture {
   public:
-  //  ~HsmServiceTestFixture() { std::filesystem::remove_all(get_store_path()); }
+    //  ~HsmServiceTestFixture() {
+    //  std::filesystem::remove_all(get_store_path()); }
 
     void init(const std::string& test_name)
     {
@@ -80,7 +81,8 @@ class HsmServiceTestFixture {
             std::move(placement_engine));
     }
 
-    void put(const hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
+    void put(
+        const hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
     {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::PUT);
@@ -147,23 +149,24 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             tier, hestia::HsmServiceRequestMethod::LIST);
         request.set_source_tier(tier);
-        request.tier()=tier;
-        auto response = m_hsm_service->make_request(request);
+        request.tier() = tier;
+        auto response  = m_hsm_service->make_request(request);
         REQUIRE(response->ok());
-        for(const auto&  object_id: response->objects()){
-          ids.push_back(object_id.id());
+        for (const auto& object_id : response->objects()) {
+            ids.push_back(object_id.id());
         }
     }
 
-    void list_tiers(const hestia::StorageObject& obj, std::vector<std::string>& ids)
+    void list_tiers(
+        const hestia::StorageObject& obj, std::vector<std::string>& ids)
     {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
         auto response = m_hsm_service->make_request(request);
         REQUIRE(response->ok());
 
-        for(const auto&  tier_id: response->tiers()){
-          ids.push_back(tier_id.id());
+        for (const auto& tier_id : response->tiers()) {
+            ids.push_back(tier_id.id());
         }
     }
 
@@ -172,11 +175,11 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::LIST_ATTRIBUTES);
         auto response = m_hsm_service->make_request(request);
-        std::cout<<response->ok()<<std::endl;
+        std::cout << response->ok() << std::endl;
         REQUIRE(response->ok());
         attrs = "test metadata";
 
-        std::cout<<"metadata: "<< response->object().metadata() <<std::endl;
+        std::cout << "metadata: " << response->object().metadata() << std::endl;
     }
 
     bool is_object_on_tier(const hestia::StorageObject& obj, int tier)
@@ -185,9 +188,9 @@ class HsmServiceTestFixture {
             obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
         auto response = m_hsm_service->make_request(request);
 
-        for(const auto&  tier_id: response->tiers()) {
-            if(tier_id.id_uint() == tier) {
-            return true;
+        for (const auto& tier_id : response->tiers()) {
+            if (tier_id.id_uint() == tier) {
+                return true;
             }
         }
         return false;
@@ -259,29 +262,29 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     get(obj2, &stream2, tgt_tier);
     check_content(&stream2, content);
 
-    //Test list_objects()
+    // Test list_objects()
     list_objects(obj_ids, src_tier);
     REQUIRE(obj_ids.size() == 2);
     REQUIRE(obj_ids[0] == obj0.id());
     REQUIRE(obj_ids[1] == obj1.id());
 
-    //Test remove()
+    // Test remove()
     remove(obj1, src_tier);
     REQUIRE_FALSE(is_object_on_tier(obj1, src_tier));
     remove(obj2, tgt_tier);
     REQUIRE_FALSE(is_object_on_tier(obj2, tgt_tier));
 
-    //Test list_tiers()
+    // Test list_tiers()
     list_tiers(obj0, tier_ids);
     REQUIRE(tier_ids.size() == 2);
     REQUIRE(tier_ids[0] == "0");
     REQUIRE(tier_ids[1] == "1");
 
-    //Test list_attributes()
+    // Test list_attributes()
     list_attributes(obj0, attrs);
-    //TODO:check
+    // TODO:check
 
-    //Test removeall
+    // Test removeall
     remove_all(obj0);
     REQUIRE_FALSE(is_object_on_tier(obj0, src_tier));
     REQUIRE_FALSE(is_object_on_tier(obj0, tgt_tier));

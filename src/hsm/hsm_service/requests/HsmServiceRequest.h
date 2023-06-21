@@ -33,8 +33,7 @@ class HsmServiceRequest :
     HsmServiceRequest(
         const StorageObject& object, HsmServiceRequestMethod method);
 
-    HsmServiceRequest(
-        const uint8_t& tier, HsmServiceRequestMethod method);
+    HsmServiceRequest(const uint8_t& tier, HsmServiceRequestMethod method);
 
     HsmServiceRequest(HsmServiceRequestMethod method);
 

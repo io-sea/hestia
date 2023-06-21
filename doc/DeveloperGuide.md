@@ -74,10 +74,10 @@ echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm@15/include"' >> ~/.zshrc
 
 ### Run
 
-The format script is `tools/run_format.sh`, which in turn runs `tools/format.sh`. In that file if you are on Mac you need to explicitly enter the path to `llvm@15` as the clang exe (something like: `/opt/homebrew/opt/llvm@15/bin/clang-format`). After that you can run:
+The format script is `infra/scripts/run_format.sh`, which in turn runs `infra/scripts/format.sh`. In that file if you are on Mac you need to explicitly enter the path to `llvm@15` as the clang exe (something like: `/opt/homebrew/opt/llvm@15/bin/clang-format`). After that you can run:
 
 ```bash
-tools/run_format.sh
+infra/scripts/run_format.sh
 ```
 
 which will update files with any needed changes.
@@ -124,7 +124,7 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $SOURCE_DIR
 You can do the following in the source directory, pointing to the `$BUILD_DIR`:
 
 ```bash
-tools/run_lint.sh $BUILD_DIR
+infra/scripts/run_lint.sh $BUILD_DIR
 ```
 
 # Building Plugins

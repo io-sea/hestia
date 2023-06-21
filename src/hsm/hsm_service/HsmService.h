@@ -68,9 +68,12 @@ class HsmService {
     HsmServiceResponse::Ptr remove_all(
         const HsmServiceRequest& request) noexcept;
 
-    HsmServiceResponse::Ptr list_objects(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr list_tiers(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr list_attributes(const HsmServiceRequest& request) noexcept;
+    HsmServiceResponse::Ptr list_objects(
+        const HsmServiceRequest& request) noexcept;
+    HsmServiceResponse::Ptr list_tiers(
+        const HsmServiceRequest& request) noexcept;
+    HsmServiceResponse::Ptr list_attributes(
+        const HsmServiceRequest& request) noexcept;
 
     std::unique_ptr<ObjectService> m_object_service;
     std::unique_ptr<TierService> m_tier_service;
