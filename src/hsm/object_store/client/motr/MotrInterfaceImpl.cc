@@ -1,3 +1,4 @@
+#ifdef HAS_MOTR
 #include "MotrInterfaceImpl.h"
 
 #include "InMemoryStreamSink.h"
@@ -8,7 +9,9 @@
 
 #include <iostream>
 
+
 #include "motr/idx.h"
+
 
 #define MAX_BLOCK_COUNT (200)
 
@@ -140,10 +143,14 @@ class IoContext {
             std::cout << "Allocating attr and extent list" << std::endl;
             /* Allocate attr and extent list*/
             auto rc = m0_bufvec_alloc(&m_attr, num_blocks, 1);
-            if (rc != 0) return rc;
+            if (rc != 0) {
+                return rc;
+            }
 
             rc = m0_indexvec_alloc(&m_ext, num_blocks);
-            if (rc != 0) return rc;
+            if (rc != 0) {
+                return rc;
+            }
         }
 
         m_current_blocks     = num_blocks;
@@ -408,6 +415,8 @@ void MotrInterfaceImpl::get(
             read_size = motr_obj->m_total_size - offset;
         }
 
+        read_size = 4096;
+
         std::cout << "Read size: " << read_size << "\nBuffer size "
                   << buffer.length() << std::endl;
 
@@ -550,3 +559,5 @@ void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
     }
 }
 }  // namespace hestia
+
+#endif
