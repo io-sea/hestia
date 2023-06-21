@@ -14,6 +14,9 @@ add_module(
         web/http/HestiaObjectView.h 
         web/http/HestiaTierView.h 
         web/http/HestiaNodeView.h
+        web/http/HestiaUserView.h
+        web/http/HestiaUserAuthView.h
+        web/http/HestiaDatasetView.h
         web/s3/HestiaS3WebApp.h
     SOURCES
         HestiaCli.cc
@@ -27,6 +30,9 @@ add_module(
         web/http/HestiaObjectView.cc 
         web/http/HestiaTierView.cc 
         web/http/HestiaNodeView.cc
+        web/http/HestiaUserView.cc
+        web/http/HestiaUserAuthView.cc
+        web/http/HestiaDatasetView.cc
         web/s3/HestiaS3WebApp.cc
     INTERNAL_INCLUDE_DIRS
         application

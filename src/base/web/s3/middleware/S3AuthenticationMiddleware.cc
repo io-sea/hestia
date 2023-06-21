@@ -4,7 +4,7 @@
 
 namespace hestia {
 HttpResponse::Ptr S3AuthenticationMiddleware::call(
-    const HttpRequest& request, responseProviderFunc func)
+    const HttpRequest& request, User&, responseProviderFunc func)
 {
     auto auth_session = S3AuthorisationSession(m_user_service);
 

@@ -16,8 +16,11 @@
 #include "ApplicationContext.h"
 #include "DistributedHsmService.h"
 #include "HsmService.h"
+
+#include "DatasetService.h"
 #include "ObjectService.h"
 #include "TierService.h"
+#include "UserService.h"
 
 #include "ProjectConfig.h"
 
@@ -87,6 +90,34 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
             object_service_config, ApplicationContext::get().get_http_client());
     }
 
+    std::unique_ptr<DatasetService> dataset_service;
+    DatasetServiceConfig dataset_service_config;
+    dataset_service_config.m_global_prefix = "hestia";
+    if (m_config.m_server_config.m_controller) {
+        dataset_service = DatasetService::create(
+            dataset_service_config,
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        dataset_service = DatasetService::create(
+            dataset_service_config,
+            ApplicationContext::get().get_http_client());
+    }
+
+    std::unique_ptr<UserService> user_service;
+    UserServiceConfig user_service_config;
+    user_service_config.m_global_prefix = "hestia";
+    if (m_config.m_server_config.m_controller) {
+        user_service = UserService::create(
+            user_service_config,
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        user_service = UserService::create(
+            user_service_config, ApplicationContext::get().get_http_client());
+    }
+    ApplicationContext::get().set_user_service(std::move(user_service));
+
     std::unique_ptr<DataPlacementEngine> dpe;
     try {
         dpe = set_up_data_placement_engine(tier_service.get());
@@ -107,6 +138,7 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 
     auto hsm_service = std::make_unique<HsmService>(
         std::move(object_service), std::move(tier_service),
+        std::move(dataset_service),
         ApplicationContext::get().get_object_store_client(), std::move(dpe),
         std::move(event_feed));
 

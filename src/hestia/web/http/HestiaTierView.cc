@@ -18,7 +18,8 @@ HestiaTierView::HestiaTierView(DistributedHsmService* hestia_service) :
 
 HestiaTierView::~HestiaTierView() {}
 
-HttpResponse::Ptr HestiaTierView::on_get(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_get(
+    const HttpRequest& request, const User&)
 {
     auto tier_service = m_hestia_service->get_hsm_service()->get_tier_service();
     const auto path =
@@ -46,7 +47,8 @@ HttpResponse::Ptr HestiaTierView::on_get(const HttpRequest& request)
     }
 }
 
-HttpResponse::Ptr HestiaTierView::on_put(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_put(
+    const HttpRequest& request, const User&)
 {
     auto tier_service = m_hestia_service->get_hsm_service()->get_tier_service();
     const auto path =
@@ -79,13 +81,15 @@ HttpResponse::Ptr HestiaTierView::on_put(const HttpRequest& request)
     }
 }
 
-HttpResponse::Ptr HestiaTierView::on_delete(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_delete(
+    const HttpRequest& request, const User&)
 {
     (void)request;
     return HttpResponse::create();
 }
 
-HttpResponse::Ptr HestiaTierView::on_head(const HttpRequest& request)
+HttpResponse::Ptr HestiaTierView::on_head(
+    const HttpRequest& request, const User&)
 {
     const auto path =
         StringUtils::split_on_first(request.get_path(), "/tiers").second;

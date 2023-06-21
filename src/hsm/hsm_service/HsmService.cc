@@ -3,6 +3,8 @@
 #include "BasicDataPlacementEngine.h"
 #include "DataPlacementEngine.h"
 #include "HsmObjectStoreClient.h"
+
+#include "DatasetService.h"
 #include "ObjectService.h"
 #include "TierService.h"
 
@@ -30,11 +32,13 @@ namespace hestia {
 HsmService::HsmService(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
+    std::unique_ptr<DatasetService> dataset_service,
     HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed) :
     m_object_service(std::move(object_service)),
     m_tier_service(std::move(tier_service)),
+    m_dataset_service(std::move(dataset_service)),
     m_object_store(object_store),
     m_placement_engine(std::move(placement_engine)),
     m_action_adapter(HsmActionAdapter::create()),
@@ -48,24 +52,28 @@ HsmService::Ptr HsmService::create(
 {
     auto object_service = ObjectService::create(ObjectServiceConfig(), client);
     auto tier_service   = TierService::create(TierServiceConfig(), client);
+    auto dataset_service =
+        DatasetService::create(DatasetServiceConfig(), client);
     auto placement_engine =
         std::make_unique<BasicDataPlacementEngine>(tier_service.get());
 
     return create(
-        std::move(object_service), std::move(tier_service), object_store,
-        std::move(placement_engine));
+        std::move(object_service), std::move(tier_service),
+        std::move(dataset_service), object_store, std::move(placement_engine));
 }
 
 HsmService::Ptr HsmService::create(
     std::unique_ptr<ObjectService> object_service,
     std::unique_ptr<TierService> tier_service,
+    std::unique_ptr<DatasetService> dataset_service,
     HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
     std::unique_ptr<EventFeed> event_feed)
 {
     return std::make_unique<HsmService>(
-        std::move(object_service), std::move(tier_service), object_store,
-        std::move(placement_engine), std::move(event_feed));
+        std::move(object_service), std::move(tier_service),
+        std::move(dataset_service), object_store, std::move(placement_engine),
+        std::move(event_feed));
 }
 
 
@@ -82,6 +90,11 @@ TierService* HsmService::get_tier_service()
 ObjectService* HsmService::get_object_service()
 {
     return m_object_service.get();
+}
+
+DatasetService* HsmService::get_dataset_service()
+{
+    return m_dataset_service.get();
 }
 
 HsmServiceResponse::Ptr HsmService::make_request(

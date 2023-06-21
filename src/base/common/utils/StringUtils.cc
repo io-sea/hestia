@@ -62,6 +62,15 @@ bool StringUtils::starts_with(const std::string& str, const std::string& prefix)
     return str.find(prefix) == 0;
 }
 
+bool StringUtils::ends_with(const std::string& str, const std::string& prefix)
+{
+    const auto loc = str.rfind(prefix);
+    if (loc == 0) {
+        return false;
+    }
+    return loc == str.size() - prefix.size();
+}
+
 void StringUtils::split(
     const std::string& str, char delimiter, std::vector<std::string>& elements)
 {

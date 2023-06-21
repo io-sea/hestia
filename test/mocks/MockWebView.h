@@ -11,7 +11,7 @@ class MockWebView : public WebView {
   public:
     MockWebView(MockWebService* service) : WebView(), m_service(service) {}
 
-    HttpResponse::Ptr on_get(const HttpRequest& request) override
+    HttpResponse::Ptr on_get(const HttpRequest& request, const User&) override
     {
         std::string data;
         auto buffer_size =
@@ -23,7 +23,7 @@ class MockWebView : public WebView {
         return response;
     }
 
-    HttpResponse::Ptr on_put(const HttpRequest& request) override
+    HttpResponse::Ptr on_put(const HttpRequest& request, const User&) override
     {
         LOG_INFO("Have headers: " << request.get_header().to_string());
         const auto content_length = request.get_header().get_content_length();

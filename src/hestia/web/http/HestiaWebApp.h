@@ -6,6 +6,7 @@
 namespace hestia {
 
 class DistributedHsmService;
+class UserService;
 
 class HestiaWebAppConfig {
   public:
@@ -16,6 +17,8 @@ class HestiaWebAppConfig {
 class HestiaWebApp : public WebApp {
   public:
     HestiaWebApp(
-        DistributedHsmService* hestia_service, HestiaWebAppConfig config = {});
+        UserService* user_service,
+        DistributedHsmService* hestia_service,
+        HestiaWebAppConfig config = {});
 };
 }  // namespace hestia

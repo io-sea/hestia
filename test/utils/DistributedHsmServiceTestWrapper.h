@@ -15,6 +15,11 @@ class DistributedHsmServiceTestWrapper {
 
     void get_store_path() const;
 
+    hestia::FileKeyValueStoreClient* get_kv_store_client()
+    {
+        return &m_kv_store_client;
+    }
+
     std::string m_store_path;
     hestia::FileKeyValueStoreClient m_kv_store_client;
     hestia::FileHsmObjectStoreClient m_obj_store_client;

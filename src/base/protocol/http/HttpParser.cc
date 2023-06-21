@@ -4,6 +4,17 @@
 #include "StringUtils.h"
 
 namespace hestia {
+bool HttpParser::parse_form_data(const std::string& input, Metadata& parsed)
+{
+    std::vector<std::string> elements;
+    StringUtils::split(input, '&', elements);
+    for (const auto& element : elements) {
+        const auto& [key, value] = StringUtils::split_on_first(element, '=');
+        parsed.set_item(key, value);
+    }
+    return true;
+}
+
 bool HttpParser::parse_preamble(const std::string& line, HttpPreamble& preamble)
 {
     bool in_path{false};

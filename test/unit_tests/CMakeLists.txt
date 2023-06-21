@@ -26,6 +26,7 @@ set(UNIT_TEST_SOURCES
     base/web/TestS3Service.cc
     base/web/TestS3WebApp.cc
     base/web/TestS3Authorization.cc
+    base/web/TestUserService.cc
     hestia/TestHestiaCppClient.cc
     hsm/TestDistributedHsmService.cc
     hsm/TestEventFeed.cc

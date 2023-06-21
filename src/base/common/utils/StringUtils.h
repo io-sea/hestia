@@ -80,6 +80,8 @@ class StringUtils {
 
     static bool starts_with(const std::string& str, const std::string& prefix);
 
+    static bool ends_with(const std::string& str, const std::string& prefix);
+
     static std::string remove_prefix(
         const std::string& str, const std::string& prefix);
 

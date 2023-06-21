@@ -9,6 +9,9 @@ add_module(
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
+        dataset_service/Dataset.h 
+        dataset_service/DatasetAdapter.h 
+        dataset_service/DatasetService.h 
         distributed_hsm_service/DistributedHsmService.h
         distributed_hsm_service/DistributedHsmServiceRequest.h
         distributed_hsm_service/HsmNodeService.h
@@ -26,6 +29,8 @@ add_module(
         tier_service/TierService.h 
         s3_service/HsmS3Service.h
     SOURCES
+        dataset_service/DatasetAdapter.cc
+        dataset_service/DatasetService.cc
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
         distributed_hsm_service/DistributedHsmService.cc
@@ -45,6 +50,7 @@ add_module(
         s3_service/HsmS3Service.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
+        dataset_service
         distributed_hsm_service
         distributed_hsm_service/model/
         hsm_service

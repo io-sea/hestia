@@ -1,6 +1,3 @@
-set(CPACK_INSTALL_PREFIX "/usr")
-set(CMAKE_INSTALL_PREFIX "/usr")
-
 set(LINK_MODULES_FOR_EXPORT
         cli 
         common 

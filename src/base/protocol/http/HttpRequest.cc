@@ -43,6 +43,9 @@ HttpRequest::HttpRequest(const std::string& message)
     else if (m_preamble.m_method == "PUT") {
         m_method = Method::PUT;
     }
+    else if (m_preamble.m_method == "POST") {
+        m_method = Method::POST;
+    }
     else if (m_preamble.m_method == "DELETE") {
         m_method = Method::DELETE;
     }
@@ -95,6 +98,8 @@ std::string HttpRequest::get_method_as_string() const
             return "GET";
         case Method::PUT:
             return "PUT";
+        case Method::POST:
+            return "POST";
         case Method::DELETE:
             return "DELETE";
         case Method::HEAD:
