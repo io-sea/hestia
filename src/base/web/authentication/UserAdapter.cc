@@ -66,7 +66,7 @@ bool UserJsonAdapter::matches_query(
         }
     }
     return true;
-};
+}
 
 void UserJsonAdapter::from_dict(const Dictionary& dict, User& item) const
 {
