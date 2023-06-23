@@ -227,8 +227,8 @@ Nightly_trigger:
     - apk add jq
   script: # Only run if the last dev pipeline succeeded (the scheduled pipeline is index 0)
     - 'wget --header "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)"
-      "$HESTIA_API_URL/pipelines?ref=devel&source=push&per_page=1"'
-    - '[ $(jq --raw-output ''.[] | .status'' latest)  != "success" ] && exit 1'
+      "$HESTIA_API_URL/pipelines?ref=devel&source=push&per_page=1" -O res.json'
+    - '[ $(jq --raw-output ''.[] | .status'' res.json)  != "success" ] && exit 1'
 
 Nightly_build:
   <<: *default_nightly_job
