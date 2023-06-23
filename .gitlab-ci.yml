@@ -28,7 +28,7 @@ stages:
     HESTIA_BUILD_DOCUMENTATION: "ON"
     HESTIA_WITH_PHOBOS: "ON"
     HESTIA_WITH_MOTR: "ON"
-    HESTIA_WITH_PROXYGEN: "ON"
+    HESTIA_WITH_PROXYGEN: "OFF"
     MOTR_SRC_DIR: "/cortx-motr"
 
 # CI code snippets
@@ -227,7 +227,7 @@ Nightly_trigger:
     - apk add jq
   script: # Only run if the last dev pipeline succeeded (the scheduled pipeline is index 0)
     - 'wget --header "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" "$HESTIA_API_URL/pipelines/latest"'
-    - '[ $(jq --raw-output ''map(select(.ref == "devel")) | .[1] | .status latest)''  != "success" ] && exit 1'
+    - '[ $(jq --raw-output ''map(select(.ref == "devel")) | map(select(.source == "push")) | .[0] | .status'' latest)  != "success" ] && exit 1'
 
 Nightly_build:
   <<: *default_nightly_job
