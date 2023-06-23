@@ -10,7 +10,7 @@ curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     --upload-file $CMAKE_BUILD_DIR/*.tar.gz
 
 # Create new release and link packages
-curl --request POST -H "PRIVATE-TOKEN: $CI_CUSTOM_JOB_TOKEN" \
+curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
       "$HESTIA_API_URL/releases" \
       -H "Content-Type: application/json" \
       --data "{
@@ -38,10 +38,10 @@ new_minor_ver=$(echo $CI_RELEASE_VERSION | awk -F. -v OFS=. '{$2 += 1 ; print}')
 # Update nightly version to REL.1
 new_nightly_ver=$(echo $CI_RELEASE_VERSION | awk -F. -v OFS=. '{$2 += 1 ; $NF = 1; print}')
 
-curl --request PUT -H "PRIVATE-TOKEN: $CI_CUSTOM_JOB_TOKEN" \
+curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/variables/CI_RELEASE_VERSION" \
     --form "value=$new_minor_ver"
 
-curl --request PUT -H "PRIVATE-TOKEN: $CI_CUSTOM_JOB_TOKEN" \
+curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/variables/CI_NIGHTLY_VERSION" \
     --form "value=$new_nightly_ver"
