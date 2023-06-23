@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 import logging
 import filecmp
+import time
 
 
 import hestia_tests.utils
@@ -52,13 +53,17 @@ class PhobosTests(hestia_tests.utils.BaseTest):
         cat_cmd = f"cat {runtime_path}/hestia_log.txt"
         put_cmd = f"hestia put {object_id} {object_content} 0 --config={hestia_config}"
         get_cmd = f"hestia get {object_id} {return_cache0} 0 --config={hestia_config}"
+        
         # TODO: Enable with copytool completion
         # copy_cmd = f"hestia copy {object_id} 0 1 --config={hestia_config}"
         # get1_cmd = f"hestia get {object_id} {return_cache1} 1 --config={hestia_config}"
+        
         ops = [put_cmd, cat_cmd, get_cmd, cat_cmd] #, copy_cmd, get1_cmd]
         hestia_tests.utils.run_ops(runtime_path, runtime_env, ops)
         
         # Check output 
+        time.sleep(5) # On CI, Phobos is slow to fully flush streams 
+        filecmp.clear_cache()
         same0 = filecmp.cmp(object_content, return_cache0)
         # same1 = filecmp.cmp(object_content, return_cache1)
         if not (same0): # and same1):

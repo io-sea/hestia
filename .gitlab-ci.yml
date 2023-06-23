@@ -1,34 +1,38 @@
-image: rockylinux:8
-
-stages:   
-  - static analysis 
+stages:
+  - static analysis
   - build
   - test
-  - nightly_build
-  - nightly_test
-  - nightly_deploy
   - deploy
 
 # CI variables
 .variables:
-  default_variables: &default_variables 
+  default_variables: &default_variables
     CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
-    CMAKE_BUILD_TYPE: Release 
-    CXX: g++
-    CC: gcc
+    CMAKE_BUILD_TYPE: "Release"
+    CXX: "g++"
+    CC: "gcc"
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    HESTIA_PROJECT_VERSION: 0.3.0
-    HESTIA_BUILD_TESTS: "OFF" 
+    HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
+    HESTIA_BUILD_TESTS: "OFF"
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_CODE_COVERAGE: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
     HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
     MOTR_SRC_DIR: ""
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
+    HESTIA_API_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
+  nightly_variables: &nightly_variables
+    <<: *default_variables
+    HESTIA_BUILD_DOCUMENTATION: "ON"
+    HESTIA_WITH_PHOBOS: "ON"
+    HESTIA_WITH_MOTR: "ON"
+    HESTIA_WITH_PROXYGEN: "ON"
+    MOTR_SRC_DIR: "/cortx-motr"
 
 # CI code snippets
-.snippets: 
+.snippets:
   - &update_distro
     yum check-update -q || true;
     yum update -qy;
@@ -38,25 +42,26 @@ stages:
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     yum install -qy $(cat ${HESTIA_DEPS}/phobos);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
-  - &configure 
+  - &configure
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR} 
-      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" 
-      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}" 
-      -DCMAKE_CXX_COMPILER="${CXX}" 
+      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR}
+      -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+      -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
+      -DCMAKE_CXX_COMPILER="${CXX}"
       -DCMAKE_PROJECT_VERSION="${HESTIA_PROJECT_VERSION}"
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
       -DHESTIA_BUILD_DOCUMENTATION="${HESTIA_BUILD_DOCUMENTATION}"
       -DCODE_COVERAGE="${HESTIA_CODE_COVERAGE}"
+      -DHESTIA_WITH_PROXYGEN="${HESTIA_WITH_PROXYGEN}"
       -DHESTIA_WITH_PHOBOS="${HESTIA_WITH_PHOBOS}"
       -DHESTIA_WITH_MOTR="${HESTIA_WITH_MOTR}"
       -DMOTR_SRC_DIR="${MOTR_SRC_DIR}"
     )
     && popd
-  - &build 
+  - &build
     make -C "${CMAKE_BUILD_DIR}" -j$(nproc)
   - &test
     make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
@@ -75,45 +80,52 @@ stages:
     expire_in: 30 min
 
 .default_job: &default_job
+  image: rockylinux:8
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
+    - if: $CI_COMMIT_TAG
+      when: never # No need to re-run CI for tags
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never # The branch pipeline will run for updated MRs
+    - if: $CI_COMMIT_REF_NAME == "master"
+      when: never # Master build are manual and pre-vetted
     - when: on_success
-  tags: 
+  tags:
     - docker
   variables:
-    <<: *default_variables 
-  before_script: 
+    <<: *default_variables
+  before_script:
     - *update_distro
     - *install_base_dependencies
-  script: 
-    - *configure 
+  script:
+    - *configure
     - *build
   cache:
     <<: *cmake_install_cache
 
-Format: 
+Format:
   <<: *default_job
   stage: static analysis
-  before_script: 
+  before_script:
     - *update_distro
     - yum install -qy $(cat ${HESTIA_DEPS}/format)
-  script: 
+  script:
     - ./infra/scripts/run_format.sh
-      && git status 
-      && git diff-index --quiet HEAD 
+      && git status
+      && git diff-index --quiet HEAD
       || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
 
-Lint: 
+Lint:
   <<: *default_job
   stage: static analysis
   variables:
     <<: *default_variables
-    CMAKE_BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: "Debug"
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    CXX: clang++
-    CC: clang
-    HESTIA_BUILD_TESTS: "ON" 
+    CXX: "clang++"
+    CC: "clang"
+    HESTIA_BUILD_TESTS: "ON"
     HESTIA_WITH_PHOBOS: "ON"
   before_script:
     - *update_distro
@@ -130,9 +142,9 @@ Release:
   variables:
     <<: *default_variables
     HESTIA_BUILD_DOCUMENTATION: "ON"
-  script: 
-    - *configure 
-    - *build 
+  script:
+    - *configure
+    - *build
     - make -C "${CMAKE_BUILD_DIR}" doxygen
     - make -C "${CMAKE_BUILD_DIR}" package
   artifacts:
@@ -144,13 +156,13 @@ Release:
 Unit_test:
   <<: *default_job
   stage: test
-  dependencies: 
+  dependencies:
     - Release
   variables:
     <<: *default_variables
-    CMAKE_BUILD_TYPE: Debug
-    CXX: clang++
-    CC: clang
+    CMAKE_BUILD_TYPE: "Debug"
+    CXX: "clang++"
+    CC: "clang"
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
   before_script:
@@ -167,70 +179,69 @@ Unit_test:
 E2E_test:
   <<: *default_job
   stage: test
-  dependencies: 
+  dependencies:
     - Release
   before_script:
     - *update_distro
     - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
   script:
-    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-0.0.1-Linux.rpm
+    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR}
+      --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-Linux.rpm
 
 # Scheduled Builds
-
 .nightly_snippets:
   - &install_motr
-    cd ${CI_PROJECT_DIR};
-    curl ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/motr-rpms/1.0.0/motr-rpms-$(arch).tar.gz | tar xz;
-    export motr_rpms=${CI_PROJECT_DIR}/builds/io-sea-internal/hestia/motr-rpms;
-    yum install -qy ${motr_rpms}/isa-l-2.30.0*.$(arch).rpm;
-    yum install -qy ${motr_rpms}/cortx-motr-2.0.0*.$(arch).rpm;
-    yum install -qy ${motr_rpms}/cortx-motr-devel-2.0.0*.$(arch).rpm;
-    export MOTR_SHA=71735b89b26fec78cea0f5fb43dadd964486fff5;
-    export MOTR_SRC=/cortx-motr;
-    git clone --recursive https://github.com/Seagate/cortx-motr.git $MOTR_SRC;
-    pushd $MOTR_SRC && git reset --hard $MOTR_SHA && popd;
+    ${CI_PROJECT_DIR}/infra/scripts/ci/install_motr.sh
   - &install_phobos
     export PHOBOS_SRC=/phobos; cd /;
     ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
 
-
-nightly_build:
+.default_nightly_job: &default_nightly_job
   <<: *default_job
+  variables:
+    <<: *nightly_variables
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
-  stage: nightly_build
-  dependencies: []
-  variables:
-    <<: *default_variables
-    HESTIA_BUILD_DOCUMENTATION: "ON"
-    HESTIA_WITH_PHOBOS: "ON"
-    HESTIA_WITH_MOTR: "ON"
-    MOTR_SRC_DIR: /cortx-motr
   before_script:
     - *update_distro
     - *install_base_dependencies
     - *install_phobos
     - *install_motr # dev only
-  script: 
-    - *configure 
+  script:
+    - *configure
     - *build
     - make -C "${CMAKE_BUILD_DIR}" package
-  artifacts: # TODO: Make send this to package repo
+    # TODO: Build and upload docs
+
+Nightly_trigger:
+  <<: *default_nightly_job
+  image: alpine:latest
+  stage: .pre
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+        && $CI_COMMIT_SHA != $CI_LAST_NIGHTLY_COMMIT_SHA # Only run if there are new commits
+      when: on_success
+  before_script:
+    - apk add jq
+  script: # Only run if the last dev pipeline succeeded
+    - 'wget --header "PRIVATE-TOKEN: $CI_CUSTOM_JOB_TOKEN" "$HESTIA_API_URL/pipelines/latest"'
+    - 'if [ $(jq --raw-output ".status" latest)  != "success" ]; then exit 1; fi'
+
+Nightly_build:
+  <<: *default_nightly_job
+  stage: build
+  artifacts:
     name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
       - ${CMAKE_BUILD_DIR}/*.rpm
-    expire_in: 1 day
+      - ${CMAKE_BUILD_DIR}/*.tar.gz
+    expire_in: 1 hour
 
-nightly_E2E:
-  <<: *default_job
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-  stage: nightly_test
-  dependencies: 
-    - nightly_build
+Nightly_E2E:
+  <<: *default_nightly_job
+  stage: test
   services:
     - name: postgres:15.3
       alias: phobosdb
@@ -247,48 +258,50 @@ nightly_E2E:
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/phobos_requirements.txt;
   script:
-    - export PYTHONPATH=/phobos/src/cli/build/lib.linux-$(arch)-3.6/:$PYTHONPATH
-    - export LD_LIBRARY_PATH=/usr/lib64/phobos:${CMAKE_BUILD_DIR}/lib
-    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --with_phobos --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-0.0.1-Linux.rpm
+    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
+      --with_phobos --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
+      --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-Linux.rpm
 
-nightly_deploy:
-  <<: *default_job
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-  stage: nightly_deploy
-  dependencies: 
-    - nightly_build
+Nightly_deploy:
+  <<: *default_nightly_job
   image: alpine:latest
-  before_script: []
-  script:
-    - echo "e2e tests passed, merging from devel to master..." 
-    # - url_host=`git remote get-url origin | sed -e "s/https:\/\/gitlab-ci-token:.*@//g"`
-    # - git remote set-url origin "https://gitlab-ci-token:${CI_TAG_UPLOAD_TOKEN}@${url_host}"
-    # - git push origin HEAD:devel -o merge_request.create -o merge_request.target=master merge_request.merge_when_pipeline_succeeds
-
-master_deploy:
-  <<: *default_job
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      if: $CI_COMMIT_REF_NAME == "master" 
-      when: manual  
   stage: deploy
-  variables:
-    <<: *default_variables
-    HESTIA_BUILD_DOCUMENTATION: "ON"
-    HESTIA_WITH_PHOBOS: "ON"
-    HESTIA_WITH_MOTR: "ON"
-    MOTR_SRC_DIR: /cortx-motr
   before_script:
-    - *update_distro
-    - *install_base_dependencies
-    - *install_phobos
-    - *install_motr # dev only
-  script: 
-    - *configure 
-    - *build
-    - make -C "${CMAKE_BUILD_DIR}" doxygen
-    - make -C "${CMAKE_BUILD_DIR}" package
-  after_script: 
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${CMAKE_BUILD_DIR}/hestia-*-Linux.rpm "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/hestia-rpms/0.0.1/hestia-${CI_COMMIT_REF_SLUG}.rpm"'
+    - apk add curl jq
+  script:
+    - ${CI_PROJECT_DIR}/infra/scripts/ci/nightly_deploy.sh
+  artifacts:
+    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - ${CMAKE_BUILD_DIR}/*.rpm
+      - ${CMAKE_BUILD_DIR}/*.tar.gz
+    expire_in: 1 month
+
+# Note: To increment major release version update the CI variable manually
+Master_build:
+  <<: *default_nightly_job
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "push"
+      when: manual
+  stage: build
+  variables:
+    <<: *nightly_variables
+    HESTIA_PROJECT_VERSION: "${CI_RELEASE_VERSION}"
+  artifacts:
+    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - ${CMAKE_BUILD_DIR}/*.rpm
+      - ${CMAKE_BUILD_DIR}/*.tar.gz
+    expire_in: 1 hour
+
+Master_deploy:
+  <<: *default_nightly_job
+  image: alpine:latest
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "push"
+      when: on_success
+  before_script:
+    - apk add curl
+  script: # Tag release, upload matching packages
+    - ${CI_PROJECT_DIR}/infra/scripts/ci/master_deploy.sh
