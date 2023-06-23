@@ -228,7 +228,8 @@ Nightly_trigger:
   script: # Only run if the last dev pipeline succeeded (the scheduled pipeline is index 0)
     - 'wget --header "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)"
       "$HESTIA_API_URL/pipelines?ref=devel&source=push&per_page=1" -O res.json'
-    - '[ $(jq --raw-output ''.[] | .status'' res.json)  != "success" ] && exit 1'
+    - jq . res.json # For Debug
+    - 'if [ $(jq --raw-output ''.[] | .status'' res.json)  != "success" ]; then exit 1; fi;'
 
 Nightly_build:
   <<: *default_nightly_job
