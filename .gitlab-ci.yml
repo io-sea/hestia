@@ -203,6 +203,7 @@ E2E_test:
     <<: *nightly_variables
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
+        && $CI_COMMIT_SHA != $CI_LAST_NIGHTLY_COMMIT_SHA # Only run if there are new commits
       when: on_success
   before_script:
     - *update_distro
@@ -219,10 +220,6 @@ Nightly_trigger:
   <<: *default_nightly_job
   image: alpine:latest
   stage: .pre
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-        && $CI_COMMIT_SHA != $CI_LAST_NIGHTLY_COMMIT_SHA # Only run if there are new commits
-      when: on_success
   before_script:
     - apk add jq
   script: # Only run if the last dev pipeline succeeded (the scheduled pipeline is index 0)
