@@ -53,7 +53,7 @@ int Motr::m0_obj_init(Obj* obj, Realm* parent, Id* id, uint64_t layout_id)
 {
     obj->m_id        = *id;
     obj->m_realm     = parent;
-    obj->m_layout_id = layout_id;
+    obj->m_layout_id = {layout_id, 0};
     return 0;
 }
 

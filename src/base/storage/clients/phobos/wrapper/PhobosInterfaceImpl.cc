@@ -1,5 +1,7 @@
 #include "PhobosInterfaceImpl.h"
 
+#include "UuidUtils.h"
+
 #if HAS_PHOBOS
 #include "PhobosDescriptor.h"
 
@@ -11,7 +13,8 @@
 namespace hestia {
 void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET, fd};
+    PhobosDescriptor::Info info{
+        UuidUtils::to_string(obj.id()), PhobosDescriptor::Operation::GET, fd};
 
     PhobosDescriptor desc(info);
     ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
@@ -26,7 +29,8 @@ void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::PUT};
+    PhobosDescriptor::Info info{
+        UuidUtils::to_string(obj.id()), PhobosDescriptor::Operation::PUT};
 
     if (fd > -1) {
         info.m_fd   = fd;
@@ -56,7 +60,8 @@ void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET_MD};
+    PhobosDescriptor::Info info{
+        UuidUtils::to_string(obj.id()), PhobosDescriptor::Operation::GET_MD};
 
     PhobosDescriptor descriptor(info);
 
@@ -80,7 +85,8 @@ void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 
 bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::GET_MD};
+    PhobosDescriptor::Info info{
+        UuidUtils::to_string(obj.id()), PhobosDescriptor::Operation::GET_MD};
 
     PhobosDescriptor descriptor(info);
     bool exists =
@@ -90,7 +96,8 @@ bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 
 void PhobosInterfaceImpl::remove(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.m_id, PhobosDescriptor::Operation::DEL};
+    PhobosDescriptor::Info info{
+        UuidUtils::to_string(obj.id()), PhobosDescriptor::Operation::DEL};
 
     PhobosDescriptor descriptor(info);
 
@@ -127,9 +134,8 @@ void PhobosInterfaceImpl::list(
     }
 
     for (int idx = 0; idx < num_objects; idx++) {
-        StorageObject obj(obj_info[idx].oid);
+        StorageObject obj(UuidUtils::from_string(obj_info[idx].oid));
         from_string(obj.m_metadata, obj_info[idx].user_md);
-        obj.m_metadata.set_item("key", obj_info[idx].oid);
         found.push_back(obj);
     }
 

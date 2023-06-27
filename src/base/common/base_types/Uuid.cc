@@ -2,23 +2,22 @@
 
 #include "StringUtils.h"
 
+#include <sstream>
+
 namespace hestia {
-Uuid::Uuid(uint64_t lo, uint64_t hi) : m_lo(lo), m_hi(hi) {}
+Uuid::Uuid() {}
 
-Uuid::Uuid(const std::string& id, char delimiter, bool as_hex)
+Uuid::Uuid(uint64_t lo, uint64_t hi) : m_lo(lo), m_hi(hi), m_is_unset(false) {}
+
+bool Uuid::is_unset() const
 {
-    from_string(id, delimiter, as_hex);
+    return m_is_unset;
 }
 
-void Uuid::from_string(const std::string& str, char delimiter, bool as_hex)
+std::string Uuid::to_string() const
 {
-    const auto [lo, hi] = StringUtils::string_to_id(str, delimiter, as_hex);
-    m_lo                = lo;
-    m_hi                = hi;
-}
-
-std::string Uuid::to_string(char delimiter, bool as_hex) const
-{
-    return StringUtils::id_to_string(m_lo, m_hi, delimiter, as_hex);
+    std::stringstream sstr;
+    sstr << std::hex << m_lo << '-' << m_hi;
+    return sstr.str();
 }
 }  // namespace hestia

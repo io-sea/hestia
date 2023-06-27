@@ -57,7 +57,7 @@ TEST_CASE_METHOD(
             THEN("We find the object")
             {
                 REQUIRE(fetched_objects.size() == 1);
-                REQUIRE(fetched_objects[0].m_id == obj.m_id);
+                REQUIRE(fetched_objects[0].id() == obj.id());
             }
         }
 

@@ -22,30 +22,6 @@ class StringUtils {
     static uint64_t to_int(const std::string& input, bool as_hex = false);
 
     /**
-     * Convert a UUID speficied by lo and hi 64 bit elements to a string. Use
-     * the UUID class instead of this.
-     *
-     * @param lo the lower 64 bits
-     * @param hi the higher 64 bits
-     * @param delimiter character betweeen lo and hi bits
-     * @param as_hex if true write as hex
-     * @return The uuid as a string
-     */
-    static std::string id_to_string(
-        uint64_t lo, uint64_t hi, char delimiter, bool as_hex = true);
-
-    /**
-     * Convert a string to a UUID. Use the UUID class instead of this.
-     *
-     * @param input the string to convert
-     * @param delimiter character betweeen lo and hi bits
-     * @param as_hex if true write as hex
-     * @return the UUID as a pair of 64 bit ints, lo bits are first in the pair.
-     */
-    static std::pair<uint64_t, uint64_t> string_to_id(
-        const std::string& input, char delimiter, bool as_hex = true);
-
-    /**
      * Split the string on the first occurence of the delimiter
      *
      * @param str the string to split
@@ -68,6 +44,11 @@ class StringUtils {
     static void split(
         const std::string& str,
         char delimiter,
+        std::vector<std::string>& elements);
+
+    static void split(
+        const std::string& str,
+        const std::string& delimiter,
         std::vector<std::string>& elements);
 
     /**

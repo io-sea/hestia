@@ -4,8 +4,6 @@ add_module(
     MODULE_NAME protocol 
     HEADERS
         AuthorizationContext.h   
-        Model.h 
-        User.h
         http/HttpRequest.h
         http/HttpResponse.h
         http/HttpHeader.h
@@ -23,10 +21,6 @@ add_module(
         s3/S3Path.h
         s3/S3Object.h
         s3/S3Container.h
-        s3/S3ContainerModel.h
-        s3/S3ObjectModel.h
-        s3/S3ContainerAdapter.h
-        s3/S3ObjectAdapter.h 
     SOURCES
         AuthorizationContext.cc
         http/HttpRequest.cc 
@@ -35,13 +29,9 @@ add_module(
         http/HttpParser.cc
         http/HttpError.cc
         request/RequestContext.cc
-        s3/S3Object.cc
         s3/S3Error.cc
         s3/S3Path.cc
-        s3/S3ContainerModel.cc
-        s3/S3ObjectModel.cc
-        s3/S3ContainerAdapter.cc
-        s3/S3ObjectAdapter.cc 
+        s3/S3Object.cc
     INTERNAL_INCLUDE_DIRS 
         http
         request

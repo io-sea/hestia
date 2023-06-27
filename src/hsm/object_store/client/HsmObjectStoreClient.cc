@@ -107,7 +107,7 @@ void HsmObjectStoreClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
     HsmObjectStoreRequest request(
-        object.m_id, HsmObjectStoreRequestMethod::GET);
+        object.id(), HsmObjectStoreRequestMethod::GET);
     request.set_extent(extent);
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
@@ -120,7 +120,7 @@ void HsmObjectStoreClient::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
     HsmObjectStoreRequest request(
-        object.m_id, HsmObjectStoreRequestMethod::PUT);
+        object.id(), HsmObjectStoreRequestMethod::PUT);
     request.set_extent(extent);
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
@@ -132,7 +132,7 @@ void HsmObjectStoreClient::put(
 void HsmObjectStoreClient::remove(const StorageObject& object) const
 {
     HsmObjectStoreRequest request(
-        object.m_id, HsmObjectStoreRequestMethod::REMOVE);
+        object.id(), HsmObjectStoreRequestMethod::REMOVE);
     if (const auto response = make_request(request); !response->ok()) {
         const std::string msg =
             "Error in single tier REMOVE: " + response->get_error().to_string();

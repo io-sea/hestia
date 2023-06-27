@@ -2,17 +2,17 @@
 
 namespace hestia {
 HsmServiceResponse::HsmServiceResponse(const HsmServiceRequest& request) :
-    hestia::Response<HsmServiceErrorCode>(request),
+    Response<HsmServiceErrorCode>(request),
     m_object_response(std::make_unique<ObjectServiceResponse>(request)),
-    m_tier_response(std::make_unique<TierServiceResponse>(request))
+    m_tier_response(std::make_unique<TierServiceResponse>(request)),
+    m_dataset_response(std::make_unique<DatasetServiceResponse>(request))
 {
 }
 
 HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request,
-    HsmObjectStoreResponse::Ptr object_store_response) :
-    hestia::Response<HsmServiceErrorCode>(request),
-    m_object_store_response(std::move(object_store_response))
+    const HsmServiceRequest& request, HsmObjectStoreResponse::Ptr response) :
+    Response<HsmServiceErrorCode>(request),
+    m_object_store_response(std::move(response))
 {
     if (!m_object_store_response->ok()) {
         on_error(
@@ -22,11 +22,11 @@ HsmServiceResponse::HsmServiceResponse(
 }
 
 HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request,
-    ObjectServiceResponsePtr object_service_response) :
-    hestia::Response<HsmServiceErrorCode>(request),
-    m_object_response(std::move(object_service_response)),
-    m_tier_response(std::make_unique<TierServiceResponse>(request))
+    const HsmServiceRequest& request, ObjectServiceResponsePtr response) :
+    Response<HsmServiceErrorCode>(request),
+    m_object_response(std::move(response)),
+    m_tier_response(std::make_unique<TierServiceResponse>(request)),
+    m_dataset_response(std::make_unique<DatasetServiceResponse>(request))
 {
     if (!m_object_response->ok()) {
         on_error(
@@ -36,16 +36,30 @@ HsmServiceResponse::HsmServiceResponse(
 }
 
 HsmServiceResponse::HsmServiceResponse(
-    const HsmServiceRequest& request,
-    TierServiceResponsePtr tier_service_response) :
-    hestia::Response<HsmServiceErrorCode>(request),
+    const HsmServiceRequest& request, TierServiceResponsePtr response) :
+    Response<HsmServiceErrorCode>(request),
     m_object_response(std::make_unique<ObjectServiceResponse>(request)),
-    m_tier_response(std::move(tier_service_response))
+    m_tier_response(std::move(response)),
+    m_dataset_response(std::make_unique<DatasetServiceResponse>(request))
 {
     if (!m_tier_response->ok()) {
         on_error(
             {HsmServiceErrorCode::ERROR,
              m_tier_response->get_base_error().to_string()});
+    }
+}
+
+HsmServiceResponse::HsmServiceResponse(
+    const HsmServiceRequest& request, DatasetServiceResponsePtr response) :
+    Response<HsmServiceErrorCode>(request),
+    m_object_response(std::make_unique<ObjectServiceResponse>(request)),
+    m_tier_response(std::make_unique<TierServiceResponse>(request)),
+    m_dataset_response(std::move(response))
+{
+    if (!m_dataset_response->ok()) {
+        on_error(
+            {HsmServiceErrorCode::ERROR,
+             m_dataset_response->get_base_error().to_string()});
     }
 }
 
@@ -56,27 +70,27 @@ HsmServiceResponse::Ptr HsmServiceResponse::create(
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request,
-    HsmObjectStoreResponse::Ptr object_store_response)
+    const HsmServiceRequest& request, HsmObjectStoreResponse::Ptr response)
 {
-    return std::make_unique<HsmServiceResponse>(
-        request, std::move(object_store_response));
+    return std::make_unique<HsmServiceResponse>(request, std::move(response));
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request,
-    ObjectServiceResponsePtr object_service_response)
+    const HsmServiceRequest& request, ObjectServiceResponsePtr response)
 {
-    return std::make_unique<HsmServiceResponse>(
-        request, std::move(object_service_response));
+    return std::make_unique<HsmServiceResponse>(request, std::move(response));
 }
 
 HsmServiceResponse::Ptr HsmServiceResponse::create(
-    const HsmServiceRequest& request,
-    TierServiceResponsePtr tier_service_response)
+    const HsmServiceRequest& request, TierServiceResponsePtr response)
 {
-    return std::make_unique<HsmServiceResponse>(
-        request, std::move(tier_service_response));
+    return std::make_unique<HsmServiceResponse>(request, std::move(response));
+}
+
+HsmServiceResponse::Ptr HsmServiceResponse::create(
+    const HsmServiceRequest& request, DatasetServiceResponsePtr response)
+{
+    return std::make_unique<HsmServiceResponse>(request, std::move(response));
 }
 
 const std::string& HsmServiceResponse::query_result() const
@@ -103,6 +117,16 @@ const std::vector<StorageTier>& HsmServiceResponse::tiers() const
 const HsmObject& HsmServiceResponse::object() const
 {
     return m_object_response->item();
+}
+
+const Dataset& HsmServiceResponse::dataset() const
+{
+    return m_dataset_response->item();
+}
+
+const std::vector<Dataset>& HsmServiceResponse::datasets() const
+{
+    return m_dataset_response->items();
 }
 
 HsmObject& HsmServiceResponse::object()

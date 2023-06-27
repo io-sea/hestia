@@ -1,11 +1,13 @@
 #pragma once
 
+#include "HsmObject.h"
+#include "StringAdapter.h"
 #include "WebView.h"
+
 #include <memory>
 
 namespace hestia {
 class DistributedHsmService;
-class HsmObjectJsonAdapter;
 
 class HestiaObjectView : public WebView {
   public:
@@ -27,6 +29,6 @@ class HestiaObjectView : public WebView {
 
   private:
     DistributedHsmService* m_hestia_service{nullptr};
-    std::unique_ptr<HsmObjectJsonAdapter> m_object_adapter;
+    std::unique_ptr<JsonAdapter<HsmObject>> m_object_adapter;
 };
 }  // namespace hestia

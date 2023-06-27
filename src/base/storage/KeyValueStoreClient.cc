@@ -1,6 +1,7 @@
 #include "KeyValueStoreClient.h"
 
 #include "RequestException.h"
+#include "UuidUtils.h"
 
 #include "Logger.h"
 
@@ -62,7 +63,9 @@ KeyValueStoreResponsePtr KeyValueStoreClient::make_request(
             break;
         case KeyValueStoreRequestMethod::SET_ADD:
             try {
-                set_add(request.get_query().first, request.get_query().second);
+                set_add(
+                    request.get_query().first,
+                    UuidUtils::from_string(request.get_query().second));
             }
             CATCH_FLOW();
             break;
@@ -75,7 +78,8 @@ KeyValueStoreResponsePtr KeyValueStoreClient::make_request(
         case KeyValueStoreRequestMethod::SET_REMOVE:
             try {
                 set_remove(
-                    request.get_query().first, request.get_query().second);
+                    request.get_query().first,
+                    UuidUtils::from_string(request.get_query().second));
             }
             CATCH_FLOW();
             break;

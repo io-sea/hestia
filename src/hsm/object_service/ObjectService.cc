@@ -5,7 +5,7 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
-#include "HsmObjectAdapter.h"
+#include "StringAdapter.h"
 
 namespace hestia {
 
@@ -21,8 +21,7 @@ ObjectService::~ObjectService() {}
 ObjectService::Ptr ObjectService::create(
     const ObjectServiceConfig& config, KeyValueStoreClient* client)
 {
-    auto adapter =
-        std::make_unique<HsmObjectJsonAdapter>(config.m_global_prefix);
+    auto adapter = std::make_unique<JsonAdapter<HsmObject>>();
 
     KeyValueCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -36,8 +35,7 @@ ObjectService::Ptr ObjectService::create(
 ObjectService::Ptr ObjectService::create(
     const ObjectServiceConfig& config, HttpClient* client)
 {
-    auto adapter =
-        std::make_unique<HsmObjectJsonAdapter>(config.m_global_prefix);
+    auto adapter = std::make_unique<JsonAdapter<HsmObject>>();
 
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;

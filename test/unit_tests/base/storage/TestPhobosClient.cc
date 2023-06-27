@@ -55,5 +55,5 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     std::vector<hestia::StorageObject> fetched_objects;
     list({"mykey", "myval"}, fetched_objects);
     REQUIRE(fetched_objects.size() == 1);
-    REQUIRE(fetched_objects[0].m_id == obj.m_id);
+    REQUIRE(fetched_objects[0].id() == obj.id());
 }

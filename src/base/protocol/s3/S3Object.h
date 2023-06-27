@@ -1,13 +1,11 @@
 #pragma once
 
-#include "Metadata.h"
+#include <string>
 
 namespace hestia {
 class S3Object {
   public:
-    S3Object(const std::string& key = {});
-
-    bool empty() const;
+    S3Object(const std::string& name = {});
 
     bool is_equal(const S3Object& other) const;
 
@@ -15,17 +13,13 @@ class S3Object {
 
     bool operator==(const S3Object& other) const { return is_equal(other); }
 
-    friend std::ostream& operator<<(std::ostream& os, S3Object const& value)
+    friend std::ostream& operator<<(std::ostream& os, S3Object const& obj)
     {
-        os << value.to_string();
+        os << obj.to_string();
         return os;
     }
 
-    std::string m_key;
-    std::string m_creation_time;
-    std::string m_content_length = "0";
     std::string m_container;
-
-    Metadata m_user_metadata;
+    std::string m_name;
 };
 }  // namespace hestia

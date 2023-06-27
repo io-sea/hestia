@@ -14,13 +14,20 @@ add_module(
         base_types/Extent.h 
         base_types/Metadata.h 
         base_types/Dictionary.h 
-        base_types/StorageObject.h
         base_types/Uuid.h
         buffer/BufferView.h
         buffer/ReadableBufferView.h
         buffer/WriteableBufferView.h
+        models/AccessControlList.h
+        models/Model.h
+        models/OwnableModel.h
+        models/StorageObject.h
+        models/StringAdapter.h
+        models/User.h 
+        models/UserGroup.h
         plugins/PluginHandle.h 
         plugins/PluginLoader.h
+        random/IdGenerator.h
         streams/Stream.h
         streams/StreamIO.h
         streams/StreamSource.h
@@ -32,7 +39,8 @@ add_module(
         streams/impls/FileStreamSource.h
         streams/impls/InMemoryStreamSink.h 
         streams/impls/InMemoryStreamSource.h
-        threads/ThreadCollection.h 
+        concurrency/ThreadCollection.h 
+        concurrency/TimedLock.h 
         utils/StringUtils.h
         utils/FileUtils.h
         utils/XmlUtils.h
@@ -40,6 +48,8 @@ add_module(
         utils/SystemUtils.h 
         utils/JsonUtils.h
         utils/ErrorUtils.h
+        utils/TimeUtils.h
+        utils/UuidUtils.h
         utils/YamlUtils.h
     SOURCES  
         File.cc
@@ -47,12 +57,18 @@ add_module(
         base_types/Extent.cc
         base_types/Metadata.cc
         base_types/Dictionary.cc
-        base_types/StorageObject.cc
         base_types/Uuid.cc
         buffer/ReadableBufferView.cc
         buffer/WriteableBufferView.cc
+        models/AccessControlList.cc
+        models/Model.cc
+        models/OwnableModel.cc
+        models/StorageObject.cc
+        models/User.cc
+        models/UserGroup.cc
         plugins/PluginHandle.cc
         plugins/PluginLoader.cc
+        random/IdGenerator.cc
         streams/Stream.cc
         streams/StreamIO.cc
         streams/StreamState.cc
@@ -62,7 +78,8 @@ add_module(
         streams/impls/FileStreamSource.cc
         streams/impls/InMemoryStreamSink.cc 
         streams/impls/InMemoryStreamSource.cc 
-        threads/ThreadCollection.cc
+        concurrency/ThreadCollection.cc
+        concurrency/TimedLock.cc
         utils/ErrorUtils.cc
         utils/FileUtils.cc
         utils/HashUtils.cc
@@ -70,14 +87,18 @@ add_module(
         utils/SystemUtils.cc
         utils/StringUtils.cc
         utils/XmlUtils.cc
+        utils/TimeUtils.cc
+        utils/UuidUtils.cc
         utils/YamlUtils.cc
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
+        models
         plugins
+        random
         streams
         streams/impls
-        threads
+        concurrency
         utils
     PRIVATE_DEPENDENCIES
         yaml-cpp::yaml-cpp

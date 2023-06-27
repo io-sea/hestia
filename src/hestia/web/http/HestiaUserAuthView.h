@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StringAdapter.h"
+#include "User.h"
 #include "WebView.h"
 #include <memory>
 
@@ -18,6 +20,6 @@ class HestiaUserAuthView : public WebView {
 
   private:
     UserService* m_user_service{nullptr};
-    std::unique_ptr<UserJsonAdapter> m_user_adapter;
+    std::unique_ptr<JsonAdapter<User>> m_user_adapter;
 };
 }  // namespace hestia

@@ -1,6 +1,5 @@
 #include "HestiaUserView.h"
 
-#include "UserAdapter.h"
 #include "UserService.h"
 
 #include "StringUtils.h"
@@ -9,7 +8,7 @@ namespace hestia {
 HestiaUserView::HestiaUserView(UserService* user_service) :
     WebView(),
     m_user_service(user_service),
-    m_user_adapter(std::make_unique<UserJsonAdapter>())
+    m_user_adapter(std::make_unique<JsonAdapter<User>>())
 {
 }
 

@@ -291,7 +291,7 @@ OpStatus HestiaCli::run_hsm()
         stream      = hestia::Stream::create();
         auto source = hestia::FileStreamSource::create(m_hsm_command.m_path);
         stream->set_source(std::move(source));
-        request->object().m_size = stream->get_source_size();
+        request->object().set_size(stream->get_source_size());
     }
     else if (m_hsm_command.m_method == HsmCommand::Method::COPY) {
         LOG_INFO(

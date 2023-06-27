@@ -11,14 +11,12 @@ add_module(
         authentication/AuthenticationMiddleware.h 
         authentication/TokenAuthenticationMiddleware.h
         authentication/AuthenticationSession.h 
-        authentication/UserAdapter.h
         authentication/UserService.h
     SOURCES
         StaticContentView.cc 
         WebApp.cc
         WebView.cc
         UrlRouter.cc
-        authentication/UserAdapter.cc
         authentication/UserService.cc
         authentication/TokenAuthenticationMiddleware.cc
     INTERNAL_DEPENDENCIES 
@@ -27,5 +25,3 @@ add_module(
     INTERNAL_INCLUDE_DIRS 
         authentication
 )
-
-add_subdirectory(s3)

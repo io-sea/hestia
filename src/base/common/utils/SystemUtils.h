@@ -18,6 +18,10 @@ class SystemUtils {
 
     static OpStatus open_pipe(handle_t file_descriptors[]);
 
+    static std::pair<OpStatus, std::string> get_mac_address();
+
+    static std::pair<OpStatus, std::string> get_hostname();
+
     static std::pair<OpStatus, std::size_t> do_read(
         handle_t file_descriptor, char* buffer, std::size_t size);
 

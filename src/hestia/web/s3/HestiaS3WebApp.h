@@ -4,7 +4,7 @@
 
 namespace hestia {
 
-class HsmS3Service;
+class S3Service;
 class UserService;
 
 struct HestiaS3WebAppConfig {};
@@ -13,7 +13,7 @@ class HestiaS3WebApp : public WebApp {
   public:
     HestiaS3WebApp(
         HestiaS3WebAppConfig config,
-        HsmS3Service* s3_service,
+        S3Service* s3_service,
         UserService* user_service);
 
   protected:
@@ -23,6 +23,6 @@ class HestiaS3WebApp : public WebApp {
 
   private:
     HestiaS3WebAppConfig m_config;
-    HsmS3Service* m_s3_service{nullptr};
+    S3Service* m_s3_service{nullptr};
 };
 }  // namespace hestia

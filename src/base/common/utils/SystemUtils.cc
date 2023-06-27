@@ -1,9 +1,26 @@
 #include "SystemUtils.h"
 
 #include <string.h>
+
+#include <limits.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include <net/if.h>
+#ifndef __linux__
+#include <net/if_dl.h>
+#endif
+#include <netdb.h>
+
+#include <netinet/in.h>
+
+#include <ifaddrs.h>
+
 #include <dlfcn.h>
+
+#include "Logger.h"
 
 namespace hestia {
 
@@ -24,6 +41,146 @@ std::pair<OpStatus, void*> SystemUtils::load_symbol(
         return {status, nullptr};
     }
     return {status, symbol};
+}
+
+#ifdef __linux__
+std::pair<OpStatus, std::string> get_mac_address_linux()
+{
+    OpStatus status;
+
+    errno     = 0;
+    auto sock = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sock == -1) {
+        status.m_status        = OpStatus::Status::ERROR;
+        status.m_error_code    = errno;
+        status.m_error_message = ::strerror(status.m_error_code);
+        return {status, {}};
+    };
+
+    char buf[1024];
+    ifconf ifc;
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+    errno       = 0;
+    if (::ioctl(sock, SIOCGIFCONF, &ifc) == -1) {
+        status.m_status        = OpStatus::Status::ERROR;
+        status.m_error_code    = errno;
+        status.m_error_message = ::strerror(status.m_error_code);
+        return {status, {}};
+    }
+
+    auto iter      = ifc.ifc_req;
+    const auto end = iter + (ifc.ifc_len / sizeof(struct ifreq));
+
+    int success = 0;
+    ifreq ifr;
+    for (; iter != end; ++iter) {
+        ::strncpy(ifr.ifr_name, iter->ifr_name, IFNAMSIZ);
+        errno = 0;
+        if (::ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
+            // don't count loopback
+            if ((ifr.ifr_flags & IFF_LOOPBACK) != 0) {
+                if (::ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+                    success = 1;
+                    break;
+                }
+            }
+        }
+        else {
+            status.m_status        = OpStatus::Status::ERROR;
+            status.m_error_code    = errno;
+            status.m_error_message = ::strerror(status.m_error_code);
+            return {status, {}};
+        }
+    }
+
+    std::vector<unsigned char> mac_address(6);
+    if (success != 0) {
+        ::memcpy(mac_address.data(), ifr.ifr_hwaddr.sa_data, 6);
+        return {status, std::string(mac_address.begin(), mac_address.end())};
+    }
+    else {
+        status.m_status     = OpStatus::Status::ERROR;
+        status.m_error_code = -1;
+        status.m_error_message =
+            "Failed to find suitable interface for mac address lookup";
+        return {status, {}};
+    }
+}
+#else
+
+static std::pair<OpStatus, std::string> get_mac_address_mac()
+{
+    OpStatus status;
+
+    ifaddrs* ifap{nullptr};
+    errno = 0;
+    if (::getifaddrs(&ifap) == 0) {
+        std::string address;
+        for (auto ifaptr = ifap; ifaptr != nullptr;
+             ifaptr      = (ifaptr)->ifa_next) {
+            if (ifaptr->ifa_addr == nullptr) {
+                continue;
+            }
+
+            if (ifaptr->ifa_addr->sa_family == AF_LINK
+                && !((ifaptr->ifa_flags & IFF_LOOPBACK) == 0)) {
+                char host[NI_MAXHOST];
+                ::getnameinfo(
+                    ifaptr->ifa_addr, sizeof(struct sockaddr_dl), host,
+                    NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
+
+                address = std::string(host);
+                if (!address.empty()) {
+                    break;
+                }
+            }
+        }
+        ::freeifaddrs(ifap);
+
+        if (address.empty()) {
+            status.m_status     = OpStatus::Status::ERROR;
+            status.m_error_code = -1;
+            status.m_error_message =
+                "Failed to find suitable interface for mac address lookup";
+            return {status, {}};
+        }
+        else {
+            return {status, address};
+        }
+    }
+    else {
+        status.m_status        = OpStatus::Status::ERROR;
+        status.m_error_code    = errno;
+        status.m_error_message = ::strerror(status.m_error_code);
+        return {status, {}};
+    }
+}
+#endif
+
+std::pair<OpStatus, std::string> SystemUtils::get_mac_address()
+{
+#ifdef __linux__
+    return get_mac_address_linux();
+#else
+    return get_mac_address_mac();
+#endif
+}
+
+std::pair<OpStatus, std::string> SystemUtils::get_hostname()
+{
+    OpStatus status;
+    std::vector<char> buffer(1024);
+    errno = 0;
+    if (::gethostname(buffer.data(), 1024) != 0) {
+        status.m_status        = OpStatus::Status::ERROR;
+        status.m_error_code    = errno;
+        status.m_error_message = ::strerror(status.m_error_code);
+        return {status, {}};
+    }
+    else {
+        return {status, std::string(buffer.begin(), buffer.end())};
+    }
 }
 
 std::pair<OpStatus, void*> SystemUtils::load_module(const std::string& path)

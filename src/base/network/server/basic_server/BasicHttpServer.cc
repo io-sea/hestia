@@ -59,15 +59,17 @@ void BasicHttpServer::on_connection(Socket* socket)
     if (socket->connected()) {
         HttpRequest request(message);
         std::string extra_bytes;
-        if (request.is_content_outstanding()) {
-            LOG_INFO(
-                "Waiting for more content: "
-                << request.get_header().get_content_length());
-            extra_bytes += socket->recieve();
+        while (request.is_content_outstanding()) {
             std::size_t content_length =
                 std::stoul(request.get_header().get_content_length());
-            if (extra_bytes.size() > content_length) {
-                request.body() += extra_bytes.substr(0, content_length);
+
+            std::size_t remainder = content_length - request.body().length();
+
+            LOG_INFO("Waiting for more content: " << remainder);
+            extra_bytes = socket->recieve();
+
+            if (extra_bytes.size() > remainder) {
+                request.body() += extra_bytes.substr(0, remainder);
             }
             else {
                 request.body() += extra_bytes;

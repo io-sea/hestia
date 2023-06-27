@@ -26,7 +26,7 @@ class Metadata {
      * @param func the funciton to call with each value
      * @param key_prefix optional prefix for keys - if a key starts with it then call func for its value
      */
-    void for_each_item(onItem func, const std::string& key_prefix = {}) const;
+    void for_each_item(onItem func) const;
 
     const std::unordered_map<std::string, std::string>& get_raw_data() const
     {

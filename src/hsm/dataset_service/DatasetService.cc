@@ -5,7 +5,7 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
-#include "DatasetAdapter.h"
+#include "StringAdapter.h"
 
 namespace hestia {
 
@@ -19,7 +19,7 @@ DatasetService::DatasetService(
 DatasetService::Ptr DatasetService::create(
     const DatasetServiceConfig& config, KeyValueStoreClient* client)
 {
-    auto adapter = std::make_unique<DatasetJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<Dataset>>();
 
     KeyValueCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -33,7 +33,7 @@ DatasetService::Ptr DatasetService::create(
 DatasetService::Ptr DatasetService::create(
     const DatasetServiceConfig& config, HttpClient* client)
 {
-    auto adapter = std::make_unique<DatasetJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<Dataset>>();
 
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;

@@ -71,7 +71,7 @@ TEST_CASE_METHOD(
 {
     init("TestHestiaCppClient");
 
-    auto obj_id = hestia::hsm_uint{0000, 0001};
+    hestia::hsm_uint obj_id{0000, 0001};
 
     std::string content = "The quick brown fox jumps over the lazy dog.";
 

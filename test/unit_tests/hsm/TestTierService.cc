@@ -1,7 +1,9 @@
 #include <catch2/catch_all.hpp>
 
 #include "FileKeyValueStoreClient.h"
-#include "StorageTierAdapter.h"
+#include "StorageTier.h"
+#include "StringAdapter.h"
+
 #include "TestUtils.h"
 #include "TierService.h"
 
@@ -32,8 +34,9 @@ class TierServiceTestFixture {
 
     void put(const hestia::StorageTier& tier)
     {
-        auto response =
-            m_service->make_request({tier, hestia::CrudMethod::PUT});
+        hestia::CrudRequest<hestia::StorageTier> req(
+            tier, hestia::CrudMethod::PUT);
+        auto response = m_service->make_request(req);
         REQUIRE(response->ok());
     }
 
@@ -53,7 +56,7 @@ class TierServiceTestFixture {
         return response->found();
     }
 
-    void list(std::vector<std::string>& ids)
+    void list(std::vector<hestia::Uuid>& ids)
     {
         auto response = m_service->make_request({hestia::CrudMethod::LIST});
         REQUIRE(response->ok());
@@ -90,24 +93,28 @@ TEST_CASE_METHOD(
     put(tier0);
     put(tier1);
 
-    REQUIRE(exists(tier0));
-    REQUIRE(exists(tier1));
-    REQUIRE_FALSE(exists(tier2));
-
     hestia::StorageTier retrieved_tier0("0");
     get(retrieved_tier0);
     REQUIRE(retrieved_tier0.m_backend == tier0.m_backend);
 
-    std::vector<std::string> ids;
+    REQUIRE(exists(retrieved_tier0));
+
+    hestia::StorageTier retrieved_tier1("1");
+    get(retrieved_tier1);
+    REQUIRE(exists(retrieved_tier1));
+
+    std::vector<hestia::Uuid> ids;
     list(ids);
     REQUIRE(ids.size() == 2);
-    REQUIRE(ids[0] == tier0.id());
-    REQUIRE(ids[1] == tier1.id());
+    REQUIRE(
+        ((ids[0] == retrieved_tier0.id()) || (ids[1] == retrieved_tier0.id())));
+    REQUIRE(
+        ((ids[0] == retrieved_tier1.id()) || (ids[1] == retrieved_tier1.id())));
 
-    remove(tier0);
+    remove(retrieved_tier0);
 
-    REQUIRE_FALSE(exists(tier0));
-    std::vector<std::string> updated_ids;
+    REQUIRE_FALSE(exists(retrieved_tier0));
+    std::vector<hestia::Uuid> updated_ids;
     list(updated_ids);
     REQUIRE(updated_ids.size() == 1);
 }

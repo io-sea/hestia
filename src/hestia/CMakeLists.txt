@@ -18,6 +18,13 @@ add_module(
         web/http/HestiaUserAuthView.h
         web/http/HestiaDatasetView.h
         web/s3/HestiaS3WebApp.h
+        web/s3/S3UrlRouter.h
+        web/s3/middleware/S3AuthenticationMiddleware.h 
+        web/s3/middleware/S3AuthorisationSession.h
+        web/s3/middleware/S3AuthorisationObject.h 
+        web/s3/views/S3ContainerView.h 
+        web/s3/views/S3ObjectView.h
+        web/s3/views/S3ContainerListView.h
     SOURCES
         HestiaCli.cc
         HestiaCppInterface.cc
@@ -34,9 +41,18 @@ add_module(
         web/http/HestiaUserAuthView.cc
         web/http/HestiaDatasetView.cc
         web/s3/HestiaS3WebApp.cc
+        web/s3/S3UrlRouter.cc
+        web/s3/middleware/S3AuthenticationMiddleware.cc 
+        web/s3/middleware/S3AuthorisationSession.cc
+        web/s3/middleware/S3AuthorisationObject.cc 
+        web/s3/views/S3ContainerView.cc 
+        web/s3/views/S3ObjectView.cc
+        web/s3/views/S3ContainerListView.cc
     INTERNAL_INCLUDE_DIRS
         application
         web/s3 
+        web/s3/middleware
+        web/s3/views
         web/http
     INTERNAL_DEPENDENCIES 
         headers

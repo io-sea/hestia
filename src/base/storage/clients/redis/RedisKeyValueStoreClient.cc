@@ -1,6 +1,7 @@
 #include "RedisKeyValueStoreClient.h"
 
 #include "Logger.h"
+#include "UuidUtils.h"
 
 #include <hiredis.h>
 
@@ -49,6 +50,22 @@ class RedisReplyWrapper {
             auto each_reply = m_reply->element[idx];
             if (each_reply->type == REDIS_REPLY_STRING) {
                 array.push_back(std::string(each_reply->str, each_reply->len));
+            }
+        }
+    }
+
+    void as_array(std::vector<Uuid>& array)
+    {
+        if (m_reply->type != REDIS_REPLY_ARRAY) {
+            LOG_ERROR("Error making SADD request");
+            throw std::runtime_error("Error making SADD request");
+        }
+
+        for (std::size_t idx = 0; idx < m_reply->elements; idx++) {
+            auto each_reply = m_reply->element[idx];
+            if (each_reply->type == REDIS_REPLY_STRING) {
+                array.push_back(
+                    UuidUtils::from_string({each_reply->str, each_reply->len}));
             }
         }
     }
@@ -173,15 +190,16 @@ void RedisKeyValueStoreClient::string_remove(const std::string& key) const
 }
 
 void RedisKeyValueStoreClient::set_add(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
-    const std::string command = "SADD " + key + " " + value;
-    auto reply                = make_request(command);
+    const std::string command =
+        "SADD " + key + " " + UuidUtils::to_string(value);
+    auto reply = make_request(command);
     reply->as_int();
 }
 
 void RedisKeyValueStoreClient::set_list(
-    const std::string& key, std::vector<std::string>& value) const
+    const std::string& key, std::vector<Uuid>& value) const
 {
     const std::string command = "SMEMBERS " + key;
     auto reply                = make_request(command);
@@ -189,10 +207,11 @@ void RedisKeyValueStoreClient::set_list(
 }
 
 void RedisKeyValueStoreClient::set_remove(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
-    const std::string command = "SREM " + key + " " + value;
-    auto reply                = make_request(command);
+    const std::string command =
+        "SREM " + key + " " + UuidUtils::to_string(value);
+    auto reply = make_request(command);
     reply->as_int();
 }
 

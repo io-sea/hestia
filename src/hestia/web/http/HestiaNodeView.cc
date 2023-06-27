@@ -2,7 +2,7 @@
 
 #include "DistributedHsmService.h"
 #include "HsmNode.h"
-#include "HsmNodeAdapter.h"
+#include "StringAdapter.h"
 
 #include "StringUtils.h"
 
@@ -35,7 +35,7 @@ HttpResponse::Ptr HestiaNodeView::on_get(
         }
 
         std::string body;
-        HsmNodeJsonAdapter().to_string(get_response->items(), body);
+        JsonAdapter<HsmNode>().to_string(get_response->items(), body);
         response->set_body(body);
     }
     return response;
@@ -54,7 +54,7 @@ HttpResponse::Ptr HestiaNodeView::on_put(
         if (!request.body().empty()) {
             HsmNode node;
             LOG_INFO("Trying to serialize: " << request.body());
-            HsmNodeJsonAdapter().from_string(request.body(), node);
+            JsonAdapter<HsmNode>().from_string(request.body(), node);
 
             auto put_response = m_hestia_service->make_request(
                 {node, DistributedHsmServiceRequestMethod::PUT});
@@ -63,7 +63,7 @@ HttpResponse::Ptr HestiaNodeView::on_put(
             }
 
             std::string body;
-            HsmNodeJsonAdapter().to_string(node, body);
+            JsonAdapter<HsmNode>().to_string(node, body);
             response->set_body(body);
         }
     }

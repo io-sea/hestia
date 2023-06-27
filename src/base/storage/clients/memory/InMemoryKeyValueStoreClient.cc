@@ -2,6 +2,7 @@
 
 #include "JsonUtils.h"
 #include "StringUtils.h"
+#include "UuidUtils.h"
 
 #include <iterator>
 #include <set>
@@ -29,7 +30,7 @@ std::string InMemoryKeyValueStoreClient::dump() const
     for (const auto& [key, value] : m_set_db) {
         std::stringstream set_sstr;
         for (const auto& set_item : value) {
-            set_sstr << set_item << ";";
+            set_sstr << UuidUtils::to_string(set_item) << ";";
         }
         sstr << key << " : " << set_sstr.str() << "\n";
     }
@@ -73,14 +74,13 @@ bool InMemoryKeyValueStoreClient::string_exists(const std::string& key) const
 }
 
 void InMemoryKeyValueStoreClient::set_add(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
-    LOG_INFO("Adding to set: " + key + " " + value);
     m_set_db[key].insert(value);
 }
 
 void InMemoryKeyValueStoreClient::set_list(
-    const std::string& key, std::vector<std::string>& values) const
+    const std::string& key, std::vector<Uuid>& values) const
 {
     if (auto iter = m_set_db.find(key); iter != m_set_db.end()) {
         std::copy(
@@ -90,7 +90,7 @@ void InMemoryKeyValueStoreClient::set_list(
 }
 
 void InMemoryKeyValueStoreClient::set_remove(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
     m_set_db[key].erase(value);
 }

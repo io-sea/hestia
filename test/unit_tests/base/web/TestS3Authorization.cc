@@ -12,7 +12,7 @@ class TestS3AuthorizationFixture {
   public:
     TestS3AuthorizationFixture()
     {
-        m_user.m_identifier        = "AKIAIOSFODNN7EXAMPLE";
+        m_user.set_name("AKIAIOSFODNN7EXAMPLE");
         m_user.m_api_token.m_value = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
         m_user_service = hestia::UserService::create({}, &m_kv_store_client);
 
@@ -21,8 +21,10 @@ class TestS3AuthorizationFixture {
 
     void add_user()
     {
-        REQUIRE(m_user_service->make_request({m_user, hestia::CrudMethod::PUT})
-                    ->ok());
+        auto response =
+            m_user_service->make_request({m_user, hestia::CrudMethod::PUT});
+        REQUIRE(response->ok());
+        m_user = response->item();
     }
 
     void remove_user()
@@ -261,7 +263,7 @@ TEST_CASE_METHOD(
     request.get_header().set_item("x-amz-meta-uid", "0");
     request.get_header().set_item("Content-Length", "52");
 
-    m_user.m_identifier        = "OPEN_KEY";
+    m_user.set_name("OPEN_KEY");
     m_user.m_api_token.m_value = "SECRET_KEY";
     add_user();
 

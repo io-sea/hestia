@@ -55,7 +55,7 @@ void HttpObjectStoreClient::put(
 void HttpObjectStoreClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
-    const auto path = m_config.m_endpoint + "/" + object.id();
+    const auto path = m_config.m_endpoint + "/" + object.id().to_string();
     auto http_response =
         m_http_client->make_request({path, HttpRequest::Method::GET});
     if (http_response->error()) {

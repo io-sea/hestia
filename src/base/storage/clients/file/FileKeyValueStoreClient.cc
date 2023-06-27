@@ -4,6 +4,7 @@
 #include "FileUtils.h"
 #include "JsonUtils.h"
 #include "StringUtils.h"
+#include "UuidUtils.h"
 
 #include <fstream>
 #include <iterator>
@@ -51,7 +52,6 @@ void FileKeyValueStoreClient::string_set(
 {
     const auto path = m_store / m_db_name;
     FileUtils::create_if_not_existing(path);
-    LOG_INFO("Setting: " + key + " to " + value + " at " + path.string());
     JsonUtils::set_value(path, key, value);
 }
 
@@ -66,20 +66,18 @@ bool FileKeyValueStoreClient::string_exists(const std::string& key) const
 }
 
 void FileKeyValueStoreClient::set_add(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
-    LOG_INFO("Adding to set: " + key + " " + value);
-
     const auto prefix = StringUtils::replace(key, ':', '_');
     const auto path   = m_store / (prefix + "_set.meta");
     FileUtils::create_if_not_existing(path);
 
     std::ofstream out_file(path, std::ios_base::app);
-    out_file << value << "\n";
+    out_file << UuidUtils::to_string(value) << "\n";
 }
 
 void FileKeyValueStoreClient::set_list(
-    const std::string& key, std::vector<std::string>& values) const
+    const std::string& key, std::vector<Uuid>& values) const
 {
     const auto prefix = StringUtils::replace(key, ':', '_');
     const auto path   = m_store / (prefix + "_set.meta");
@@ -93,11 +91,13 @@ void FileKeyValueStoreClient::set_list(
     in_file.read_lines(file_values);
 
     std::set<std::string> s(file_values.begin(), file_values.end());
-    std::copy(s.begin(), s.end(), std::back_inserter(values));
+    for (const auto& value : s) {
+        values.push_back(UuidUtils::from_string(value));
+    }
 }
 
 void FileKeyValueStoreClient::set_remove(
-    const std::string& key, const std::string& value) const
+    const std::string& key, const Uuid& value) const
 {
     const auto prefix = StringUtils::replace(key, ':', '_');
     const auto path   = m_store / (prefix + "_set.meta");
@@ -113,7 +113,7 @@ void FileKeyValueStoreClient::set_remove(
     }
 
     std::set<std::string> s(file_values.begin(), file_values.end());
-    s.erase(value);
+    s.erase(UuidUtils::to_string(value));
 
     std::vector<std::string> write_values;
     std::copy(s.begin(), s.end(), std::back_inserter(write_values));

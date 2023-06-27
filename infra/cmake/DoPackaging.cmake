@@ -5,7 +5,6 @@ set(LINK_MODULES_FOR_EXPORT
         protocol 
         storage 
         web
-        s3app
         hsm
         event_feed
         http_client

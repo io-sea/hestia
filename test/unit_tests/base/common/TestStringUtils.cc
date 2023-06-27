@@ -8,11 +8,6 @@ TEST_CASE("Test StringUtils - int conversion", "[common]")
 
     REQUIRE(hestia::StringUtils::to_int("ABC123", true) == 11256099);
 
-    REQUIRE(hestia::StringUtils::id_to_string(123, 456, '_') == "7b_1c8");
-
-    REQUIRE(
-        hestia::StringUtils::id_to_string(123, 456, '_', false) == "123_456");
-
     const auto& [first, second] =
         hestia::StringUtils::split_on_first("quick_brown_fox", '_');
     REQUIRE(first == "quick");
@@ -37,4 +32,15 @@ TEST_CASE("Test StringUtils - Split on substring", "[common]")
         hestia::StringUtils::split_on_first(path, "/objects");
     REQUIRE(first == "127.0.0.1:8000/api/v1/hsm");
     REQUIRE(second == "/12345");
+}
+
+TEST_CASE("Test StringUtils - Split on delimiter string", "[common]")
+{
+    std::string path = "user::token::value";
+    std::vector<std::string> split_string;
+    hestia::StringUtils::split(path, "::", split_string);
+    REQUIRE(split_string.size() == 3);
+    REQUIRE(split_string[0] == "user");
+    REQUIRE(split_string[1] == "token");
+    REQUIRE(split_string[2] == "value");
 }

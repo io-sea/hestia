@@ -7,7 +7,7 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
-#include "HsmNodeAdapter.h"
+#include "StringAdapter.h"
 
 namespace hestia {
 HsmNodeService::HsmNodeService(
@@ -26,7 +26,7 @@ HsmNodeService::~HsmNodeService()
 HsmNodeService::Ptr HsmNodeService::create(
     const HsmNodeServiceConfig& config, KeyValueStoreClient* client)
 {
-    auto adapter = std::make_unique<HsmNodeJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<HsmNode>>();
 
     KeyValueCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -40,7 +40,7 @@ HsmNodeService::Ptr HsmNodeService::create(
 HsmNodeService::Ptr HsmNodeService::create(
     const HsmNodeServiceConfig& config, HttpClient* client)
 {
-    auto adapter = std::make_unique<HsmNodeJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<HsmNode>>();
 
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;

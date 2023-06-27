@@ -39,7 +39,7 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
     static constexpr int mo_uber_realm = 0;
 
     m_hsm.motr()->m0_client_init(&m_client, nullptr, true);
-    mock::motr::Id realm_id{mo_uber_realm};
+    mock::motr::Id realm_id{mo_uber_realm, 0};
     m_hsm.motr()->m0_container_init(
         &m_container, nullptr, &realm_id, &m_client);
 
@@ -47,7 +47,7 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
     LOG_INFO("Initializing with: " << config.m_tier_info.size() << " pools.");
     for (const auto& entry : config.m_tier_info) {
         (void)entry;
-        m_client.add_pool({pool_count});
+        m_client.add_pool({pool_count, 0});
         pool_count++;
     }
 
@@ -61,7 +61,7 @@ void MockMotrInterfaceImpl::initialize_hsm(
     std::size_t pool_count{0};
     for (const auto& entry : tier_info) {
         (void)entry;
-        pool_fids.push_back({pool_count});
+        pool_fids.push_back({pool_count, 0});
         pool_count++;
     }
 
@@ -74,10 +74,7 @@ void MockMotrInterfaceImpl::initialize_hsm(
 void MockMotrInterfaceImpl::put(
     const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
-    Uuid id;
-    id.from_string(request.object().id());
-
-    MotrObject motr_obj(id);
+    MotrObject motr_obj(request.object().id());
 
     auto rc = m_hsm.m0hsm_create(
         motr_obj.get_motr_id(), motr_obj.get_motr_obj(), request.target_tier(),
@@ -129,9 +126,7 @@ void MockMotrInterfaceImpl::get(
 {
     (void)object;
 
-    Uuid id;
-    id.from_string(request.object().id());
-    MotrObject motr_obj(id);
+    MotrObject motr_obj(request.object().id());
     motr_obj.m_size = request.object().m_size;
 
     auto rc = m_hsm.m0hsm_set_read_tier(
@@ -172,10 +167,7 @@ void MockMotrInterfaceImpl::get(
 
 void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
-    Uuid id;
-    id.from_string(request.object().id());
-
-    MotrObject motr_obj(id);
+    MotrObject motr_obj(request.object().id());
 
     std::size_t offset{0};
     std::size_t length{IMotrInterfaceImpl::max_obj_length};
@@ -192,10 +184,7 @@ void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    Uuid id;
-    id.from_string(request.object().id());
-
-    MotrObject motr_obj(id);
+    MotrObject motr_obj(request.object().id());
     std::size_t length = request.extent().m_length;
     if (length == 0) {
         length = IMotrInterfaceImpl::max_obj_length;
@@ -215,10 +204,7 @@ void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    Uuid id;
-    id.from_string(request.object().id());
-
-    MotrObject motr_obj(id);
+    MotrObject motr_obj(request.object().id());
     std::size_t length = request.extent().m_length;
     if (length == 0) {
         length = IMotrInterfaceImpl::max_obj_length;

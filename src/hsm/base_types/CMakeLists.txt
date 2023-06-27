@@ -4,13 +4,12 @@ add_module(
     MODULE_NAME hsm_base_types
     HEADERS
         HsmObject.h
-        HsmObjectAdapter.h
         StorageTier.h
-        StorageTierAdapter.h
+        TierExtents.h
     SOURCES
         HsmObject.cc
-        HsmObjectAdapter.cc
-        StorageTierAdapter.cc
+        StorageTier.cc 
+        TierExtents.cc
     INTERNAL_DEPENDENCIES 
         common
 )

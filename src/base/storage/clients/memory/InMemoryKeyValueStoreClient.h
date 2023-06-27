@@ -2,8 +2,8 @@
 
 #include "KeyValueStoreClient.h"
 
+#include <map>
 #include <set>
-#include <unordered_map>
 
 namespace hestia {
 
@@ -31,16 +31,14 @@ class InMemoryKeyValueStoreClient : public KeyValueStoreClient {
 
     void string_remove(const std::string& key) const override;
 
-    void set_add(
-        const std::string& key, const std::string& value) const override;
+    void set_add(const std::string& key, const Uuid& value) const override;
 
     void set_list(
-        const std::string& key, std::vector<std::string>& value) const override;
+        const std::string& key, std::vector<Uuid>& value) const override;
 
-    void set_remove(
-        const std::string& key, const std::string& value) const override;
+    void set_remove(const std::string& key, const Uuid& value) const override;
 
     mutable std::unordered_map<std::string, std::string> m_string_db;
-    mutable std::unordered_map<std::string, std::set<std::string>> m_set_db;
+    mutable std::unordered_map<std::string, std::set<Uuid>> m_set_db;
 };
 }  // namespace hestia

@@ -3,7 +3,6 @@
 #include "DistributedHsmService.h"
 #include "HsmService.h"
 
-#include "StorageTierAdapter.h"
 #include "TierService.h"
 
 #include "StringUtils.h"
@@ -12,7 +11,7 @@ namespace hestia {
 HestiaTierView::HestiaTierView(DistributedHsmService* hestia_service) :
     WebView(),
     m_hestia_service(hestia_service),
-    m_tier_adapter(std::make_unique<StorageTierJsonAdapter>())
+    m_tier_adapter(std::make_unique<JsonAdapter<StorageTier>>())
 {
 }
 

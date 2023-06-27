@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CrudClient.h"
+#include "IdGenerator.h"
 #include "KeyValueStoreClient.h"
+#include "UuidUtils.h"
 
 namespace hestia {
 struct KeyValueCrudClientConfig {
@@ -29,10 +31,13 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         std::unique_ptr<StringAdapter<ItemT>> adapter,
         KeyValueStoreClient* client) :
         CrudClient<ItemT>(std::move(adapter)),
+        m_id_generator(std::make_unique<DefaultIdGenerator>()),
         m_config(config),
         m_client(client){};
 
     virtual ~KeyValueCrudClient() = default;
+
+    std::unique_ptr<IdGenerator> m_id_generator;
 
   protected:
     KeyValueCrudClientConfig m_config;
@@ -40,22 +45,35 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
   private:
     void get(ItemT& item) const override
     {
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_GET, get_item_key(item),
-             m_config.m_endpoint});
-        if (!response->ok()) {
-            throw RequestException<CrudRequestError>(
-                {CrudErrorCode::ERROR,
-                 "Error in kv_store STRING_GET: "
-                     + response->get_error().to_string()});
+        if (item.id().is_unset()) {
+            Metadata query;
+            query.set_item("name", item.name());
+
+            std::vector<ItemT> items;
+            multi_get(query, items);
+            if (items.empty()) {
+                throw RequestException<CrudRequestError>(
+                    {CrudErrorCode::ITEM_NOT_FOUND,
+                     "Item with name: " + item.name() + " not found"});
+            }
+            item = items[0];
         }
-        CrudClient<ItemT>::from_string(response->item(), item);
+        else {
+            const auto response = m_client->make_request(
+                {KeyValueStoreRequestMethod::STRING_GET, get_item_key(item),
+                 m_config.m_endpoint});
+            if (!response->ok()) {
+                throw RequestException<CrudRequestError>(
+                    {CrudErrorCode::ERROR,
+                     "Error in kv_store STRING_GET: "
+                         + response->get_error().to_string()});
+            }
+            CrudClient<ItemT>::from_string(response->item(), item);
+        }
     }
 
-    void list(
-        const Metadata& query, std::vector<std::string>& ids) const override
+    void list(const Metadata& query, std::vector<Uuid>& ids) const override
     {
-        LOG_INFO("Doing list with query: " << query.to_string());
         KeyValueStoreResponsePtr response;
         response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_LIST, get_set_key(),
@@ -76,17 +94,15 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
         else {
             for (const auto& id : response->ids()) {
-                LOG_INFO("Adding id: " + id);
                 ids.push_back(id);
             }
         }
-        LOG_INFO("Got : " << ids.size());
     }
 
     void multi_get(
         const Metadata& query, std::vector<ItemT>& items) const override
     {
-        std::vector<std::string> ids;
+        std::vector<Uuid> ids;
         list(query, ids);
 
         std::vector<std::string> keys;
@@ -107,17 +123,20 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         }
     }
 
-    void put(const ItemT& item, bool do_generate_id = false) const override
+    void put(const ItemT& item, bool do_generate_id, ItemT& updated_item)
+        const override
     {
         std::string content;
-        std::string working_id = item.id();
-        if (do_generate_id) {
-            working_id = generate_id();
+        Uuid working_id = item.id();
+        if (working_id.is_unset() || do_generate_id) {
+            working_id = generate_id(item);
             CrudClient<ItemT>::to_string(item, content, working_id);
         }
         else {
             CrudClient<ItemT>::to_string(item, content);
         }
+
+        const auto id_str = UuidUtils::to_string(working_id);
 
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_SET,
@@ -130,24 +149,40 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
                      + response->get_error().to_string()});
         }
 
+        if (!item.name().empty()) {
+            auto response = m_client->make_request(
+                {KeyValueStoreRequestMethod::STRING_SET,
+                 Metadata::Query(get_name_key(item.name()), id_str),
+                 m_config.m_endpoint});
+            if (!response->ok()) {
+                throw RequestException<CrudRequestError>(
+                    {CrudErrorCode::ERROR,
+                     "Error in kv_store STRING_SET: "
+                         + response->get_error().to_string()});
+            }
+        }
+
         const auto set_response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_ADD,
-             Metadata::Query(get_set_key(), working_id), m_config.m_endpoint});
+             Metadata::Query(get_set_key(), id_str), m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_ADD: "
                 + response->get_error().to_string());
         }
+
+        updated_item = item;
+        updated_item.set_id(working_id);
     }
 
-    std::string generate_id() const override
+    Uuid generate_id(const ItemT& item) const override
     {
-        std::vector<std::string> ids;
-        list({}, ids);
-        return std::to_string(ids.size());
+        return m_id_generator->get_uuid(
+            m_config.m_prefix + "::" + m_config.m_item_prefix
+            + "::" + item.name());
     }
 
-    bool exists(const std::string& id) const override
+    bool exists(const Uuid& id) const override
     {
         const auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_EXISTS, get_item_key(id),
@@ -160,7 +195,18 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         return response->found();
     }
 
-    void remove(const std::string& id) const override
+    bool exists(const std::string& name) const override
+    {
+        const auto response = m_client->make_request(
+            {KeyValueStoreRequestMethod::STRING_GET, get_name_key(name),
+             m_config.m_endpoint});
+        if (!response->ok() || response->item().empty()) {
+            return false;
+        }
+        return exists(UuidUtils::from_string(response->item()));
+    }
+
+    void remove(const Uuid& id) const override
     {
         const auto string_response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(id),
@@ -173,7 +219,8 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
 
         const auto set_response = m_client->make_request(
             {KeyValueStoreRequestMethod::SET_REMOVE,
-             Metadata::Query(get_set_key(), id), m_config.m_endpoint});
+             Metadata::Query(get_set_key(), UuidUtils::to_string(id)),
+             m_config.m_endpoint});
         if (!set_response->ok()) {
             throw std::runtime_error(
                 "Error in kv_store SET_REMOVE: "
@@ -184,21 +231,28 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
     std::string get_item_key(const ItemT& item) const
     {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
-               + item.id();
+               + UuidUtils::to_string(item.id());
     }
 
-    std::string get_item_key(const std::string& id) const
+    std::string get_item_key(const Uuid& id) const
     {
-        return m_config.m_prefix + ":" + m_config.m_item_prefix + ":" + id;
+        return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
+               + UuidUtils::to_string(id);
+    }
+
+    std::string get_name_key(const std::string& name) const
+    {
+        return m_config.m_prefix + ":" + m_config.m_item_prefix
+               + "_name:" + name;
     }
 
     void get_item_keys(
-        const std::vector<std::string>& ids,
-        std::vector<std::string>& keys) const
+        const std::vector<Uuid>& ids, std::vector<std::string>& keys) const
     {
         for (const auto& id : ids) {
             keys.push_back(
-                m_config.m_prefix + ":" + m_config.m_item_prefix + ":" + id);
+                m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
+                + UuidUtils::to_string(id));
         }
     }
 

@@ -112,7 +112,11 @@ void Socket::do_connect()
     ::inet_aton(m_address.c_str(), &serv_addr.sin_addr);
     serv_addr.sin_port = htons(m_port);
 
-    int result = ::connect(m_handle, (sockaddr*)&serv_addr, sizeof(serv_addr));
+    int result = 0;
+    {
+        result = ::connect(m_handle, (sockaddr*)&serv_addr, sizeof(serv_addr));
+    }
+
     if (result < 0) {
         const std::string msg = "Socket: Unable to connect to server.";
         LOG_ERROR(msg);
@@ -138,7 +142,10 @@ void Socket::do_bind()
     serv_addr.sin_port        = htons(m_port);
 
     errno      = 0;
-    int result = ::bind(m_handle, (sockaddr*)&serv_addr, sizeof(serv_addr));
+    int result = 0;
+    {
+        result = ::bind(m_handle, (sockaddr*)&serv_addr, sizeof(serv_addr));
+    }
     if (result < 0) {
         const std::string msg = "Socket: Unable to bind socket";
         LOG_ERROR(msg);
@@ -206,7 +213,10 @@ std::string Socket::send(const std::string& message)
         }
     }
 
-    auto n = ::write(m_handle, message.c_str(), message.length());
+    std::size_t n{0};
+    {
+        n = ::write(m_handle, message.c_str(), message.length());
+    }
     if (n < 0) {
         on_socker_error("Socket: Send failed.");
         return {};
@@ -245,10 +255,15 @@ void Socket::on_socker_error(const std::string& message)
 std::string Socket::recieve()
 {
     const int buffer_size = 512;
-    char buffer[buffer_size];
-    auto result = ::read(m_handle, buffer, buffer_size);
+    std::vector<char> buffer(buffer_size);
+
+    std::size_t result{0};
+    {
+        result = ::read(m_handle, buffer.data(), buffer_size);
+    }
+
     if (result > 0) {
-        return std::string(buffer);
+        return std::string(buffer.begin(), buffer.begin() + result);
     }
     else if (result == 0) {
         {
@@ -279,8 +294,11 @@ void Socket::close()
 
 void Socket::respond(const std::string& message)
 {
-    auto result =
-        ::write(m_handle, message.c_str(), static_cast<int>(message.size()));
+    std::size_t result{0};
+    {
+        result = ::write(
+            m_handle, message.c_str(), static_cast<int>(message.size()));
+    }
     (void)result;
 }
 
@@ -293,7 +311,12 @@ int Socket::do_accept()
 {
     sockaddr_in cli_addr;
     socklen_t clilen = sizeof(cli_addr);
-    return ::accept(m_handle, (sockaddr*)&cli_addr, &clilen);
+
+    int rc{0};
+    {
+        rc = ::accept(m_handle, (sockaddr*)&cli_addr, &clilen);
+    }
+    return rc;
 }
 
 void Socket::do_close()

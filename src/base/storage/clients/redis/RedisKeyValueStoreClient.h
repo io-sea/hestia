@@ -39,14 +39,12 @@ class RedisKeyValueStoreClient : public KeyValueStoreClient {
 
     void string_remove(const std::string& key) const override;
 
-    void set_add(
-        const std::string& key, const std::string& value) const override;
+    void set_add(const std::string& key, const Uuid& value) const override;
 
     void set_list(
-        const std::string& key, std::vector<std::string>& value) const override;
+        const std::string& key, std::vector<Uuid>& value) const override;
 
-    void set_remove(
-        const std::string& key, const std::string& value) const override;
+    void set_remove(const std::string& key, const Uuid& value) const override;
 
   private:
     std::unique_ptr<RedisReplyWrapper> make_request(

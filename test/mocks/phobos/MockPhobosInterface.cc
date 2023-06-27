@@ -1,5 +1,7 @@
 #include "MockPhobosInterface.h"
 
+#include "UuidUtils.h"
+
 #include <sstream>
 #include <unistd.h>
 
@@ -14,8 +16,10 @@ std::unique_ptr<MockPhobosInterface> MockPhobosInterface::create()
 
 void MockPhobosInterface::get(const StorageObject& obj, int fd)
 {
+    const auto id_str = UuidUtils::to_string(obj.id());
+
     pho_xfer_desc desc;
-    desc.xd_objid = obj.m_id;
+    desc.xd_objid = id_str;
     desc.xd_op    = PHO_XFER_OP_GET;
     desc.xd_fd    = fd;
 
@@ -31,8 +35,10 @@ void MockPhobosInterface::get(const StorageObject& obj, int fd)
 
 void MockPhobosInterface::put(const StorageObject& obj, int fd)
 {
+    const auto id_str = UuidUtils::to_string(obj.id());
+
     pho_xfer_desc desc;
-    desc.xd_objid = obj.m_id;
+    desc.xd_objid = id_str;
     desc.xd_op    = PHO_XFER_OP_PUT;
 
     if (fd > -1) {
@@ -57,8 +63,10 @@ void MockPhobosInterface::put(const StorageObject& obj, int fd)
 
 bool MockPhobosInterface::exists(const StorageObject& obj)
 {
+    const auto id_str = UuidUtils::to_string(obj.id());
+
     pho_xfer_desc desc;
-    desc.xd_objid = obj.m_id;
+    desc.xd_objid = id_str;
     desc.xd_op    = PHO_XFER_OP_GETMD;
 
     bool exists = m_phobos.phobos_getmd(&desc, 1, nullptr, nullptr) == 0;
@@ -67,8 +75,10 @@ bool MockPhobosInterface::exists(const StorageObject& obj)
 
 void MockPhobosInterface::get_metadata(StorageObject& obj)
 {
+    const auto id_str = UuidUtils::to_string(obj.id());
+
     pho_xfer_desc desc;
-    desc.xd_objid = obj.m_id;
+    desc.xd_objid = id_str;
     desc.xd_op    = PHO_XFER_OP_GETMD;
 
     int rc = m_phobos.phobos_getmd(&desc, 1, nullptr, nullptr);
@@ -90,8 +100,10 @@ void MockPhobosInterface::get_metadata(StorageObject& obj)
 
 void MockPhobosInterface::remove(const StorageObject& obj)
 {
+    const auto id_str = UuidUtils::to_string(obj.id());
+
     pho_xfer_desc desc;
-    desc.xd_objid = obj.m_id;
+    desc.xd_objid = id_str;
     desc.xd_op    = PHO_XFER_OP_DEL;
 
     m_phobos.phobos_delete(&desc, 1);

@@ -3,19 +3,20 @@
 #include "DistributedHsmService.h"
 #include "HsmService.h"
 
-#include "HsmObjectAdapter.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 #include "ObjectService.h"
+#include "StringAdapter.h"
 
 #include "Logger.h"
 #include "StringUtils.h"
+#include "UuidUtils.h"
 
 namespace hestia {
 HestiaObjectView::HestiaObjectView(DistributedHsmService* hestia_service) :
     WebView(),
     m_hestia_service(hestia_service),
-    m_object_adapter(std::make_unique<HsmObjectJsonAdapter>("hestia"))
+    m_object_adapter(std::make_unique<JsonAdapter<HsmObject>>())
 {
 }
 
@@ -55,7 +56,7 @@ HttpResponse::Ptr HestiaObjectView::on_get(
         if (tier.empty()) {
             LOG_INFO("Getting single object: " << obj_id);
             auto get_response = object_service->make_request(
-                {HsmObject(Uuid(obj_id, '_', true)), CrudMethod::GET});
+                {HsmObject(UuidUtils::from_string(obj_id)), CrudMethod::GET});
             if (!get_response->ok()) {
                 LOG_ERROR(
                     "Failed to get object: "
@@ -74,7 +75,7 @@ HttpResponse::Ptr HestiaObjectView::on_get(
                                             << request.body());
 
             auto get_response = object_service->make_request(
-                {HsmObject(Uuid(obj_id, '_', true)), CrudMethod::GET});
+                {HsmObject(UuidUtils::from_string(obj_id)), CrudMethod::GET});
             if (!get_response->ok()) {
                 LOG_ERROR(
                     "Failed to get object: "
@@ -156,7 +157,7 @@ HttpResponse::Ptr HestiaObjectView::on_put(
                                             << request.body());
 
             auto get_response = object_service->make_request(
-                {HsmObject(Uuid(obj_id, '_', true)), CrudMethod::GET});
+                {HsmObject(UuidUtils::from_string(obj_id)), CrudMethod::GET});
             if (!get_response->ok()) {
                 LOG_ERROR(
                     "Failed to get object: "

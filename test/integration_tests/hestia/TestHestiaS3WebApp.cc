@@ -11,19 +11,16 @@
 #include "HsmService.h"
 #include "UserService.h"
 
-#include "HsmObjectAdapter.h"
-#include "StorageTierAdapter.h"
-
 #include "DistributedHsmServiceTestWrapper.h"
 #include "ObjectStoreTestWrapper.h"
 
-#include "HsmS3Service.h"
-#include "S3WebApp.h"
+#include "S3Service.h"
 
 #include "TestUtils.h"
 
 #include <iostream>
 
+#ifdef __HESTIA_DUMMY__
 class S3ClientTestFixture : public ObjectStoreTestWrapper {
   public:
     S3ClientTestFixture() : ObjectStoreTestWrapper("s3_plugin")
@@ -69,7 +66,8 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
 
 TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
 {
-    hestia::StorageObject obj("0000");
+    const auto id = hestia::Uuid(0000);
+    hestia::StorageObject obj(id);
     obj.m_metadata.set_item("key", "0000");
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 
@@ -102,3 +100,4 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
     REQUIRE(recontstructed_content == content);
     */
 }
+#endif

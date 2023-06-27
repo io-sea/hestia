@@ -40,6 +40,10 @@ class Dictionary {
         Metadata& sink,
         const std::vector<std::string>& exclude_keys = {}) const;
 
+    bool has_key_and_value(
+        const Metadata::Query& query,
+        const std::string& delimiter = "::") const;
+
     bool has_map_item(const std::string& key) const;
 
     void set_map_item(const std::string& key, std::unique_ptr<Dictionary> item);

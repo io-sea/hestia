@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StorageTier.h"
+#include "StringAdapter.h"
 #include "WebView.h"
 #include <memory>
 
@@ -27,6 +29,6 @@ class HestiaTierView : public WebView {
 
   private:
     DistributedHsmService* m_hestia_service{nullptr};
-    std::unique_ptr<StorageTierJsonAdapter> m_tier_adapter;
+    std::unique_ptr<JsonAdapter<StorageTier>> m_tier_adapter;
 };
 }  // namespace hestia

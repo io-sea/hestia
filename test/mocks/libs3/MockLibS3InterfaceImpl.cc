@@ -50,8 +50,8 @@ int MockLibS3InterfaceImpl::put(
     put_handler.m_put_object_data_callback = on_put_data;
 
     m_lib_s3.s3_put_object(
-        &bucket, obj.m_key.c_str(), stream->get_source_size(), nullptr, nullptr,
-        0, &put_handler, reinterpret_cast<void*>(stream));
+        &bucket, obj.m_name.c_str(), stream->get_source_size(), nullptr,
+        nullptr, 0, &put_handler, reinterpret_cast<void*>(stream));
     return static_cast<int>(!(response_status == libs3::S3Status::OK));
 }
 
@@ -89,7 +89,7 @@ int MockLibS3InterfaceImpl::get(
     get_handler.m_get_object_data_callback = on_get_data;
 
     m_lib_s3.s3_get_object(
-        &bucket, obj.m_key.c_str(), nullptr, 0, stream->get_sink_size(),
+        &bucket, obj.m_name.c_str(), nullptr, 0, stream->get_sink_size(),
         nullptr, 0, &get_handler, reinterpret_cast<void*>(stream));
 
     return static_cast<int>(!(response_status == libs3::S3Status::OK));
@@ -115,7 +115,7 @@ int MockLibS3InterfaceImpl::remove(const S3Object& obj)
     response_handler.m_response_complete_callback = on_response_complete;
 
     m_lib_s3.s3_delete_object(
-        &bucket, obj.m_key.c_str(), nullptr, 0, &response_handler, nullptr);
+        &bucket, obj.m_name.c_str(), nullptr, 0, &response_handler, nullptr);
 
     return static_cast<int>(!(response_status == libs3::S3Status::OK));
 }

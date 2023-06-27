@@ -4,6 +4,7 @@
 #include "HttpClient.h"
 #include "RequestError.h"
 #include "RequestException.h"
+#include "UuidUtils.h"
 
 #include <sstream>
 
@@ -38,26 +39,35 @@ class HttpCrudClient : public CrudClient<ItemT> {
 
     virtual ~HttpCrudClient() = default;
 
-    std::string generate_id() const override
+    Uuid generate_id(const ItemT&) const override
     {
         throw std::runtime_error(
             "Id generation not supported for http client - the server should do this.");
     }
 
-    bool exists(const std::string& id) const override
+    bool exists(const Uuid& id) const override
     {
-        const auto path =
-            m_config.m_endpoint + "/" + m_config.m_item_prefix + "s/" + id;
+        const auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix
+                          + "s/" + UuidUtils::to_string(id);
         HttpRequest request(path, HttpRequest::Method::GET);
         const auto response = m_client->make_request(request);
 
         return !response->error();
     }
 
+    bool exists(const std::string& name) const override
+    {
+        const auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix
+                          + "s/?name=" + name;
+        HttpRequest request(path, HttpRequest::Method::GET);
+        const auto response = m_client->make_request(request);
+        return !response->error();
+    }
+
     void get(ItemT& item) const override
     {
         const auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix
-                          + "s/" + item.id();
+                          + "s/" + UuidUtils::to_string(item.id());
         HttpRequest request(path, HttpRequest::Method::GET);
 
         const auto response = m_client->make_request(request);
@@ -89,13 +99,14 @@ class HttpCrudClient : public CrudClient<ItemT> {
         this->from_string(response->body(), items);
     }
 
-    void put(const ItemT& item, bool do_generate_id) const override
+    void put(const ItemT& item, bool do_generate_id, ItemT& updated_item)
+        const override
     {
         (void)do_generate_id;
 
         auto path = m_config.m_endpoint + "/" + m_config.m_item_prefix + "s";
-        if (!item.id().empty()) {
-            path += "/" + item.id();
+        if (!item.id().is_unset()) {
+            path += "/" + UuidUtils::to_string(item.id());
         }
 
         HttpRequest request(path, HttpRequest::Method::PUT);
@@ -107,9 +118,11 @@ class HttpCrudClient : public CrudClient<ItemT> {
                 {CrudErrorCode::ERROR,
                  "Error in http client PUT: " + response->to_string()});
         }
+
+        this->from_string(response->body(), updated_item);
     }
 
-    void remove(const std::string& id) const override
+    void remove(const Uuid& id) const override
     {
         (void)id;
         /*
@@ -133,8 +146,7 @@ class HttpCrudClient : public CrudClient<ItemT> {
         */
     }
 
-    void list(
-        const Metadata& query, std::vector<std::string>& ids) const override
+    void list(const Metadata& query, std::vector<Uuid>& ids) const override
     {
         (void)query;
         (void)ids;
@@ -159,16 +171,16 @@ class HttpCrudClient : public CrudClient<ItemT> {
     std::string get_item_path(const ItemT& item) const
     {
         return m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
-               + item.id();
+               + UuidUtils::to_string(item.id());
     }
 
     void get_item_keys(
-        const std::vector<std::string>& ids,
-        std::vector<std::string>& keys) const
+        const std::vector<Uuid>& ids, std::vector<std::string>& keys) const
     {
         for (const auto& id : ids) {
             keys.push_back(
-                m_config.m_prefix + ":" + m_config.m_item_prefix + ":" + id);
+                m_config.m_prefix + ":" + m_config.m_item_prefix + ":"
+                + UuidUtils::to_string(id));
         }
     }
 

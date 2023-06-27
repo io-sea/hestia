@@ -24,7 +24,7 @@ class FileObjectStoreClient : public ObjectStoreClient {
         const std::filesystem::path& root, Mode mode = Mode::DATA_AND_METADATA);
 
     void migrate(
-        const std::string& object_id,
+        const Uuid& object_id,
         const std::filesystem::path& root,
         bool keep_existing = true);
 
@@ -40,7 +40,7 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     void remove(const StorageObject& object) const override;
 
-    bool exists(const std::string& object_id) const;
+    bool exists(const Uuid& object_id) const;
 
     void list(
         const Metadata::Query& query,
@@ -48,16 +48,14 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     // Internal API
     std::filesystem::path get_data_path(
-        const std::string& object_id,
-        const std::filesystem::path& root = {}) const;
+        const Uuid& object_id, const std::filesystem::path& root = {}) const;
     std::filesystem::path get_metadata_path(
-        const std::string& object_id,
-        const std::filesystem::path& root = {}) const;
+        const Uuid& object_id, const std::filesystem::path& root = {}) const;
 
     std::string get_metadata_item(
-        const std::string& object_id, const std::string& key) const;
+        const Uuid& object_id, const std::string& key) const;
 
-    bool has_data(const std::string& object_id) const;
+    bool has_data(const Uuid& object_id) const;
 
     void read_metadata(StorageObject& object) const;
 

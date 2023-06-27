@@ -1,8 +1,9 @@
 #include <catch2/catch_all.hpp>
 
 #include "FileKeyValueStoreClient.h"
-#include "HsmObjectAdapter.h"
+#include "HsmObject.h"
 #include "ObjectService.h"
+#include "StringAdapter.h"
 #include "TestUtils.h"
 
 #include <filesystem>
@@ -54,7 +55,7 @@ class ObjectServiceTestFixture {
         return response->found();
     }
 
-    void list(std::vector<std::string>& ids)
+    void list(std::vector<hestia::Uuid>& ids)
     {
         auto response =
             m_object_service->make_request({hestia::CrudMethod::LIST});
@@ -86,16 +87,19 @@ TEST_CASE_METHOD(
 {
     init("TestObjectService");
 
-    hestia::HsmObject object0(1234);
-    object0.object().m_metadata.set_item("key0", "value0");
-    object0.object().m_metadata.set_item("key1", "value1");
-    object0.object().m_metadata.set_item("key2", "value2");
+    hestia::Uuid id0(1234);
+    hestia::HsmObject object0(id0);
+    object0.metadata().set_item("key0", "value0");
+    object0.metadata().set_item("key1", "value1");
+    object0.metadata().set_item("key2", "value2");
 
-    object0.add_tier(1);
-    object0.add_tier(2);
+    object0.add_extent(1, {});
+    object0.add_extent(2, {});
 
-    hestia::HsmObject object1(56789);
-    hestia::HsmObject object2(4321);
+    hestia::Uuid id1(56789);
+    hestia::Uuid id2(4321);
+    hestia::HsmObject object1(id1);
+    hestia::HsmObject object2(id2);
 
     put(object0);
     put(object1);
@@ -104,15 +108,15 @@ TEST_CASE_METHOD(
     REQUIRE(exists(object1));
     REQUIRE_FALSE(exists(object2));
 
-    hestia::HsmObject retrieved_object0(1234);
+    hestia::HsmObject retrieved_object0(id0);
     get(retrieved_object0);
-    REQUIRE(retrieved_object0.object().m_metadata.get_item("key0") == "value0");
-    REQUIRE(retrieved_object0.object().m_metadata.get_item("key1") == "value1");
-    REQUIRE(retrieved_object0.object().m_metadata.get_item("key2") == "value2");
+    REQUIRE(retrieved_object0.metadata().get_item("key0") == "value0");
+    REQUIRE(retrieved_object0.metadata().get_item("key1") == "value1");
+    REQUIRE(retrieved_object0.metadata().get_item("key2") == "value2");
 
     REQUIRE(retrieved_object0.tiers().size() == 2);
 
-    std::vector<std::string> ids;
+    std::vector<hestia::Uuid> ids;
     list(ids);
     REQUIRE(ids.size() == 2);
     REQUIRE(ids[0] == object0.id());
@@ -121,7 +125,7 @@ TEST_CASE_METHOD(
     remove(object0);
 
     REQUIRE_FALSE(exists(object0));
-    std::vector<std::string> updated_ids;
+    std::vector<hestia::Uuid> updated_ids;
     list(updated_ids);
     REQUIRE(updated_ids.size() == 1);
 }

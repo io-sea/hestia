@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Dataset.h"
+#include "StringAdapter.h"
 #include "WebView.h"
+
 #include <memory>
 
 namespace hestia {
@@ -27,6 +30,6 @@ class HestiaDatasetView : public WebView {
 
   private:
     DistributedHsmService* m_hsm_service{nullptr};
-    std::unique_ptr<DatasetJsonAdapter> m_dataset_adapter;
+    std::unique_ptr<JsonAdapter<Dataset>> m_dataset_adapter;
 };
 }  // namespace hestia

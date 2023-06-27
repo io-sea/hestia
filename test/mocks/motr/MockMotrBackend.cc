@@ -269,8 +269,8 @@ Layout* MotrBackend::allocate_layout(Layout::Type layout_type) const
 {
     auto layout     = std::make_unique<Layout>();
     auto layout_raw = layout.get();
-    layout->m_id =
-        m_client->m_request_handler.m_layout_domain.m_layouts.size() + 1;
+    layout->m_id    = {
+        m_client->m_request_handler.m_layout_domain.m_layouts.size() + 1, 0};
     layout->m_type = layout_type;
     m_client->m_request_handler.m_layout_domain.m_layouts.push_back(
         std::move(layout));

@@ -6,7 +6,9 @@
 #include "KeyValueStoreClient.h"
 
 #include "HashUtils.h"
-#include "UserAdapter.h"
+#include "StringAdapter.h"
+
+#include <stdexcept>
 
 namespace hestia {
 
@@ -21,7 +23,7 @@ UserService::~UserService() {}
 UserService::Ptr UserService::create(
     const UserServiceConfig& config, KeyValueStoreClient* client)
 {
-    auto adapter = std::make_unique<UserJsonAdapter>(true);
+    auto adapter = std::make_unique<JsonAdapter<User>>();
 
     KeyValueCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -35,7 +37,7 @@ UserService::Ptr UserService::create(
 UserService::Ptr UserService::create(
     const UserServiceConfig& config, HttpClient* client)
 {
-    auto adapter = std::make_unique<UserJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<User>>();
 
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -78,13 +80,21 @@ std::unique_ptr<UserServiceResponse> UserService::authenticate_with_token(
 {
     Metadata query;
     query.set_item("token::value", token);
-    auto list_response = make_request({query});
+
+    CrudRequest<User> req{query};
+    auto list_response = make_request(req);
     if (!list_response->ok()) {
         LOG_ERROR("Failed to authenticate with token - error");
+        return list_response;
     }
 
     if (list_response->ids().empty()) {
         LOG_ERROR("No matching user found.");
+        auto error_response =
+            std::make_unique<CrudResponse<User, CrudErrorCode>>(req);
+        error_response->on_error(
+            {CrudErrorCode::ITEM_NOT_FOUND, "No matching user found."});
+        return error_response;
     }
 
     return make_request({list_response->ids()[0], CrudMethod::GET});
@@ -93,16 +103,20 @@ std::unique_ptr<UserServiceResponse> UserService::authenticate_with_token(
 std::unique_ptr<UserServiceResponse> UserService::register_user(
     const std::string& username, const std::string& password)
 {
+    LOG_INFO("Register user: " << username);
     User user(username);
 
     CrudRequest<User> request(user, CrudMethod::EXISTS);
+
     auto exists_response = make_request(request);
     if (!exists_response->ok()) {
+        LOG_ERROR("Unexpected error adding new user");
         return exists_response;
     }
 
     if (exists_response->found()) {
         auto response = std::make_unique<UserServiceResponse>(request);
+        LOG_INFO("Attempted to regiser already existing user");
         response->on_error(
             {CrudErrorCode::CANT_OVERRIDE_EXISTING, "User already exists"});
         return response;

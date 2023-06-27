@@ -10,13 +10,11 @@ add_module(
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
         dataset_service/Dataset.h 
-        dataset_service/DatasetAdapter.h 
         dataset_service/DatasetService.h 
         distributed_hsm_service/DistributedHsmService.h
         distributed_hsm_service/DistributedHsmServiceRequest.h
         distributed_hsm_service/HsmNodeService.h
         distributed_hsm_service/model/HsmNode.h
-        distributed_hsm_service/model/HsmNodeAdapter.h
         hsm_service/HsmService.h
         hsm_service/model/HsmAction.h
         hsm_service/model/HsmActionAdapter.h
@@ -27,16 +25,18 @@ add_module(
         key_value_store/KeyValueStoreClientFactory.h
         object_service/ObjectService.h
         tier_service/TierService.h 
-        s3_service/HsmS3Service.h
+        s3_service/S3Service.h
+        s3_service/S3DatasetAdapter.h
+        s3_service/S3ObjectAdapter.h
     SOURCES
-        dataset_service/DatasetAdapter.cc
+        dataset_service/Dataset.cc
         dataset_service/DatasetService.cc
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
         distributed_hsm_service/DistributedHsmService.cc
         distributed_hsm_service/DistributedHsmServiceRequest.cc
         distributed_hsm_service/HsmNodeService.cc
-        distributed_hsm_service/model/HsmNodeAdapter.cc
+        distributed_hsm_service/model/HsmNode.cc
         hsm_service/HsmService.cc
         hsm_service/model/HsmAction.cc
         hsm_service/model/HsmActionAdapter.cc
@@ -47,7 +47,9 @@ add_module(
         key_value_store/KeyValueStoreClientFactory.cc
         object_service/ObjectService.cc
         tier_service/TierService.cc 
-        s3_service/HsmS3Service.cc
+        s3_service/S3Service.cc
+        s3_service/S3DatasetAdapter.cc
+        s3_service/S3ObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
         dataset_service
@@ -64,5 +66,4 @@ add_module(
         hsm_object_store_client
         http_client
         event_feed
-        s3app
 )

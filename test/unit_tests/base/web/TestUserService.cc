@@ -31,7 +31,7 @@ TEST_CASE_METHOD(TestUserServiceFixture, "Test User Service", "[user-service]")
 
     REQUIRE_FALSE(auth_response->item().m_api_token.m_value.empty());
 
-    LOG_INFO("Starting token check");
     auto token_response = m_user_service->authenticate_with_token(
         auth_response->item().m_api_token.m_value);
+    REQUIRE(token_response->ok());
 }

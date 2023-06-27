@@ -36,19 +36,11 @@ void Metadata::set_item(const std::string& key, const std::string& item)
     m_data[key] = item;
 }
 
-void Metadata::for_each_item(onItem func, const std::string& key_prefix) const
+void Metadata::for_each_item(onItem func) const
 {
-    if (key_prefix.empty()) {
-        for (const auto& entry : m_data) {
-            func(entry.first, entry.second);
-        }
-    }
-    else {
-        for (const auto& entry : m_data) {
-            if (key_contains(entry.first, key_prefix)) {
-                func(entry.first, entry.second);
-            }
-        }
+
+    for (const auto& entry : m_data) {
+        func(entry.first, entry.second);
     }
 }
 

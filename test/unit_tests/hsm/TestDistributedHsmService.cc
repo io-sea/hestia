@@ -79,7 +79,8 @@ TEST_CASE_METHOD(
     REQUIRE(get_response->ok());
     REQUIRE(get_response->items().size() == 1);
 
-    hestia::HsmNode node("01234");
+    hestia::Uuid id(1234);
+    hestia::HsmNode node(id);
     node.m_host_address = "127.0.0.1";
 
     hestia::HsmObjectStoreClientBackend backend;
@@ -95,6 +96,15 @@ TEST_CASE_METHOD(
     REQUIRE(get_response2->ok());
 
     REQUIRE(get_response2->items().size() == 2);
-    REQUIRE(get_response2->items()[1].m_host_address == node.m_host_address);
-    REQUIRE(get_response2->items()[1].m_backends.size() == 1);
+
+    if (get_response2->items()[1].id() == id) {
+        REQUIRE(
+            get_response2->items()[1].m_host_address == node.m_host_address);
+        REQUIRE(get_response2->items()[1].m_backends.size() == 1);
+    }
+    else {
+        REQUIRE(
+            get_response2->items()[0].m_host_address == node.m_host_address);
+        REQUIRE(get_response2->items()[0].m_backends.size() == 1);
+    }
 }

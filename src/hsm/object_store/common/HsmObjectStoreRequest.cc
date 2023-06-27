@@ -109,7 +109,7 @@ std::string HsmObjectStoreRequest::method_as_string() const
 std::string HsmObjectStoreRequest::to_string() const
 {
     std::stringstream sstr;
-    sstr << "ObjectId: " << object().id() << " | ";
+    sstr << "ObjectId: " << object().id().to_string() << " | ";
     sstr << "Operation: " << to_string(m_method) << " | ";
     sstr << "Extent: " << extent().to_string() << " | ";
     sstr << "Source Tier: " << m_source_tier << " | ";

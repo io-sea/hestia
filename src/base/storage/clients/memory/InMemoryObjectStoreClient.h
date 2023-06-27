@@ -25,7 +25,7 @@ class InMemoryObjectStoreClient : public ObjectStoreClient {
 
     void remove(const StorageObject& object) const override;
 
-    bool exists(const std::string& object_id) const;
+    bool exists(const Uuid& object_id) const;
 
     void list(
         const Metadata::Query& query,

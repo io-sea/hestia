@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include "ProjectConfig.h"
 #include "StringUtils.h"
+#include "UuidUtils.h"
 
 #include <exception>
 #include <fstream>
@@ -44,16 +45,16 @@ void FileObjectStoreClient::do_initialize(
 void FileObjectStoreClient::remove(const StorageObject& object) const
 {
     if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
-        std::filesystem::remove(get_metadata_path(object.m_id));
+        std::filesystem::remove(get_metadata_path(object.id()));
     }
 
     if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
-        std::filesystem::remove(get_data_path(object.m_id));
+        std::filesystem::remove(get_data_path(object.id()));
     }
 }
 
 void FileObjectStoreClient::migrate(
-    const std::string& object_id,
+    const Uuid& object_id,
     const std::filesystem::path& root,
     bool keep_existing)
 {
@@ -103,7 +104,7 @@ void FileObjectStoreClient::migrate(
 
 bool FileObjectStoreClient::exists(const StorageObject& object) const
 {
-    return exists(object.m_id);
+    return exists(object.id());
 }
 
 void FileObjectStoreClient::put(
@@ -112,7 +113,7 @@ void FileObjectStoreClient::put(
     (void)extent;
 
     if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
-        auto path = get_metadata_path(object.m_id);
+        auto path = get_metadata_path(object.id());
         FileUtils::create_if_not_existing(path);
 
         std::ofstream meta_file(path);
@@ -126,7 +127,7 @@ void FileObjectStoreClient::put(
     if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
         if (stream != nullptr) {
             auto stream_sink =
-                std::make_unique<FileStreamSink>(get_data_path(object.m_id));
+                std::make_unique<FileStreamSink>(get_data_path(object.id()));
             stream->set_sink(std::move(stream_sink));
         }
     }
@@ -139,8 +140,8 @@ void FileObjectStoreClient::get(
 
     if (!exists(object)) {
         const std::string msg =
-            "Requested object: " + object.m_id
-            + " not found in: " + get_data_path(object.m_id).string();
+            "Requested object: " + object.id().to_string()
+            + " not found in: " + get_data_path(object.id()).string();
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
@@ -153,13 +154,13 @@ void FileObjectStoreClient::get(
     if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
         if (stream != nullptr) {
             auto stream_source =
-                std::make_unique<FileStreamSource>(get_data_path(object.m_id));
+                std::make_unique<FileStreamSource>(get_data_path(object.id()));
             stream->set_source(std::move(stream_source));
         }
     }
 }
 
-bool FileObjectStoreClient::has_data(const std::string& object_id) const
+bool FileObjectStoreClient::has_data(const Uuid& object_id) const
 {
     return std::filesystem::is_regular_file(get_data_path(object_id));
 }
@@ -169,8 +170,10 @@ void FileObjectStoreClient::list(
 {
     for (const auto& dir_entry : std::filesystem::directory_iterator(m_root)) {
         if (FileUtils::is_file_with_extension(dir_entry, ".meta")) {
-            const auto object_id =
+            const auto object_id_str =
                 FileUtils::get_filename_without_extension(dir_entry.path());
+
+            Uuid object_id = UuidUtils::from_string(object_id_str);
             if (const auto value = get_metadata_item(object_id, query.first);
                 value == query.second) {
                 StorageObject object(object_id);
@@ -182,7 +185,7 @@ void FileObjectStoreClient::list(
 }
 
 std::string FileObjectStoreClient::get_metadata_item(
-    const std::string& object_id, const std::string& search_key) const
+    const Uuid& object_id, const std::string& search_key) const
 {
     std::ifstream md_file(get_metadata_path(object_id));
     std::string line;
@@ -199,7 +202,7 @@ std::string FileObjectStoreClient::get_metadata_item(
 
 void FileObjectStoreClient::read_metadata(StorageObject& object) const
 {
-    std::ifstream md_file(get_metadata_path(object.m_id));
+    std::ifstream md_file(get_metadata_path(object.id()));
     std::pair<std::string, std::string> pair;
     while (md_file >> pair.first >> pair.second) {
         object.m_metadata.set_item(pair.first, pair.second);
@@ -207,20 +210,20 @@ void FileObjectStoreClient::read_metadata(StorageObject& object) const
 }
 
 std::filesystem::path FileObjectStoreClient::get_data_path(
-    const std::string& object_id, const std::filesystem::path& root) const
+    const Uuid& object_id, const std::filesystem::path& root) const
 {
-    return root.empty() ? m_root / (object_id + ".data") :
-                          root / (object_id + ".data");
+    return root.empty() ? m_root / (object_id.to_string() + ".data") :
+                          root / (object_id.to_string() + ".data");
 }
 
 std::filesystem::path FileObjectStoreClient::get_metadata_path(
-    const std::string& object_id, const std::filesystem::path& root) const
+    const Uuid& object_id, const std::filesystem::path& root) const
 {
-    return root.empty() ? m_root / (object_id + ".meta") :
-                          root / (object_id + ".meta");
+    return root.empty() ? m_root / (object_id.to_string() + ".meta") :
+                          root / (object_id.to_string() + ".meta");
 }
 
-bool FileObjectStoreClient::exists(const std::string& object_id) const
+bool FileObjectStoreClient::exists(const Uuid& object_id) const
 {
     if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
         return std::filesystem::is_regular_file(get_metadata_path(object_id));

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "EventFeed.h"
+
 #include "HsmObject.h"
-#include "HsmObjectAdapter.h"
 #include "HsmServiceRequest.h"
 #include "HsmServiceResponse.h"
 

@@ -187,6 +187,13 @@ HttpResponse::Ptr CurlClient::make_request(
             "Failed request with error: " + handle->m_error_buffer);
     }
 
+    long http_code = 0;
+    curl_easy_getinfo(handle->m_handle, CURLINFO_RESPONSE_CODE, &http_code);
+    if (http_code != 200 || rc == CURLE_ABORTED_BY_CALLBACK) {
+        LOG_INFO("Error in http response");
+        response = HttpResponse::create(http_code, "Curl Error");
+    }
+
     m_handles.erase(std::this_thread::get_id());
 
     LOG_INFO("Request all done");

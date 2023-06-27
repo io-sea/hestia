@@ -3,6 +3,7 @@
 #include "KeyValueStoreRequest.h"
 #include "Metadata.h"
 #include "Response.h"
+#include "Uuid.h"
 
 #include <memory>
 #include <vector>
@@ -36,14 +37,13 @@ class KeyValueStoreClient {
 
     virtual void string_remove(const std::string& key) const = 0;
 
-    virtual void set_add(
-        const std::string& key, const std::string& value) const = 0;
+    virtual void set_add(const std::string& key, const Uuid& value) const = 0;
 
     virtual void set_list(
-        const std::string& key, std::vector<std::string>& values) const = 0;
+        const std::string& key, std::vector<Uuid>& values) const = 0;
 
     virtual void set_remove(
-        const std::string& key, const std::string& value) const = 0;
+        const std::string& key, const Uuid& value) const = 0;
 
     void on_exception(
         const KeyValueStoreRequest& request,

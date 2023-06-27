@@ -159,8 +159,9 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
     if (tag.empty()) {
         tag = "endpoint";
     }
-    service_config.m_self.m_tag = tag + "_" + m_config.m_server_config.m_host
-                                  + "_" + m_config.m_server_config.m_port;
+    service_config.m_self.set_name(
+        tag + "_" + m_config.m_server_config.m_host + "_"
+        + m_config.m_server_config.m_port);
     service_config.m_self.m_version = project_config::get_project_version();
     service_config.m_app_name       = project_config::get_project_name();
     service_config.m_controller_address =
@@ -189,7 +190,10 @@ bool HestiaConfigurator::set_up_tiers(TierService* tier_service)
 {
     for (const auto& [id, tier] : m_config.m_tiers) {
         LOG_INFO("Adding tier: " << std::to_string(id) << " to Tier service");
-        auto response = tier_service->make_request({tier, CrudMethod::PUT});
+
+        CrudRequest<StorageTier> request(tier, CrudMethod::PUT);
+        request.set_generate_id(true);
+        auto response = tier_service->make_request(request);
         if (!response->ok()) {
             LOG_ERROR("Failed to PUT tier in initialization.");
             return false;

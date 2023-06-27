@@ -1,5 +1,7 @@
 #include "Dictionary.h"
 
+#include "StringUtils.h"
+
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
@@ -26,6 +28,50 @@ void Dictionary::for_each_scalar(onItem func) const
             }
         }
     }
+}
+
+bool Dictionary::has_key_and_value(
+    const Metadata::Query& query, const std::string& delimiter) const
+{
+    if (m_type != Type::MAP) {
+        return false;
+    }
+
+    std::vector<std::string> nested_keys;
+    StringUtils::split(query.first, delimiter, nested_keys);
+
+    Dictionary* working_dict{nullptr};
+    std::size_t depth_count = 0;
+    for (const auto& key : nested_keys) {
+        if (working_dict == nullptr) {
+            working_dict = get_map_item(key);
+        }
+        else {
+            working_dict = working_dict->get_map_item(key);
+        }
+
+        if (working_dict == nullptr) {
+            return false;
+        }
+
+        if (working_dict->get_type() == Type::SCALAR) {
+            if (depth_count == nested_keys.size() - 1) {
+                break;
+            }
+            else {
+                return false;
+            }
+        }
+        else if (working_dict->get_type() != Type::MAP) {
+            return false;
+        }
+        depth_count++;
+    }
+
+    if (working_dict != nullptr) {
+        return working_dict->get_scalar() == query.second;
+    }
+    return false;
 }
 
 void Dictionary::get_map_items(

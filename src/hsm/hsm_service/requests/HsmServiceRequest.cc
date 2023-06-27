@@ -4,26 +4,46 @@
 
 namespace hestia {
 HsmServiceRequest::HsmServiceRequest(
-    const hestia::Uuid& object_id, HsmServiceRequestMethod method) :
-    hestia::MethodRequest<HsmServiceRequestMethod>(method)
+    const Uuid& subject_id,
+    HsmServiceRequestSubject subject,
+    HsmServiceRequestMethod method) :
+    MethodRequest<HsmServiceRequestMethod>(method), m_subject(subject)
 {
-    m_object = hestia::StorageObject(object_id.to_string());
+    if (subject == HsmServiceRequestSubject::OBJECT) {
+        m_object = HsmObject(subject_id);
+    }
+    else {
+        m_dataset = Dataset(subject_id);
+    }
 }
 
 HsmServiceRequest::HsmServiceRequest(
-    const hestia::StorageObject& object, HsmServiceRequestMethod method) :
-    hestia::MethodRequest<HsmServiceRequestMethod>(method), m_object(object)
+    const HsmObject& object, HsmServiceRequestMethod method) :
+    MethodRequest<HsmServiceRequestMethod>(method), m_object(object)
 {
 }
 
 HsmServiceRequest::HsmServiceRequest(
-    const uint8_t& tier, HsmServiceRequestMethod method) :
-    hestia::MethodRequest<HsmServiceRequestMethod>(method), m_tier(tier)
+    const Dataset& dataset, HsmServiceRequestMethod method) :
+    MethodRequest<HsmServiceRequestMethod>(method),
+    m_dataset(dataset),
+    m_subject(HsmServiceRequestSubject::DATASET)
 {
 }
 
-HsmServiceRequest::HsmServiceRequest(HsmServiceRequestMethod method) :
-    hestia::MethodRequest<HsmServiceRequestMethod>(method)
+HsmServiceRequest::HsmServiceRequest(
+    const uint8_t& tier,
+    HsmServiceRequestSubject subject,
+    HsmServiceRequestMethod method) :
+    MethodRequest<HsmServiceRequestMethod>(method),
+    m_subject(subject),
+    m_tier(tier)
+{
+}
+
+HsmServiceRequest::HsmServiceRequest(
+    HsmServiceRequestSubject subject, HsmServiceRequestMethod method) :
+    MethodRequest<HsmServiceRequestMethod>(method), m_subject(subject)
 {
 }
 
@@ -87,12 +107,12 @@ void HsmServiceRequest::set_query(const std::string& query)
     m_query = query;
 }
 
-const hestia::StorageObject& HsmServiceRequest::object() const
+const HsmObject& HsmServiceRequest::object() const
 {
     return m_object;
 }
 
-StorageObject& HsmServiceRequest::object()
+HsmObject& HsmServiceRequest::object()
 {
     return m_object;
 }
@@ -105,6 +125,26 @@ const uint8_t& HsmServiceRequest::tier() const
 uint8_t& HsmServiceRequest::tier()
 {
     return m_tier;
+}
+
+uint8_t HsmServiceRequest::source_tier() const
+{
+    return m_source_tier;
+}
+
+uint8_t HsmServiceRequest::target_tier() const
+{
+    return m_target_tier;
+}
+
+const std::string& HsmServiceRequest::query() const
+{
+    return m_query;
+}
+
+const Extent& HsmServiceRequest::extent() const
+{
+    return m_extent;
 }
 
 std::string HsmServiceRequest::to_string() const

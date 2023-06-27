@@ -1,7 +1,8 @@
 #include <catch2/catch_all.hpp>
 
-#include "HsmNodeAdapter.h"
+#include "HsmNode.h"
 #include "JsonUtils.h"
+#include "StringAdapter.h"
 
 #include <iostream>
 
@@ -14,7 +15,7 @@ TEST_CASE("Test HsmNodeAdapter", "[hsm]")
     backend.m_identifier = "my_backend";
     node.m_backends.push_back(backend);
 
-    hestia::HsmNodeJsonAdapter adapter;
+    hestia::JsonAdapter<hestia::HsmNode> adapter;
     std::string json;
     adapter.to_string(node, json);
 
@@ -29,19 +30,20 @@ TEST_CASE("Test HsmNodeAdapter", "[hsm]")
 
 TEST_CASE("Test HsmNodeAdapter - Node List", "[hsm]")
 {
-    hestia::HsmNode node0;
-    node0.m_host_address = "127.0.0.1:8000";
-    node0.m_id           = "1234";
+    const auto id0 = hestia::Uuid(1234);
+    const auto id1 = hestia::Uuid(5678);
 
-    hestia::HsmNode node1;
+    hestia::HsmNode node0(id0);
+    node0.m_host_address = "127.0.0.1:8000";
+
+    hestia::HsmNode node1(id1);
     node1.m_host_address = "127.0.0.1:8080";
-    node1.m_id           = "5678";
 
     std::vector<hestia::HsmNode> nodes;
     nodes.push_back(node0);
     nodes.push_back(node1);
 
-    hestia::HsmNodeJsonAdapter adapter;
+    hestia::JsonAdapter<hestia::HsmNode> adapter;
     std::string json;
     adapter.to_string(nodes, json);
 

@@ -22,16 +22,16 @@ std::string InMemoryObjectStoreClient::get_registry_identifier()
 
 bool InMemoryObjectStoreClient::exists(const StorageObject& object) const
 {
-    return m_metadata.find(object.id()) != m_metadata.end();
+    return m_metadata.find(object.id().to_string()) != m_metadata.end();
 }
 
 void InMemoryObjectStoreClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
-    auto md_iter = m_metadata.find(object.id());
+    auto md_iter = m_metadata.find(object.id().to_string());
     if (md_iter == m_metadata.end()) {
         const std::string msg =
-            "Object " + object.id() + " not found in store.";
+            "Object " + object.id().to_string() + " not found in store.";
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
@@ -44,7 +44,8 @@ void InMemoryObjectStoreClient::get(
                 WriteableBufferView& buffer,
                 std::size_t offset) -> InMemoryStreamSource::Status {
             (void)offset;
-            const auto status = m_data.read(object.id(), extent, buffer);
+            const auto status =
+                m_data.read(object.id().to_string(), extent, buffer);
             return {status.is_ok(), status.m_bytes_read};
         };
         auto source = InMemoryStreamSource::create(source_func);
@@ -56,9 +57,9 @@ void InMemoryObjectStoreClient::put(
     const StorageObject& object, const Extent& extent, Stream* stream) const
 {
     LOG_INFO("Starting client PUT: " + object.to_string());
-    auto md_iter = m_metadata.find(object.id());
+    auto md_iter = m_metadata.find(object.id().to_string());
     if (md_iter == m_metadata.end()) {
-        m_metadata[object.id()] = object.m_metadata;
+        m_metadata[object.id().to_string()] = object.m_metadata;
     }
     else {
         md_iter->second.merge(object.m_metadata);
@@ -70,7 +71,8 @@ void InMemoryObjectStoreClient::put(
                              std::size_t offset) -> InMemoryStreamSink::Status {
             const Extent chunk_extent = {
                 extent.m_offset + offset, buffer.length()};
-            const auto status = m_data.write(object.id(), chunk_extent, buffer);
+            const auto status =
+                m_data.write(object.id().to_string(), chunk_extent, buffer);
             return {status.is_ok(), buffer.length()};
         };
         auto sink = InMemoryStreamSink::create(sink_func);
@@ -80,17 +82,17 @@ void InMemoryObjectStoreClient::put(
 
 void InMemoryObjectStoreClient::remove(const StorageObject& object) const
 {
-    auto md_iter = m_metadata.find(object.id());
+    const auto obj_id = object.id().to_string();
+    auto md_iter      = m_metadata.find(obj_id);
     if (md_iter == m_metadata.end()) {
-        const std::string msg =
-            "Object " + object.id() + " not found in store.";
+        const std::string msg = "Object " + obj_id + " not found in store.";
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
     }
     m_metadata.erase(md_iter);
-    if (m_data.has_key(object.id())) {
-        m_data.remove(object.id());
+    if (m_data.has_key(obj_id)) {
+        m_data.remove(obj_id);
     }
 }
 

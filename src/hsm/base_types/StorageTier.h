@@ -1,33 +1,34 @@
 #pragma once
 
+#include "Model.h"
 #include <string>
 
 namespace hestia {
 
-class StorageTier {
+class StorageTier : public Model {
   public:
-    enum class tier_storage_class { ssd_nvme, ssd_sata, hdd, tape };
+    enum class medium { ssd_nvme, ssd_sata, hdd, tape };
 
-    StorageTier() = default;
+    StorageTier();
 
-    StorageTier(const std::string& id) : m_id(id) {}
+    StorageTier(const std::string& id);
 
-    StorageTier(uint8_t id) : m_id(std::to_string(id)) {}
+    StorageTier(uint8_t id);
 
-    const std::string& id() const { return m_id; }
+    uint8_t id_uint() const;
 
-    uint8_t id_uint() const
-    {
-        if (m_id.empty()) {
-            return 0;
-        }
-        return std::stoul(m_id);
-    }
+    void deserialize(
+        const Dictionary& dict,
+        SerializeFormat format = SerializeFormat::FULL) override;
 
-    tier_storage_class m_type{tier_storage_class::ssd_nvme};
+    void serialize(
+        Dictionary& dict,
+        SerializeFormat format = SerializeFormat::FULL,
+        const Uuid& id         = {}) const override;
+
+    medium m_medium{medium::ssd_nvme};
     std::size_t m_capacity{0};
     std::size_t m_bandwith{0};
-    std::string m_id;
     std::string m_backend;
 };
 }  // namespace hestia

@@ -32,9 +32,13 @@ class JsonUtils {
      */
     static std::string to_json(const Metadata& metadata);
 
-    static std::string to_json(const Dictionary& dict);
+    static std::string to_json(
+        const Dictionary& dict,
+        const std::vector<std::string>& exclude_keys = {});
 
-    static std::unique_ptr<Dictionary> from_json(const std::string& str);
+    static std::unique_ptr<Dictionary> from_json(
+        const std::string& str,
+        const std::vector<std::string>& exclude_keys = {});
 
     static std::string to_json(
         const std::vector<Metadata>& metadata, const std::string& key = {});

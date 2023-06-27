@@ -72,10 +72,10 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::register_self()
 {
     // Check if the node exists already
     Metadata query;
-    query.set_item("tag", m_config.m_self.m_tag);
+    query.set_item("name", m_config.m_self.name());
     LOG_INFO(
-        "Checking for pre-registered endpoint with tag: "
-        << m_config.m_self.m_tag);
+        "Checking for pre-registered endpoint with name: "
+        << m_config.m_self.name());
     auto exists_response = m_node_service->make_request(query);
     if (!exists_response->ok()) {
         throw std::runtime_error(
@@ -85,8 +85,9 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::register_self()
 
     if (!exists_response->items().empty()) {
         LOG_INFO(
-            "Found endpoint with id: " << exists_response->items()[0].id());
-        m_config.m_self.m_id = exists_response->items()[0].id();
+            "Found endpoint with id: "
+            << exists_response->items()[0].id().to_string());
+        m_config.m_self = exists_response->items()[0];
     }
     else {
         LOG_INFO("Pre-existing endpoint not found - will request new one.");
@@ -96,6 +97,9 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::register_self()
         m_config.m_self, DistributedHsmServiceRequestMethod::PUT);
     auto put_response = put(req);
     if (!put_response->ok()) {
+        LOG_ERROR(
+            "Failed to register node: "
+            + put_response->get_error().to_string());
         throw std::runtime_error(
             "Failed to register node: "
             + put_response->get_error().to_string());
@@ -180,7 +184,7 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::put(
     LOG_INFO("Calling Node service put");
 
     CrudRequest<HsmNode> request(req.item(), CrudMethod::PUT);
-    if (req.item().m_id.empty() && m_config.m_self.m_is_controller) {
+    if (req.item().id().is_unset() && m_config.m_self.m_is_controller) {
         LOG_INFO("Requesting id generation");
         request.set_generate_id(true);
     }

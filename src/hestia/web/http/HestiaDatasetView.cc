@@ -1,6 +1,5 @@
 #include "HestiaDatasetView.h"
 
-#include "DatasetAdapter.h"
 #include "DatasetService.h"
 
 #include "DistributedHsmService.h"
@@ -12,7 +11,7 @@ namespace hestia {
 HestiaDatasetView::HestiaDatasetView(DistributedHsmService* hsm_service) :
     WebView(),
     m_hsm_service(hsm_service),
-    m_dataset_adapter(std::make_unique<DatasetJsonAdapter>())
+    m_dataset_adapter(std::make_unique<JsonAdapter<Dataset>>())
 {
 }
 

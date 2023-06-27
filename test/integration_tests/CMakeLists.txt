@@ -1,6 +1,7 @@
 set(INTEGRATION_TEST_MODULE ${PROJECT_NAME}_integration_tests)
 
 set(INTEGRATION_TEST_SOURCES     
+    base/common/TestSystemUtils.cc
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
     hestia/TestHestiaWebApp.cc
@@ -19,10 +20,10 @@ add_executable(${INTEGRATION_TEST_MODULE} ${INTEGRATION_TEST_SOURCES})
 
 target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
     hestia_http_client
+    hestia_common
     hestia_app
     hestia_server
     hestia_web
-    hestia_s3app
     hestia_mocks
     hestia_s3_backend
     hestia_event_feed

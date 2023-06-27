@@ -76,8 +76,8 @@ int LibS3InterfaceImpl::put(
 
     LOG_INFO("Starting LibS3 put");
     S3_put_object(
-        &bucket, obj.m_key.c_str(), stream->get_source_size(), nullptr, nullptr,
-        0, &put_handler, reinterpret_cast<void*>(&cb_context));
+        &bucket, obj.m_name.c_str(), stream->get_source_size(), nullptr,
+        nullptr, 0, &put_handler, reinterpret_cast<void*>(&cb_context));
 
     LOG_INFO(
         "Finished LibS3 put - status is: "
@@ -121,7 +121,7 @@ int LibS3InterfaceImpl::get(
     get_handler.getObjectDataCallback            = on_get_data;
 
     S3_get_object(
-        &bucket, obj.m_key.c_str(), nullptr, 0, stream->get_sink_size(),
+        &bucket, obj.m_name.c_str(), nullptr, 0, stream->get_sink_size(),
         nullptr, 0, &get_handler, reinterpret_cast<void*>(&cb_context));
 
     return static_cast<int>(
@@ -148,7 +148,7 @@ int LibS3InterfaceImpl::remove(const S3Object& obj)
     response_handler.completeCallback = on_response_complete;
 
     S3_delete_object(
-        &bucket, obj.m_key.c_str(), nullptr, 0, &response_handler,
+        &bucket, obj.m_name.c_str(), nullptr, 0, &response_handler,
         reinterpret_cast<void*>(&cb_context));
 
     return static_cast<int>(

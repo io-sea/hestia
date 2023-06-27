@@ -2,7 +2,7 @@
 
 #include "ApplicationContext.h"
 #include "DistributedHsmService.h"
-#include "HsmS3Service.h"
+#include "S3Service.h"
 
 #include "HttpClient.h"
 #include "KeyValueStoreClient.h"
@@ -25,17 +25,16 @@ HestiaServer::HestiaServer(const ServerConfig& config) : m_config(config) {}
 void HestiaServer::run()
 {
     WebApp::Ptr web_app;
-    std::unique_ptr<HsmS3Service> hsm_s3_service;
+    std::unique_ptr<S3Service> s3_service;
 
     if (m_config.m_web_app_config.m_interface == WebAppConfig::Interface::S3) {
         LOG_INFO("Running S3 interface");
-        hsm_s3_service = std::make_unique<HsmS3Service>(
-            ApplicationContext::get().get_hsm_service(),
-            ApplicationContext::get().get_kv_store_client());
+        s3_service = std::make_unique<S3Service>(
+            ApplicationContext::get().get_hsm_service());
 
         HestiaS3WebAppConfig config;
         web_app = std::make_unique<HestiaS3WebApp>(
-            config, hsm_s3_service.get(),
+            config, s3_service.get(),
             ApplicationContext::get().get_user_service());
     }
     else {

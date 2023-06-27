@@ -64,6 +64,12 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
                 view, user, 0, request_context->get_request());
         }
         catch (const std::exception& e) {
+            LOG_ERROR(
+                "Unhandled exception in view or middleware: " << e.what());
+            response = HttpResponse::create(500, "Internal Server Error");
+        }
+        catch (...) {
+            LOG_ERROR("Uknown exception in view or middleware");
             response = HttpResponse::create(500, "Internal Server Error");
         }
     }

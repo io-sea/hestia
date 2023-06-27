@@ -43,20 +43,22 @@ int bad_stream()
 
 namespace hestia {
 int HestiaCppInterface::put(
-    const hestia::Uuid& object_id,
-    const hestia::Extent& extent,
-    const hestia::ReadableBufferView& buffer,
+    const Uuid& object_id,
+    const Extent& extent,
+    const ReadableBufferView& buffer,
     uint8_t tier_id,
     bool overwrite)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::PUT);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::PUT);
     request.set_extent(extent);
     request.set_target_tier(tier_id);
     request.set_should_put_overwrite(overwrite);
 
     hestia::Stream stream;
     stream.set_source(hestia::InMemoryStreamSource::create(buffer));
-    request.object().m_size = stream.get_source_size();
+    request.object().set_size(stream.get_source_size());
 
     if (const auto response = ApplicationContext::get()
                                   .get_hsm_service()
@@ -80,7 +82,9 @@ int HestiaCppInterface::get(
     hestia::WriteableBufferView& buffer,
     uint8_t tier_id)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::GET);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::GET);
     request.set_extent(extent);
     request.set_source_tier(tier_id);
 
@@ -109,7 +113,9 @@ int HestiaCppInterface::copy(
     uint8_t source_tier,
     uint8_t target_tier)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::COPY);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::COPY);
     request.set_extent(extent);
     request.set_source_tier(source_tier);
     request.set_target_tier(target_tier);
@@ -131,7 +137,9 @@ int HestiaCppInterface::move(
     uint8_t source_tier,
     uint8_t target_tier)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::MOVE);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::MOVE);
     request.set_extent(extent);
     request.set_source_tier(source_tier);
     request.set_target_tier(target_tier);
@@ -152,7 +160,9 @@ int HestiaCppInterface::get_attributes(
     const std::string& keys,
     std::string& attributes)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::GET);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::GET);
     request.set_query(keys);
 
     const auto response = ApplicationContext::get()
@@ -171,7 +181,9 @@ int HestiaCppInterface::get_attributes(
 int HestiaCppInterface::set_attributes(
     const hestia::Uuid& object_id, const std::string& attributes)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::GET);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::GET);
     request.set_query(attributes);
 
     if (const auto response = ApplicationContext::get()
@@ -187,7 +199,9 @@ int HestiaCppInterface::set_attributes(
 
 int HestiaCppInterface::release(const hestia::Uuid& object_id)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::REMOVE_ALL);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::REMOVE_ALL);
     if (const auto response = ApplicationContext::get()
                                   .get_hsm_service()
                                   ->get_hsm_service()
@@ -204,7 +218,9 @@ int HestiaCppInterface::release(
 {
     (void)remove_key;
 
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::REMOVE);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::REMOVE);
     request.set_source_tier(tier_id);
     const auto response = ApplicationContext::get()
                               .get_hsm_service()
@@ -217,10 +233,10 @@ int HestiaCppInterface::release(
     return rc::ok();
 }
 
-int HestiaCppInterface::list_objects(
-    uint8_t tier, std::vector<hestia::Uuid> objects)
+int HestiaCppInterface::list_objects(uint8_t tier, std::vector<Uuid> objects)
 {
-    HsmServiceRequest request(HsmServiceRequestMethod::GET);
+    HsmServiceRequest request(
+        HsmServiceRequestSubject::OBJECT, HsmServiceRequestMethod::GET);
     request.set_source_tier(tier);
     const auto response = ApplicationContext::get()
                               .get_hsm_service()
@@ -232,7 +248,7 @@ int HestiaCppInterface::list_objects(
     }
 
     for (const auto& object : response->objects()) {
-        objects.push_back(object.uuid());
+        objects.push_back(object.id());
     }
 
     return rc::ok();
@@ -241,7 +257,9 @@ int HestiaCppInterface::list_objects(
 int HestiaCppInterface::list_tiers(
     const hestia::Uuid& object_id, std::vector<uint8_t>& tiers)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::GET_TIERS);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::GET_TIERS);
     const auto response = ApplicationContext::get()
                               .get_hsm_service()
                               ->get_hsm_service()
@@ -252,7 +270,7 @@ int HestiaCppInterface::list_tiers(
     }
 
     for (const auto& tier : response->tiers()) {
-        tiers.push_back(std::stoi(tier.id()));
+        tiers.push_back(tier.id_uint());
     }
     return rc::ok();
 }
@@ -260,7 +278,9 @@ int HestiaCppInterface::list_tiers(
 int HestiaCppInterface::list_attributes(
     const hestia::Uuid& object_id, std::string& attributes)
 {
-    HsmServiceRequest request(object_id, HsmServiceRequestMethod::GET);
+    HsmServiceRequest request(
+        object_id, HsmServiceRequestSubject::OBJECT,
+        HsmServiceRequestMethod::GET);
     const auto response = ApplicationContext::get()
                               .get_hsm_service()
                               ->get_hsm_service()

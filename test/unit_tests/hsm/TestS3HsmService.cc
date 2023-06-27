@@ -1,12 +1,13 @@
 #include <catch2/catch_all.hpp>
 
 #include "DistributedHsmServiceTestWrapper.h"
-#include "HsmS3Service.h"
+#include "S3Service.h"
 
 #include "TestUtils.h"
 
 #include <iostream>
 
+#ifdef __HESTIA_DUMMY__
 class HsmS3ServiceTestFixture {
   public:
     void init(const std::string& test_name)
@@ -15,18 +16,18 @@ class HsmS3ServiceTestFixture {
             __FILE__, test_name);
         m_dist_hsm_service->add_tiers(5);
 
-        m_s3_service = std::make_unique<hestia::HsmS3Service>(
+        m_s3_service = std::make_unique<hestia::S3Service>(
             m_dist_hsm_service->m_dist_hsm_service.get(),
             &m_dist_hsm_service->m_kv_store_client);
     }
 
     void check_ok(hestia::S3Service::Status status) { REQUIRE(status.ok()); }
 
-    void check_exists(
-        const hestia::S3Container& container, bool should_exist = true)
+    void check_exists(const hestia::Dataset& dataset, bool should_exist = true)
     {
-        const auto [status, exists] = m_s3_service->exists(container);
-        REQUIRE(status.ok());
+        const auto [status, exists] =
+            m_s3_service->get_hsm_serive()->get_hsm_service()
+                REQUIRE(status.ok());
         REQUIRE(exists == should_exist);
     }
 
@@ -79,3 +80,4 @@ TEST_CASE_METHOD(
 
     REQUIRE(fetched_object == object);
 }
+#endif

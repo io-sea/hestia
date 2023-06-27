@@ -6,10 +6,12 @@ include(external/code-coverage)
 set(UNIT_TEST_SOURCES
     base/common/TestBlockList.cc
     base/common/TestExtent.cc
+    base/common/TestDictionary.cc
     base/common/TestHashUtils.cc
     base/common/TestJsonUtils.cc
     base/common/TestStream.cc
     base/common/TestStringUtils.cc
+    base/common/TestUuidUtils.cc
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
@@ -23,11 +25,10 @@ set(UNIT_TEST_SOURCES
     base/storage/TestPhobosClient.cc
     base/storage/TestS3Client.cc
     base/web/TestWebApp.cc
-    base/web/TestS3Service.cc
-    base/web/TestS3WebApp.cc
     base/web/TestS3Authorization.cc
     base/web/TestUserService.cc
     hestia/TestHestiaCppClient.cc
+    hestia/TestS3WebApp.cc
     hsm/TestDistributedHsmService.cc
     hsm/TestEventFeed.cc
     hsm/TestMockMotrBackend.cc
@@ -54,7 +55,6 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     hestia_lib 
     hestia_server 
     hestia_storage
-    hestia_s3app
     hestia_event_feed
     hestia_mock_motr
     hestia_mocks

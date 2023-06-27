@@ -1,20 +1,32 @@
 #pragma once
 
 #include "HsmObject.h"
+#include "OwnableModel.h"
 
 #include <string>
 #include <vector>
 
 namespace hestia {
-class Dataset {
+class Dataset : public OwnableModel {
   public:
-    Dataset() = default;
+    Dataset();
 
-    Dataset(const std::string& id) : m_identifier(id) {}
+    Dataset(const std::string& name);
 
-    const std::string& id() const { return m_identifier; }
+    Dataset(const Uuid& id);
 
-    std::string m_identifier;
+    void deserialize(
+        const Dictionary& dict,
+        SerializeFormat format = SerializeFormat::FULL) override;
+
+    void serialize(
+        Dictionary& dict,
+        SerializeFormat format = SerializeFormat::FULL,
+        const Uuid& id         = {}) const override;
+
+    const std::vector<HsmObject>& objects() const { return m_objects; }
+
+  private:
     std::vector<HsmObject> m_objects;
 };
 }  // namespace hestia

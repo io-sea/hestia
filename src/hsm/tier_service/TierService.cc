@@ -5,7 +5,7 @@
 #include "KeyValueCrudClient.h"
 #include "KeyValueStoreClient.h"
 
-#include "StorageTierAdapter.h"
+#include "StringAdapter.h"
 
 namespace hestia {
 
@@ -19,7 +19,7 @@ TierService::TierService(
 TierService::Ptr TierService::create(
     const TierServiceConfig& config, KeyValueStoreClient* client)
 {
-    auto adapter = std::make_unique<StorageTierJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<StorageTier>>();
 
     KeyValueCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;
@@ -33,7 +33,7 @@ TierService::Ptr TierService::create(
 TierService::Ptr TierService::create(
     const TierServiceConfig& config, HttpClient* client)
 {
-    auto adapter = std::make_unique<StorageTierJsonAdapter>();
+    auto adapter = std::make_unique<JsonAdapter<StorageTier>>();
 
     HttpCrudClientConfig crud_client_config;
     crud_client_config.m_item_prefix = config.m_item_prefix;

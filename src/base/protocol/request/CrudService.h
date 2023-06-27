@@ -2,6 +2,7 @@
 
 #include "CrudClient.h"
 #include "Service.h"
+#include "UuidUtils.h"
 
 #include "Logger.h"
 
@@ -64,13 +65,22 @@ class CrudService :
                 break;
             case CrudMethod::PUT:
                 try {
-                    put(request.item(), request.should_generate_id());
+                    put(request.item(), request.should_generate_id(),
+                        response->item());
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
             case CrudMethod::EXISTS:
                 try {
-                    response->set_found(exists(request.item().id()));
+                    if (!request.item().id().is_unset()) {
+                        response->set_found(exists(request.item().id()));
+                    }
+                    else if (!request.item().name().empty()) {
+                        response->set_found(exists(request.item().name()));
+                    }
+                    else {
+                        response->set_found(false);
+                    }
                 }
                 HESTIA_CRUD_SERVICE_CATCH_FLOW();
                 break;
@@ -102,13 +112,14 @@ class CrudService :
   protected:
     virtual void get(ItemT& item) const { m_client->get(item); }
 
-    virtual bool exists(const std::string& id) const
+    virtual bool exists(const Uuid& id) const { return m_client->exists(id); }
+
+    virtual bool exists(const std::string& name) const
     {
-        return m_client->exists(id);
+        return m_client->exists(name);
     }
 
-    virtual void list(
-        const Metadata& query, std::vector<std::string>& ids) const
+    virtual void list(const Metadata& query, std::vector<Uuid>& ids) const
     {
         m_client->list(query, ids);
     }
@@ -119,12 +130,13 @@ class CrudService :
         m_client->multi_get(query, items);
     }
 
-    virtual void put(const ItemT& item, bool generate_id = false) const
+    virtual void put(
+        const ItemT& item, bool generate_id, ItemT& updated_item) const
     {
-        m_client->put(item, generate_id);
+        m_client->put(item, generate_id, updated_item);
     }
 
-    virtual void remove(const std::string& id) const { m_client->remove(id); }
+    virtual void remove(const Uuid& id) const { m_client->remove(id); }
 
   private:
     void on_exception(

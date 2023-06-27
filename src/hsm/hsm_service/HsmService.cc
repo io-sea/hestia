@@ -7,9 +7,10 @@
 #include "DatasetService.h"
 #include "ObjectService.h"
 #include "TierService.h"
+#include "UuidUtils.h"
 
 #include "HsmActionAdapter.h"
-#include "HsmObjectAdapter.h"
+#include "StringAdapter.h"
 
 #include "Logger.h"
 
@@ -143,10 +144,10 @@ HsmServiceResponse::Ptr HsmService::put(
 
     if (stream != nullptr) {
         const auto chosen_tier = m_placement_engine->choose_tier(
-            req.object().m_size, req.target_tier());
+            req.object().object().m_size, req.target_tier());
 
         HsmObjectStoreRequest data_put_request(
-            req.object(), HsmObjectStoreRequestMethod::PUT);
+            req.object().object(), HsmObjectStoreRequestMethod::PUT);
         data_put_request.set_target_tier(chosen_tier);
         data_put_request.set_extent(req.extent());
         if (req.should_overwrite_put()) {
@@ -162,7 +163,13 @@ HsmServiceResponse::Ptr HsmService::put(
         // Update metadata
         auto obj = req.object();
         HsmObject hsm_object(obj);
-        hsm_object.add_tier(chosen_tier);
+        if (!req.extent().empty()) {
+            hsm_object.add_extent(chosen_tier, req.extent());
+        }
+        else {
+            hsm_object.add_extent(
+                chosen_tier, {0, req.object().object().m_size});
+        }
 
         ObjectServiceRequest obj_put_request(hsm_object, CrudMethod::PUT);
 
@@ -175,49 +182,14 @@ HsmServiceResponse::Ptr HsmService::put(
 
         if (m_event_feed) {
             EventFeed::Event event;
-            event.m_id          = req.object().id();
-            event.m_length      = req.object().m_size;
+            event.m_id          = UuidUtils::to_string(req.object().id());
+            event.m_length      = req.object().object().m_size;
             event.m_method      = EventFeed::Event::Method::PUT;
             event.m_target_tier = req.target_tier();
             m_event_feed->log_event(event);
         }
 
         return response;
-    }
-
-    if (!req.query().empty()) {
-        HsmAction action;
-        m_action_adapter->parse(req.query(), action);
-        if (action.has_action()) {
-            // First finish this request and remove the metadata
-            /*
-            switch (action.mAction)
-            {
-                case HsmAction::Action::RELEASE:
-                    HsmServiceRequest action_req(req.object(),
-            HsmServiceRequestMethod::REMOVE);
-                    action_req.setSourceTier(action.mSourceTier);
-                    return makeRequest(action_req);
-                case HsmAction::Action::COPY:
-                    HsmServiceRequest action_req(req.object(),
-            HsmServiceRequestMethod::COPY);
-                    action_req.setSourceTier(action.mSourceTier);
-                    action_req.setTargetTier(action.mTargetTier);
-                    return makeRequest(action_req);
-                    break;
-                case HsmAction::Action::MOVE:
-                    HsmServiceRequest action_req(req.object(),
-            HsmServiceRequestMethod::MOVE);
-                    action_req.setSourceTier(action.mSourceTier);
-                    action_req.setTargetTier(action.mTargetTier);
-                    return makeRequest(action_req);
-                    break;
-                    break;
-                default:
-                    break;
-            }
-            */
-        }
     }
 
     ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
@@ -248,7 +220,7 @@ HsmServiceResponse::Ptr HsmService::get(
 
     if (stream != nullptr) {
         HsmObjectStoreRequest data_request(
-            req.object(), HsmObjectStoreRequestMethod::GET);
+            req.object().object(), HsmObjectStoreRequestMethod::GET);
         data_request.set_source_tier(req.source_tier());
         data_request.set_extent(req.extent());
         auto data_response = m_object_store->make_request(data_request, stream);
@@ -286,7 +258,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     }
 
     HsmObjectStoreRequest copy_data_request(
-        req.object(), HsmObjectStoreRequestMethod::COPY);
+        req.object().object(), HsmObjectStoreRequestMethod::COPY);
     copy_data_request.set_extent(req.extent());
     copy_data_request.set_source_tier(req.source_tier());
     copy_data_request.set_target_tier(req.target_tier());
@@ -300,10 +272,16 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     ERROR_CHECK(get_response);
 
     auto hsm_object = get_response->item();
-    hsm_object.add_tier(req.target_tier());
+
+    if (!req.extent().empty()) {
+        hsm_object.add_extent(req.target_tier(), req.extent());
+    }
+    else {
+        hsm_object.add_extent(
+            req.target_tier(), {0, hsm_object.object().m_size});
+    }
 
     // Should also update last modified time here
-
     auto put_response =
         m_object_service->make_request({hsm_object, CrudMethod::PUT});
     ERROR_CHECK(put_response);
@@ -312,8 +290,8 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
 
     if (m_event_feed) {
         EventFeed::Event event;
-        event.m_id          = req.object().id();
-        event.m_length      = req.object().m_size;
+        event.m_id          = UuidUtils::to_string(req.object().id());
+        event.m_length      = req.object().object().m_size;
         event.m_method      = EventFeed::Event::Method::COPY;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();
@@ -336,7 +314,7 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
     }
 
     HsmObjectStoreRequest move_request(
-        req.object(), HsmObjectStoreRequestMethod::MOVE);
+        req.object().object(), HsmObjectStoreRequestMethod::MOVE);
     move_request.set_extent(req.extent());
     move_request.set_source_tier(req.source_tier());
     move_request.set_target_tier(req.target_tier());
@@ -347,8 +325,8 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     if (m_event_feed) {
         EventFeed::Event event;
-        event.m_id          = req.object().id();
-        event.m_length      = req.object().m_size;
+        event.m_id          = UuidUtils::to_string(req.object().id());
+        event.m_length      = req.object().object().m_size;
         event.m_method      = EventFeed::Event::Method::MOVE;
         event.m_source_tier = req.source_tier();
         event.m_target_tier = req.target_tier();
@@ -361,7 +339,16 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     auto hsm_object = get_response->item();
 
-    hsm_object.replace_tier(req.source_tier(), req.target_tier());
+    if (!req.extent().empty()) {
+        hsm_object.remove_extent(req.source_tier(), req.extent());
+        hsm_object.add_extent(req.target_tier(), req.extent());
+    }
+    else {
+        hsm_object.remove_extent(
+            req.source_tier(), {0, hsm_object.object().m_size});
+        hsm_object.add_extent(
+            req.target_tier(), {0, hsm_object.object().m_size});
+    }
 
     auto put_response =
         m_object_service->make_request({hsm_object, CrudMethod::PUT});
@@ -376,7 +363,7 @@ HsmServiceResponse::Ptr HsmService::remove(
     LOG_INFO("Starting HSMService REMOVE: " + req.to_string());
 
     HsmObjectStoreRequest remove_data_request(
-        req.object(), HsmObjectStoreRequestMethod::REMOVE);
+        req.object().object(), HsmObjectStoreRequestMethod::REMOVE);
     remove_data_request.set_extent(req.extent());
     remove_data_request.set_source_tier(req.source_tier());
 
@@ -397,7 +384,7 @@ HsmServiceResponse::Ptr HsmService::remove(
 
     if (m_event_feed) {
         EventFeed::Event event;
-        event.m_id          = req.object().id();
+        event.m_id          = UuidUtils::to_string(req.object().id());
         event.m_method      = EventFeed::Event::Method::REMOVE;
         event.m_source_tier = req.source_tier();
         ;
@@ -417,9 +404,9 @@ HsmServiceResponse::Ptr HsmService::remove_all(
         m_object_service->make_request({req.object(), CrudMethod::GET});
 
     auto hsm_object = obj_get_request->item();
-    for (const uint8_t& tier_id : hsm_object.tiers()) {
+    for (const auto& [tier_id, extents] : hsm_object.tiers()) {
         HsmObjectStoreRequest remove_data_request(
-            req.object(), HsmObjectStoreRequestMethod::REMOVE);
+            req.object().object(), HsmObjectStoreRequestMethod::REMOVE);
         remove_data_request.set_extent(req.extent());
         remove_data_request.set_source_tier(tier_id);
 
@@ -435,7 +422,7 @@ HsmServiceResponse::Ptr HsmService::remove_all(
 
     if (m_event_feed) {
         EventFeed::Event event;
-        event.m_id          = req.object().id();
+        event.m_id          = UuidUtils::to_string(req.object().id());
         event.m_method      = EventFeed::Event::Method::REMOVE_ALL;
         event.m_source_tier = req.source_tier();
         ;
@@ -463,8 +450,8 @@ HsmServiceResponse::Ptr HsmService::list_objects(
         auto get_object_response =
             m_object_service->make_request(get_object_request);
         ERROR_CHECK(get_object_response);
-        for (const auto& tier_id : get_object_response->item().tiers()) {
-            if (req.tier() == std::stoi(std::to_string(tier_id))) {
+        for (const auto& tier : get_object_response->item().tiers()) {
+            if (req.tier() == std::stoi(std::to_string(tier.first))) {
                 response->add_object(get_object_response->item());
                 break;
             }
@@ -488,7 +475,7 @@ HsmServiceResponse::Ptr HsmService::list_tiers(
 
     auto list_response =
         std::make_unique<CrudResponse<StorageTier, CrudErrorCode>>(req);
-    for (const auto& tier_id : obj_get_response->item().tiers()) {
+    for (const auto& [tier_id, tier] : obj_get_response->item().tiers()) {
         for (const auto& tier : all_tiers_response->items()) {
             if (tier_id == tier.id_uint()) {
                 list_response->items().push_back(tier);

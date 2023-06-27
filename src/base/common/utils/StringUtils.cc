@@ -89,32 +89,24 @@ void StringUtils::split(
     }
 }
 
-std::string StringUtils::id_to_string(
-    uint64_t lo, uint64_t hi, char delimiter, bool as_hex)
+void StringUtils::split(
+    const std::string& str,
+    const std::string& delimiter,
+    std::vector<std::string>& elements)
 {
-    std::stringstream sstr;
-    if (as_hex) {
-        sstr << std::hex << lo << delimiter << hi;
+    if (str.empty() || delimiter.empty()) {
+        return;
+    }
+
+    if (auto loc = str.find(delimiter); loc != std::string::npos) {
+        elements.push_back(str.substr(0, loc));
+        split(
+            str.substr(
+                loc + delimiter.size(), str.size() - loc - delimiter.size()),
+            delimiter, elements);
     }
     else {
-        sstr << lo << delimiter << hi;
-    }
-    return sstr.str();
-}
-
-std::pair<uint64_t, uint64_t> StringUtils::string_to_id(
-    const std::string& input, char delimiter, bool as_hex)
-{
-    std::stringstream ss;
-
-    const auto loc = input.find(delimiter);
-    if (loc == std::string::npos) {
-        return {to_int(input, as_hex), 0};
-    }
-    else {
-        const auto lo_str = input.substr(0, loc);
-        const auto hi_st  = input.substr(loc, input.size() - loc);
-        return {to_int(lo_str, as_hex), to_int(hi_st, as_hex)};
+        elements.push_back(str);
     }
 }
 
