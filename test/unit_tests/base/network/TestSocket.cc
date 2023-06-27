@@ -17,13 +17,12 @@ class TestSocket : public Socket {
 
     void do_bind() override
     {
-        m_state.set_bound();
-
         std::unique_lock<std::mutex> lck(mtx);
+        m_state.set_bound();
         cv.notify_one();
     }
 
-    void do_close() override { m_state.set_disconnected(); }
+    void do_close() override {}
 
     void listen_impl() override {}
 

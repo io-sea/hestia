@@ -41,13 +41,12 @@ std::string HashUtils::do_md5(const std::string& input)
 
 std::string HashUtils::base64_encode(const std::string& input)
 {
-    std::vector<unsigned char> buffer(EVP_MAX_MD_SIZE);
-    EVP_EncodeBlock(
+    std::vector<unsigned char> buffer(EVP_ENCODE_LENGTH(input.length()));
+    auto i = EVP_EncodeBlock(
         buffer.data(), reinterpret_cast<const unsigned char*>(input.c_str()),
         input.length());
 
-    std::string ret(buffer.begin(), buffer.end());
-    ret.erase(std::find(ret.begin(), ret.end(), '\0'), ret.end());
+    std::string ret(buffer.begin(), buffer.begin() + i);
     return ret;
 }
 

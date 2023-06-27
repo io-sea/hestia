@@ -175,11 +175,8 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::LIST_ATTRIBUTES);
         auto response = m_hsm_service->make_request(request);
-        std::cout << response->ok() << std::endl;
         REQUIRE(response->ok());
         attrs = "test metadata";
-
-        std::cout << "metadata: " << response->object().metadata() << std::endl;
     }
 
     bool is_object_on_tier(const hestia::StorageObject& obj, int tier)

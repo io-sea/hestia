@@ -160,6 +160,9 @@ void from_json_internal(
 std::unique_ptr<Dictionary> JsonUtils::from_json(
     const std::string& str, const std::vector<std::string>& exclude_keys)
 {
+    if (str.empty()) {
+        return std::make_unique<Dictionary>();
+    }
     const auto json = nlohmann::json::parse(str);
 
     std::unique_ptr<Dictionary> dict;
