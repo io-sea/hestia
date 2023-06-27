@@ -216,6 +216,7 @@ E2E_test:
     - *configure
     - *build
     - make -C "${CMAKE_BUILD_DIR}" package
+    - make -C "${CMAKE_BUILD_DIR}" package_source
     # TODO: Build and upload docs
 
 Nightly_trigger:

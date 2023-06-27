@@ -2,12 +2,23 @@
 
 # Upload packages to registry
 registry_url="$HESTIA_API_URL/packages/generic/hestia/$CI_RELEASE_VERSION/hestia-$CI_RELEASE_VERSION"
-curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url.rpm" \
-    --upload-file $CMAKE_BUILD_DIR/*.rpm
-curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    --upload-file $CMAKE_BUILD_DIR/*Linux.rpm
+do echo "will retry in 2 seconds"; sleep 2; done
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url.tar.gz" \
-    --upload-file $CMAKE_BUILD_DIR/*.tar.gz
+    --upload-file $CMAKE_BUILD_DIR/*Linux.tar.gz
+do echo "will retry in 2 seconds"; sleep 2; done
+
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url.src.rpm" \
+    --upload-file $CMAKE_BUILD_DIR/*.src.rpm
+do echo "will retry in 2 seconds"; sleep 2; done
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url-Source.tar.gz" \
+    --upload-file $CMAKE_BUILD_DIR/*Source.tar.gz
+do echo "will retry in 2 seconds"; sleep 2; done
 
 # Create new release and link packages
 curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \

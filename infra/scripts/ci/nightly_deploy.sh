@@ -13,10 +13,15 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
         "squash_on_merge": false
       }' \
     -o merge.json
-sleep 10
+sleep 5
 curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/merge_requests/$(jq .iid merge.json)/merge"
+sleep 5
 
+# Tag MR with minor patch
+curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
+      "$HESTIA_API_URL/repository/tags?tag_name=v$CI_RELEASE_VERSION&ref=master"
+    
 # Update last successful nightly build SHA
 curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/variables/CI_LAST_NIGHTLY_COMMIT_SHA" \
