@@ -28,7 +28,7 @@ stages:
     HESTIA_BUILD_DOCUMENTATION: "ON"
     HESTIA_WITH_PHOBOS: "ON"
     HESTIA_WITH_MOTR: "ON"
-    HESTIA_WITH_PROXYGEN: "OFF"
+    HESTIA_WITH_PROXYGEN: "ON"
     MOTR_SRC_DIR: "/cortx-motr"
 
 # CI code snippets
@@ -40,7 +40,6 @@ stages:
     yum config-manager -q --set-enabled powertools;
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
-    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &configure
     mkdir -p "${CMAKE_BUILD_DIR}"
@@ -126,7 +125,6 @@ Lint:
     CXX: "clang++"
     CC: "clang"
     HESTIA_BUILD_TESTS: "ON"
-    HESTIA_WITH_PHOBOS: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -194,8 +192,11 @@ E2E_test:
   - &install_motr
     ${CI_PROJECT_DIR}/infra/scripts/ci/install_motr.sh
   - &install_phobos
+    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
     export PHOBOS_SRC=/phobos; cd /;
     ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
+  - &install_proxygen
+    yum install -qy $(cat ${HESTIA_DEPS}/proxygen);
 
 .default_nightly_job: &default_nightly_job
   <<: *default_job
@@ -210,6 +211,7 @@ E2E_test:
     - *install_base_dependencies
     - *install_phobos
     - *install_motr # dev only
+    - *install_proxygen
   script:
     - *configure
     - *build
