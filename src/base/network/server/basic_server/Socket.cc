@@ -213,7 +213,7 @@ std::string Socket::send(const std::string& message)
         }
     }
 
-    std::size_t n{0};
+    int n{0};
     {
         n = ::write(m_handle, message.c_str(), message.length());
     }

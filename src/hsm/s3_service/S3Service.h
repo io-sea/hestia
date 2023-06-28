@@ -6,6 +6,8 @@
 namespace hestia {
 class DistributedHsmService;
 class HsmService;
+class NamespaceService;
+
 class S3ObjectAdapter;
 class S3DatasetAdapter;
 
@@ -27,14 +29,19 @@ class S3Service {
         std::string m_message;
     };
 
-    S3Service(DistributedHsmService* hsm_service);
+    S3Service(
+        DistributedHsmService* hsm_service,
+        NamespaceService* namespace_service);
 
     virtual ~S3Service();
 
     HsmService* get_hsm_service() const;
 
+    NamespaceService* get_namespace_service() const;
+
   private:
     DistributedHsmService* m_hsm_service{nullptr};
+    NamespaceService* m_namespace_service{nullptr};
     std::unique_ptr<S3ObjectAdapter> m_object_adapter;
     std::unique_ptr<S3DatasetAdapter> m_dataset_adapter;
 };

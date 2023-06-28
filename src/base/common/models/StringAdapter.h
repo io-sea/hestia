@@ -86,6 +86,11 @@ class StringAdapter {
 template<typename ItemT>
 class JsonAdapter : public StringAdapter<ItemT> {
   public:
+    JsonAdapter(Model::SerializeFormat format = Model::SerializeFormat::FULL) :
+        StringAdapter<ItemT>(format)
+    {
+    }
+
     void dict_to_string(
         const Dictionary& dict, std::string& output) const override
     {

@@ -86,7 +86,6 @@ class HsmServiceTestFixture {
     {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::PUT);
-        request.set_source_tier(tier);
         request.set_target_tier(tier);
         REQUIRE(m_hsm_service->make_request(request, stream)->ok());
     }
@@ -97,15 +96,13 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::GET);
         request.set_source_tier(tier);
-        request.set_target_tier(tier);
         REQUIRE(m_hsm_service->make_request(request, stream)->ok());
     }
 
     bool exists(const hestia::StorageObject& obj)
     {
-        hestia::HsmServiceRequest request(
-            obj, hestia::HsmServiceRequestMethod::EXISTS);
-        auto exists = m_hsm_service->make_request(request);
+        auto exists = m_hsm_service->make_request(
+            {obj, hestia::HsmServiceRequestMethod::EXISTS});
         REQUIRE(exists->ok());
         return exists->object_found();
     }
@@ -133,15 +130,15 @@ class HsmServiceTestFixture {
         hestia::HsmServiceRequest request(
             obj, hestia::HsmServiceRequestMethod::REMOVE);
         request.set_source_tier(tier);
-        request.set_target_tier(tier);
         REQUIRE(m_hsm_service->make_request(request)->ok());
     }
 
     void remove_all(const hestia::StorageObject& obj)
     {
-        hestia::HsmServiceRequest request(
-            obj, hestia::HsmServiceRequestMethod::REMOVE_ALL);
-        REQUIRE(m_hsm_service->make_request(request)->ok());
+        REQUIRE(m_hsm_service
+                    ->make_request(
+                        {obj, hestia::HsmServiceRequestMethod::REMOVE_ALL})
+                    ->ok());
     }
 
     void list_objects(std::vector<hestia::Uuid>& ids, uint8_t tier)
@@ -160,9 +157,8 @@ class HsmServiceTestFixture {
 
     void list_tiers(const hestia::StorageObject& obj, std::vector<uint8_t>& ids)
     {
-        hestia::HsmServiceRequest request(
-            obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
-        auto response = m_hsm_service->make_request(request);
+        auto response = m_hsm_service->make_request(
+            {obj, hestia::HsmServiceRequestMethod::LIST_TIERS});
         REQUIRE(response->ok());
 
         for (const auto& tier_id : response->tiers()) {
@@ -172,18 +168,16 @@ class HsmServiceTestFixture {
 
     void list_attributes(const hestia::StorageObject& obj, std::string& attrs)
     {
-        hestia::HsmServiceRequest request(
-            obj, hestia::HsmServiceRequestMethod::LIST_ATTRIBUTES);
-        auto response = m_hsm_service->make_request(request);
+        auto response = m_hsm_service->make_request(
+            {obj, hestia::HsmServiceRequestMethod::LIST_ATTRIBUTES});
         REQUIRE(response->ok());
         attrs = "test metadata";
     }
 
     bool is_object_on_tier(const hestia::StorageObject& obj, int tier)
     {
-        hestia::HsmServiceRequest request(
-            obj, hestia::HsmServiceRequestMethod::LIST_TIERS);
-        auto response = m_hsm_service->make_request(request);
+        auto response = m_hsm_service->make_request(
+            {obj, hestia::HsmServiceRequestMethod::LIST_TIERS});
 
         for (const auto& tier_id : response->tiers()) {
             if (tier_id.id_uint() == tier) {
@@ -222,78 +216,81 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
 
     // Test put()
     hestia::Uuid id0{0000};
-    hestia::Uuid id1{0001};
-    hestia::Uuid id2{0002};
-
     hestia::StorageObject obj0(id0);
-    hestia::StorageObject obj1(id1);
-    hestia::StorageObject obj2(id2);
-    hestia::Stream stream0, stream1, stream2;
-    int src_tier = 0;
-    int tgt_tier = 1;
-    std::vector<hestia::Uuid> obj_ids;
-    std::vector<uint8_t> tier_ids;
-    std::string attrs;
 
-    put(obj0, &stream0, src_tier);
-    put(obj1, &stream1, src_tier);
-    put(obj2, &stream2, src_tier);
+    hestia::Stream stream;
+    uint8_t tier0_id = 0;
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
     hestia::ReadableBufferView read_buffer(content);
-    REQUIRE(stream0.write(read_buffer).ok());
-    REQUIRE(stream0.reset().ok());
+
+    obj0.m_size = content.length();
+    put(obj0, &stream, tier0_id);
+    REQUIRE(stream.write(read_buffer).ok());
+    REQUIRE(stream.reset().ok());
+
     REQUIRE(exists(obj0));
-    REQUIRE(stream1.write(read_buffer).ok());
-    REQUIRE(stream1.reset().ok());
+
+    hestia::Uuid id1{0001};
+    hestia::Uuid id2{0002};
+    hestia::StorageObject obj1(id1);
+    hestia::StorageObject obj2(id2);
+    obj1.m_size = content.length();
+    put(obj1, &stream, tier0_id);
+    REQUIRE(stream.write(read_buffer).ok());
+    REQUIRE(stream.reset().ok());
     REQUIRE(exists(obj1));
-    REQUIRE(stream2.write(read_buffer).ok());
-    REQUIRE(stream2.reset().ok());
+
+    obj2.m_size = content.length();
+    put(obj2, &stream, tier0_id);
+    REQUIRE(stream.write(read_buffer).ok());
+    REQUIRE(stream.reset().ok());
     REQUIRE(exists(obj2));
 
     // Test get()
-    get(obj0, &stream0, src_tier);
-    check_content(&stream0, content);
+    get(obj0, &stream, tier0_id);
+    check_content(&stream, content);
 
-    // Test copy() and move()
-    copy(obj0, src_tier, tgt_tier);
-    REQUIRE(is_object_on_tier(obj0, tgt_tier));
-    get(obj0, &stream0, tgt_tier);
-    check_content(&stream0, content);
+    uint8_t tier1_id = 1;
+    copy(obj0, tier0_id, tier1_id);
+    REQUIRE(is_object_on_tier(obj0, tier1_id));
 
-    move(obj2, src_tier, tgt_tier);
+    get(obj0, &stream, tier1_id);
+    check_content(&stream, content);
 
-    // TODO: JG to follow with quick fix after merge
-    return;
+    move(obj2, tier0_id, tier1_id);
+    REQUIRE_FALSE(is_object_on_tier(obj2, tier0_id));
 
-    REQUIRE_FALSE(is_object_on_tier(obj2, src_tier));
-    get(obj2, &stream2, tgt_tier);
-    check_content(&stream2, content);
+    get(obj2, &stream, tier1_id);
+    check_content(&stream, content);
 
     // Test list_objects()
-    list_objects(obj_ids, src_tier);
+    std::vector<hestia::Uuid> obj_ids;
+    list_objects(obj_ids, tier0_id);
     REQUIRE(obj_ids.size() == 2);
-    REQUIRE(obj_ids[0] == obj0.id());
-    REQUIRE(obj_ids[1] == obj1.id());
+    REQUIRE((obj_ids[0] == obj0.id() || obj_ids[0] == obj1.id()));
+    REQUIRE((obj_ids[1] == obj0.id() || obj_ids[1] == obj1.id()));
 
     // Test remove()
-    remove(obj1, src_tier);
-    REQUIRE_FALSE(is_object_on_tier(obj1, src_tier));
-    remove(obj2, tgt_tier);
-    REQUIRE_FALSE(is_object_on_tier(obj2, tgt_tier));
+    remove(obj1, tier0_id);
+    REQUIRE_FALSE(is_object_on_tier(obj1, tier0_id));
+    remove(obj2, tier1_id);
+    REQUIRE_FALSE(is_object_on_tier(obj2, tier1_id));
 
     // Test list_tiers()
+    std::vector<uint8_t> tier_ids;
     list_tiers(obj0, tier_ids);
     REQUIRE(tier_ids.size() == 2);
-    REQUIRE(tier_ids[0] == 0);
-    REQUIRE(tier_ids[1] == 1);
+    REQUIRE((tier_ids[0] == 0 || tier_ids[1] == 0));
+    REQUIRE((tier_ids[0] == 1 || tier_ids[1] == 1));
 
     // Test list_attributes()
+    std::string attrs;
     list_attributes(obj0, attrs);
     // TODO:check
 
     // Test removeall
     remove_all(obj0);
-    REQUIRE_FALSE(is_object_on_tier(obj0, src_tier));
-    REQUIRE_FALSE(is_object_on_tier(obj0, tgt_tier));
+    REQUIRE_FALSE(is_object_on_tier(obj0, tier0_id));
+    REQUIRE_FALSE(is_object_on_tier(obj0, tier1_id));
 }

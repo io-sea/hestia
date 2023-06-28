@@ -68,43 +68,51 @@ const DistributedHsmServiceConfig& DistributedHsmService::get_self_config()
     return m_config;
 }
 
-DistributedHsmServiceResponse::Ptr DistributedHsmService::register_self()
+void DistributedHsmService::register_self()
 {
-    // Check if the node exists already
-    Metadata query;
-    query.set_item("name", m_config.m_self.name());
     LOG_INFO(
         "Checking for pre-registered endpoint with name: "
         << m_config.m_self.name());
-    auto exists_response = m_node_service->make_request(query);
+
+    auto exists_response =
+        m_node_service->make_request({m_config.m_self, CrudMethod::EXISTS});
     if (!exists_response->ok()) {
         throw std::runtime_error(
             "Failed to check for pre-existing tag: "
             + exists_response->get_error().to_string());
     }
 
-    if (!exists_response->items().empty()) {
-        LOG_INFO(
-            "Found endpoint with id: "
-            << exists_response->items()[0].id().to_string());
-        m_config.m_self = exists_response->items()[0];
+    if (!exists_response->found()) {
+        LOG_INFO("Pre-existing endpoint not found - will request new one.");
+        DistributedHsmServiceRequest req(
+            m_config.m_self, DistributedHsmServiceRequestMethod::PUT);
+        LOG_INFO("Has: " << m_config.m_self.m_backends.size() << " backends");
+        auto put_response = put(req);
+        if (!put_response->ok()) {
+            LOG_ERROR(
+                "Failed to register node: "
+                + put_response->get_error().to_string());
+            throw std::runtime_error(
+                "Failed to register node: "
+                + put_response->get_error().to_string());
+        }
+        m_config.m_self = put_response->item();
+        LOG_INFO("Has: " << m_config.m_self.m_backends.size() << " backends");
     }
     else {
-        LOG_INFO("Pre-existing endpoint not found - will request new one.");
+        auto get_response =
+            m_node_service->make_request({m_config.m_self, CrudMethod::GET});
+        if (!get_response->ok()) {
+            LOG_ERROR(
+                "Failed to get node: " + get_response->get_error().to_string());
+            throw std::runtime_error(
+                "Failed to get node: " + get_response->get_error().to_string());
+        }
+        LOG_INFO(
+            "Found endpoint with id: "
+            << get_response->item().id().to_string());
+        m_config.m_self = get_response->item();
     }
-
-    DistributedHsmServiceRequest req(
-        m_config.m_self, DistributedHsmServiceRequestMethod::PUT);
-    auto put_response = put(req);
-    if (!put_response->ok()) {
-        LOG_ERROR(
-            "Failed to register node: "
-            + put_response->get_error().to_string());
-        throw std::runtime_error(
-            "Failed to register node: "
-            + put_response->get_error().to_string());
-    }
-    return put_response;
 }
 
 HsmService* DistributedHsmService::get_hsm_service()
@@ -189,14 +197,15 @@ DistributedHsmServiceResponse::Ptr DistributedHsmService::put(
         request.set_generate_id(true);
     }
 
-    const auto put_response = m_node_service->make_request(request);
+    auto put_response = m_node_service->make_request(request);
     if (!put_response->ok()) {
         ON_ERROR(
             ERROR, "Error in DistributedHsmService::put: "
                        + put_response->get_error().to_string());
     }
 
-    auto response = DistributedHsmServiceResponse::create(req);
+    auto response =
+        DistributedHsmServiceResponse::create(req, std::move(put_response));
     LOG_INFO("Finished Node service put");
     return response;
 }

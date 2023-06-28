@@ -75,6 +75,11 @@ void Model::serialize(
     dict.set_map(data);
 }
 
+void Model::reset_id()
+{
+    m_id = Uuid();
+}
+
 std::time_t Model::get_last_modified_time() const
 {
     return m_last_modified_time;

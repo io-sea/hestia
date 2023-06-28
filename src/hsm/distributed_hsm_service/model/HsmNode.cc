@@ -38,17 +38,9 @@ void HsmNode::deserialize(const Dictionary& dict, SerializeFormat format)
     if (dict.has_map_item("backends")) {
         auto backends_dict = dict.get_map_item("backends");
         for (const auto& backend_dict : backends_dict->get_sequence()) {
-            Metadata backend_data;
-            backend_dict->get_map_items(backend_data);
 
             HsmObjectStoreClientBackend backend;
-            auto on_each_backend_item =
-                [&backend](const std::string& key, const std::string& value) {
-                    if (key == "identifier") {
-                        backend.m_identifier = value;
-                    }
-                };
-            backend_data.for_each_item(on_each_backend_item);
+            backend.deserialize(*backend_dict);
             m_backends.push_back(backend);
         }
     }
@@ -73,9 +65,7 @@ void HsmNode::serialize(
 
     auto backend_seq = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
     for (const auto& backend : m_backends) {
-        auto backend_data = std::make_unique<Dictionary>();
-        backend_data->set_map({{"identifier", backend.m_identifier}});
-        backend_seq->add_sequence_item(std::move(backend_data));
+        backend_seq->add_sequence_item(backend.serialize());
     }
     dict.set_map_item("backends", std::move(backend_seq));
 }

@@ -50,6 +50,8 @@ HsmServiceRequest::HsmServiceRequest(
 std::string HsmServiceRequest::method_as_string() const
 {
     switch (m_method) {
+        case HsmServiceRequestMethod::CREATE:
+            return "CREATE";
         case HsmServiceRequestMethod::PUT:
             return "PUT";
         case HsmServiceRequestMethod::GET:

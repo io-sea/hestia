@@ -25,12 +25,17 @@ class CliTests(hestia_tests.utils.BaseTest):
         runtime_env = os.environ.copy()
         if not self.system_install:
             runtime_env = self.insert_project_paths(runtime_env)
+        runtime_env["HESTIA_CACHE_DIR"] = runtime_path / "cache"
+
+        create_cmd = f"hestia object create"
+        results = hestia_tests.utils.run_ops(runtime_path, runtime_env, [create_cmd])
+        object_id = results[0].decode("utf-8").rstrip()
+        logging.info("Created object with id: " + object_id)
         
-        object_id = "00001234"
-        put_cmd = f"hestia put {object_id} {object_content} 0"
-        get_cmd = f"hestia get {object_id} {return_cache0} 0"
-        copy_cmd = f"hestia copy {object_id} 0 1"
-        get1_cmd = f"hestia get {object_id} {return_cache1} 1"
+        put_cmd = f"hestia object put {object_id} {object_content} 0"
+        get_cmd = f"hestia object get {object_id} {return_cache0} 0"
+        copy_cmd = f"hestia object copy {object_id} 0 1"
+        get1_cmd = f"hestia object get {object_id} {return_cache1} 1"
 
         ops = [put_cmd, get_cmd, copy_cmd, get1_cmd]
         hestia_tests.utils.run_ops(runtime_path, runtime_env, ops)

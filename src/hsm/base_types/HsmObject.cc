@@ -1,5 +1,6 @@
 #include "HsmObject.h"
 
+#include "Logger.h"
 #include "UuidUtils.h"
 
 #include <algorithm>
@@ -24,18 +25,50 @@ HsmObject::HsmObject(const StorageObject& object) :
 
 void HsmObject::add_extent(uint8_t tier_id, const Extent& extent)
 {
+    Extent working_extent = extent;
+    if (working_extent.empty()) {
+        working_extent = Extent(0, m_storage_object.m_size);
+    }
+
     if (auto it = m_tier_extents.find(tier_id); it != m_tier_extents.end()) {
-        it->second.add_extent(extent);
+        it->second.add_extent(working_extent);
+        const auto size = it->second.get_size();
+        if (m_storage_object.m_size < size) {
+            m_storage_object.m_size = size;
+        }
     }
     else {
-        m_tier_extents.emplace(tier_id, TierExtents(tier_id, extent));
+        m_tier_extents.emplace(tier_id, TierExtents(tier_id, working_extent));
+        if (m_storage_object.m_size < working_extent.get_end()) {
+            m_storage_object.m_size = working_extent.get_end();
+        }
     }
 }
 
 void HsmObject::remove_extent(uint8_t tier_id, const Extent& extent)
 {
+    Extent working_extent = extent;
+    if (working_extent.empty()) {
+        working_extent = Extent(0, m_storage_object.m_size);
+    }
+
+    bool remove_tier{false};
     if (auto it = m_tier_extents.find(tier_id); it != m_tier_extents.end()) {
         it->second.remove_extent(extent);
+        std::size_t max_size{0};
+        for (const auto& [key, tier] : m_tier_extents) {
+            const auto tier_size = tier.get_size();
+            if (tier_size > max_size) {
+                max_size = tier_size;
+            }
+        }
+        m_storage_object.m_size = max_size;
+        if (it->second.empty()) {
+            remove_tier = true;
+        }
+    }
+    if (remove_tier) {
+        m_tier_extents.erase(tier_id);
     }
 }
 
@@ -97,7 +130,10 @@ bool HsmObject::is_write_locked()
     return m_write_lock.m_active;
 }
 
-void HsmObject::remove_all_but_one_tiers() {}
+void HsmObject::remove_all_tiers()
+{
+    m_tier_extents.clear();
+}
 
 StorageObject& HsmObject::object()
 {

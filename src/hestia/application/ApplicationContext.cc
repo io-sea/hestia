@@ -2,6 +2,7 @@
 
 #include "DistributedHsmService.h"
 #include "HsmObjectStoreClient.h"
+#include "NamespaceService.h"
 
 #include "HttpClient.h"
 #include "KeyValueStoreClient.h"
@@ -17,6 +18,7 @@ void ApplicationContext::clear()
     m_object_store_client.reset();
     m_http_client.reset();
     m_user_service.reset();
+    m_namespace_service.reset();
 }
 
 ApplicationContext& ApplicationContext::get()
@@ -50,6 +52,11 @@ HsmObjectStoreClient* ApplicationContext::get_object_store_client() const
     return m_object_store_client.get();
 }
 
+NamespaceService* ApplicationContext::get_namespace_service() const
+{
+    return m_namespace_service.get();
+}
+
 void ApplicationContext::set_kv_store_client(
     std::unique_ptr<KeyValueStoreClient> kv_store_client)
 {
@@ -77,5 +84,11 @@ void ApplicationContext::set_user_service(
     std::unique_ptr<UserService> user_service)
 {
     m_user_service = std::move(user_service);
+}
+
+void ApplicationContext::set_namespace_service(
+    std::unique_ptr<NamespaceService> namespace_service)
+{
+    m_namespace_service = std::move(namespace_service);
 }
 }  // namespace hestia

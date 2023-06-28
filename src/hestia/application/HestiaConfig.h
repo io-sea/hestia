@@ -19,7 +19,7 @@ class HestiaConfig {
 
     void load_defaults();
 
-    std::string m_cache_path{"hestia_cache"};
+    std::string m_cache_path;
 
     ServerConfig m_server_config;
 

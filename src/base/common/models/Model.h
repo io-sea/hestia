@@ -36,6 +36,8 @@ class Model {
 
     const Uuid& id() const;
 
+    void reset_id();
+
     virtual void serialize(
         Dictionary& dict,
         SerializeFormat format = SerializeFormat::FULL,

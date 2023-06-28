@@ -19,6 +19,7 @@ class HestiaCli {
 
     struct HsmCommand {
         enum class Method {
+            CREATE,
             PUT,
             GET,
             COPY,

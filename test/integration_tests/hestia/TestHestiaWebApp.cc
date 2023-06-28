@@ -89,13 +89,14 @@ class TestHestiaWebAppFixture {
         m_object_adapter->from_string(response->body(), object);
     }
 
-    void put_object(const hestia::HsmObject& object)
+    void put_object(hestia::HsmObject& object)
     {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::PUT);
         m_object_adapter->to_string(object, req.body());
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
+        m_object_adapter->from_string(response->body(), object);
     }
 
     void put_data(
@@ -166,17 +167,16 @@ TEST_CASE_METHOD(
     get_objects(objects);
     REQUIRE(objects.empty());
 
-    const auto id = hestia::Uuid(1234);
-    hestia::HsmObject obj(id);
+    hestia::HsmObject obj;
     put_object(obj);
 
     hestia::HsmObject returned_object;
-    get_object(id, returned_object);
-    REQUIRE(returned_object.id() == id);
+    get_object(obj.id(), returned_object);
+    REQUIRE(returned_object.id() == obj.id());
 
     get_objects(objects);
     REQUIRE(objects.size() == 1);
-    REQUIRE(objects[0].id() == id);
+    REQUIRE(objects[0].id() == obj.id());
 
     std::vector<hestia::StorageTier> tiers;
     get_tiers(tiers);
@@ -190,7 +190,6 @@ TEST_CASE_METHOD(
     put_tier(tier0);
     put_tier(tier1);
 
-    return;
     get_tiers(tiers);
     REQUIRE(tiers.size() == 2);
     REQUIRE(tiers[0].m_backend == tier0.m_backend);

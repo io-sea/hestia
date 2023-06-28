@@ -3,7 +3,9 @@
 #include "HestiaCli.h"
 #include "Logger.h"
 #include "ProjectConfig.h"
+#include "TimeUtils.h"
 
+#include <ctime>
 #include <filesystem>
 #include <iostream>
 
@@ -24,7 +26,8 @@ int main(int argc, char** argv)
     logger_config.m_assert       = false;
     logger_config.m_log_prefix   = "hestia_cli";
     logger_config.m_log_file_path =
-        std::filesystem::current_path() / "hestia_log.txt";
+        hestia_cli.m_config.m_cache_path + "/hestia_log_"
+        + std::to_string(hestia::TimeUtils::get_current_time()) + ".txt";
 
     hestia::Logger::get_instance().do_initialize(logger_config);
 

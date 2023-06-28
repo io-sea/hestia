@@ -111,7 +111,6 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
     REQUIRE(m_http_client->m_nodes[id].id() == id);
     REQUIRE(m_http_client->m_nodes[id].name() == "my_node");
 
-    return;
     REQUIRE(m_client->exists(created_node.id()));
 
     hestia::HsmNode fetched_node(id);

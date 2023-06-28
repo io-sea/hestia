@@ -27,7 +27,8 @@ void convert_move(
 void event_to_string(
     const EventFeed::Event& event, std::string& str, const bool sorted = false);
 
-void EventFeed::initialize(const EventFeedConfig& config)
+void EventFeed::initialize(
+    const std::string& cache_path, const EventFeedConfig& config)
 {
     m_config = config;
 
@@ -35,7 +36,15 @@ void EventFeed::initialize(const EventFeedConfig& config)
         return;
     }
 
-    m_output_file.open(m_config.m_event_feed_file_path, std::ios::trunc);
+    m_output_file_path = m_config.m_event_feed_file_path;
+    if (m_output_file_path.is_relative()) {
+        m_output_file_path =
+            std::filesystem::path(cache_path) / m_output_file_path;
+    }
+
+    LOG_INFO("Initializing Event Feed at: " << m_output_file_path);
+
+    m_output_file.open(m_output_file_path, std::ios::trunc);
     m_output_file.close();  // Flush output file
 }
 
@@ -52,7 +61,7 @@ void EventFeed::log_event(const EventFeed::Event& event)
         LOG_INFO("Serializing event in sorted order : Testing only")
     }
     LOG_INFO("Logging event to event feed");
-    m_output_file.open(m_config.m_event_feed_file_path, std::ios::app);
+    m_output_file.open(m_output_file_path, std::ios::app);
     m_output_file << str;
     m_output_file.close();
 }

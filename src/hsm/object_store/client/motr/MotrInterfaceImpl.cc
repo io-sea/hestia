@@ -6,6 +6,7 @@
 #include "Logger.h"
 
 #include "File.h"
+#include "UuidUtils.h"
 
 #include <iostream>
 
@@ -261,11 +262,10 @@ class IoContext {
 
 class MotrObject {
   public:
-    MotrObject(const std::string& id, bool close_on_delete = true) :
-        m_uuid(), m_close_on_delete(close_on_delete)
+    MotrObject(const Uuid& id, bool close_on_delete = true) :
+        m_uuid(id), m_close_on_delete(close_on_delete)
     {
         memset(&m_handle, 0, sizeof(m_handle));
-        m_uuid.from_string(id);
 
         // TODO - add proper motr id generation, e.g. following M0_ID_APP
         // restrictions
@@ -487,8 +487,7 @@ void MotrInterfaceImpl::put(
 
 void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid;
-    uuid.from_string(request.object().id());
+    Uuid uuid = request.object().id();
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;
@@ -507,8 +506,7 @@ void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid;
-    uuid.from_string(request.object().id());
+    Uuid uuid = request.object().id();
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;
@@ -534,8 +532,7 @@ void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid;
-    uuid.from_string(request.object().id());
+    Uuid uuid = request.object().id();
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;

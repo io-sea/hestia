@@ -129,3 +129,46 @@ hestia server --config=hestia.yaml
 ```
 
 this will block in the terminal while the service is running.
+
+# S3 API
+
+This example uses Amazon's `boto` Python S3 client library: `pip install boto3`
+
+Start the Hestia service
+
+```bash
+hestia start
+```
+
+Add an object `00001234` to tier `0`:
+
+```python
+import boto
+session = boto3.session.Session(aws_access_key_id="OPEN_KEY", aws_secret_access_key="SECRET_KEY")
+client = session.client(service_name='s3', endpoint_url="HESTIA_ENDPOINT")
+
+client.create_bucket(Bucket="my_bucket")
+
+client.upload_file(Filename=filename,
+  Bucket=bucket_name,
+  Key=key,
+  ExtraArgs={"Metadata": meta_data})
+```
+
+Copy it to another tier, tier `1`:
+
+```python
+boto.post()
+```
+
+Retrieve the version on tier `1`:
+
+```python
+boto.get()
+```
+
+Stop the Hestia service
+
+```python
+hestia stop
+```

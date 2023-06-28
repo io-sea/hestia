@@ -30,7 +30,8 @@ void HestiaServer::run()
     if (m_config.m_web_app_config.m_interface == WebAppConfig::Interface::S3) {
         LOG_INFO("Running S3 interface");
         s3_service = std::make_unique<S3Service>(
-            ApplicationContext::get().get_hsm_service());
+            ApplicationContext::get().get_hsm_service(),
+            ApplicationContext::get().get_namespace_service());
 
         HestiaS3WebAppConfig config;
         web_app = std::make_unique<HestiaS3WebApp>(

@@ -57,6 +57,7 @@ class HsmService {
         const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
 
   private:
+    HsmServiceResponse::Ptr create(const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr get(
         const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
     HsmServiceResponse::Ptr put(
@@ -74,6 +75,8 @@ class HsmService {
         const HsmServiceRequest& request) noexcept;
     HsmServiceResponse::Ptr list_attributes(
         const HsmServiceRequest& request) noexcept;
+
+    void add_put_event(const HsmObject& obj, uint8_t tier);
 
     std::unique_ptr<ObjectService> m_object_service;
     std::unique_ptr<TierService> m_tier_service;

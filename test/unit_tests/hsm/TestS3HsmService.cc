@@ -1,13 +1,16 @@
 #include <catch2/catch_all.hpp>
 
 #include "DistributedHsmServiceTestWrapper.h"
+
+#include "Dataset.h"
 #include "S3Service.h"
 
 #include "TestUtils.h"
 
 #include <iostream>
 
-#ifdef __HESTIA_DUMMY__
+#ifdef HESTIA_DUMMY
+
 class HsmS3ServiceTestFixture {
   public:
     void init(const std::string& test_name)
@@ -80,4 +83,5 @@ TEST_CASE_METHOD(
 
     REQUIRE(fetched_object == object);
 }
+
 #endif

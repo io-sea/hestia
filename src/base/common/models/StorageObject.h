@@ -18,9 +18,9 @@ class StorageObject : public OwnableModel {
     /**
      * Constructor
      *
-     * @param id A key for the object - can be path or UUID-like.
+     * @param id A name for the object - can be path or UUID-like.
      */
-    StorageObject(const std::string& key = {});
+    StorageObject(const std::string& name = {});
 
     StorageObject(const Uuid& id);
 

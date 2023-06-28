@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <fstream>
 
 namespace hestia {
@@ -28,7 +29,8 @@ class EventFeed {
 
     /// @brief Initialize an instance with the config provided
     /// @param config EventFeed configuration
-    void initialize(const EventFeedConfig& config);
+    void initialize(
+        const std::string& cache_path, const EventFeedConfig& config);
 
     /// @brief Serialize a filesystem-impacting event
     /// @param req Event data to serialize
@@ -36,6 +38,7 @@ class EventFeed {
 
   private:
     EventFeedConfig m_config;
+    std::filesystem::path m_output_file_path;
     std::ofstream m_output_file;
 };
 }  // namespace hestia

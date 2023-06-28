@@ -59,6 +59,7 @@ HttpResponse::Ptr HestiaTierView::on_put(
         if (!request.body().empty()) {
             m_tier_adapter->from_string(request.body(), tier);
         }
+        tier.reset_id();
 
         auto put_response = tier_service->make_request({tier, CrudMethod::PUT});
         if (!put_response->ok()) {

@@ -16,7 +16,8 @@ namespace hestia {
 HestiaObjectView::HestiaObjectView(DistributedHsmService* hestia_service) :
     WebView(),
     m_hestia_service(hestia_service),
-    m_object_adapter(std::make_unique<JsonAdapter<HsmObject>>())
+    m_object_adapter(std::make_unique<JsonAdapter<HsmObject>>(
+        Model::SerializeFormat::CHILD_ID))
 {
 }
 
@@ -74,8 +75,10 @@ HttpResponse::Ptr HestiaObjectView::on_get(
                 "Getting data for object: " << obj_id << " : "
                                             << request.body());
 
+            const auto obj_uuid = UuidUtils::from_string(obj_id);
+
             auto get_response = object_service->make_request(
-                {HsmObject(UuidUtils::from_string(obj_id)), CrudMethod::GET});
+                {HsmObject(obj_uuid), CrudMethod::GET});
             if (!get_response->ok()) {
                 LOG_ERROR(
                     "Failed to get object: "
@@ -83,7 +86,8 @@ HttpResponse::Ptr HestiaObjectView::on_get(
                 return HttpResponse::create(500, "Internal Server Error.");
             }
 
-            HsmServiceRequest req(obj_id, HsmServiceRequestMethod::GET);
+            HsmServiceRequest req(
+                get_response->item(), HsmServiceRequestMethod::GET);
             req.set_source_tier(std::stoi(tier));
 
             std::vector<char> body(get_response->item().object().m_size);
@@ -129,6 +133,7 @@ HttpResponse::Ptr HestiaObjectView::on_put(
         if (!request.body().empty()) {
             m_object_adapter->from_string(request.body(), obj);
         }
+        obj.reset_id();
 
         auto object_put_response =
             object_service->make_request({obj, CrudMethod::PUT});

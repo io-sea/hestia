@@ -65,7 +65,15 @@ class DistributedHsmServiceResponse :
 
     DistributedHsmServiceResponse(const DistributedHsmServiceRequest& request);
 
+    DistributedHsmServiceResponse(
+        const DistributedHsmServiceRequest& request,
+        std::unique_ptr<CrudResponse<HsmNode, CrudErrorCode>> crud_response);
+
     static Ptr create(const DistributedHsmServiceRequest& request);
+
+    static Ptr create(
+        const DistributedHsmServiceRequest& request,
+        std::unique_ptr<CrudResponse<HsmNode, CrudErrorCode>> crud_response);
 
     const HsmNode& item() const;
 
@@ -74,6 +82,8 @@ class DistributedHsmServiceResponse :
     std::vector<HsmNode>& items();
 
   private:
+    std::unique_ptr<CrudResponse<HsmNode, CrudErrorCode>> m_crud_response;
+
     HsmNode m_item;
     std::vector<HsmNode> m_items;
 };

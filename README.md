@@ -1,83 +1,102 @@
 # Hestia
 
-Hestia (Hierarchical Storage Tiers Interface for Applications) is a [Hierarchical Storage Management](https://en.wikipedia.org/wiki/Hierarchical_storage_management) (HSM) interface for Object Stores.
+Hestia (Hierarchical Storage Tiers Interface for Applications) is a [Hierarchical Storage Management](https://en.wikipedia.org/wiki/Hierarchical_storage_management) (HSM) application for Object Stores.
 
-It allows different Object Store backends to be accessed through a single HSM API - via command line interface or network requests.
+It is being developed in the context of the [IO-SEA](https://iosea-project.eu) project for Exascale Storage I/O and Data Management.
 
-Typical applications are:
+It allows different Object Store backends to be interfaced through a single HSM-enabled API.
 
-* Data migration between storage systems
+Typical use-cases are:
+
 * HSM system implementation
 * HSM system benchmarking, anaylsis and design
+* Data migration between storage systems
 
-# Sample Applications
+# Core Concepts
 
-## Config 
+The Core Concepts in Hestia are derived from the [IO-SEA](https://iosea-project.eu) project.
 
-Specify which HSM 'Tiers' are handled by which Object Stores via a `yaml` config:
+In a large-scale storage system it is useful to use the distinct concepts of an `Object Store` and a `Key-Value Store` to implement a File System, rather than a typical monolithic POSIX-implied approach.
 
-```yaml
-tier_registry:
-  - identifier: 0
-    client_identifier: hestia::MotrClient
-  - identifier: 1
-    client_identifier: hestia::MotrClient
-  - identifier: 2
-    client_identifier: hestia::S3Client
-object_store_clients:
-  - identifier: hestia::S3Client
-    source: plugin
-    type: basic
-    plugin_path: libhestia_s3_plugin
-    host: 127.0.0.1:8000
-  - identifier: hestia::MotrClient
-    source: plugin
-    type: hsm
-    plugin_path: libhestia_motr_plugin
-```
+User data is kept in an Object Store, with blobs of data labelled with a `unique identifier`. Metadata for describing the File System itself is maintained in a Key-Value store, with just the unique identifiers of the data-blobs in the Object Store referenced.
 
-## CLI
+To support user access and manipulation of large amounts of data it is useful to be able to group objects, in a `Dataset`. It is also necessary to be able to address the data. This is supported via a `Namespace`. In `IO-SEA` and `hestia` a `Namespace` is accociated with a `Dataset`, assigning File-System metadata (such as a path) to Object unique-identifiers. When a consumer mounts a `Namespace` they will load the associated `Dataset` and can address objects as they would in a typical File-System.
 
-Add an object `00001234` to tier `0`:
+`Hestia` is a middleware in the `IO-SEA` software stack, facilititating distributed communication between several other applications. As such it needs to have support for:
 
-```bash
-hestia put 00001234 my_file_in.dat 0 --config=hestia.yaml
-```
+* `Key-Value Store` integration
+* `Object Store` integration
+* `HSM` concepts, such as `Storage Tier`s
+* `Dataset` and `Namespace` IO-SEA concepts
+* Mappings from standard addressing schemes (e.g. S3, REST) to IO-SEA concepts
+* Distributed Communication and Syncronization over a network
 
-Copy it to another tier, tier `1`:
+Currently the software is an `alpha` state - interfaces are being designed for the above requirements and basic implementations added.
 
-```bash
-hestia copy 00001234 0 1 --config=hestia.yaml
-```
+# Runtime Modes
 
-Retrieve the version on tier `1`:
+The `hestia` application has four primary runtime modes:
+
+* `Client`: Used to operate directly with Object Stores at a low-level, or with Datasets and Namespaces at a higher level.
+* `Client - Standalone`: A single-node version of Hestia, useful for testing.
+* `Server - Controller`: Used as an entry-point and co-ordiantor for the Hestia Distributed System. Has direct access to the Key-Value Store interface.
+* `Server - Worker`: Accepts commands from the Controller and provides an access-point for large user data access requests. 
+
+In all modes the application can read from a user provided `config` file on the system on launch and maintain a small local `cache` for runtime settings.
+
+# Sample Client Applications
+
+## Low-level CLI
+
+Request an identifier for a new object
 
 ```bash
-hestia get 00001234 my_file_out.dat 1 --config=hestia.yaml
+hestia object create
 ```
 
-## Http
+The identifier will be returned in the console in [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) format :
 
-```yaml
-server:
-  host_address: 127.0.0.1
-  host_port: 8080
-  web_app: hestia::HsmService
-  backend: hestia::Basic
-  ...
+```bash
+>>> 550e8400-e29b-41d4-a716-446655440000
 ```
+
+Add data from `my_file_in.dat` to this object. By default it will go to the 'fastest' Storage Tier, tier `0`:
+
+```bash
+hestia object put 550e8400-e29b-41d4-a716-446655440000 my_file_in.dat
+```
+
+Copy the contents of the object to another Storage Tier, tier `1`:
+
+```bash
+hestia object copy 550e8400-e29b-41d4-a716-446655440000 0 1
+```
+
+Retrieve the content of the object on tier `1` and write it to `my_file_out.dat`:
+
+```bash
+hestia object get 550e8400-e29b-41d4-a716-446655440000 my_file_out.dat 1
+```
+
+## Low-level REST API
 
 Start the Hestia service
 
 ```bash
 export HESTIA_ENDPOINT=127.0.0.1:8080
-hestia start --config=hestia.yaml
+hestia start
 ```
 
-Add an object `00001234` to tier `0`:
+Create a new object
 
 ```bash
-curl -X PUT --upload-file "my_file.dat" $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/0
+curl -X PUT $HESTIA_ENDPOINT/api/v1/hsm/objects
+```
+
+The object id will be returned in the response in `json` format. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` on tier `0` do:
+
+```bash
+curl -X PUT --upload-file "my_file.dat" $HESTIA_ENDPOINT/api/v1/hsm/objects/550e8400-e29b-41d4-a716-446655440000/tiers/0
 ```
 
 Copy it to another tier, tier `1`:
@@ -85,19 +104,13 @@ Copy it to another tier, tier `1`:
 ```bash
 curl -X PUT -H "hestia-hsm-method: copy" \ 
             -H "hestia-hsm-source-tier: 0" \
-            $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/1
+            $HESTIA_ENDPOINT/api/v1/hsm/objects/550e8400-e29b-41d4-a716-446655440000/tiers/1
 ```
 
-Retrieve the version on tier `1`:
+Retrieve the data from the version on tier `1`:
 
 ```bash
-curl $HESTIA_ENDPOINT/api/v1/hsm/objects/000012345/tiers/1/data
-```
-
-List the hestia nodes in the system:
-
-```bash
-curl $HESTIA_ENDPOINT/api/v1/nodes/
+curl $HESTIA_ENDPOINT/api/v1/hsm/objects/550e8400-e29b-41d4-a716-446655440000/tiers/1/data
 ```
 
 Stop the Hestia service
@@ -106,63 +119,11 @@ Stop the Hestia service
 hestia stop
 ```
 
-## S3
-
-This example uses Amazon's `boto` Python S3 client library: `pip install boto3`
-
-```yaml
-server:
-  host_address: 127.0.0.1
-  host_port: 8080
-  web_app: hestia::HsmS3Service
-  backend: hestia::Basic
-  ...
-```
-
-Start the Hestia service
-
-```bash
-hestia start --config=hestia.yaml
-```
-
-Add an object `00001234` to tier `0`:
-
-```python
-import boto
-session = boto3.session.Session(aws_access_key_id="OPEN_KEY", aws_secret_access_key="SECRET_KEY")
-client = session.client(service_name='s3', endpoint_url="HESTIA_ENDPOINT")
-
-client.create_bucket(Bucket="my_bucket")
-
-client.upload_file(Filename=filename,
-  Bucket=bucket_name,
-  Key=key,
-  ExtraArgs={"Metadata": meta_data})
-```
-
-Copy it to another tier, tier `1`:
-
-```python
-boto.post()
-```
-
-Retrieve the version on tier `1`:
-
-```python
-boto.get()
-```
-
-Stop the Hestia service
-
-```python
-hestia stop
-```
-
-For more details see the [Hestia User Guide](./doc/UserGuide.md).
+For more details on `Server` setup and other client interfaces like `S3` see the [Hestia User Guide](./doc/UserGuide.md).
 
 # Building from Source
 
-Hestia is supported on Linux (`Rocky 8` is the primary platform) and Mac. 
+Hestia is supported on Linux (`RHEL 8` is the primary development platform) and Mac. 
 
 ## Dependencies
 

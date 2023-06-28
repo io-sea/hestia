@@ -102,6 +102,8 @@ HsmServiceResponse::Ptr HsmService::make_request(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
     switch (req.method()) {
+        case HsmServiceRequestMethod::CREATE:
+            return create(req);
         case HsmServiceRequestMethod::GET:
             return get(req, stream);
         case HsmServiceRequestMethod::PUT:
@@ -128,6 +130,21 @@ HsmServiceResponse::Ptr HsmService::make_request(
     }
 }
 
+HsmServiceResponse::Ptr HsmService::create(
+    const HsmServiceRequest& req) noexcept
+{
+    LOG_INFO("Starting HSMService CREATE: " + req.to_string());
+
+    auto put_response =
+        m_object_service->make_request({req.object(), CrudMethod::PUT});
+    ERROR_CHECK(put_response);
+
+    auto response = HsmServiceResponse::create(req, std::move(put_response));
+    LOG_INFO("Finished HSMService PUT");
+
+    return response;
+}
+
 HsmServiceResponse::Ptr HsmService::put(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
 {
@@ -142,64 +159,46 @@ HsmServiceResponse::Ptr HsmService::put(
         ON_ERROR(BAD_PUT_OVERWRITE_COMBINATION, msg);
     }
 
+    // Create or Update object
+    auto put_response =
+        m_object_service->make_request({req.object(), CrudMethod::PUT});
+    ERROR_CHECK(put_response);
+
     if (stream != nullptr) {
+
+        HsmObject working_object(put_response->item());
+
         const auto chosen_tier = m_placement_engine->choose_tier(
-            req.object().object().m_size, req.target_tier());
+            working_object.object().m_size, req.target_tier());
 
         HsmObjectStoreRequest data_put_request(
-            req.object().object(), HsmObjectStoreRequestMethod::PUT);
+            working_object.object(), HsmObjectStoreRequestMethod::PUT);
         data_put_request.set_target_tier(chosen_tier);
         data_put_request.set_extent(req.extent());
-        if (req.should_overwrite_put()) {
-            data_put_request.object().update_modified_time();
-        }
-        else {
-            data_put_request.object().initialize_timestamps();
-        }
+
         auto data_put_response =
             m_object_store->make_request(data_put_request, stream);
         ERROR_CHECK(data_put_response);
 
-        // Update metadata
-        auto obj = req.object();
-        HsmObject hsm_object(obj);
-        if (!req.extent().empty()) {
-            hsm_object.add_extent(chosen_tier, req.extent());
-        }
-        else {
-            hsm_object.add_extent(
-                chosen_tier, {0, req.object().object().m_size});
-        }
-
-        ObjectServiceRequest obj_put_request(hsm_object, CrudMethod::PUT);
+        working_object.add_extent(chosen_tier, req.extent());
 
         auto object_put_response =
-            m_object_service->make_request(obj_put_request);
+            m_object_service->make_request({working_object, CrudMethod::PUT});
         auto response =
             HsmServiceResponse::create(req, std::move(object_put_response));
 
         LOG_INFO("Finished HSMService PUT");
 
-        if (m_event_feed) {
-            EventFeed::Event event;
-            event.m_id          = UuidUtils::to_string(req.object().id());
-            event.m_length      = req.object().object().m_size;
-            event.m_method      = EventFeed::Event::Method::PUT;
-            event.m_target_tier = req.target_tier();
-            m_event_feed->log_event(event);
-        }
-
+        add_put_event(working_object, chosen_tier);
         return response;
     }
 
-    ObjectServiceRequest obj_put_request(req.object(), CrudMethod::PUT);
-    auto object_put_response = m_object_service->make_request(obj_put_request);
-    auto response =
-        HsmServiceResponse::create(req, std::move(object_put_response));
+    auto response = HsmServiceResponse::create(req, std::move(put_response));
     LOG_INFO("Finished HSMService PUT");
 
     return response;
 }
+
 
 HsmServiceResponse::Ptr HsmService::get(
     const HsmServiceRequest& req, hestia::Stream* stream) noexcept
@@ -272,14 +271,7 @@ HsmServiceResponse::Ptr HsmService::copy(const HsmServiceRequest& req) noexcept
     ERROR_CHECK(get_response);
 
     auto hsm_object = get_response->item();
-
-    if (!req.extent().empty()) {
-        hsm_object.add_extent(req.target_tier(), req.extent());
-    }
-    else {
-        hsm_object.add_extent(
-            req.target_tier(), {0, hsm_object.object().m_size});
-    }
+    hsm_object.add_extent(req.target_tier(), req.extent());
 
     // Should also update last modified time here
     auto put_response =
@@ -339,16 +331,8 @@ HsmServiceResponse::Ptr HsmService::move(const HsmServiceRequest& req) noexcept
 
     auto hsm_object = get_response->item();
 
-    if (!req.extent().empty()) {
-        hsm_object.remove_extent(req.source_tier(), req.extent());
-        hsm_object.add_extent(req.target_tier(), req.extent());
-    }
-    else {
-        hsm_object.remove_extent(
-            req.source_tier(), {0, hsm_object.object().m_size});
-        hsm_object.add_extent(
-            req.target_tier(), {0, hsm_object.object().m_size});
-    }
+    hsm_object.remove_extent(req.source_tier(), req.extent());
+    hsm_object.add_extent(req.target_tier(), req.extent());
 
     auto put_response =
         m_object_service->make_request({hsm_object, CrudMethod::PUT});
@@ -375,7 +359,7 @@ HsmServiceResponse::Ptr HsmService::remove(
         m_object_service->make_request({req.object(), CrudMethod::GET});
 
     auto hsm_object = obj_get_request->item();
-    hsm_object.remove_tier(req.source_tier());
+    hsm_object.remove_extent(req.source_tier(), req.extent());
 
     auto object_put_response =
         m_object_service->make_request({hsm_object, CrudMethod::PUT});
@@ -414,6 +398,8 @@ HsmServiceResponse::Ptr HsmService::remove_all(
             m_object_store->make_request(remove_data_request);
         ERROR_CHECK(remove_data_response);
     }
+
+    hsm_object.remove_all_tiers();
 
     auto object_put_response =
         m_object_service->make_request({hsm_object, CrudMethod::REMOVE});
@@ -510,5 +496,20 @@ HsmServiceResponse::Ptr HsmService::list_attributes(
 
     return HsmServiceResponse::create(req, std::move(get_response));
 }
+
+void HsmService::add_put_event(const HsmObject& obj, uint8_t tier)
+{
+    if (!m_event_feed) {
+        return;
+    }
+
+    EventFeed::Event event;
+    event.m_id          = UuidUtils::to_string(obj.id());
+    event.m_length      = obj.object().m_size;
+    event.m_method      = EventFeed::Event::Method::PUT;
+    event.m_target_tier = tier;
+    m_event_feed->log_event(event);
+}
+
 
 }  // namespace hestia

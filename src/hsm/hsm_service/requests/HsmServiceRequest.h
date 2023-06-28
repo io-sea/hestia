@@ -10,6 +10,7 @@
 
 namespace hestia {
 enum class HsmServiceRequestMethod {
+    CREATE,
     PUT,
     GET,
     EXISTS,

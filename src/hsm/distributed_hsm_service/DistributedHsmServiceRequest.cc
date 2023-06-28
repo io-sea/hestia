@@ -95,6 +95,28 @@ DistributedHsmServiceResponse::DistributedHsmServiceResponse(
 {
 }
 
+DistributedHsmServiceResponse::DistributedHsmServiceResponse(
+    const DistributedHsmServiceRequest& request,
+    std::unique_ptr<CrudResponse<HsmNode, CrudErrorCode>> crud_response) :
+    Response<DistributedHsmServiceErrorCode>(request)
+{
+    m_crud_response = std::move(crud_response);
+    if (!m_crud_response->ok()) {
+        on_error(
+            {DistributedHsmServiceErrorCode::ERROR,
+             "Error in crud response: "
+                 + m_crud_response->get_error().to_string()});
+    }
+}
+
+DistributedHsmServiceResponse::Ptr DistributedHsmServiceResponse::create(
+    const DistributedHsmServiceRequest& request,
+    std::unique_ptr<CrudResponse<HsmNode, CrudErrorCode>> crud_response)
+{
+    return std::make_unique<DistributedHsmServiceResponse>(
+        request, std::move(crud_response));
+}
+
 DistributedHsmServiceResponse::Ptr DistributedHsmServiceResponse::create(
     const DistributedHsmServiceRequest& request)
 {
@@ -103,11 +125,18 @@ DistributedHsmServiceResponse::Ptr DistributedHsmServiceResponse::create(
 
 const HsmNode& DistributedHsmServiceResponse::item() const
 {
+    if (m_crud_response) {
+        return m_crud_response->item();
+    }
+
     return m_item;
 }
 
 const std::vector<HsmNode>& DistributedHsmServiceResponse::items() const
 {
+    if (m_crud_response) {
+        return m_crud_response->items();
+    }
     return m_items;
 }
 

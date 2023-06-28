@@ -15,7 +15,22 @@ void TierExtents::add_extent(const Extent& extent)
 
 void TierExtents::remove_extent(const Extent& extent)
 {
-    m_extents.erase(extent.m_offset);
+    if (m_extents.size() == 1) {
+        m_extents.erase(extent.m_offset);
+    }
+}
+
+bool TierExtents::empty() const
+{
+    return m_extents.empty();
+}
+
+std::size_t TierExtents::get_size() const
+{
+    if (m_extents.empty()) {
+        return 0;
+    }
+    return m_extents.rbegin()->second.get_end();
 }
 
 void TierExtents::read_lock()
@@ -91,9 +106,11 @@ void TierExtents::deserialize(const Dictionary& dict)
         }
         else if (key == "extents") {
             if (dict_item->get_type() == Dictionary::Type::SEQUENCE) {
-                std::size_t offset{0};
-                std::size_t length{0};
+
                 for (const auto& extent_dict : dict_item->get_sequence()) {
+                    std::size_t offset{0};
+                    std::size_t length{0};
+
                     if (auto offset_dict = extent_dict->get_map_item("offset");
                         offset_dict != nullptr) {
                         if (!offset_dict->get_scalar().empty()) {
@@ -106,8 +123,8 @@ void TierExtents::deserialize(const Dictionary& dict)
                             length = std::stoul(length_dict->get_scalar());
                         }
                     }
+                    m_extents.emplace(offset, Extent{offset, length});
                 }
-                m_extents.emplace(offset, Extent{offset, length});
             }
         }
     }

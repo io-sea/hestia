@@ -11,11 +11,15 @@ namespace hestia {
 
 class TierExtents {
   public:
-    TierExtents(uint8_t tier_id = 0, const Extent& extent = {});
+    TierExtents() = default;
+
+    TierExtents(uint8_t tier_id, const Extent& extent);
 
     void add_extent(const Extent& extent);
 
     void remove_extent(const Extent& extent);
+
+    bool empty() const;
 
     void read_lock();
 
@@ -34,6 +38,8 @@ class TierExtents {
     void deserialize(const Dictionary& dict);
 
     uint8_t tier() const { return m_tier_id; }
+
+    std::size_t get_size() const;
 
   private:
     uint8_t m_tier_id{0};

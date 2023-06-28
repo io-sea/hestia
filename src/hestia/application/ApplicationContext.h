@@ -8,6 +8,7 @@ class KeyValueStoreClient;
 class HttpClient;
 class HsmObjectStoreClient;
 class UserService;
+class NamespaceService;
 
 class ApplicationContext {
   public:
@@ -25,6 +26,8 @@ class ApplicationContext {
 
     UserService* get_user_service() const;
 
+    NamespaceService* get_namespace_service() const;
+
     void set_hsm_service(std::unique_ptr<DistributedHsmService> hsm_service);
 
     void set_kv_store_client(
@@ -37,11 +40,15 @@ class ApplicationContext {
 
     void set_user_service(std::unique_ptr<UserService> user_service);
 
+    void set_namespace_service(
+        std::unique_ptr<NamespaceService> namespace_service);
+
   private:
     std::unique_ptr<KeyValueStoreClient> m_kv_store_client;
     std::unique_ptr<HttpClient> m_http_client;
     std::unique_ptr<HsmObjectStoreClient> m_object_store_client;
     std::unique_ptr<DistributedHsmService> m_hsm_service;
     std::unique_ptr<UserService> m_user_service;
+    std::unique_ptr<NamespaceService> m_namespace_service;
 };
 }  // namespace hestia

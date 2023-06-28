@@ -30,8 +30,8 @@ TEST_CASE("Test HsmNodeAdapter", "[hsm]")
 
 TEST_CASE("Test HsmNodeAdapter - Node List", "[hsm]")
 {
-    const auto id0 = hestia::Uuid(1234);
-    const auto id1 = hestia::Uuid(5678);
+    hestia::Uuid id0(1234);
+    hestia::Uuid id1(5678);
 
     hestia::HsmNode node0(id0);
     node0.m_host_address = "127.0.0.1:8000";

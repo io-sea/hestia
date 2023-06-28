@@ -3,9 +3,9 @@
 namespace hestia {
 StorageTier::StorageTier() : Model("tier") {}
 
-StorageTier::StorageTier(const std::string& id) : Model(id, "tier") {}
+StorageTier::StorageTier(const std::string& name) : Model(name, "tier") {}
 
-StorageTier::StorageTier(uint8_t id) : Model(std::to_string(id), "tier") {}
+StorageTier::StorageTier(uint8_t name) : Model(std::to_string(name), "tier") {}
 
 uint8_t StorageTier::id_uint() const
 {

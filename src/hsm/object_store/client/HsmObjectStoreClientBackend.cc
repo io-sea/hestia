@@ -61,6 +61,43 @@ bool HsmObjectStoreClientBackend::is_hsm() const
     return m_type == Type::HSM;
 }
 
+Dictionary::Ptr HsmObjectStoreClientBackend::serialize() const
+{
+    auto dict = std::make_unique<Dictionary>();
+
+    dict->set_map(
+        {{"identifier", m_identifier},
+         {"type", m_type == Type::HSM ? "hsm" : "basic"}});
+
+    auto metadata_dict = std::make_unique<Dictionary>();
+    metadata_dict->set_map(m_extra_config.get_raw_data());
+
+    dict->set_map_item("extra_config", std::move(metadata_dict));
+
+    return dict;
+}
+
+void HsmObjectStoreClientBackend::deserialize(const Dictionary& dict)
+{
+    Metadata scalar_data;
+    dict.get_map_items(scalar_data);
+
+    auto each_item = [this](const std::string& key, const std::string& value) {
+        if (key == "identifier") {
+            m_identifier = value;
+        }
+        else if (key == "type") {
+            m_type = value == "hsm" ? Type::HSM : Type::BASIC;
+        }
+    };
+    scalar_data.for_each_item(each_item);
+
+    auto extra_config_dict = dict.get_map_item("extra_config");
+    if (extra_config_dict != nullptr) {
+        extra_config_dict->get_map_items(m_extra_config);
+    }
+}
+
 std::string HsmObjectStoreClientBackend::to_string() const
 {
     const std::string type_str = m_type == Type::BASIC ? "Basic" : "HSM";

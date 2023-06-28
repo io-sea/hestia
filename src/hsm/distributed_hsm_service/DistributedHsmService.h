@@ -47,7 +47,7 @@ class DistributedHsmService {
         const DistributedHsmServiceRequest& req) const noexcept;
 
   private:
-    DistributedHsmServiceResponse::Ptr register_self();
+    void register_self();
 
     DistributedHsmServiceResponse::Ptr get(
         const DistributedHsmServiceRequest& req) const;

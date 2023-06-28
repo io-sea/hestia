@@ -24,6 +24,10 @@ class HsmObjectStoreClientBackend {
 
     void set_type(const std::string& type);
 
+    Dictionary::Ptr serialize() const;
+
+    void deserialize(const Dictionary& dict);
+
     bool is_hsm() const;
 
     std::string to_string() const;

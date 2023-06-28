@@ -4,6 +4,7 @@ import tarfile
 import subprocess
 import sys
 import requests
+import os
 
 class BaseTest(object):
 
@@ -127,7 +128,13 @@ def install_package(work_dir: Path, package_path: Path, project_name: str) -> bo
     return system_install
 
 def run_ops(runtime_path: Path, runtime_env, ops: list):
+    result_output = []
     for op in ops:
         logging.info("Launching: " + op)
-        subprocess.run(op, shell=True, cwd=runtime_path, env=runtime_env)
+        results = subprocess.run(op, shell=True, cwd=runtime_path, env=runtime_env, stdout=subprocess.PIPE)
+        if results.returncode != 0:
+            logging.info("Failed running: " + op)
+            raise RuntimeError("External process call failed with code: " + str(results.returncode))
+        result_output.append(results.stdout)
         logging.info("Finished CLI command")
+    return result_output

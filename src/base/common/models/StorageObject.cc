@@ -1,5 +1,7 @@
 #include "StorageObject.h"
 
+#include "UuidUtils.h"
+
 #include <chrono>
 
 namespace hestia {
@@ -58,7 +60,7 @@ bool StorageObject::empty() const
 std::string StorageObject::to_string() const
 {
     std::string ret;
-    ret += "Id: " + m_id.to_string() + " | ";
+    ret += "Id: " + UuidUtils::to_string(m_id) + " | ";
     ret += "Name: " + m_name + " | ";
     ret += "Metadata: {";
     ret += m_metadata.to_string() + "}";

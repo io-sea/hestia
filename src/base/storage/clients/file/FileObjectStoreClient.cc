@@ -140,7 +140,7 @@ void FileObjectStoreClient::get(
 
     if (!exists(object)) {
         const std::string msg =
-            "Requested object: " + object.id().to_string()
+            "Requested object: " + UuidUtils::to_string(object.id())
             + " not found in: " + get_data_path(object.id()).string();
         LOG_ERROR(msg);
         throw ObjectStoreException(
@@ -212,15 +212,15 @@ void FileObjectStoreClient::read_metadata(StorageObject& object) const
 std::filesystem::path FileObjectStoreClient::get_data_path(
     const Uuid& object_id, const std::filesystem::path& root) const
 {
-    return root.empty() ? m_root / (object_id.to_string() + ".data") :
-                          root / (object_id.to_string() + ".data");
+    std::string id = UuidUtils::to_string(object_id);
+    return root.empty() ? m_root / (id + ".data") : root / (id + ".data");
 }
 
 std::filesystem::path FileObjectStoreClient::get_metadata_path(
     const Uuid& object_id, const std::filesystem::path& root) const
 {
-    return root.empty() ? m_root / (object_id.to_string() + ".meta") :
-                          root / (object_id.to_string() + ".meta");
+    std::string id = UuidUtils::to_string(object_id);
+    return root.empty() ? m_root / (id + ".meta") : root / (id + ".meta");
 }
 
 bool FileObjectStoreClient::exists(const Uuid& object_id) const

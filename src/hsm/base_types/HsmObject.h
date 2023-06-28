@@ -17,7 +17,7 @@ class HsmObject : public OwnableModel {
 
     HsmObject(const StorageObject& object);
 
-    void add_extent(uint8_t tier_id, const Extent& extent);
+    void add_extent(uint8_t tier_id, const Extent& extent = {});
 
     const Uuid& dataset() const;
 
@@ -37,7 +37,7 @@ class HsmObject : public OwnableModel {
 
     void remove_tier(uint8_t tier_id);
 
-    void remove_all_but_one_tiers();
+    void remove_all_tiers();
 
     void read_lock();
 

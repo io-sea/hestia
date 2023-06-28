@@ -55,6 +55,7 @@ HttpResponse::Ptr HestiaNodeView::on_put(
             HsmNode node;
             LOG_INFO("Trying to serialize: " << request.body());
             JsonAdapter<HsmNode>().from_string(request.body(), node);
+            node.reset_id();
 
             auto put_response = m_hestia_service->make_request(
                 {node, DistributedHsmServiceRequestMethod::PUT});
@@ -63,7 +64,7 @@ HttpResponse::Ptr HestiaNodeView::on_put(
             }
 
             std::string body;
-            JsonAdapter<HsmNode>().to_string(node, body);
+            JsonAdapter<HsmNode>().to_string(put_response->item(), body);
             response->set_body(body);
         }
     }

@@ -18,6 +18,7 @@
 #include "HsmService.h"
 
 #include "DatasetService.h"
+#include "NamespaceService.h"
 #include "ObjectService.h"
 #include "TierService.h"
 #include "UserService.h"
@@ -31,6 +32,7 @@ namespace hestia {
 OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 {
     m_config = config;
+    LOG_INFO("Initializing Hestia with cache path: " + m_config.m_cache_path);
 
     CurlClientConfig http_client_config;
     auto http_client = std::make_unique<CurlClient>(http_client_config);
@@ -103,6 +105,22 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
             dataset_service_config,
             ApplicationContext::get().get_http_client());
     }
+
+    std::unique_ptr<NamespaceService> namespace_service;
+    NamespaceServiceConfig namespace_service_config;
+    namespace_service_config.m_global_prefix = "hestia";
+    if (m_config.m_server_config.m_controller) {
+        namespace_service = NamespaceService::create(
+            namespace_service_config,
+            ApplicationContext::get().get_kv_store_client());
+    }
+    else {
+        namespace_service = NamespaceService::create(
+            namespace_service_config,
+            ApplicationContext::get().get_http_client());
+    }
+    ApplicationContext::get().set_namespace_service(
+        std::move(namespace_service));
 
     std::unique_ptr<UserService> user_service;
     UserServiceConfig user_service_config;
@@ -188,15 +206,35 @@ OpStatus HestiaConfigurator::initialize(const HestiaConfig& config)
 
 bool HestiaConfigurator::set_up_tiers(TierService* tier_service)
 {
-    for (const auto& [id, tier] : m_config.m_tiers) {
-        LOG_INFO("Adding tier: " << std::to_string(id) << " to Tier service");
+    if (m_config.m_tiers.empty()) {
+        return true;
+    }
 
-        CrudRequest<StorageTier> request(tier, CrudMethod::PUT);
-        request.set_generate_id(true);
-        auto response = tier_service->make_request(request);
-        if (!response->ok()) {
-            LOG_ERROR("Failed to PUT tier in initialization.");
-            return false;
+    LOG_INFO("Check for new Tiers to add.");
+
+    auto tiers_list_response =
+        tier_service->make_request(CrudMethod::MULTI_GET);
+    for (const auto& [id, tier] : m_config.m_tiers) {
+
+        bool found{false};
+        for (const auto& tier : tiers_list_response->items()) {
+            if (tier.name() == std::to_string(id)) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            LOG_INFO(
+                "Adding tier: " << std::to_string(id) << " to Tier service");
+
+            CrudRequest<StorageTier> request(tier, CrudMethod::PUT);
+            request.set_generate_id(true);
+            auto response = tier_service->make_request(request);
+            if (!response->ok()) {
+                LOG_ERROR("Failed to PUT tier in initialization.");
+                return false;
+            }
         }
     }
     return true;
@@ -235,10 +273,8 @@ HestiaConfigurator::set_up_data_placement_engine(TierService* tier_service)
 
 std::unique_ptr<EventFeed> HestiaConfigurator::set_up_event_feed()
 {
-    LOG_INFO("Setting up event feed");
     auto event_feed = std::make_unique<EventFeed>();
-
-    event_feed->initialize(m_config.m_event_feed_config);
+    event_feed->initialize(m_config.m_cache_path, m_config.m_event_feed_config);
 
     return event_feed;
 }

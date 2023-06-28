@@ -7,6 +7,7 @@ add_module(
         HestiaCppInterface.h
         application/ApplicationContext.h
         application/HestiaConfig.h
+        application/HestiaCache.h
         application/HestiaConfigurator.h
         application/HestiaServer.h
         application/ServerConfig.h
@@ -30,6 +31,7 @@ add_module(
         HestiaCppInterface.cc
         application/ApplicationContext.cc
         application/HestiaConfig.cc
+        application/HestiaCache.cc
         application/HestiaConfigurator.cc
         application/HestiaServer.cc
         application/ServerConfig.cc

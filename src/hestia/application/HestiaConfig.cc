@@ -1,5 +1,6 @@
 #include "HestiaConfig.h"
 
+#include "HestiaCache.h"
 #include "Logger.h"
 #include "YamlUtils.h"
 
@@ -38,6 +39,7 @@ void HestiaConfig::load_server_config(const Dictionary& config)
 
 void HestiaConfig::load_defaults()
 {
+    m_cache_path = HestiaCache::get_default_cache_dir();
     load_object_store_defaults();
     load_kv_store_defaults();
     load_event_feed_defaults();
@@ -51,6 +53,8 @@ void HestiaConfig::load_object_store_defaults()
         HsmObjectStoreClientBackend::Type::HSM,
         HsmObjectStoreClientBackend::Source::BUILT_IN,
         "hestia::FileHsmObjectStoreClient");
+    client_config.m_extra_config.set_item("root", default_root);
+
     m_backends.emplace(client_config.m_identifier, client_config);
 
     for (uint8_t idx = 0; idx < 5; idx++) {
@@ -132,8 +136,6 @@ void HestiaConfig::load_event_feed(const Dictionary& event_feed_config)
 
 void HestiaConfig::load_event_feed_defaults()
 {
-    m_event_feed_config.m_event_feed_file_path =
-        std::filesystem::current_path() / "event-feed.yaml";
     m_event_feed_config.m_active      = true;
     m_event_feed_config.m_sorted_keys = false;
 }
@@ -142,6 +144,10 @@ void HestiaConfig::load(const Dictionary& dict)
 {
     if (auto cache_loc = dict.get_map_item("cache_location"); cache_loc) {
         m_cache_path = cache_loc->get_scalar();
+    }
+
+    if (m_cache_path.empty()) {
+        m_cache_path = HestiaCache::get_default_cache_dir();
     }
 
     auto backends = dict.get_map_item("object_store_clients");

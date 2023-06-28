@@ -23,6 +23,8 @@ add_module(
         hsm_service/requests/HsmServiceRequest.h
         hsm_service/requests/HsmServiceError.h 
         key_value_store/KeyValueStoreClientFactory.h
+        namespace_service/Namespace.h 
+        namespace_service/NamespaceService.h 
         object_service/ObjectService.h
         tier_service/TierService.h 
         s3_service/S3Service.h
@@ -45,6 +47,8 @@ add_module(
         hsm_service/requests/HsmServiceRequest.cc
         hsm_service/requests/HsmServiceError.cc
         key_value_store/KeyValueStoreClientFactory.cc
+        namespace_service/Namespace.cc 
+        namespace_service/NamespaceService.cc 
         object_service/ObjectService.cc
         tier_service/TierService.cc 
         s3_service/S3Service.cc
@@ -59,6 +63,7 @@ add_module(
         hsm_service/model
         hsm_service/requests
         key_value_store
+        namespace_service
         object_service
         tier_service
         s3_service

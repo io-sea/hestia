@@ -46,13 +46,18 @@ class PhobosTests(hestia_tests.utils.BaseTest):
             runtime_env["LD_LIBRARY_PATH"] = "/usr/lib/hestia/:/usr/lib64/phobos"
         
         runtime_env["PYTHONPATH"] = f"{self.phobos_install_dir}/src/cli/build/lib.linux-x86_64-3.6"
-
+        runtime_env["HESTIA_CACHE_DIR"] = runtime_path / "cache"
+        
         hestia_config=self.work_dir / "test_data" / "configs" / "hestia_phobos_tests.yaml"
 
-        object_id = "00001234"
+        create_cmd = f"hestia object create --config={hestia_config}"
+        results = hestia_tests.utils.run_ops(runtime_path, runtime_env, [create_cmd])
+        object_id = results[0].decode("utf-8").rstrip()
+        logging.info("Created object with id: " + object_id)
+
         cat_cmd = f"cat {runtime_path}/hestia_log.txt"
-        put_cmd = f"hestia put {object_id} {object_content} 0 --config={hestia_config}"
-        get_cmd = f"hestia get {object_id} {return_cache0} 0 --config={hestia_config}"
+        put_cmd = f"hestia object put {object_id} {object_content} 0 --config={hestia_config}"
+        get_cmd = f"hestia object get {object_id} {return_cache0} 0 --config={hestia_config}"
         
         # TODO: Enable with copytool completion
         # copy_cmd = f"hestia copy {object_id} 0 1 --config={hestia_config}"
