@@ -49,7 +49,7 @@ class RedisKeyValueStoreClient : public KeyValueStoreClient {
 
   private:
     std::unique_ptr<RedisReplyWrapper> make_request(
-        const std::string& request) const;
+        const std::string& request, const std::string& json = "") const;
 
     RedisKeyValueStoreClientConfig m_config;
     std::unique_ptr<RedisContextWrapper> m_context;

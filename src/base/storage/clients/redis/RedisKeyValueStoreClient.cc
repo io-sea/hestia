@@ -30,8 +30,7 @@ class RedisReplyWrapper {
     std::string as_string_or_nill()
     {
         if (m_reply->type == REDIS_REPLY_STRING) {
-            // Unwrap ' from return value
-            return std::string(m_reply->str + 1, m_reply->len - 2);
+            return std::string(m_reply->str, m_reply->len);
         }
         else if (m_reply->type != REDIS_REPLY_NIL) {
             LOG_ERROR("Error making GET request");
@@ -50,8 +49,7 @@ class RedisReplyWrapper {
         for (std::size_t idx = 0; idx < m_reply->elements; idx++) {
             auto each_reply = m_reply->element[idx];
             if (each_reply->type == REDIS_REPLY_STRING) {
-                array.push_back(
-                    std::string(each_reply->str + 1, each_reply->len - 2));
+                array.push_back(std::string(each_reply->str, each_reply->len));
             }
             else if (m_reply->type != REDIS_REPLY_NIL) {
                 LOG_ERROR("Error making MULTIGET request");
@@ -162,10 +160,18 @@ void RedisKeyValueStoreClient::do_initialize(
 }
 
 std::unique_ptr<RedisReplyWrapper> RedisKeyValueStoreClient::make_request(
-    const std::string& request) const
+    const std::string& request, const std::string& json) const
 {
-    auto reply = reinterpret_cast<redisReply*>(
-        redisCommand(m_context->m_context, request.c_str()));
+    redisReply* reply;
+    if (json.empty()) {
+        reply = reinterpret_cast<redisReply*>(
+            redisCommand(m_context->m_context, request.c_str()));
+    }
+    else {
+        reply = reinterpret_cast<redisReply*>(redisCommand(
+            m_context->m_context, request.c_str(), json.c_str(),
+            json.length()));
+    }
     if (reply == nullptr) {
         m_context->check_if_valid();
     }
@@ -208,8 +214,8 @@ void RedisKeyValueStoreClient::string_multi_get(
 void RedisKeyValueStoreClient::string_set(
     const std::string& key, const std::string& value) const
 {
-    const std::string command = "SET " + key + " '" + value + "'";
-    auto reply                = make_request(command);
+    const std::string command = "SET " + key + " %b";
+    auto reply                = make_request(command, value);
     reply->check_ok();
 }
 
