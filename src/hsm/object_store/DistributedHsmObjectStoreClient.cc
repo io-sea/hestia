@@ -45,6 +45,7 @@ void DistributedHsmObjectStoreClient::do_initialize(
     std::unordered_map<std::string, HsmObjectStoreClientBackend> backends;
     for (const auto& backend :
          m_hsm_service->get_self_config().m_self.m_backends) {
+        LOG_INFO("Adding backend: " << backend.to_string());
         backends[backend.m_identifier] = backend;
     }
 

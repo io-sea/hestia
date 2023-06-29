@@ -97,6 +97,10 @@ void HestiaConfig::load_kv_store(
                 m_key_value_store_spec = KeyValueStoreClientSpec(
                     KeyValueStoreClientSpec::Type::FILE, client_config);
             }
+            if (client_identifier == "hestia::RedisKeyValueStoreClient") {
+                m_key_value_store_spec = KeyValueStoreClientSpec(
+                    KeyValueStoreClientSpec::Type::REDIS, client_config);
+            }
             break;
         }
     }

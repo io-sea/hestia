@@ -154,9 +154,11 @@ std::string HsmServiceRequest::to_string() const
     std::stringstream sstr;
     sstr << "HsmServiceRequest: [";
     sstr << "Method:" << method_as_string() << ", ";
-    sstr << "Object:[" << m_object.to_string() << "], ";
-    sstr << "Source Tier:" << std::to_string(m_source_tier) << ", ";
-    sstr << "Target Tier:" << std::to_string(m_target_tier) << "]";
+    if (m_method != HsmServiceRequestMethod::CREATE) {
+        sstr << "Object:[" << m_object.to_string() << "], ";
+        sstr << "Source Tier:" << std::to_string(m_source_tier) << ", ";
+        sstr << "Target Tier:" << std::to_string(m_target_tier) << "]";
+    }
     return sstr.str();
 }
 

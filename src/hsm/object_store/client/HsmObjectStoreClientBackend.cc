@@ -61,13 +61,28 @@ bool HsmObjectStoreClientBackend::is_hsm() const
     return m_type == Type::HSM;
 }
 
+std::string source_to_string(const HsmObjectStoreClientBackend::Source& source)
+{
+    if (source == HsmObjectStoreClientBackend::Source::BUILT_IN) {
+        return "built_in";
+    }
+    else if (source == HsmObjectStoreClientBackend::Source::PLUGIN) {
+        return "plugin";
+    }
+    else if (source == HsmObjectStoreClientBackend::Source::MOCK) {
+        return "mock";
+    }
+    return "";
+}
+
 Dictionary::Ptr HsmObjectStoreClientBackend::serialize() const
 {
     auto dict = std::make_unique<Dictionary>();
 
     dict->set_map(
         {{"identifier", m_identifier},
-         {"type", m_type == Type::HSM ? "hsm" : "basic"}});
+         {"type", m_type == Type::HSM ? "hsm" : "basic"},
+         {"source", source_to_string(m_source)}});
 
     auto metadata_dict = std::make_unique<Dictionary>();
     metadata_dict->set_map(m_extra_config.get_raw_data());
@@ -88,6 +103,9 @@ void HsmObjectStoreClientBackend::deserialize(const Dictionary& dict)
         }
         else if (key == "type") {
             m_type = value == "hsm" ? Type::HSM : Type::BASIC;
+        }
+        else if (key == "source") {
+            set_source(value);
         }
     };
     scalar_data.for_each_item(each_item);

@@ -140,7 +140,7 @@ HsmServiceResponse::Ptr HsmService::create(
     ERROR_CHECK(put_response);
 
     auto response = HsmServiceResponse::create(req, std::move(put_response));
-    LOG_INFO("Finished HSMService PUT");
+    LOG_INFO("Finished HSMService CREATE");
 
     return response;
 }

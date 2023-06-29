@@ -105,21 +105,22 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
         std::vector<Uuid> ids;
         list(query, ids);
 
-        std::vector<std::string> keys;
-        get_item_keys(ids, keys);
-
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_MULTI_GET, keys,
-             m_config.m_endpoint});
-        if (!response->ok()) {
-            throw std::runtime_error(
-                "Error in kv_store STRING_MULTI_GET: "
-                + response->get_error().to_string());
-        }
-        for (const auto& item_data : response->items()) {
-            ItemT item;
-            CrudClient<ItemT>::from_string(item_data, item);
-            items.push_back(item);
+        if (!ids.empty()) {
+            std::vector<std::string> keys;
+            get_item_keys(ids, keys);
+            const auto response = m_client->make_request(
+                {KeyValueStoreRequestMethod::STRING_MULTI_GET, keys,
+                 m_config.m_endpoint});
+            if (!response->ok()) {
+                throw std::runtime_error(
+                    "Error in kv_store STRING_MULTI_GET: "
+                    + response->get_error().to_string());
+            }
+            for (const auto& item_data : response->items()) {
+                ItemT item;
+                CrudClient<ItemT>::from_string(item_data, item);
+                items.push_back(item);
+            }
         }
     }
 
@@ -138,7 +139,7 @@ class KeyValueCrudClient : public CrudClient<ItemT> {
 
         const auto id_str = UuidUtils::to_string(working_id);
 
-        const auto response = m_client->make_request(
+        auto response = m_client->make_request(
             {KeyValueStoreRequestMethod::STRING_SET,
              Metadata::Query(get_item_key(working_id), content),
              m_config.m_endpoint});

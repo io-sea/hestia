@@ -14,6 +14,7 @@ class RedisKeyValueStoreClientConfig {
   public:
     std::string m_redis_backend_address{"127.0.0.1"};
     int m_redis_backend_port{6379};
+    bool m_redis_flush_on_start{false};
 };
 
 class RedisKeyValueStoreClient : public KeyValueStoreClient {

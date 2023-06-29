@@ -20,6 +20,7 @@ stages:
     HESTIA_WITH_PHOBOS: "OFF"
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PROXYGEN: "OFF"
+    HESTIA_TEST_REDIS: "OFF"
     MOTR_SRC_DIR: ""
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     HESTIA_API_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
@@ -52,6 +53,7 @@ stages:
       -DCMAKE_CXX_COMPILER="${CXX}"
       -DCMAKE_PROJECT_VERSION="${HESTIA_PROJECT_VERSION}"
       -DHESTIA_BUILD_TESTS="${HESTIA_BUILD_TESTS}"
+      -DHESTIA_TEST_REDIS="${HESTIA_TEST_REDIS}"
       -DHESTIA_BUILD_DOCUMENTATION="${HESTIA_BUILD_DOCUMENTATION}"
       -DCODE_COVERAGE="${HESTIA_CODE_COVERAGE}"
       -DHESTIA_WITH_PROXYGEN="${HESTIA_WITH_PROXYGEN}"
@@ -163,10 +165,12 @@ Unit_test:
     CC: "clang"
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
+    HESTIA_TEST_REDIS: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
+    - redis-server&
   script:
     - *configure
     - *build

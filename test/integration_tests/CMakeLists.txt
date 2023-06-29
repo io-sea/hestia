@@ -1,6 +1,6 @@
 set(INTEGRATION_TEST_MODULE ${PROJECT_NAME}_integration_tests)
 
-set(INTEGRATION_TEST_SOURCES     
+set(INTEGRATION_TEST_SOURCES
     base/common/TestSystemUtils.cc
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
@@ -9,16 +9,22 @@ set(INTEGRATION_TEST_SOURCES
     main.cc
     )
 
-if(${HESTIA_WITH_PROXYGEN})
-    LIST(APPEND INTEGRATION_TEST_SOURCES 
-        base/storage/TestProxygenServer.cc
-        base/storage/TestProxygenMockPhobos.cc
+    if(${HESTIA_WITH_PROXYGEN})
+    LIST(APPEND INTEGRATION_TEST_SOURCES
+    base/storage/TestProxygenServer.cc
+    base/storage/TestProxygenMockPhobos.cc
     )
-endif()
+    endif()
+
+    if(${HESTIA_TEST_REDIS})
+    LIST(APPEND INTEGRATION_TEST_SOURCES
+        base/storage/TestRedisKeyValueStore.cc
+    )
+    endif()
 
 add_executable(${INTEGRATION_TEST_MODULE} ${INTEGRATION_TEST_SOURCES})
 
-target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
+target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_http_client
     hestia_common
     hestia_app
@@ -30,6 +36,14 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_test_utils
     Catch2::Catch2
     ${PLATFORM_LIBS})
+
+if(${HESTIA_TEST_REDIS})
+    target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
+        hestia_lib
+        hestia_storage
+    )
+    target_compile_definitions(${INTEGRATION_TEST_MODULE} PUBLIC TEST_REDIS)
+endif()
 
 if(${HESTIA_WITH_PROXYGEN})
     target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE hestia_proxygen_plugin)

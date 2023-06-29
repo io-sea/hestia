@@ -1,6 +1,9 @@
 include(AddModule)
 
-fetch_hiredis()
+find_package(hiredis QUIET)
+if(NOT ${hiredis_FOUND})
+    fetch_hiredis()
+endif()
 
 add_module(
     MODULE_NAME storage 
