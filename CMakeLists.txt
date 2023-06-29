@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
+set(CMAKE_PROJECT_VERSION "0.0.0" CACHE STRING "Project Version")
 project(hestia VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C CXX)
 message(STATUS "Hestia Version: " ${CMAKE_PROJECT_VERSION})
 

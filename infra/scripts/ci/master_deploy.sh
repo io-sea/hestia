@@ -47,7 +47,7 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
 # Increment next minor release version
 new_minor_ver=$(echo $CI_RELEASE_VERSION | awk -F. -v OFS=. '{$2 += 1 ; print}')
 # Update nightly version to REL.1
-new_nightly_ver=$(echo $CI_RELEASE_VERSION | awk -F. -v OFS=. '{$2 += 1 ; $NF = 1; print}')
+new_nightly_ver=$(echo $CI_RELEASE_VERSION | awk -F. -v OFS=. '{$NF = 1; print}')
 
 curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/variables/CI_RELEASE_VERSION" \
