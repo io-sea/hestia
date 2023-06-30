@@ -50,7 +50,7 @@ void Model::deserialize(const Dictionary& dict, SerializeFormat format)
         }
     };
     dict.for_each_scalar(on_item);
-};
+}
 
 void Model::serialize(
     Dictionary& dict, SerializeFormat format, const Uuid& id) const

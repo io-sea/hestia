@@ -29,7 +29,7 @@ object_store_clients:
     type: basic
     plugin_path: libhestia_s3_plugin
     host: 127.0.0.1:8000
-  - identifier: hestia::MockPhobosClient
+  - identifier: hestia::mock::MockPhobosClient
     source: mock
     type: basic
     plugin_path: libhestia_mock_phobos_plugin

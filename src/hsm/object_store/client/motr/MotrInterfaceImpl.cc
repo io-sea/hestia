@@ -3,7 +3,9 @@
 
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
+#include "JsonUtils.h"
 #include "Logger.h"
+#include "UuidUtils.h"
 
 #include "File.h"
 #include "UuidUtils.h"
@@ -105,10 +107,6 @@ class IoContext {
 
     int prepare(int num_blocks, size_t block_size, bool alloc_io_buff)
     {
-        std::cout << "Input arguments to Prepare are num_blocks: " << num_blocks
-                  << ", block_size: " << block_size
-                  << ", alloc_io_buff: " << alloc_io_buff << std::endl;
-
         m_allocated_io_buffer = alloc_io_buff;
 
         /* allocate new I/O vec? */
@@ -116,17 +114,14 @@ class IoContext {
             || block_size != m_current_block_size) {
             if (m_current_blocks != 0) {
                 free_data();
-                std::cout << "Freed data" << std::endl;
             }
 
             int rc = 0;
             if (m_allocated_io_buffer) {
                 rc = m0_bufvec_alloc(&m_data, num_blocks, block_size);
-                std::cout << "bufvec allocated" << std::endl;
             }
             else {
                 rc = m0_bufvec_empty_alloc(&m_data, num_blocks);
-                std::cout << "empty buffvec allocated" << std::endl;
             }
             if (rc != 0) {
                 return rc;
@@ -138,10 +133,8 @@ class IoContext {
             /* free previous vectors */
             if (m_current_blocks > 0) {
                 free_index();
-                std::cout << "Index freed" << std::endl;
             }
 
-            std::cout << "Allocating attr and extent list" << std::endl;
             /* Allocate attr and extent list*/
             auto rc = m0_bufvec_alloc(&m_attr, num_blocks, 1);
             if (rc != 0) {
@@ -161,16 +154,12 @@ class IoContext {
 
     int map(int num_blocks, size_t block_size, off_t offset, char* buff)
     {
-        std::cout << "Entering map function, num blocks: :" << num_blocks
-                  << std::endl;
         if (num_blocks == 0) {
             return -EINVAL;
         }
 
         for (int i = 0; i < num_blocks; i++) {
-            m_ext.iv_index[i] = offset + i * block_size;
-            std::cout << "Loop index " << i << " extent index "
-                      << m_ext.iv_index[i] << std::endl;
+            m_ext.iv_index[i]       = offset + i * block_size;
             m_ext.iv_vec.v_count[i] = block_size;
 
             /* we don't want any attributes */
@@ -178,12 +167,9 @@ class IoContext {
 
             if (m_data.ov_vec.v_count[i] == 0) {
                 m_data.ov_vec.v_count[i] = block_size;
-                std::cout << "Vec count set to block size: " << block_size
-                          << std::endl;
             }
             /* check the allocated buffer has the right size */
             else if (m_data.ov_vec.v_count[i] != block_size) {
-                std::cout << "Returning error line 188" << std::endl;
                 return -EINVAL;
             }
 
@@ -266,10 +252,12 @@ class MotrObject {
         m_uuid(id), m_close_on_delete(close_on_delete)
     {
         memset(&m_handle, 0, sizeof(m_handle));
+        //        m_uuid=UuidUtils::from_string(id);
 
         // TODO - add proper motr id generation, e.g. following M0_ID_APP
         // restrictions
-        m_motr_id.u_lo += m_uuid.m_lo;
+        m_motr_id.u_lo += (m_uuid.m_lo) | 10000000;
+        m_motr_id.u_lo += 10000000;
     }
 
     ~MotrObject()
@@ -296,8 +284,6 @@ class MotrObject {
         }
         auto rc = m_io_ctx->map(
             m_unread_block_count, m_block_size, m_start_offset, nullptr);
-        std::cout << "Read_blocks called map, it completed successfully"
-                  << std::endl;
         if (rc != 0) {
             return rc;
         }
@@ -306,19 +292,23 @@ class MotrObject {
 
     int read(WriteableBufferView& buffer, std::size_t length)
     {
-        int count = 0;
         for (auto transfer_size = length; transfer_size > 0;
              transfer_size -= get_last_transfer_size()) {
             set_block_layout(transfer_size);
 
-            std::cout << "Iteration: " << count
-                      << " transfer size: " << transfer_size << std::endl;
-            count++;
-
+            if (transfer_size < m_min_block_size) {
+                m_block_size = m_min_block_size;
+            }
             if (auto rc = read_blocks(); rc != 0) {
                 return rc;
             }
-            m_io_ctx->to_buffer(buffer, m_block_size);
+            if (transfer_size < m_min_block_size) {
+                m_io_ctx->to_buffer(buffer, transfer_size);
+            }
+            else {
+                m_io_ctx->to_buffer(buffer, m_block_size);
+            }
+
             m_start_offset += get_last_transfer_size();
         }
         return 0;
@@ -341,6 +331,27 @@ class MotrObject {
         return m_unread_block_count * m_block_size;
     }
 
+    void save_size()
+    {
+        const auto path = std::filesystem::current_path() / "key_value_store"
+                          / (UuidUtils::to_string(m_uuid) + ".meta");
+        hestia::Metadata data;
+        data.set_item("size", std::to_string(m_total_size));
+        auto metadata = JsonUtils::to_json(data);
+        auto out      = std::ofstream(path);
+        out << metadata << std::endl;
+    }
+
+    void load_size()
+    {
+        const auto path = std::filesystem::current_path() / "key_value_store"
+                          / (UuidUtils::to_string(m_uuid) + ".meta");
+        auto istr = std::ifstream(path);
+        std::string value;
+        JsonUtils::get_value(path, "size", value);
+        m_total_size = std::stol(value);
+    }
+
     Uuid m_uuid;
     m0_uint128 m_motr_id{M0_ID_APP};
     m0_obj m_handle;
@@ -350,6 +361,7 @@ class MotrObject {
     std::size_t m_total_size{0};
     int m_unread_block_count{0};
     std::size_t m_block_size{0};
+    std::size_t m_min_block_size{0};
     std::size_t m_start_offset{0};
     std::unique_ptr<IoContext> m_io_ctx;
 };
@@ -384,17 +396,31 @@ void MotrInterfaceImpl::get(
 
     if (request.extent().empty()) {
         motr_obj->m_total_size = request.object().m_size;
+        std::cout
+            << "Case request.extent().empty(), request.object().m_size is "
+            << request.object().m_size << std::endl;
+        if (motr_obj->m_total_size == 0) {
+            // temporary: load size from temp kv store until full kv store
+            // implemented
+            motr_obj->load_size();
+        }
     }
     else {
         motr_obj->m_start_offset = request.extent().m_offset;
         motr_obj->m_total_size   = request.extent().m_length;
+        std::cout
+            << "Case request.extent() not empty, request.extent().m_lentgh is "
+            << request.extent().m_length << std::endl;
     }
-    motr_obj->m_total_size = 4096;
+    std::cout << "m_total_size is " << motr_obj->m_total_size << std::endl;
+    // motr_obj->m_total_size = 8192;
 
     m0_obj_init(
         &motr_obj->m_handle, const_cast<m0_realm*>(&m_realm),
         &motr_obj->m_motr_id, m0_client_layout_id(m_client_instance));
 
+    motr_obj->m_min_block_size =
+        m0_obj_layout_id_to_unit_size(m0_client_layout_id(m_client_instance));
     motr_obj->m_block_size =
         m0_obj_layout_id_to_unit_size(m0_client_layout_id(m_client_instance));
 
@@ -415,7 +441,7 @@ void MotrInterfaceImpl::get(
             read_size = motr_obj->m_total_size - offset;
         }
 
-        read_size = 4096;
+        // read_size = 4096;
 
         std::cout << "Read size: " << read_size << "\nBuffer size "
                   << buffer.length() << std::endl;
@@ -450,6 +476,8 @@ void MotrInterfaceImpl::put(
         LOG_ERROR(msg);
         throw std::runtime_error(msg);
     }
+    motr_obj->m_block_size =
+        m0_obj_layout_id_to_unit_size(m0_client_layout_id(m_client_instance));
 
     /*
     LOG_INFO("Setting write tier: " << request.target_tier());
@@ -478,6 +506,16 @@ void MotrInterfaceImpl::put(
             LOG_ERROR(msg);
             return {false, 0};
         }
+        auto num_blocks = (buffer.length()) / (motr_obj->m_block_size);
+        if ((buffer.length()) % (motr_obj->m_block_size) != 0) {
+            num_blocks++;
+        }
+        auto write_size = num_blocks * (motr_obj->m_block_size);
+        std::cout << write_size << " bytes written" << std::endl;
+        motr_obj->m_total_size = write_size;
+        // save size (which is an integer multiple of 4096 bytes) that motr has
+        // written
+        motr_obj->save_size();
         return {true, buffer.length()};
     };
 
@@ -488,6 +526,7 @@ void MotrInterfaceImpl::put(
 void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
     Uuid uuid = request.object().id();
+    // uuid=UuidUtils::from_string(request.object().id());
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;
@@ -533,6 +572,7 @@ void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
     Uuid uuid = request.object().id();
+    // uuid.from_string(request.object().id());
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;

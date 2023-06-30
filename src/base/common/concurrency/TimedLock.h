@@ -22,4 +22,4 @@ class TimedLock {
     std::time_t m_max_lock_time{5000};
 };
 
-};  // namespace hestia
+}  // namespace hestia

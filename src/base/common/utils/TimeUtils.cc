@@ -19,4 +19,4 @@ std::string TimeUtils::get_current_time_hr()
     ss << std::put_time(std::localtime(&time), "%F_%H-%M-%S");
     return ss.str();
 }
-};  // namespace hestia
+}  // namespace hestia

@@ -56,4 +56,4 @@ void StorageTier::serialize(
     dict.set_map(data);
 }
 
-};  // namespace hestia
+}  // namespace hestia
