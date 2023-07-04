@@ -1,75 +1,16 @@
 #include <catch2/catch_all.hpp>
 
-#include "ApplicationContext.h"
-#include "HestiaConfigurator.h"
-#include "hestia.h"
+#include "CppClientTestWrapper.h"
 
-#include "FileUtils.h"
-#include "TestUtils.h"
-
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-class HestiaCppClientTestFixture {
+class HestiaCppClientTestFixture : public CppClientTestWrapper {
   public:
-    void init(const std::string& test_name)
-    {
-        m_test_name           = test_name;
-        const auto cache_path = get_cache_path();
-        hestia::FileUtils::empty_path(cache_path);
-
-        const auto base_config_path =
-            TestUtils::get_test_data_dir() / "configs" / "defaults.yaml";
-        REQUIRE(std::filesystem::is_regular_file(base_config_path));
-
-        const auto test_config = cache_path + "/defaults.yaml";
-
-        std::filesystem::copy_file(base_config_path, test_config);
-
-        std::stringstream sstr;
-        sstr << "\ncache_location: " << cache_path << "\n";
-        {
-            std::ofstream out_file(test_config, std::ios_base::app);
-            out_file << sstr.str();
-        }
-
-        const auto rc = hestia::initialize(test_config.c_str());
-        REQUIRE(rc == 0);
-    }
-
-    ~HestiaCppClientTestFixture()
-    {
-        hestia::finish();
-        std::filesystem::remove_all(get_cache_path());
-    }
-
-    std::string get_cache_path() const
-    {
-        return TestUtils::get_test_output_dir(__FILE__) / m_test_name;
-    }
-
-    void get_and_check(
-        const hestia::hsm_uint obj_id, uint8_t tier, const std::string& content)
-    {
-        std::vector<char> return_buffer(content.length());
-        auto rc = hestia::get(
-            obj_id, return_buffer.data(), tier, content.length(), 0);
-        REQUIRE(rc == 0);
-
-        std::string returned_content(
-            return_buffer.begin(), return_buffer.end());
-        REQUIRE(returned_content == content);
-    }
-
-    std::string m_test_name;
+    void init() { CppClientTestWrapper::init("TestHestiaCppClient"); }
 };
 
 TEST_CASE_METHOD(
     HestiaCppClientTestFixture, "Test Hestia CPP client", "[hestia_cpp]")
 {
-    init("TestHestiaCppClient");
+    init();
 
     hestia::hsm_uint obj_id{0000, 0001};
 

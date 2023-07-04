@@ -11,3 +11,6 @@ sg3_utils-devel
 protobuf-c-devel
 openssl-devel
 libpq-devel
+postgresql
+postgresql-contrib
+postgresql-server

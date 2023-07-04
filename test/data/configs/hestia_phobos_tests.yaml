@@ -4,6 +4,7 @@ server:
   web_app: hestia::HsmService
   backend: hestia::Basic
   controller: true
+  tag: controller0
 
 web_apps:
   - identitifier: hestia::HsmService
@@ -28,7 +29,6 @@ object_store_clients:
     source: plugin
     type: basic
     plugin_path: libhestia_s3_plugin
-    host: 127.0.0.1:8000
   - identifier: hestia::PhobosClient
     source: plugin
     type: basic
@@ -43,7 +43,6 @@ key_value_store:
 
 key_value_store_clients:
   - identifier: hestia::FileKeyValueStoreClient
-    root: key_value_store
 
 tier_registry:
   - identifier: 0

@@ -8,17 +8,22 @@ add_module(
         ObjectStoreTestWrapper.h
         HsmObjectStoreTestWrapper.h
         DistributedHsmServiceTestWrapper.h
+        CppClientTestWrapper.h
         TestContext.h
         TestUtils.h
     SOURCES
         ObjectStoreTestWrapper.cc
         HsmObjectStoreTestWrapper.cc
         DistributedHsmServiceTestWrapper.cc
+        CppClientTestWrapper.cc
         TestContext.cc
     INTERNAL_DEPENDENCIES 
         web
         hsm_object_store_client
         hsm
+        lib
+        app
+        common
     DEPENDENCIES 
         Catch2::Catch2
 )

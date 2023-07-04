@@ -22,6 +22,12 @@ set(INTEGRATION_TEST_SOURCES
     )
     endif()
 
+    if(${HESTIA_WITH_PHOBOS})
+    LIST(APPEND INTEGRATION_TEST_SOURCES
+        base/storage/TestPhobosBackend.cc
+    )
+    endif()
+
 add_executable(${INTEGRATION_TEST_MODULE} ${INTEGRATION_TEST_SOURCES})
 
 target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
@@ -38,11 +44,14 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     ${PLATFORM_LIBS})
 
 if(${HESTIA_TEST_REDIS})
-    target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
-        hestia_lib
-        hestia_storage
-    )
     target_compile_definitions(${INTEGRATION_TEST_MODULE} PUBLIC TEST_REDIS)
+endif()
+
+if(${HESTIA_WITH_PHOBOS})
+    target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
+        hestia_phobos_plugin
+    )
+    target_compile_definitions(${INTEGRATION_TEST_MODULE} PUBLIC HAS_PHOBOS)
 endif()
 
 if(${HESTIA_WITH_PROXYGEN})
@@ -55,4 +64,5 @@ endif()
 add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin)
 
 target_code_coverage(${INTEGRATION_TEST_MODULE})
+
 catch_discover_tests(${INTEGRATION_TEST_MODULE})

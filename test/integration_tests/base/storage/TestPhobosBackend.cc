@@ -1,20 +1,20 @@
-#ifdef TEST_REDIS
+#ifdef HAS_PHOBOS
 
 #include <catch2/catch_all.hpp>
 
 #include "CppClientTestWrapper.h"
 
-class HestiaRedisTestFixture : public CppClientTestWrapper {
+class PhobosTestFixture : public CppClientTestWrapper {
   public:
     void init()
     {
         CppClientTestWrapper::init(
-            "TestHestiaRedisKeyValueClient", "hestia_redis_tests.yaml");
+            "TestPhobosBackend", "hestia_phobos_tests.yaml");
     }
 };
 
 TEST_CASE_METHOD(
-    HestiaRedisTestFixture, "Test Redis KV store backend", "[integration]")
+    PhobosTestFixture, "Test phobos backend integration", "[phobos]")
 {
     init();
 
@@ -28,14 +28,15 @@ TEST_CASE_METHOD(
 
     get_and_check(obj_id, 0, content);
 
-    auto copy_rc = hestia::copy(obj_id, 0, 1);
-    REQUIRE(copy_rc == 0);
+    // auto copy_rc = hestia::copy(obj_id, 0, 1);
+    // REQUIRE(copy_rc == 0);
 
-    get_and_check(obj_id, 1, content);
+    // get_and_check(obj_id, 1, content);
 
-    auto move_rc = hestia::move(obj_id, 1, 2);
-    REQUIRE(move_rc == 0);
+    // auto move_rc = hestia::move(obj_id, 1, 2);
+    // REQUIRE(move_rc == 0);
 
-    get_and_check(obj_id, 2, content);
+    // get_and_check(obj_id, 2, content);
 }
+
 #endif

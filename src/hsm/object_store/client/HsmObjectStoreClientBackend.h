@@ -16,7 +16,8 @@ class HsmObjectStoreClientBackend {
     HsmObjectStoreClientBackend(
         Type client_type, Source source, const std::string& identifier);
 
-    HsmObjectStoreClientBackend(const Dictionary& config);
+    HsmObjectStoreClientBackend(
+        const Dictionary& config, const std::string& cache_path = "");
 
     HsmObjectStoreClientBackend(const HsmObjectStoreClientBackend& other);
 

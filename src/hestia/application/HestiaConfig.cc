@@ -94,6 +94,11 @@ void HestiaConfig::load_kv_store(
             Metadata client_config;
             config->get_map_items(client_config);
             if (client_identifier == "hestia::FileKeyValueStoreClient") {
+                if (client_config.get_item("root").empty()) {
+                    std::string default_root =
+                        m_cache_path + "/hsm_key_value_store";
+                    client_config.set_item("root", default_root);
+                }
                 m_key_value_store_spec = KeyValueStoreClientSpec(
                     KeyValueStoreClientSpec::Type::FILE, client_config);
             }
@@ -191,7 +196,9 @@ void HestiaConfig::load_object_store_clients(
             identifier_dict != nullptr) {
             identifier = identifier_dict->get_scalar();
         }
-        m_backends.emplace(identifier, HsmObjectStoreClientBackend(*store));
+
+        m_backends.emplace(
+            identifier, HsmObjectStoreClientBackend(*store, m_cache_path));
     }
 
     for (const auto& tier : tiers.get_sequence()) {

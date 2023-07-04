@@ -7,7 +7,7 @@ index 3a24acd..485aca7 100644
      if args.schema:
          # Create a new migrator with a connection to the newly configured db
 -        with psycopg2.connect(dbname=database, user=user, password=password) \
-+        with psycopg2.connect(dbname=database, user=user, password=password, host="phobosdb") \
++        with psycopg2.connect(dbname=database, user=user, password=password, host="localhost") \
                  as conn:
              migrator = Migrator(conn)
              migrator.create_schema()
@@ -21,7 +21,7 @@ index 8cad2b0..8a60d5e 100644
      # Connect to "postgres" (admin) database
 -    with psycopg2.connect(dbname="postgres") as conn:
 +    try:
-+        conn = psycopg2.connect(dbname="postgres", host="phobosdb")
++        conn = psycopg2.connect(dbname="postgres", host="localhost")
          conn.autocommit = True
          with conn.cursor() as cursor:
              # Admin input: no privilege escalation here, hence we don't care
@@ -35,7 +35,7 @@ index 8cad2b0..8a60d5e 100644
  
      # Connect to the newly created database to create extensions
 -    with psycopg2.connect(dbname=database) as conn:
-+    with psycopg2.connect(dbname=database, host="phobosdb") as conn:
++    with psycopg2.connect(dbname=database, host="localhost") as conn:
          conn.autocommit = True
          with conn.cursor() as cursor:
              # Create btree_gin extension
@@ -45,7 +45,7 @@ index 8cad2b0..8a60d5e 100644
      """Drop the phobos database and user"""
 -    with psycopg2.connect(dbname="postgres") as conn:
 +    try:
-+        conn =psycopg2.connect(dbname="postgres", host="phobosdb")
++        conn =psycopg2.connect(dbname="postgres", host="localhost")
          conn.autocommit = True
          with conn.cursor() as cursor:
              with _allow_pg_prog_error("does not exist"):

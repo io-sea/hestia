@@ -17,6 +17,10 @@ export PHOBOS_LAYOUT_RAID1_repl_count=1
 export PYTHONPATH=/phobos/src/cli/build/lib.linux-$(arch)-3.6
 # Initialize phobos db
 useradd postgres
+mkdir /home/postgres
+chown postgres /home/postgres
+su postgres -c "initdb -D /home/postgres/data"
+su postgres -c "postgres -D /home/postgres/data&"
 su postgres -c "PYTHONPATH=${PYTHONPATH} python3 -m phobos.db setup_db -s -p phobos"
 
 export PHOBOSD_PID_FILEPATH="$test_dir/phobosd.pid"

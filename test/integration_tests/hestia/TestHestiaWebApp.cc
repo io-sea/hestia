@@ -26,11 +26,10 @@ class TestHestiaWebAppFixture {
   public:
     TestHestiaWebAppFixture()
     {
-        auto store_path =
-            TestUtils::get_test_output_dir(__FILE__) / "TestHestiaWebWpp";
-        std::filesystem::remove_all(store_path);
+        m_store_path = TestUtils::get_test_output_dir(__FILE__);
+        std::filesystem::remove_all(m_store_path);
         hestia::Metadata store_config;
-        store_config.set_item("root", store_path);
+        store_config.set_item("root", m_store_path);
 
         m_kv_store_client.initialize(store_config);
         m_obj_store_client.initialize(store_config);
@@ -69,6 +68,8 @@ class TestHestiaWebAppFixture {
         hestia::CurlClientConfig http_config;
         m_http_client = std::make_unique<hestia::CurlClient>(http_config);
     }
+
+    ~TestHestiaWebAppFixture() {}
 
     void get_objects(std::vector<hestia::HsmObject>& objects)
     {
@@ -157,7 +158,8 @@ class TestHestiaWebAppFixture {
     std::unique_ptr<hestia::BasicHttpServer> m_server;
     std::unique_ptr<hestia::CurlClient> m_http_client;
 
-    std::string m_base_url = "127.0.0.1:8000/api/v1/hsm/";
+    std::string m_base_url   = "127.0.0.1:8000/api/v1/hsm/";
+    std::string m_store_path = {};
 };
 
 TEST_CASE_METHOD(

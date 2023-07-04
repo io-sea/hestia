@@ -17,7 +17,7 @@ HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
 }
 
 HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
-    const Dictionary& config)
+    const Dictionary& config, const std::string& cache_path)
 {
     if (const auto identifier_dict = config.get_map_item("identifier")) {
         m_identifier = identifier_dict->get_scalar();
@@ -31,6 +31,13 @@ HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
         set_type(type_dict->get_scalar());
     }
     config.get_map_items(m_extra_config, {"identifier", "source", "type"});
+
+    if (m_extra_config.get_item("root").empty()) {
+        if (!cache_path.empty()) {
+            std::string default_root = cache_path + "/hsm_object_store";
+            m_extra_config.set_item("root", default_root);
+        }
+    }
 }
 
 void HsmObjectStoreClientBackend::set_source(const std::string& source)

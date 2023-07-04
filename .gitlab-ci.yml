@@ -42,6 +42,12 @@ stages:
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
+  - &install_phobos
+    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
+    pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/phobos_requirements.txt;
+    export PHOBOS_SRC=/phobos; cd /;
+    ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
   - &configure
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -166,14 +172,17 @@ Unit_test:
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
     HESTIA_TEST_REDIS: "ON"
+    HESTIA_WITH_PHOBOS: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
-    - redis-server&
+    - *install_phobos
   script:
     - *configure
     - *build
+    - redis-server&
+    - ${CI_PROJECT_DIR}/test/data/start_phobos_db.sh
     - *test
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-hestia_unit_tests
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-report-hestia_unit_test
@@ -195,10 +204,6 @@ E2E_test:
 .nightly_snippets:
   - &install_motr
     ${CI_PROJECT_DIR}/infra/scripts/ci/install_motr.sh
-  - &install_phobos
-    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
-    export PHOBOS_SRC=/phobos; cd /;
-    ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
   - &install_proxygen
     yum install -qy $(cat ${HESTIA_DEPS}/proxygen);
 
@@ -252,14 +257,6 @@ Nightly_build:
 Nightly_E2E:
   <<: *default_nightly_job
   stage: test
-  services:
-    - name: postgres:15.3
-      alias: phobosdb
-      entrypoint: ["docker-entrypoint.sh"]
-      command: ["postgres"]
-      variables:
-        POSTGRES_HOST_AUTH_METHOD: "trust"
-        POSTGRES_PASSWORD: "phobos"
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -267,7 +264,6 @@ Nightly_E2E:
     - *install_phobos
     - *install_proxygen
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
-    - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/phobos_requirements.txt;
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
       --with_phobos --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
