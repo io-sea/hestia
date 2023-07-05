@@ -68,7 +68,7 @@ IOResult InMemoryStreamSource::read_from_source_func(
         return {get_state(), 0};
     }
 
-    if (writeable_buffer.length() >= bytes_read) {
+    if (bytes_read < writeable_buffer.length()) {
         set_state(StreamState::State::FINISHED);
         return {get_state(), bytes_read};
     }

@@ -17,6 +17,7 @@
 
 
 #define MAX_BLOCK_COUNT (200)
+#define MOTR_MIN_BLOCK_SIZE (4096)
 
 namespace hestia {
 void MotrInterfaceImpl::initialize(const MotrConfig& config)
@@ -296,13 +297,13 @@ class MotrObject {
              transfer_size -= get_last_transfer_size()) {
             set_block_layout(transfer_size);
 
-            if (transfer_size < m_min_block_size) {
-                m_block_size = m_min_block_size;
-            }
+            // if (transfer_size < m_min_block_size) {
+            //     m_block_size = m_min_block_size;
+            // }
             if (auto rc = read_blocks(); rc != 0) {
                 return rc;
             }
-            if (transfer_size < m_min_block_size) {
+            if (transfer_size < m_block_size) {
                 m_io_ctx->to_buffer(buffer, transfer_size);
             }
             else {
@@ -319,7 +320,7 @@ class MotrObject {
         m_unread_block_count = transfer_size / m_block_size;
         if (m_unread_block_count == 0) {
             m_unread_block_count = 1;
-            m_block_size         = transfer_size;
+            //    m_block_size         = transfer_size;
         }
         else if (m_unread_block_count > MAX_BLOCK_COUNT) {
             m_unread_block_count = MAX_BLOCK_COUNT;
@@ -361,7 +362,7 @@ class MotrObject {
     std::size_t m_total_size{0};
     int m_unread_block_count{0};
     std::size_t m_block_size{0};
-    std::size_t m_min_block_size{0};
+    std::size_t m_min_block_size{MOTR_MIN_BLOCK_SIZE};
     std::size_t m_start_offset{0};
     std::unique_ptr<IoContext> m_io_ctx;
 };
@@ -479,6 +480,16 @@ void MotrInterfaceImpl::put(
     motr_obj->m_block_size =
         m0_obj_layout_id_to_unit_size(m0_client_layout_id(m_client_instance));
 
+    /*auto num_blocks = (request.object().m_size) / (motr_obj->m_block_size);
+        if ((request.object().m_size) % (motr_obj->m_block_size) != 0) {
+            num_blocks++;
+        }
+        auto write_size = num_blocks * (motr_obj->m_block_size);*/
+    motr_obj->m_total_size = request.object().m_size;
+    // save size (which is an integer multiple of 4096 bytes) that motr will
+    // write
+    motr_obj->save_size();
+
     /*
     LOG_INFO("Setting write tier: " << request.target_tier());
     rc = m0hsm_set_write_tier(id, request.target_tier());
@@ -506,16 +517,8 @@ void MotrInterfaceImpl::put(
             LOG_ERROR(msg);
             return {false, 0};
         }
-        auto num_blocks = (buffer.length()) / (motr_obj->m_block_size);
-        if ((buffer.length()) % (motr_obj->m_block_size) != 0) {
-            num_blocks++;
-        }
-        auto write_size = num_blocks * (motr_obj->m_block_size);
-        std::cout << write_size << " bytes written" << std::endl;
-        motr_obj->m_total_size = write_size;
-        // save size (which is an integer multiple of 4096 bytes) that motr has
-        // written
-        motr_obj->save_size();
+
+
         return {true, buffer.length()};
     };
 
@@ -545,23 +548,28 @@ void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid = request.object().id();
+    auto motr_obj = std::make_unique<MotrObject>(request.object().id());
+    motr_obj->m_close_on_delete = false;
 
-    struct m0_uint128 id;
-    id.u_hi = uuid.m_hi;
-    id.u_lo = uuid.m_lo;
-
-    std::size_t length = request.extent().m_length;
-    if (length == 0) {
-        length = IMotrInterfaceImpl::max_obj_length;
+    motr_obj->m_total_size = request.extent().m_length;
+    if (motr_obj->m_total_size % motr_obj->m_min_block_size != 0) {
+        std::string msg =
+            "Error in motr copy: length should be a multiple of 0x1000";
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
+    if (motr_obj->m_total_size == 0) {
+        motr_obj->m_total_size = IMotrInterfaceImpl::max_obj_length;
+    }
+
 
     // mock::motr::Hsm::hsm_cp_flags flags =
     // mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
     enum hsm_cp_flags flags = hsm_cp_flags::HSM_KEEP_OLD_VERS;
-    auto rc                 = m0hsm_copy(
-        id, request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+
+    auto rc = m0hsm_copy(
+        motr_obj->m_motr_id, request.source_tier(), request.target_tier(),
+        request.extent().m_offset, motr_obj->m_total_size, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -571,24 +579,30 @@ void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid = request.object().id();
-    // uuid.from_string(request.object().id());
+    // Uuid uuid = request.object().id();
+    //  uuid.from_string(request.object().id());
 
-    struct m0_uint128 id;
-    id.u_hi = uuid.m_hi;
-    id.u_lo = uuid.m_lo;
+    auto motr_obj = std::make_unique<MotrObject>(request.object().id());
+    motr_obj->m_close_on_delete = false;
 
-    std::size_t length = request.extent().m_length;
-    if (length == 0) {
-        length = IMotrInterfaceImpl::max_obj_length;
+    motr_obj->m_total_size = request.extent().m_length;
+    if (motr_obj->m_total_size % motr_obj->m_min_block_size != 0) {
+        std::string msg =
+            "Error in motr move: length should be a multiple of 0x1000";
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
+    if (motr_obj->m_total_size == 0) {
+        motr_obj->m_total_size = motr_obj->m_min_block_size;
+    }
+
 
     // mock::motr::Hsm::hsm_cp_flags flags =
     // mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     enum hsm_cp_flags flags = hsm_cp_flags::HSM_MOVE;
     auto rc                 = m0hsm_copy(
-        id, request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+        motr_obj->m_motr_id, request.source_tier(), request.target_tier(),
+        request.extent().m_offset, motr_obj->m_total_size, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
         LOG_ERROR(msg);
