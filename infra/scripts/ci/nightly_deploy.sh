@@ -20,7 +20,7 @@ sleep 5
 
 # Tag MR with minor patch
 curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
-      "$HESTIA_API_URL/repository/tags?tag_name=v$CI_RELEASE_VERSION&ref=master"
+      "$HESTIA_API_URL/repository/tags?tag_name=v$CI_NIGHTLY_VERSION&ref=master"
     
 # Increment nightly minor version
 new_nightly_ver=$(echo $CI_NIGHTLY_VERSION | awk -F. -v OFS=. '{$NF += 1 ; print}')
