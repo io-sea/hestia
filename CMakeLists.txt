@@ -24,7 +24,7 @@ option(HESTIA_WITH_PROXYGEN "Build the Proxyen webserver." OFF)
 option(HESTIA_WITH_S3_CLIENT "Build the S3 Client." ON)
 
 if(${HESTIA_BUILD_TESTS})
-  option(HESTIA_TEST_REDIS "Test the Redis key-value store backend (requires Redis server)" OFF)
+option(HESTIA_TEST_REDIS "Test the Redis key-value store backend (requires Redis server)" OFF)
 endif()
 
 add_subdirectory(src)
@@ -34,17 +34,25 @@ add_subdirectory(test)
 
 # This skips adding these targets if we are included by another project
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    option(HESTIA_BUILD_DOCUMENTATION "Build Documentation. Depends on Doxygen." OFF)
-    if(HESTIA_BUILD_DOCUMENTATION)
-        add_subdirectory(doc)
-    endif()
-
-    include(DoStaticAnalysis)
-    add_clang_format()
-    add_clang_tidy()
+option(HESTIA_BUILD_DOCUMENTATION "Build Documentation. Depends on Doxygen." OFF)
+if(HESTIA_BUILD_DOCUMENTATION)
+add_subdirectory(doc)
 endif()
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install Prefix" FORCE)
+include(DoStaticAnalysis)
+add_clang_format()
+add_clang_tidy()
+endif()
+
+# Platform specific setting tweaks
+if(APPLE)
+  if(${HESTIA_WITH_PHOBOS})
+    message(WARNING "Phobos is not buildable on Mac, turning off.")
+  endif()
+  set(HESTIA_WITH_PHOBOS OFF) # Phobos can't be built on Mac
+else()
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install Prefix" FORCE)
+  endif()
 endif()
 include(DoPackaging)

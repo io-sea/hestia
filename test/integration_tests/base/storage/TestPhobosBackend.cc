@@ -3,6 +3,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "CppClientTestWrapper.h"
+#include "IdGenerator.h"
 
 class PhobosTestFixture : public CppClientTestWrapper {
   public:
@@ -17,8 +18,9 @@ TEST_CASE_METHOD(
     PhobosTestFixture, "Test phobos backend integration", "[phobos]")
 {
     init();
-
-    hestia::hsm_uint obj_id{0000, 0001};
+    hestia::DefaultIdGenerator uuid_generator;
+    hestia::Uuid obj_uuid   = uuid_generator.get_uuid("phobos_test");
+    hestia::hsm_uint obj_id = {obj_uuid.m_hi, obj_uuid.m_lo};
 
     std::string content = "The quick brown fox jumps over the lazy dog.";
 

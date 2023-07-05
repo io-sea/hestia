@@ -48,9 +48,7 @@ if(${HESTIA_TEST_REDIS})
 endif()
 
 if(${HESTIA_WITH_PHOBOS})
-    target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE 
-        hestia_phobos_plugin
-    )
+    add_dependencies(${INTEGRATION_TEST_MODULE} hestia_phobos_plugin)
     target_compile_definitions(${INTEGRATION_TEST_MODULE} PUBLIC HAS_PHOBOS)
 endif()
 
