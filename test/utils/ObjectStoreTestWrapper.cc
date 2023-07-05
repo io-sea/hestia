@@ -44,9 +44,9 @@ void ObjectStoreTestWrapper::get(
 {
     hestia::ObjectStoreRequest request(
         obj, hestia::ObjectStoreRequestMethod::GET);
-    auto repsonse = m_client->make_request(request, stream);
-    REQUIRE(repsonse->ok());
-    obj = repsonse->object();
+    auto response = m_client->make_request(request, stream);
+    REQUIRE(response->ok());
+    obj = response->object();
 }
 
 void ObjectStoreTestWrapper::exists(

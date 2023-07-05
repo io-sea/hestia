@@ -133,9 +133,6 @@ void RedisKeyValueStoreClient::initialize(const Metadata& config_data)
         else if (key == "backend_port") {
             config.m_redis_backend_port = std::stoi(value);
         }
-        else if (key == "flush_on_start") {
-            config.m_redis_flush_on_start = value == "true";
-        }
     };
     config_data.for_each_item(on_item);
     do_initialize(config);
@@ -150,27 +147,20 @@ void RedisKeyValueStoreClient::do_initialize(
         m_config.m_redis_backend_port);
     m_context = std::make_unique<RedisContextWrapper>(context);
     m_context->check_if_valid();
-
-    // Flush all hestia entries
-    if (m_config.m_redis_flush_on_start) {
-        const std::string command = "FLUSHALL";
-        auto reply                = make_request(command);
-        reply->check_ok();
-    }
 }
 
 std::unique_ptr<RedisReplyWrapper> RedisKeyValueStoreClient::make_request(
-    const std::string& request, const std::string& json) const
+    const std::string& request, const std::string& binary_string) const
 {
     redisReply* reply;
-    if (json.empty()) {
+    if (binary_string.empty()) {
         reply = reinterpret_cast<redisReply*>(
             redisCommand(m_context->m_context, request.c_str()));
     }
     else {
         reply = reinterpret_cast<redisReply*>(redisCommand(
-            m_context->m_context, request.c_str(), json.c_str(),
-            json.length()));
+            m_context->m_context, request.c_str(), binary_string.c_str(),
+            binary_string.length()));
     }
     if (reply == nullptr) {
         m_context->check_if_valid();

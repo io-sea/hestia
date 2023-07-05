@@ -14,7 +14,6 @@ class RedisKeyValueStoreClientConfig {
   public:
     std::string m_redis_backend_address{"127.0.0.1"};
     int m_redis_backend_port{6379};
-    bool m_redis_flush_on_start{false};
 };
 
 class RedisKeyValueStoreClient : public KeyValueStoreClient {
@@ -49,7 +48,8 @@ class RedisKeyValueStoreClient : public KeyValueStoreClient {
 
   private:
     std::unique_ptr<RedisReplyWrapper> make_request(
-        const std::string& request, const std::string& json = "") const;
+        const std::string& request,
+        const std::string& binary_string = "") const;
 
     RedisKeyValueStoreClientConfig m_config;
     std::unique_ptr<RedisContextWrapper> m_context;

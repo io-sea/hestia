@@ -2,43 +2,66 @@
 
 #include <catch2/catch_all.hpp>
 
-#include "CppClientTestWrapper.h"
 #include "IdGenerator.h"
+#include "ObjectStoreTestWrapper.h"
 
-class PhobosTestFixture : public CppClientTestWrapper {
+class PhobosStoreTestFixture : public ObjectStoreTestWrapper {
   public:
-    void init()
-    {
-        CppClientTestWrapper::init(
-            "TestPhobosBackend", "hestia_phobos_tests.yaml");
-    }
+    PhobosStoreTestFixture() : ObjectStoreTestWrapper("phobos_plugin") {}
 };
 
+
 TEST_CASE_METHOD(
-    PhobosTestFixture, "Test phobos backend integration", "[phobos]")
+    PhobosStoreTestFixture, "Test phobos backend integration", "[phobos]")
 {
-    init();
     hestia::DefaultIdGenerator uuid_generator;
-    hestia::Uuid obj_uuid   = uuid_generator.get_uuid("phobos_test");
-    hestia::hsm_uint obj_id = {obj_uuid.m_hi, obj_uuid.m_lo};
+    hestia::Uuid obj_uuid = uuid_generator.get_uuid("phobos_test");
 
-    std::string content = "The quick brown fox jumps over the lazy dog.";
+    hestia::StorageObject obj(obj_uuid);
+    obj.m_metadata.set_item("mykey", "myval");
 
-    auto put_rc =
-        hestia::put(obj_id, false, content.data(), 0, content.length(), 0);
-    REQUIRE(put_rc == 0);
+    exists(obj, false);
 
-    get_and_check(obj_id, 0, content);
+    // No way of putting just metadata
 
-    // auto copy_rc = hestia::copy(obj_id, 0, 1);
-    // REQUIRE(copy_rc == 0);
+    // put(obj);
+    // exists(obj, true);
 
-    // get_and_check(obj_id, 1, content);
+    // hestia::StorageObject fetched_obj(obj_uuid);
+    // get(fetched_obj);
 
-    // auto move_rc = hestia::move(obj_id, 1, 2);
-    // REQUIRE(move_rc == 0);
+    // REQUIRE(fetched_obj.m_metadata.get_item("mykey") == "myval");
 
-    // get_and_check(obj_id, 2, content);
+    // remove(obj);
+    // exists(fetched_obj, false);
+
+    std::string content = "The quick brown fox jumps over the lazy dog";
+    obj.m_size          = content.size();
+
+    hestia::Stream stream;
+    put(obj, &stream);
+
+    REQUIRE(stream.write(content).ok());
+    REQUIRE(stream.reset().ok());
+
+    get(obj, &stream);
+
+    std::vector<char> returned_buffer(content.length());
+    hestia::WriteableBufferView write_buffer(returned_buffer);
+    REQUIRE(stream.read(write_buffer).ok());
+    REQUIRE(stream.reset().ok());
+
+    std::string returned_content =
+        std::string(returned_buffer.begin(), returned_buffer.end());
+    REQUIRE(returned_content == content);
+
+    std::vector<hestia::StorageObject> fetched_objects;
+    list({"mykey", "myval"}, fetched_objects);
+    REQUIRE(fetched_objects.size() == 1);
+    REQUIRE(fetched_objects[0].id() == obj.id());
+
+    remove(obj);
+    exists(obj, false);
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include "MockPhobos.h"
 
+#include <stdexcept>
 #include <unistd.h>
 
 #include <iostream>
@@ -133,6 +134,13 @@ int MockPhobos::phobos_store_object_list(
     for (const auto& entry : m_metadata_cache) {
         for (int idx = 0; idx < n_metadata; idx++) {
             auto md_item = std::string(*(metadata + idx));
+            if (auto first_eq = md_item.find_first_of("=");
+                first_eq != md_item.length()) {
+                md_item = md_item.substr(0, first_eq);
+            }
+            else {
+                throw std::runtime_error("MockPhobos: Need value of query");
+            }
             if (auto val = entry.second.get_item(md_item); !val.empty()) {
                 auto obj_info     = new object_info;
                 obj_info->oid     = entry.first;

@@ -126,13 +126,15 @@ void from_string(Metadata& metadata, const std::string& str)
 void PhobosInterfaceImpl::list(
     const Metadata::Query& query, std::vector<StorageObject>& found)
 {
-    const char* key = query.first.c_str();
-    int query_count = (!query.first.empty() ? 1 : 0);
+    const std::string skey = query.first + "=" + query.second;
+    const char* key        = skey.c_str();
+    int query_count        = (!query.first.empty() ? 1 : 0);
 
     int num_objects{0};
     struct object_info* obj_info{nullptr};
 
-    const char* pattern = "";
+    const std::string spattern;
+    const char* pattern = spattern.c_str();
     int rc              = phobos_store_object_list_cpp(
         &pattern, 1, true, &key, query_count, false, &obj_info, &num_objects);
     if (rc != 0) {
