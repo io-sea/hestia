@@ -1,7 +1,6 @@
 #include "PhobosInterfaceImpl.h"
 
 #include "UuidUtils.h"
-
 #if HAS_PHOBOS
 #include "PhobosDescriptor.h"
 
@@ -48,7 +47,14 @@ void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
     };
     obj.m_metadata.for_each_item(each_item);
 
-    ssize_t rc = phobos_put_cpp(&desc.get_handle(), 1, nullptr, nullptr);
+    pho_completion_cb_t callback = [](void*, const struct pho_xfer_desc*,
+                                      int rc) {
+        if (rc != 0) {
+            throw std::runtime_error("phobos_put " + std::to_string(rc));
+        }
+    };
+
+    ssize_t rc = phobos_put_cpp(&desc.get_handle(), 1, callback, nullptr);
     if (fd > 0) {
         ::close(fd);
     }

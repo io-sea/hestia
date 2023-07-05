@@ -26,7 +26,9 @@ StreamState StreamIO::finish() noexcept
             set_state(StreamState::State::ERROR, "Unknown exception.");
         }
     }
-    set_state(StreamState::State::FINISHED);
+    if (m_state.ok()) {
+        set_state(StreamState::State::FINISHED);
+    }
     return get_state();
 }
 
