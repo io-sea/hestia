@@ -32,7 +32,7 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
           {
             \"name\": \"Hestia RPM\",
             \"url\": \"$registry_url.rpm\",
-            \"direct_asset_path\": \"/binaries/hestia$HESTIA_PROJECT_VERSION.rpm\",
+            \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION.rpm\",
             \"link_type\": \"package\"
           },
           {
@@ -40,7 +40,13 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
             \"url\": \"$registry_url.tar.gz\",
             \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION.tar.gz\",
             \"link_type\": \"package\"
-          }
+          },
+          {
+            \"name\": \"Hestia SRC RPM\",
+            \"url\": \"$registry_url.src.rpm\",
+            \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION.src.rpm\",
+            \"link_type\": \"package\"
+          },
         ]}
       }"
 
