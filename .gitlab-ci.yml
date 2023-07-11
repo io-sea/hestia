@@ -93,9 +93,11 @@ stages:
         && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "devel"
       when: on_success
     - if: $CI_PIPELINE_SOURCE == "push"
+        && $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
         && $CI_COMMIT_REF_NAME != "master"
         && $CI_COMMIT_REF_NAME != "devel"
-        && $CI_COMMIT_TAG == ""
       when: manual
     - when: never # Only run default pipeline to verify devel MRs
   tags:

@@ -1,9 +1,9 @@
 set(LINK_MODULES_FOR_EXPORT
-        cli 
-        common 
-        server 
-        protocol 
-        storage 
+        cli
+        common
+        server
+        protocol
+        storage
         web
         hsm
         event_feed
@@ -25,9 +25,13 @@ set(STANDALONE_MODULES_FOR_EXPORT
         mocks
         mock_s3
         mock_s3_plugin
-        main 
+        main
         lib
 )
+
+if(HESTIA_WITH_PROXYGEN)
+        list(APPEND LINK_MODULES_FOR_EXPORT proxygen_plugin)
+endif()
 
 if(HESTIA_WITH_S3_CLIENT)
         list(APPEND STANDALONE_MODULES_FOR_EXPORT s3_plugin)
@@ -51,12 +55,11 @@ list(APPEND LINK_MODULES_FOR_EXPORT nlohmann_json spdlog yaml-cpp hiredis_static
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_link_libraries(${PROJECT_NAME} INTERFACE ${LINK_MODULES_FOR_EXPORT})
-
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(${PROJECT_NAME}::${PROJECT_NAME}_lib ALIAS ${PROJECT_NAME}_lib)
 
 add_library(${PROJECT_NAME}_cmake_modules INTERFACE)
-target_include_directories(${PROJECT_NAME}_cmake_modules INTERFACE 
+target_include_directories(${PROJECT_NAME}_cmake_modules INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/infra/cmake>
         $<INSTALL_INTERFACE:lib/cmake/${PROJECT_NAME}/modules>
         )
@@ -133,6 +136,6 @@ set(CPACK_SOURCE_IGNORE_FILES
 include(CPack)
 
 else()
-        message(STATUS "Skipping package targets due to PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} " not equal to CMAKE_SOURCE_DIR: " ${CMAKE_SOURCE_DIR}) 
+        message(STATUS "Skipping package targets due to PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} " not equal to CMAKE_SOURCE_DIR: " ${CMAKE_SOURCE_DIR})
 endif()
 
