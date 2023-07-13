@@ -41,7 +41,7 @@ HttpResponse::Ptr HestiaUserView::on_get(
     }
     else {
         auto response = HttpResponse::create();
-        response->set_body("Hello world");
+        response->set_body("Not implemented");
         return response;
     }
 }

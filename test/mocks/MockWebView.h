@@ -4,6 +4,9 @@
 #include "RequestContext.h"
 #include "WebView.h"
 
+#include "InMemoryStreamSource.h"
+#include "ReadableBufferView.h"
+
 #include "Logger.h"
 
 namespace hestia::mock {
@@ -27,8 +30,19 @@ class MockWebView : public WebView {
     {
         LOG_INFO("Have headers: " << request.get_header().to_string());
         const auto content_length = request.get_header().get_content_length();
+        if (!request.get_context()
+                 ->get_stream()
+                 ->has_content()) {  // If no stream look at body
+            auto source = InMemoryStreamSource::create(
+                ReadableBufferView(request.body()));
+            request.get_context()->get_stream()->set_source(std::move(source));
+        }
         m_service->set_data(
             std::stoi(content_length), request.get_context()->get_stream());
+        auto status = request.get_context()->get_stream()->flush();
+        if (!status.ok()) {
+            LOG_ERROR("Error saving request data");
+        }
         return HttpResponse::create();
     }
 

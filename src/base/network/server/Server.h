@@ -41,6 +41,8 @@ class Server {
 
     virtual Status stop();
 
+    virtual void wait_until_bound();
+
   protected:
     Status get_status() const;
 

@@ -3,6 +3,7 @@
 #include "AuthorizationContext.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
+#include "ReadableBufferView.h"
 #include "Stream.h"
 
 #include <atomic>
@@ -26,6 +27,8 @@ class RequestContext {
     HttpResponse* get_response() const;
 
     const HttpRequest& get_request() const;
+
+    void set_body(const ReadableBufferView& buffer);
 
     void on_input_complete();
 

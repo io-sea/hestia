@@ -1,88 +1,22 @@
-#include <string>
-
 #ifdef HAVE_PROXYGEN
 #include <catch2/catch_all.hpp>
 
 #include "ProxygenServer.h"
 
-#include "InMemoryKeyValueStoreClient.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 #include "Logger.h"
 #include "RequestContext.h"
 #include "UrlRouter.h"
+
+#include "MockWebService.h"
+#include "MockWebView.h"
+#include "UrlRouter.h"
+
+#include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
 
-class TestWebService {
-  public:
-    std::size_t get_data(hestia::Stream* stream)
-    {
-        if (m_buffer.empty()) {
-            return 0;
-        }
-        stream->set_source(hestia::InMemoryStreamSource::create(m_buffer));
-        return m_buffer.size();
-    }
-
-    std::size_t get_data(std::string& val)
-    {
-        val = std::string(m_buffer.begin(), m_buffer.end());
-        return m_buffer.size();
-    }
-
-    void set_data(std::size_t size, hestia::Stream* stream)
-    {
-        m_buffer.clear();
-        m_buffer.resize(size);
-        stream->set_sink(hestia::InMemoryStreamSink::create(m_buffer));
-    }
-
-  private:
-    std::vector<char> m_buffer;
-};
-
-class TestWebView : public hestia::WebView {
-  public:
-    TestWebView(TestWebService* service) : hestia::WebView(), m_service(service)
-    {
-    }
-
-    hestia::HttpResponse::Ptr on_get(
-        const hestia::HttpRequest& request, const hestia::User&) override
-    {
-        (void)request;
-
-        // auto buffer_size =
-        // mService->getData(request.getContext()->getStream());
-        // LOG_INFO("Buffer size is: " + std::to_string(buffer_size));
-
-        std::string data;
-        auto buffer_size = m_service->get_data(data);
-        auto response    = hestia::HttpResponse::create();
-        if (buffer_size == 0) {
-            response->set_body("No data set!");
-        }
-        else {
-            response->header().set_item(
-                "Content-Length", std::to_string(buffer_size));
-            response->set_body(data);
-        }
-        return response;
-    }
-
-    hestia::HttpResponse::Ptr on_put(
-        const hestia::HttpRequest& request, const hestia::User&) override
-    {
-        const auto content_length = request.get_header().get_content_length();
-        m_service->set_data(
-            std::stoi(content_length), request.get_context()->get_stream());
-
-        return hestia::HttpResponse::create();
-    }
-
-  private:
-    TestWebService* m_service{nullptr};
-};
+#include <memory>
 
 class TestWebApp : public hestia::WebApp {
   public:
@@ -90,11 +24,11 @@ class TestWebApp : public hestia::WebApp {
     {
         m_url_router = std::make_unique<hestia::UrlRouter>();
         m_url_router->add_pattern(
-            {"/"}, std::make_unique<TestWebView>(&m_service));
+            {"/"}, std::make_unique<hestia::mock::MockWebView>(&m_service));
     }
 
   private:
-    TestWebService m_service;
+    hestia::mock::MockWebService m_service;
 };
 
 
@@ -118,6 +52,11 @@ TEST_CASE_METHOD(
     hestia::ProxygenServer server(test_config, m_web_app.get());
 
     server.initialize();
-    // server.start();
+    server.start();
+    server.wait_until_bound();
+
+    // Other testing done with curl client
+
+    server.stop();
 }
 #endif

@@ -6,6 +6,10 @@
 
 #include <filesystem>
 
+#ifdef HAVE_PROXYGEN
+#include <folly/init/Init.h>
+#endif
+
 int main(int argc, char* argv[])
 {
     hestia::Logger::Config logger_config;
@@ -19,6 +23,14 @@ int main(int argc, char* argv[])
         std::filesystem::create_directories(
             std::filesystem::current_path() / "test_output");
     }
+
+#ifdef HAVE_PROXYGEN
+    int folly_argc = 0;
+    folly::InitOptions init_options;
+    init_options.remove_flags = false;
+    init_options.use_gflags   = false;
+    folly::Init folly_instance(&folly_argc, nullptr, init_options);
+#endif
 
     int result = Catch::Session().run(argc, argv);
 

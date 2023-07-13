@@ -6,6 +6,7 @@
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 #include "ObjectService.h"
+#include "RequestContext.h"
 #include "StringAdapter.h"
 
 #include "Logger.h"
@@ -179,6 +180,8 @@ HttpResponse::Ptr HestiaObjectView::on_put(
                 ReadableBufferView(request.body()));
             stream.set_source(std::move(source));
             stream.set_source_size(request.body().size());
+
+            // TODO: Add support for input streams of data
 
             auto data_put_response =
                 m_hestia_service->get_hsm_service()->make_request(req, &stream);

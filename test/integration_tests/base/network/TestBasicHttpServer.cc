@@ -40,5 +40,6 @@ TEST_CASE_METHOD(
     hestia::BasicHttpServer server(test_config, m_web_app.get());
 
     server.initialize();
-    // server.start();
+    server.start();
+    server.wait_until_bound();
 }

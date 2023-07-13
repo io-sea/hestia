@@ -53,14 +53,16 @@ void ProxygenMessage::build_response(
     bool end_of_message)
 {
     proxygen::ResponseBuilder response_builder(response_handler);
-    response_builder.status(response->code(), response->message());
-    response_builder.body(response->body());
 
-    auto each_header =
-        [&response_builder](const std::string& tag, const std::string& val) {
+    if (response != nullptr) {
+        response_builder.status(response->code(), response->message());
+        response_builder.body(response->body());
+        auto each_header = [&response_builder](
+                               const std::string& tag, const std::string& val) {
             response_builder.header(tag, val);
         };
-    response->header().for_each(each_header);
+        response->header().for_each(each_header);
+    }
 
     if (end_of_message) {
         response_builder.sendWithEOM();

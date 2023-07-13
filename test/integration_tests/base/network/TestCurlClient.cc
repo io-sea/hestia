@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include "BasicHttpServer.h"
 #include "CurlClient.h"
 #include "MockWebView.h"
 #include "UrlRouter.h"
@@ -12,6 +11,14 @@
 #include "UserService.h"
 
 #include <iostream>
+
+#ifdef HAVE_PROXYGEN
+#include "ProxygenServer.h"
+using TestServer = hestia::ProxygenServer;
+#else
+#include "BasicHttpServer.h"
+using TestServer = hestia::BasicHttpServer;
+#endif
 
 class TestWebApp : public hestia::WebApp {
   public:
@@ -39,10 +46,11 @@ class TestCurlClientFixture {
     std::unique_ptr<hestia::UserService> m_user_service;
 };
 
+
 TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Default", "[curl]")
 {
     hestia::Server::Config test_config;
-    hestia::BasicHttpServer server(test_config, m_web_app.get());
+    TestServer server(test_config, m_web_app.get());
 
     server.initialize();
     server.start();
@@ -67,12 +75,13 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Default", "[curl]")
     REQUIRE(
         get_response1->body()
         == "The quick brown fox jumps over the lazy dog.");
+    server.stop();
 }
 
 TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
 {
     hestia::Server::Config test_config;
-    hestia::BasicHttpServer server(test_config, m_web_app.get());
+    TestServer server(test_config, m_web_app.get());
 
     server.initialize();
     server.start();
@@ -110,4 +119,5 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
     std::string reconstructed_response(
         returned_content.begin(), returned_content.end());
     REQUIRE(reconstructed_response == content);
+    server.stop();
 }

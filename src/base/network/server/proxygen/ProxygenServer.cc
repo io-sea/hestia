@@ -3,8 +3,7 @@
 #ifdef HAVE_PROXYGEN
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/executors/GlobalExecutor.h>
-#include <folly/init/Init.h>
-#include <folly/portability/GFlags.h>
+
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/RequestHandlerFactory.h>
 
@@ -20,7 +19,10 @@ ProxygenServer::ProxygenServer(const Server::Config& config, WebApp* web_app) :
 {
 }
 
-ProxygenServer::~ProxygenServer() {}
+ProxygenServer::~ProxygenServer()
+{
+    stop();
+}
 
 ProxygenServer::Status ProxygenServer::initialize()
 {
@@ -39,13 +41,6 @@ ProxygenServer::Status ProxygenServer::initialize()
     }
 
     // return {};
-    int folly_argc = 0;
-
-    folly::InitOptions init_options;
-    init_options.remove_flags = false;
-    init_options.use_gflags   = false;
-
-    folly::init(&folly_argc, nullptr, init_options);
 
     proxygen::HTTPServerOptions options;
     // options.threads = mConfig.mNumThreads;
@@ -71,14 +66,39 @@ ProxygenServer::Status ProxygenServer::initialize()
 
 ProxygenServer::Status ProxygenServer::start()
 {
-    std::thread t([this]() {
+    auto worker = std::make_unique<std::thread>([this]() {
         LOG_INFO(
             "About to start server, impl is: " + std::to_string(bool(m_impl)));
-        m_impl->start();
+        m_impl->start([this]() {
+            std::unique_lock<std::mutex> lck(m_bound_mutex);
+            m_bound_cv.notify_all();
+        });
     });
 
-    t.join();
+    m_threads.add(std::move(worker));
+    if (m_config.m_block_on_launch) {
+        m_threads.join_and_clear_all();
+    }
     return {};
 }
+
+void ProxygenServer::wait_until_bound()
+{
+    std::unique_lock<std::mutex> lck(m_bound_mutex);
+    m_bound_cv.wait(lck);
+    LOG_INFO("Server is bound, impl is: " + std::to_string(bool(m_impl)));
+}
+
+ProxygenServer::Status ProxygenServer::stop()
+{
+    if (m_threads.size() > 0) {
+        LOG_INFO("Stopping server, impl is: " + std::to_string(bool(m_impl)));
+        m_impl->stop();
+        m_threads.join_and_clear_all();
+    }
+    return {};
+}
+
+
 }  // namespace hestia
 #endif

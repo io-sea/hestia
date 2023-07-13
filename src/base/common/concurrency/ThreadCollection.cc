@@ -40,6 +40,7 @@ void ThreadCollection::join_and_clear_all()
 
     std::scoped_lock guard(m_mutex);
     threads.clear();
+    m_threads.clear();
     m_accepting = true;
 }
 

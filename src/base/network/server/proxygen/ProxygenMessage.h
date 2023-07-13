@@ -15,8 +15,8 @@ class ProxygenMessage {
 
     static void build_response(
         proxygen::ResponseHandler* response_handler,
-        const HttpResponse* response,
-        bool end_of_message);
+        const HttpResponse* response = nullptr,
+        bool end_of_message          = false);
 };
 }  // namespace hestia
 #endif

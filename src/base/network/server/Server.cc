@@ -29,6 +29,11 @@ Server::Status Server::stop()
     return {};
 }
 
+void Server::wait_until_bound()
+{
+    return;
+}
+
 Server::Status Server::get_status() const
 {
     std::scoped_lock guard(m_mutex);

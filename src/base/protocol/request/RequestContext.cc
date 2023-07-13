@@ -30,6 +30,12 @@ const HttpRequest& RequestContext::get_request() const
     return m_request;
 }
 
+void RequestContext::set_body(const ReadableBufferView& buffer)
+{
+    m_request.body().assign(buffer.data(), buffer.length());
+}
+
+
 void RequestContext::set_output_chunk_handler(onChunkFunc func)
 {
     m_on_output_chunk = func;

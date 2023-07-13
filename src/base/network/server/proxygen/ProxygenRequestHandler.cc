@@ -1,14 +1,21 @@
 #include "ProxygenRequestHandler.h"
 
+#ifdef HAVE_PROXYGEN
+
+#include "HttpRequest.h"
 #include "ProxygenMessage.h"
 
-#include "Logger.h"
+#include "InMemoryStreamSource.h"
+#include "ReadableBufferView.h"
 #include "RequestContext.h"
 
-#ifdef HAVE_PROXYGEN
+#include "Logger.h"
+
 #include <folly/executors/GlobalExecutor.h>
 #include <folly/io/async/EventBaseManager.h>
 #include <proxygen/httpserver/ResponseBuilder.h>
+
+#include <memory>
 
 namespace hestia {
 ProxygenRequestHandler::ProxygenRequestHandler(WebApp* web_app) :
@@ -29,37 +36,40 @@ void ProxygenRequestHandler::onRequest(
         "Got request with method: "
         + m_request_context->get_request().get_method_as_string());
 
-    m_web_app->on_request(m_request_context.get());
+    if (m_request_context->get_request().get_method()
+        == HttpRequest::Method::GET) {
+        m_web_app->on_request(m_request_context.get());
 
-    if (!m_request_context->get_stream()->waiting_for_content()) {
-        LOG_INFO(
-            "Sending response, finished ? " << m_request_context->finished());
-        LOG_INFO(
-            "Content length ? " << m_request_context->get_response()
-                                       ->header()
-                                       .get_content_length());
-        ProxygenMessage::build_response(
-            downstream_, m_request_context->get_response(),
-            m_request_context->finished());
-    }
+        if (!m_request_context->get_stream()->waiting_for_content()) {
+            LOG_INFO(
+                "Sending response, finished ? "
+                << m_request_context->finished());
+            LOG_INFO(
+                "Content length ? " << m_request_context->get_response()
+                                           ->header()
+                                           .get_content_length());
+            ProxygenMessage::build_response(
+                downstream_, m_request_context->get_response(), false);
+        }
 
-    if (m_request_context->get_stream()->has_content()) {
-        auto event_base = folly::EventBaseManager::get()->getEventBase();
-        m_request_context->set_output_chunk_handler(
-            [this,
-             event_base](const ReadableBufferView& buffer, bool finished) {
-                on_output_chunk(buffer, finished, event_base);
-                return 0;
-            });
+        else if (m_request_context->get_stream()->has_content()) {
+            auto event_base = folly::EventBaseManager::get()->getEventBase();
+            m_request_context->set_output_chunk_handler(
+                [this,
+                 event_base](const ReadableBufferView& buffer, bool finished) {
+                    on_output_chunk(buffer, finished, event_base);
+                    return 0;
+                });
 
-        m_request_context->set_output_complete_handler(
-            [this](const HttpResponse* response) {
-                on_output_finished(response);
-            });
+            m_request_context->set_output_complete_handler(
+                [this](const HttpResponse* response) {
+                    on_output_finished(response);
+                });
 
-        LOG_INFO("Flushing stream.");
-        folly::getGlobalCPUExecutor()->add(
-            [this]() { m_request_context->flush_stream(); });
+            LOG_INFO("Flushing stream.");
+            folly::getGlobalCPUExecutor()->add(
+                [this]() { m_request_context->flush_stream(); });
+        }
     }
 }
 
@@ -77,9 +87,7 @@ void ProxygenRequestHandler::on_output_chunk(
 
     if (finished) {
         evb->runInEventBaseThread([this, body = buf.move()]() mutable {
-            proxygen::ResponseBuilder(downstream_)
-                .body(std::move(body))
-                .sendWithEOM();
+            proxygen::ResponseBuilder(downstream_).body(std::move(body)).send();
         });
     }
     else {
@@ -89,11 +97,9 @@ void ProxygenRequestHandler::on_output_chunk(
     }
 }
 
-void ProxygenRequestHandler::on_output_finished(const HttpResponse* response)
+void ProxygenRequestHandler::on_output_finished(const HttpResponse*)
 {
-    (void)response;
     LOG_INFO("On Output finished");
-    // ProxygenMessage::buildResponse(downstream_, response, true);
 }
 
 void ProxygenRequestHandler::onEgressPaused() noexcept {}
@@ -102,37 +108,41 @@ void ProxygenRequestHandler::onEgressResumed() noexcept {}
 
 void ProxygenRequestHandler::onBody(
     std::unique_ptr<folly::IOBuf> buffer) noexcept
+
 {
-    ReadableBufferView read_buffer(buffer->data(), buffer->length());
-    LOG_INFO("Got body: " << read_buffer.data());
-    auto status = m_request_context->write_to_stream(read_buffer);
-    if (!status.ok()) {
-        LOG_ERROR("Error writing body to stream: " << status.m_state.message());
+    if (m_request_context->get_request().get_method()
+        == HttpRequest::Method::PUT) {
+        if (!buffer->empty()) {
+            ReadableBufferView read_buffer(buffer->data(), buffer->length());
+            m_request_context->set_body(read_buffer);
+            LOG_INFO(
+                "Processing body for request: "
+                << m_request_context->get_request().to_string());
+            m_web_app->on_request(m_request_context.get());
+        }
+        // TODO: Add full support for input streams
+        ProxygenMessage::build_response(
+            downstream_, m_request_context->get_response(), false);
     }
 }
 
 void ProxygenRequestHandler::onEOM() noexcept
 {
     LOG_INFO("Got end of message");
-    // mRequestContext->onInputComplete();
-    if (!m_request_context->finished()) {
-        // ProxygenMessage::buildResponse(downstream_,
-        // mRequestContext->getResponse(), true);
-    }
+    m_request_context->on_input_complete();
+    ProxygenMessage::build_response(downstream_, nullptr, true);
 }
 
 void ProxygenRequestHandler::onUpgrade(proxygen::UpgradeProtocol) noexcept {}
 
 void ProxygenRequestHandler::requestComplete() noexcept
 {
-    // m_finished = true;
-    // m_paused   = true;
+    LOG_INFO("Request completed");
 }
 
 void ProxygenRequestHandler::onError(proxygen::ProxygenError /*err*/) noexcept
 {
-    // m_finished = true;
-    // m_paused   = true;
+    LOG_ERROR("Proxygen server error");
 }
 }  // namespace hestia
 #endif

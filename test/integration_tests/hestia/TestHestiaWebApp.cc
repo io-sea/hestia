@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include "BasicHttpServer.h"
 #include "CurlClient.h"
 #include "MockWebView.h"
 #include "UrlRouter.h"
@@ -21,6 +20,15 @@
 
 #include <filesystem>
 #include <iostream>
+
+
+#ifdef HAVE_PROXYGEN
+#include "ProxygenServer.h"
+using TestServer = hestia::ProxygenServer;
+#else
+#include "BasicHttpServer.h"
+using TestServer = hestia::BasicHttpServer;
+#endif
 
 class TestHestiaWebAppFixture {
   public:
@@ -58,8 +66,7 @@ class TestHestiaWebAppFixture {
             m_user_service.get(), m_dist_hsm_service.get());
 
         hestia::Server::Config server_config;
-        m_server = std::make_unique<hestia::BasicHttpServer>(
-            server_config, m_web_app.get());
+        m_server = std::make_unique<TestServer>(server_config, m_web_app.get());
 
         m_server->initialize();
         m_server->start();
@@ -69,7 +76,7 @@ class TestHestiaWebAppFixture {
         m_http_client = std::make_unique<hestia::CurlClient>(http_config);
     }
 
-    ~TestHestiaWebAppFixture() {}
+    ~TestHestiaWebAppFixture() { m_server->stop(); }
 
     void get_objects(std::vector<hestia::HsmObject>& objects)
     {
@@ -155,7 +162,7 @@ class TestHestiaWebAppFixture {
     std::unique_ptr<hestia::JsonAdapter<hestia::StorageTier>> m_tier_adapter;
 
     std::unique_ptr<hestia::HestiaWebApp> m_web_app;
-    std::unique_ptr<hestia::BasicHttpServer> m_server;
+    std::unique_ptr<TestServer> m_server;
     std::unique_ptr<hestia::CurlClient> m_http_client;
 
     std::string m_base_url   = "127.0.0.1:8000/api/v1/hsm/";

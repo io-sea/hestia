@@ -174,17 +174,14 @@ Unit_test:
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
     HESTIA_TEST_REDIS: "ON"
-    HESTIA_WITH_PHOBOS: "ON"
   before_script:
     - *update_distro
     - *install_base_dependencies
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
-    - *install_phobos
   script:
     - *configure
     - *build
     - redis-server&
-    - ${CI_PROJECT_DIR}/test/data/start_phobos_db.sh
     - *test
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-hestia_unit_tests
 #    - make -C "${CMAKE_BUILD_DIR}" ccov-report-hestia_unit_test
@@ -240,6 +237,29 @@ Nightly_build:
       - ${CMAKE_BUILD_DIR}/*.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 hour
+
+Nightly_unit_test:
+  <<: *default_nightly_job
+  stage: test
+  variables:
+    <<: *nightly_variables
+    HESTIA_BUILD_TESTS: "ON"
+    HESTIA_TEST_REDIS: "ON"
+    HESTIA_BUILD_DOCUMENTATION: "OFF"
+    HESTIA_WITH_MOTR: "OFF" # No real motr tests present at this time
+  before_script:
+    - *update_distro
+    - *install_base_dependencies
+    - *install_proxygen
+    - *install_phobos
+    - yum install -qy $(cat ${HESTIA_DEPS}/test)
+  script:
+    - *configure
+    - *build
+    - redis-server&
+    - ${CI_PROJECT_DIR}/test/data/start_phobos_db.sh
+    - *test
+
 
 Nightly_E2E:
   <<: *default_nightly_job

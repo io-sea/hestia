@@ -16,7 +16,7 @@ class BasicHttpServer : public Server {
 
     Status start() override;
 
-    void wait_until_bound();
+    void wait_until_bound() override;
 
   private:
     void on_connection(Socket* socket);

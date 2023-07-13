@@ -2,10 +2,16 @@
 
 #include "DistributedHsmService.h"
 #include "HsmService.h"
-
 #include "TierService.h"
 
+#include "InMemoryStreamSink.h"
+#include "RequestContext.h"
+#include "WriteableBufferView.h"
+
+#include "Logger.h"
 #include "StringUtils.h"
+
+#include <vector>
 
 namespace hestia {
 HestiaTierView::HestiaTierView(DistributedHsmService* hestia_service) :
@@ -41,7 +47,8 @@ HttpResponse::Ptr HestiaTierView::on_get(
     }
     else {
         auto response = HttpResponse::create();
-        response->set_body("Hello world");
+        response->set_body(
+            "Specific tier information endpoint not implemented");
         return response;
     }
 }
@@ -56,9 +63,10 @@ HttpResponse::Ptr HestiaTierView::on_put(
     if (path.empty() || path == "/") {
         LOG_INFO("Creating tier");
         StorageTier tier;
-        if (!request.body().empty()) {
+        if (!request.body().empty()) {  // Info is sent as the body
             m_tier_adapter->from_string(request.body(), tier);
         }
+        // Generate new UUID
         tier.reset_id();
 
         auto put_response = tier_service->make_request({tier, CrudMethod::PUT});
@@ -76,7 +84,7 @@ HttpResponse::Ptr HestiaTierView::on_put(
     }
     else {
         auto response = HttpResponse::create();
-        response->set_body("Hello world");
+        response->set_body("Not implemented");
         return response;
     }
 }

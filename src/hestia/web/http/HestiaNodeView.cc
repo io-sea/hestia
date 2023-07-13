@@ -4,6 +4,9 @@
 #include "HsmNode.h"
 #include "StringAdapter.h"
 
+#include "InMemoryStreamSink.h"
+#include "RequestContext.h"
+
 #include "StringUtils.h"
 
 #include "Logger.h"
