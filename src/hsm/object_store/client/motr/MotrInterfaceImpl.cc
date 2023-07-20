@@ -184,7 +184,7 @@ class IoContext {
 
     void free_data()
     {
-        if (m_allocated_io_buffer) {
+        if (m_allocated_io_buffer) {   
             m0_bufvec_free(&m_data);
         }
         else {

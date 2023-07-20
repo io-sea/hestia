@@ -7,10 +7,14 @@ add_module(
         MotrInterface.h 
         IMotrInterfaceImpl.h
         MotrConfig.h
+        IoContext.h
+        BaseMotrObject.h
     SOURCES
         MotrHsmClient.cc
         MotrInterface.cc 
         MotrConfig.cc
+        IoContext.cc
+        BaseMotrObject.cc
     INTERNAL_DEPENDENCIES 
         hsm_object_store_client
 )
