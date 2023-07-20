@@ -61,6 +61,6 @@ endif()
 
 add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin)
 
-target_code_coverage(${INTEGRATION_TEST_MODULE})
+target_code_coverage(${INTEGRATION_TEST_MODULE} ALL)
 
 catch_discover_tests(${INTEGRATION_TEST_MODULE})

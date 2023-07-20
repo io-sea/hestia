@@ -18,7 +18,7 @@ include(GNUInstallDirs)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 option(HESTIA_BUILD_TESTS "Build Hestia tests." OFF)
-option(HESTIA_WITH_PHOBOS "Build Phobos Object Store Integration." ON)
+option(HESTIA_WITH_PHOBOS "Build Phobos Object Store Integration." OFF)
 option(HESTIA_WITH_MOTR "Build the Cortx Motr Integration." OFF)
 option(HESTIA_WITH_PROXYGEN "Build the Proxyen webserver." OFF)
 option(HESTIA_WITH_S3_CLIENT "Build the S3 Client." ON)
