@@ -37,4 +37,3 @@ Run `make ccov-exeName` to run the coverage wrapper for `exeName` where `exeName
 
 HTML report was genereted as `$BUILD_DIR/ccov/all-merged/index.html`.
 
-![image](https://git.ichec.ie/io-sea-internal/IO-SEA-Internal-Documentation/-/blob/master/WP4/T4.3/images/coveragereport.png)
