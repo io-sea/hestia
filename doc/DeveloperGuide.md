@@ -46,7 +46,8 @@ Option | Effect
 ## Testing
 
 Units test can be run with `make -C build test`, given `HESTIA_BUILD_TESTS` was set to `ON` during the build process. 
-
+To enable code coverage targets, the single CMake option of `CODE_COVERAGE` needs to be set to 'ON'. 
+It is described [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
 
 # Running Static Analysis
 
