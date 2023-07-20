@@ -20,6 +20,8 @@ class IoContext {
 
     void to_buffer(WriteableBufferView& buffer, std::size_t block_size);
 
+    virtual int read_blocks();
+
     virtual std::size_t get_extent_index(int i);
     virtual std::size_t get_extent_count(int i);
     virtual std::size_t get_attr_count(int i);

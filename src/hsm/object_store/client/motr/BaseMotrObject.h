@@ -32,7 +32,7 @@ class BaseMotrObject {
     virtual void set_motr_id();
     virtual void close_entity();
     virtual int IoCtxt_read_blocks();
-    virtual std::unique_ptr<IoContext> set_IoContext(int num_blocks, size_t block_size, bool alloc_io_buff);
+    virtual void set_IoContext(int num_blocks, size_t block_size, bool alloc_io_buff);
 
     Uuid m_uuid;
     bool m_close_on_delete{true};

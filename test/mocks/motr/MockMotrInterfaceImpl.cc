@@ -1,5 +1,7 @@
 #include "MockMotrInterfaceImpl.h"
-#include "IOContext.h"
+#include "MockIOContext.h"
+#include "MockMotrObject.h"
+
 
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
@@ -12,155 +14,6 @@
 
 namespace hestia {
     
-class MockIoContext: public IoContext {
-  public:
-    std::size_t get_extent_index(int i){ return m_ext.m_indices[i]; }
-     std::size_t get_extent_count(int i){ return m_ext.m_counts[i]; }
-     std::size_t get_attr_count(int i){ return m_attr.m_counts[i]; }
-     std::size_t get_data_count(int i){ return m_data.m_counts[i];}
-     std::size_t get_data_size(){return m_data.m_counts.size();}
-     void* get_data_buf(int i){return m_data.m_buffers[i];}
-     void set_extent_index(int i, size_t n){m_ext.m_indices[i] = n;}
-     void set_extent_count(int i, size_t n){m_ext.m_counts[i]=n;}
-     void set_attr_count(int i, size_t n){m_attr.m_counts[i]=n;}
-     void set_data_count(int i, size_t n){m_data.m_counts[i]=n;}
-     void set_data_buf(int i, char * buf){m_data.m_buffers[i] = buf;}
-     void indexvec_free(){m_attr.clear();}
-     void attrvec_free(){m_attr.clear();}
-     void buffvec_free(){m_data.clear();}
-     void buffvec_free2(){m_data.clear();}
-     int alloc_data(int num_blocks, std::size_t block_size){return 0;}
-     int empty_alloc_data(int num_blocks){return 0;}
-     int alloc_attr(int num_blocks, std::size_t block_size){return 0;}
-     int index_alloc(int num_blocks){return 0;}
-/*
-    int do_io_op(struct m0_obj* obj, enum m0_obj_opcode opcode)
-    {
-        struct m0_op* ops[1] = {NULL};
-
-        /* Create the op request */
-        //m0_obj_op(obj, opcode, &m_ext, &m_data, &m_attr, 0, 0, &ops[0]);
-
-        /* Launch the op request*/
-        //m0_op_launch(ops, 1);
-
-        /* wait for completion */
-        //auto rc = 0;
-        //    m0_op_wait(ops[0], M0_BITS(M0_OS_FAILED, M0_OS_STABLE), M0_TIME_NEVER) ?:
-        //        m0_rc(ops[0]);
-
-        /* finalize and release *
-        //m0_op_fini(ops[0]);
-        //m0_op_free(ops[0]);
-
-        return rc;
-    }
-*/
-    //int read_blocks(struct m0_obj* obj) { return do_io_op(obj, M0_OC_READ); }
-    //int read_blocks(mock::motr::Obj* obj){return mock::motr::MotrBackend::read_object(obj,m_ext,m_data);}
-
-    //TODO add the mock read/write blocks methods
-
-    struct mock::motr::IndexVec m_ext;
-    struct mock::motr::BufferVec m_data;
-    struct mock::motr::BufferVec m_attr;
-};
-
-class MotrObject {
-  public:
-    MotrObject(const hestia::Uuid& oid) : m_id(oid) {}
-
-
-    ~MotrObject() = default;
-
-    mock::motr::Id get_motr_id() const { return to_motr_id(m_id); }
-
-    mock::motr::Obj* get_motr_obj() { return &m_handle; }
-
-    static mock::motr::Id to_motr_id(const hestia::Uuid& id)
-    {
-        mock::motr::Id motr_id;
-        motr_id.m_lo = id.m_lo;
-        motr_id.m_hi = id.m_hi;
-        return motr_id;
-    }
-
-    int read_blocks()
-    {
-        if (!m_io_ctx) {
-            m_io_ctx = std::make_unique<IoContext>(
-                m_unread_block_count, m_block_size, true);
-        }
-        else {
-            auto rc =
-                m_io_ctx->prepare(m_unread_block_count, m_block_size, true);
-            if (rc != 0) {
-                return rc;
-            }
-        }
-        auto rc = m_io_ctx->map(
-            m_unread_block_count, m_block_size, m_start_offset, nullptr);
-        if (rc != 0) {
-            return rc;
-        }
-        return m_io_ctx->read_blocks(&m_handle);
-    }
-
-    int read(WriteableBufferView& buffer, std::size_t length)
-    {
-        for (auto transfer_size = length; transfer_size > 0;
-             transfer_size -= get_last_transfer_size()) {
-            set_block_layout(transfer_size);
-
-            // if (transfer_size < m_min_block_size) {
-            //     m_block_size = m_min_block_size;
-            // }
-            if (auto rc = read_blocks(); rc != 0) {
-                return rc;
-            }
-            if (transfer_size < m_block_size) {
-                m_io_ctx->to_buffer(buffer, transfer_size);
-            }
-            else {
-                m_io_ctx->to_buffer(buffer, m_block_size);
-            }
-
-            m_start_offset += get_last_transfer_size();
-        }
-        return 0;
-    }
-
-    void set_block_layout(std::size_t transfer_size)
-    {
-        m_unread_block_count = transfer_size / m_block_size;
-        if (m_unread_block_count == 0) {
-            m_unread_block_count = 1;
-            //    m_block_size         = transfer_size;
-        }
-        else if (m_unread_block_count > MAX_BLOCK_COUNT) {
-            m_unread_block_count = MAX_BLOCK_COUNT;
-        }
-    }
-
-    std::size_t get_last_transfer_size() const
-    {
-        return m_unread_block_count * m_block_size;
-    }
-
-    std::size_t m_size{0};
-
-  private:
-    hestia::Uuid m_id;
-    mock::motr::Obj m_handle;
-
-    std::size_t m_total_size{0};
-    int m_unread_block_count{0};
-    std::size_t m_block_size{0};
-    std::size_t m_start_offset{0};
-    std::unique_ptr<IoContext> m_io_ctx;
-};
-
-
 void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
 {
     static constexpr int mo_uber_realm = 0;
@@ -201,10 +54,10 @@ void MockMotrInterfaceImpl::initialize_hsm(
 void MockMotrInterfaceImpl::put(
     const HsmObjectStoreRequest& request, hestia::Stream* stream) const
 {
-    MotrObject motr_obj(request.object().id());
+    auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
 
     auto rc = m_hsm.m0hsm_create(
-        motr_obj.get_motr_id(), motr_obj.get_motr_obj(), request.target_tier(),
+        motr_obj->motr_id, motr_obj.get_motr_obj(), request.target_tier(),
         false);
     if (rc < 0) {
         const std::string msg =

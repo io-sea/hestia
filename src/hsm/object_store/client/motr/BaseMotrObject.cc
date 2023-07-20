@@ -19,13 +19,14 @@ namespace hestia{
 
         if (m_close_on_delete) {
             close_entity();
+            //set bool ?
         }
     }
 
     int BaseMotrObject::read_blocks()
     {
         if (!m_io_ctx) {
-            m_io_ctx = set_IoContext(
+            set_IoContext(
                 m_unread_block_count, m_block_size, true);
         }
         else {
