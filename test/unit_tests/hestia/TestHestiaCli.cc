@@ -5,6 +5,20 @@
 
 #include <iostream>
 
+class TestConsoleInterface : public hestia::IConsoleInterface {
+    void console_write(const std::string& output) const override
+    {
+        m_last_output = output;
+    }
+
+    bool console_read(std::string& line) const override
+    {
+        (void)line;
+        return false;
+    }
+    mutable std::string m_last_output;
+};
+
 class TestHestiaClient :
     public hestia::IHestiaClient,
     public hestia::IHestiaApplication {
@@ -89,18 +103,15 @@ class TestHestiaClient :
     hestia::OpStatus run() override { return {}; }
 };
 
-class TestHestiaCli : public hestia::HestiaCli {
-  public:
-    void console_write(const std::string& output) const
-    {
-        m_last_output = output;
-    }
-    mutable std::string m_last_output;
-};
-
 class HestiaCliTestFixture {
   public:
-    HestiaCliTestFixture() {}
+    HestiaCliTestFixture()
+    {
+        auto console = std::make_unique<TestConsoleInterface>();
+        m_console    = console.get();
+
+        m_cli = std::make_unique<hestia::HestiaCli>(std::move(console));
+    }
 
     void parse_args(const std::vector<std::string>& args)
     {
@@ -113,7 +124,7 @@ class HestiaCliTestFixture {
             }
             input_args[idx][arg_size] = '\0';
         }
-        m_cli.parse_args(args.size(), input_args);
+        m_cli->parse_args(args.size(), input_args);
 
         for (std::size_t idx = 0; idx < args.size(); idx++) {
             delete[] input_args[idx];
@@ -123,11 +134,12 @@ class HestiaCliTestFixture {
 
     void run()
     {
-        auto rc = m_cli.run(&m_test_client);
+        auto rc = m_cli->run(&m_test_client);
         REQUIRE(rc.ok());
     }
 
-    TestHestiaCli m_cli;
+    std::unique_ptr<hestia::HestiaCli> m_cli;
+    TestConsoleInterface* m_console{nullptr};
     TestHestiaClient m_test_client;
 };
 

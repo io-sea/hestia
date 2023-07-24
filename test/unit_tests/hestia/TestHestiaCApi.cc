@@ -26,18 +26,18 @@ class HestiaCApiTestFixture {
 
 TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API", "[hestia]")
 {
-    char* response{nullptr};
-    int len_response{0};
+    char* output{nullptr};
+    int len_output{0};
 
     auto rc = hestia_create(
-        HESTIA_OBJECT, HESTIA_ID_NONE, HESTIA_ATTRS_NONE, HESTIA_OUTPUT_IDS,
-        nullptr, 0, &response, &len_response);
+        HESTIA_OBJECT, HESTIA_IO_NONE, HESTIA_ID_NONE, nullptr, 0,
+        HESTIA_IO_IDS, &output, &len_output);
     REQUIRE(rc == 0);
-    REQUIRE(len_response > 0);
-    REQUIRE(response != nullptr);
+    REQUIRE(len_output > 0);
+    REQUIRE(output != nullptr);
 
-    std::string id(response, len_response);
-    delete[] response;
+    std::string id(output, len_output);
+    delete[] output;
 
     std::string content("The quick brown fox jumps over the lazy dog");
     // rc = hestia_data_put(id.c_str(), content.data(), content.length(), 0, 0);

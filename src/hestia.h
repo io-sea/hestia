@@ -39,19 +39,12 @@ typedef enum hestia_id_format_e {
     HESTIA_PARENT_NAME = 1 << 3
 } hestia_id_format_t;
 
-typedef enum hestia_attribute_format_e {
-    HESTIA_ATTRS_NONE = 0,
-    HESTIA_ATTRS_JSON,
-    HESTIA_ATTRS_KEY_VALUE,
-    HESTIA_ATTRS_TYPE_COUNT,
-} hestia_attribute_format_t;
-
-typedef enum hestia_output_format_e {
-    HESTIA_OUTPUT_NONE            = 0,
-    HESTIA_OUTPUT_IDS             = 1 << 0,
-    HESTIA_OUTPUT_ATTRS_JSON      = 1 << 1,
-    HESTIA_OUTPUT_ATTRS_KEY_VALUE = 1 << 2,
-} hestia_output_format_t;
+typedef enum hestia_io_format_e {
+    HESTIA_IO_NONE      = 0,
+    HESTIA_IO_IDS       = 1 << 0,
+    HESTIA_IO_JSON      = 1 << 1,
+    HESTIA_IO_KEY_VALUE = 1 << 2,
+} hestia_io_format_t;
 
 typedef enum hestia_query_format_e {
     HESTIA_QUERY_NONE = 0,
@@ -94,34 +87,13 @@ int hestia_finish();
 
 int hestia_create(
     hestia_item_t subject,
+    hestia_io_format_t input_format,
     hestia_id_format_t id_format,
-    hestia_attribute_format_t attribute_format,
-    hestia_output_format_t output_format,
     const char* input,
     int len_input,
-    char** response,
-    int* len_response);
-
-/// @brief Get the attributes of the object as key-value pairs
-///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-/// @param keys An array of fetched key entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
-/// @param values An array of fetched value entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
-/// @param num_attrs Number of attributes to get - size of the key entries array
-///
-/// @return 0 on success, hestia_error_e value on failure
-int hestia_read(
-    hestia_item_t subject,
-    hestia_query_format_t query_format,
-    hestia_id_format_t id_format,
-    hestia_output_format_t output_format,
-    int offset,
-    int count,
-    const char* query,
-    int len_query,
-    char** response,
-    int* len_response,
-    int* total_count);
+    hestia_io_format_t output_format,
+    char** output,
+    int* len_output);
 
 /// @brief Set or update attributes for an object.
 ///
@@ -136,13 +108,34 @@ int hestia_read(
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_update(
     hestia_item_t subject,
+    hestia_io_format_t input_format,
     hestia_id_format_t id_format,
-    hestia_attribute_format_t attribute_format,
-    hestia_output_format_t output_format,
     const char* input,
     int len_input,
-    char** response,
-    int* len_response);
+    hestia_io_format_t output_format,
+    char** output,
+    int* len_output);
+
+/// @brief Get the attributes of the object as key-value pairs
+///
+/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param keys An array of fetched key entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
+/// @param values An array of fetched value entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
+/// @param num_attrs Number of attributes to get - size of the key entries array
+///
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_read(
+    hestia_item_t subject,
+    hestia_query_format_t query_format,
+    hestia_id_format_t id_format,
+    int offset,
+    int count,
+    const char* input,
+    int len_input,
+    hestia_io_format_t output_format,
+    char** output,
+    int* len_output,
+    int* total_count);
 
 /// @brief remove an object entirely from the system
 ///
@@ -154,6 +147,20 @@ int hestia_remove(
     hestia_id_format_t id_format,
     const char* input,
     int len_input);
+
+/// @brief Identify an object, if it exists
+///
+/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+///
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_identify(
+    hestia_item_t subject,
+    hestia_id_format_t id_format,
+    const char* input,
+    int len_input,
+    const char* output,
+    int* len_output,
+    int* exists);
 
 /// @brief Puts data to the object store
 ///
@@ -170,7 +177,9 @@ int hestia_data_put(
     const void* buf,
     const size_t length,
     const size_t offset,
-    const uint8_t tier);
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
 
 /// @brief Puts data to the object store via a file descriptor
 ///
@@ -187,7 +196,9 @@ int hestia_data_put_descriptor(
     int file_discriptor,
     const size_t length,
     const size_t offset,
-    const uint8_t tier);
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
 
 /// @brief Retrieves data from the object store
 ///
@@ -204,7 +215,9 @@ int hestia_data_get(
     void* buf,
     const size_t len,
     const size_t off,
-    const uint8_t tier);
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
 
 /// @brief Copy an object from one tier to another
 ///
@@ -217,7 +230,9 @@ int hestia_data_copy(
     hestia_item_t subject,
     const char* id,
     const uint8_t src_tier,
-    const uint8_t tgt_tier);
+    const uint8_t tgt_tier,
+    char** activity_id,
+    int* len_activity_id);
 
 /// @brief Move an object from one tier to another
 ///
@@ -230,7 +245,9 @@ int hestia_data_move(
     hestia_item_t subject,
     const char* id,
     const uint8_t src_tier,
-    const uint8_t tgt_tier);
+    const uint8_t tgt_tier,
+    char** activity_id,
+    int* len_activity_id);
 
 /// @brief Remove an objects data from a given tier
 ///
@@ -239,7 +256,11 @@ int hestia_data_move(
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_data_release(
-    hestia_item_t subject, const char* id, const uint8_t tier);
+    hestia_item_t subject,
+    const char* id,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
 
 #ifdef __cplusplus
 }

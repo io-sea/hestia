@@ -1,5 +1,7 @@
 #include "HestiaCommands.h"
 
+#include "ConsoleInterface.h"
+
 namespace hestia {
 
 void HestiaClientCommand::set_hsm_subject(const std::string& subject)
@@ -29,6 +31,19 @@ void HestiaClientCommand::set_hsm_action(HsmAction::Action action)
     m_action.set_action(action);
     m_action.set_source_tier(m_source_tier);
     m_action.set_target_tier(m_target_tier);
+}
+
+HestiaClientCommand::IoFormat HestiaClientCommand::io_format_from_string(
+    const std::string& format)
+{
+    return IoFormat_enum_string_converter().init().from_string(format);
+}
+
+bool HestiaClientCommand::expects_id(IoFormat format)
+{
+    return format == IoFormat::ID || format == IoFormat::IDs
+           || format == IoFormat::IDS_ATTRS_JSON
+           || format == IoFormat::IDS_ATTRS_KV_PAIR;
 }
 
 bool HestiaClientCommand::is_crud_method() const
@@ -121,6 +136,77 @@ std::vector<std::string> HestiaClientCommand::get_hsm_subjects() const
 std::vector<std::string> HestiaClientCommand::get_system_subjects() const
 {
     return {"user", "hsm_node"};
+}
+
+std::pair<HestiaClientCommand::IoFormat, CrudAttributes::Format>
+HestiaClientCommand::parse_create_update_inputs(
+    VecCrudIdentifier& ids,
+    CrudAttributes& attributes,
+    IConsoleInterface* console) const
+{
+    IoFormat input_format{IoFormat::NONE};
+    if (!m_input_format.empty()) {
+        input_format = io_format_from_string(m_input_format);
+    }
+
+    IoFormat output_format{IoFormat::IDs};
+    if (!m_output_format.empty()) {
+        output_format = io_format_from_string(m_output_format);
+    }
+
+    CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
+    if (expects_id(input_format) && !m_id_format.empty()) {
+        id_format = CrudIdentifier::input_format_from_string(m_id_format);
+    }
+
+    std::string attribute_buffer;
+    if (input_format == IoFormat::ID && !m_body.empty()) {
+        CrudIdentifier::parse(m_body, id_format, ids);
+    }
+    else if (input_format != IoFormat::NONE) {
+        std::string line;
+        bool in_ids = expects_id(input_format);
+        while (console->console_read(line)) {
+            if (line.empty()) {
+                in_ids = false;
+            }
+            else if (in_ids) {
+                CrudIdentifier id;
+                id.from_buffer(line, id_format);
+                ids.push_back(id);
+            }
+            else {
+                attribute_buffer += line;
+            }
+        }
+    }
+
+    attributes.set_buffer(attribute_buffer);
+
+    CrudAttributes::Format attribute_input_format{CrudAttributes::Format::NONE};
+    if (input_format == IoFormat::ATTRS_JSON
+        || input_format == IoFormat::IDS_ATTRS_JSON) {
+        attribute_input_format = CrudAttributes::Format::JSON;
+    }
+    else if (
+        input_format == IoFormat::ATTRS_KV_PAIR
+        || input_format == IoFormat::IDS_ATTRS_KV_PAIR) {
+        attribute_input_format = CrudAttributes::Format::KV_PAIR;
+    }
+    attributes.set_format(attribute_input_format);
+
+    CrudAttributes::Format attribute_output_format{
+        CrudAttributes::Format::NONE};
+    if (output_format == IoFormat::ATTRS_JSON
+        || output_format == IoFormat::IDS_ATTRS_JSON) {
+        attribute_output_format = CrudAttributes::Format::JSON;
+    }
+    else if (
+        output_format == IoFormat::ATTRS_KV_PAIR
+        || output_format == IoFormat::IDS_ATTRS_KV_PAIR) {
+        attribute_output_format = CrudAttributes::Format::KV_PAIR;
+    }
+    return {output_format, attribute_output_format};
 }
 
 }  // namespace hestia

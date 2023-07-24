@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EnumUtils.h"
+
 #include <string>
 #include <vector>
 
@@ -9,15 +11,15 @@ class CrudIdentifier {
   public:
     enum class Type { PRIMARY_KEY, NAME };
 
-    enum class InputFormat {
+    STRINGABLE_ENUM(
+        InputFormat,
         NONE,
         ID,
         NAME,
         ID_PARENT_ID,
         ID_PARENT_NAME,
         NAME_PARENT_NAME,
-        NAME_PARENT_ID
-    };
+        NAME_PARENT_ID)
 
     CrudIdentifier() = default;
 
@@ -39,6 +41,8 @@ class CrudIdentifier {
     bool has_value() const;
 
     bool has_primary_key() const;
+
+    static InputFormat input_format_from_string(const std::string& format);
 
     bool has_name() const;
 
@@ -62,9 +66,9 @@ class CrudIdentifier {
         m_parent_primary_key = id;
     }
 
-  private:
     void from_buffer(const std::string& line, InputFormat format);
 
+  private:
     std::string m_primary_key;
     std::string m_name;
     std::string m_parent_primary_key;

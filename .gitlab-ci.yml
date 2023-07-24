@@ -273,7 +273,7 @@ Nightly_E2E:
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
-      --with_phobos --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
+      --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
       --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-Linux.rpm
 
 Nightly_deploy:

@@ -44,6 +44,12 @@ std::size_t CrudIdentifier::parse(
     return byte_count;
 }
 
+CrudIdentifier::InputFormat CrudIdentifier::input_format_from_string(
+    const std::string& format)
+{
+    return InputFormat_enum_string_converter().init().from_string(format);
+}
+
 void CrudIdentifier::from_buffer(const std::string& line, InputFormat format)
 {
     switch (format) {

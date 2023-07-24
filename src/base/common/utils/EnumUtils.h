@@ -2,6 +2,7 @@
 
 #include "StringUtils.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 #define STRINGABLE_ENUM(TYPE, ...)                                             \

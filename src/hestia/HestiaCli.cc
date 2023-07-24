@@ -5,6 +5,7 @@
 #include "FileStreamSink.h"
 #include "FileStreamSource.h"
 
+#include "ConsoleInterface.h"
 #include "DaemonManager.h"
 #include "Logger.h"
 #include "UuidUtils.h"
@@ -13,6 +14,13 @@
 #include <iostream>
 
 namespace hestia {
+
+HestiaCli::HestiaCli(std::unique_ptr<IConsoleInterface> console_interface) :
+    m_console_interface(
+        console_interface == nullptr ? std::make_unique<ConsoleInterface>() :
+                                       std::move(console_interface))
+{
+}
 
 void HestiaCli::add_hsm_actions(
     std::unordered_map<std::string, CLI::App*>& commands,
@@ -115,43 +123,43 @@ void HestiaCli::add_crud_commands(
     auto create_cmd =
         commands[subject]->add_subcommand("create", "Create a " + subject);
     create_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Spec");
+        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
     create_cmd->add_option(
-        "attribute_fmt", m_client_command.m_attribute_format,
-        "Attribute Format Spec");
+        "input_fmt", m_client_command.m_input_format, "Input Format Specifier");
     create_cmd->add_option(
-        "output_fmt", m_client_command.m_attribute_format,
-        "Output Format Spec");
+        "output_fmt", m_client_command.m_output_format,
+        "Output Format Specifier");
     commands[subject + "_create"] = create_cmd;
+
+    auto update_cmd =
+        commands[subject]->add_subcommand("update", "Update a " + subject);
+    update_cmd->add_option(
+        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+    update_cmd->add_option(
+        "attribute_fmt", m_client_command.m_input_format,
+        "Attribute Format Specifier");
+    update_cmd->add_option(
+        "output_fmt", m_client_command.m_output_format,
+        "Output Format Specifier");
+    commands[subject + "_update"] = update_cmd;
 
     auto read_cmd =
         commands[subject]->add_subcommand("read", "Read " + subject + "s");
     read_cmd->add_option(
-        "query_fmt", m_client_command.m_query_format, "Query Format Spec");
+        "query_fmt", m_client_command.m_query_format, "Query Format Specifier");
     read_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format, "Output Format Spec");
+        "output_fmt", m_client_command.m_output_format,
+        "Output Format Specifier");
     read_cmd->add_option(
         "offset", m_client_command.m_offset, "Page start offset");
     read_cmd->add_option(
         "count", m_client_command.m_count, "Max number of items per page");
     commands[subject + "_read"] = read_cmd;
 
-    auto update_cmd =
-        commands[subject]->add_subcommand("update", "Update a " + subject);
-    update_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Spec");
-    update_cmd->add_option(
-        "attribute_fmt", m_client_command.m_attribute_format,
-        "Attribute Format Spec");
-    update_cmd->add_option(
-        "output_fmt", m_client_command.m_attribute_format,
-        "Output Format Spec");
-    commands[subject + "_update"] = update_cmd;
-
     auto remove_cmd =
         commands[subject]->add_subcommand("remove", "Remove a " + subject);
     remove_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Spec");
+        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
     commands[subject + "_remove"] = remove_cmd;
 
     auto identify_cmd =
@@ -159,7 +167,8 @@ void HestiaCli::add_crud_commands(
     identify_cmd->add_option(
         "id_fmt", m_client_command.m_id_format, "Id Format Spec");
     identify_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format, "Output Format Spec");
+        "output_fmt", m_client_command.m_output_format,
+        "Output Format Specifier");
     commands[subject + "_identify"] = identify_cmd;
 }
 
@@ -367,14 +376,28 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
     if (m_client_command.is_create_method()) {
         VecCrudIdentifier ids;
         CrudAttributes attributes;
-        CrudAttributes::Format output_format{CrudAttributes::Format::JSON};
+        const auto& [output_format, output_attr_format] =
+            m_client_command.parse_create_update_inputs(
+                ids, attributes, m_console_interface.get());
 
         if (const auto status = client->create(
-                m_client_command.m_subject, ids, attributes, output_format);
+                m_client_command.m_subject, ids, attributes,
+                output_attr_format);
             !status.ok()) {
             return status;
         }
-        console_write(attributes.buffer());
+
+        if (HestiaClientCommand::expects_id(output_format)) {
+            for (const auto& id : ids) {
+                m_console_interface->console_write(id.get_primary_key() + "/n");
+            }
+            if (!attributes.buffer().empty()) {
+                m_console_interface->console_write("/n");
+            }
+        }
+        if (!attributes.buffer().empty()) {
+            m_console_interface->console_write(attributes.buffer());
+        }
     }
     else if (m_client_command.is_update_method()) {
         VecCrudIdentifier ids;
@@ -385,7 +408,7 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
             !status.ok()) {
             return status;
         }
-        console_write(attributes.buffer());
+        m_console_interface->console_write(attributes.buffer());
     }
     else if (m_client_command.is_read_method()) {
 
@@ -394,7 +417,7 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
             status.ok()) {
             return status;
         }
-        console_write(query.m_attributes.buffer());
+        m_console_interface->console_write(query.m_attributes.buffer());
     }
     else if (m_client_command.is_remove_method()) {
         VecCrudIdentifier ids;
@@ -461,11 +484,6 @@ OpStatus HestiaCli::stop_daemon()
             OpStatus::Status::ERROR, 0, "Error stopping hestia Daemon");
     }
     return {};
-}
-
-void HestiaCli::console_write(const std::string& output) const
-{
-    std::cout << output << std::endl;
 }
 
 }  // namespace hestia

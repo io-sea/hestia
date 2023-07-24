@@ -16,6 +16,12 @@ bool CrudAttributes::is_json() const
     return m_format == Format::JSON;
 }
 
+CrudAttributes::Format CrudAttributes::format_from_string(
+    const std::string& format)
+{
+    return Format_enum_string_converter().init().from_string(format);
+}
+
 bool CrudAttributes::has_content() const
 {
     return !m_buffer.empty();

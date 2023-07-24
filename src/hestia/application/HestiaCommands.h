@@ -4,12 +4,26 @@
 #include "HestiaTypes.h"
 #include "HsmAction.h"
 
+#include "EnumUtils.h"
+
 #include <filesystem>
 
 namespace hestia {
+class IConsoleInterface;
+
 class HestiaClientCommand {
 
   public:
+    STRINGABLE_ENUM(
+        IoFormat,
+        NONE,
+        ID,
+        IDs,
+        IDS_ATTRS_JSON,
+        IDS_ATTRS_KV_PAIR,
+        ATTRS_JSON,
+        ATTRS_KV_PAIR)
+
     std::vector<std::string> get_crud_methods() const;
 
     std::vector<std::string> get_action_subjects() const;
@@ -39,6 +53,15 @@ class HestiaClientCommand {
 
     bool is_data_put_action() const;
 
+    static bool expects_id(IoFormat format);
+
+    static IoFormat io_format_from_string(const std::string& format);
+
+    std::pair<IoFormat, CrudAttributes::Format> parse_create_update_inputs(
+        VecCrudIdentifier& ids,
+        CrudAttributes& attributes,
+        IConsoleInterface* console) const;
+
     void set_crud_method(const std::string& method);
 
     void set_hsm_action(HsmAction::Action action);
@@ -57,7 +80,7 @@ class HestiaClientCommand {
 
     std::string m_id;
     std::string m_id_format;
-    std::string m_attribute_format;
+    std::string m_input_format;
     std::string m_output_format;
     std::string m_query_format;
     std::string m_body;

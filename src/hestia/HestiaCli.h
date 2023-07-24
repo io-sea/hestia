@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ConsoleInterface.h"
 #include "HestiaApplication.h"
 #include "HestiaCommands.h"
 
@@ -10,6 +11,7 @@ class App;
 namespace hestia {
 
 class IHestiaClient;
+class IConsoleInterface;
 
 class HestiaCli {
   public:
@@ -21,6 +23,8 @@ class HestiaCli {
         SERVER
     };
 
+    HestiaCli(std::unique_ptr<IConsoleInterface> console_interface = {});
+
     bool is_client() const;
 
     bool is_server() const;
@@ -28,9 +32,6 @@ class HestiaCli {
     void parse_args(int argc, char* argv[]);
 
     OpStatus run(IHestiaApplication* app);
-
-  protected:
-    virtual void console_write(const std::string& output) const;
 
   private:
     void add_crud_commands(
@@ -62,5 +63,6 @@ class HestiaCli {
     std::string m_server_port;
     AppCommand m_app_command{AppCommand::UNKNOWN};
     HestiaClientCommand m_client_command;
+    std::unique_ptr<IConsoleInterface> m_console_interface;
 };
 }  // namespace hestia

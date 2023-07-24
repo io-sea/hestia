@@ -1,12 +1,13 @@
 #pragma once
 
+#include "EnumUtils.h"
 #include "Map.h"
 
 namespace hestia {
 class CrudAttributes {
 
   public:
-    enum class Format { NONE, JSON, KV_PAIR };
+    STRINGABLE_ENUM(Format, NONE, JSON, KV_PAIR)
 
     CrudAttributes() = default;
 
@@ -22,11 +23,15 @@ class CrudAttributes {
 
     Format get_format() const { return m_format; }
 
+    static Format format_from_string(const std::string& format);
+
     void set_buffer(const std::string& buffer, Format format = Format::JSON)
     {
         m_format = format;
         m_buffer = buffer;
     }
+
+    void set_format(Format format) { m_format = format; }
 
     static std::string to_string(Format format)
     {
