@@ -138,11 +138,13 @@ void ProxygenRequestHandler::onUpgrade(proxygen::UpgradeProtocol) noexcept {}
 void ProxygenRequestHandler::requestComplete() noexcept
 {
     LOG_INFO("Request completed");
+    delete this;
 }
 
 void ProxygenRequestHandler::onError(proxygen::ProxygenError /*err*/) noexcept
 {
     LOG_ERROR("Proxygen server error");
+    delete this;
 }
 }  // namespace hestia
 #endif

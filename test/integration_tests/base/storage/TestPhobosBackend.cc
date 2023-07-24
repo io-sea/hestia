@@ -15,10 +15,10 @@ TEST_CASE_METHOD(
     PhobosStoreTestFixture, "Test phobos backend integration", "[phobos]")
 {
     hestia::DefaultIdGenerator uuid_generator;
-    hestia::Uuid obj_uuid = uuid_generator.get_uuid("phobos_test");
+    std::string obj_id = uuid_generator.get_id("phobos_test");
 
-    hestia::StorageObject obj(obj_uuid);
-    obj.m_metadata.set_item("mykey", "myval");
+    hestia::StorageObject obj(obj_id);
+    obj.get_metadata_as_writeable().set_item("mykey", "myval");
 
     exists(obj, false);
 
@@ -36,7 +36,7 @@ TEST_CASE_METHOD(
     // exists(fetched_obj, false);
 
     std::string content = "The quick brown fox jumps over the lazy dog";
-    obj.m_size          = content.size();
+    obj.set_size(content.size());
 
     hestia::Stream stream;
     put(obj, &stream);

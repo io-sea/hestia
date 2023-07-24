@@ -20,7 +20,6 @@ PluginHandle::PluginHandle(void* handle, const std::string& name) :
 
 PluginHandle::~PluginHandle()
 {
-    LOG_INFO("Destroying plugin handle: " << m_name);
     if (const auto status = SystemUtils::close_module(m_handle, m_name);
         !status.ok()) {
         LOG_ERROR(status.message());

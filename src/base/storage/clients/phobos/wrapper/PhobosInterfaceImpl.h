@@ -17,8 +17,8 @@ class PhobosInterfaceImpl : public IPhobosInterfaceImpl {
 
     void remove(const StorageObject& object) override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found)
-        override;
+    void list(
+        const KeyValuePair& query, std::vector<StorageObject>& found) override;
 };
 }  // namespace hestia
 

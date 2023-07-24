@@ -28,10 +28,10 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
     m_motr_config.mc_is_oostore     = true;
     m_motr_config.mc_is_read_verify = false;
 
-    m_motr_config.mc_local_addr  = m_config.m_local_address.c_str();
-    m_motr_config.mc_ha_addr     = m_config.m_ha_address.c_str();
-    m_motr_config.mc_profile     = m_config.m_profile.c_str();
-    m_motr_config.mc_process_fid = m_config.m_proc_fid.c_str();
+    m_motr_config.mc_local_addr  = m_config.m_local_address.get_value().c_str();
+    m_motr_config.mc_ha_addr     = m_config.m_ha_address.get_value().c_str();
+    m_motr_config.mc_profile     = m_config.m_profile.get_value().c_str();
+    m_motr_config.mc_process_fid = m_config.m_proc_fid.get_value().c_str();
 
     m_motr_config.mc_tm_recv_queue_min_len = 64;
     m_motr_config.mc_max_rpc_msg_size      = 65536;
@@ -48,7 +48,7 @@ void MotrInterfaceImpl::initialize(const MotrConfig& config)
         LOG_ERROR("m0 client init failed: " << rc);
     }
 
-    initialize_hsm(config.m_tier_info);
+    initialize_hsm(config.m_tier_info.container());
 }
 
 void MotrInterfaceImpl::finish()
@@ -256,7 +256,7 @@ class MotrObject {
 
         // TODO - add proper motr id generation, e.g. following M0_ID_APP
         // restrictions
-        m_motr_id.u_lo += (m_uuid.m_lo) | 10000000;
+        m_motr_id.u_lo += (m_uuid.lo()) | 10000000;
         m_motr_id.u_lo += 10000000;
     }
 
@@ -335,7 +335,7 @@ class MotrObject {
     {
         const auto path = std::filesystem::current_path() / "key_value_store"
                           / (UuidUtils::to_string(m_uuid) + ".meta");
-        hestia::Metadata data;
+        hestia::Map data;
         data.set_item("size", std::to_string(m_total_size));
         auto metadata = JsonUtils::to_json(data);
         auto out      = std::ofstream(path);
@@ -396,10 +396,10 @@ void MotrInterfaceImpl::get(
         UuidUtils::from_string(request.object().id()));
 
     if (request.extent().empty()) {
-        motr_obj->m_total_size = request.object().m_size;
+        motr_obj->m_total_size = request.object().size();
         std::cout
             << "Case request.extent().empty(), request.object().m_size is "
-            << request.object().m_size << std::endl;
+            << request.object().size() << std::endl;
         if (motr_obj->m_total_size == 0) {
             // temporary: load size from temp kv store until full kv store
             // implemented
@@ -531,8 +531,8 @@ void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
     // uuid=UuidUtils::from_string(request.object().id());
 
     struct m0_uint128 id;
-    id.u_hi = uuid.m_hi;
-    id.u_lo = uuid.m_lo;
+    id.u_hi = uuid.hi();
+    id.u_lo = uuid.lo();
 
     std::size_t offset{0};
     std::size_t length{IMotrInterfaceImpl::max_obj_length};
@@ -550,8 +550,8 @@ void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
     Uuid uuid = UuidUtils::from_string(request.object().id());
 
     struct m0_uint128 id;
-    id.u_hi = uuid.m_hi;
-    id.u_lo = uuid.m_lo;
+    id.u_hi = uuid.hi();
+    id.u_lo = uuid.lo();
 
     std::size_t length = request.extent().m_length;
     if (length == 0) {
@@ -577,8 +577,8 @@ void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
     // uuid.from_string(request.object().id());
 
     struct m0_uint128 id;
-    id.u_hi = uuid.m_hi;
-    id.u_lo = uuid.m_lo;
+    id.u_hi = uuid.hi();
+    id.u_lo = uuid.lo();
 
     std::size_t length = request.extent().m_length;
     if (length == 0) {
