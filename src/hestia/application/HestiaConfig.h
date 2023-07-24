@@ -4,53 +4,76 @@
 #include "EventFeed.h"
 #include "HsmObjectStoreClientBackend.h"
 #include "KeyValueStoreClientFactory.h"
+#include "LoggerConfig.h"
+#include "SerializeableWithFields.h"
 #include "ServerConfig.h"
+
+#include "StorageTier.h"
 
 #include "Dictionary.h"
 
 namespace hestia {
 
-class HestiaConfig {
-
+class HestiaConfig : public SerializeableWithFields {
   public:
-    std::string load(const std::string& path);
+    HestiaConfig();
 
-    void load(const Dictionary& dict);
+    HestiaConfig(const HestiaConfig& other);
 
-    void load_defaults();
+    void add_object_store_backend(const HsmObjectStoreClientBackend& backend);
 
-    std::string m_cache_path;
+    void add_storage_tier(const StorageTier& tier);
 
-    ServerConfig m_server_config;
+    const EventFeedConfig& get_event_feed_config() const;
 
-    std::unordered_map<std::string, HsmObjectStoreClientBackend> m_backends;
-    std::unordered_map<uint8_t, StorageTier> m_tiers;
+    const KeyValueStoreClientConfig& get_key_value_store_config() const;
 
-    KeyValueStoreClientSpec m_key_value_store_spec{
-        KeyValueStoreClientSpec::Type::FILE};
-    PlacementEngineType m_placement_engine_spec{
-        hestia::PlacementEngineType::BASIC};
+    const LoggerConfig& get_logger_config() const;
 
-    EventFeedConfig m_event_feed_config;
+    const ServerConfig& get_server_config() const;
+
+    const std::string& get_cache_path() const;
+
+    const std::vector<HsmObjectStoreClientBackend>& get_object_store_backends()
+        const;
+
+    const std::vector<StorageTier>& get_storage_tiers() const;
+
+    const std::string& get_user_token() const;
+
+    bool has_object_store_backends() const;
+
+    void load(
+        const std::string& config_path = {},
+        const std::string& user_token  = {},
+        const Dictionary& extra_config = {});
+
+    void load_from_dict(
+        const Dictionary& dict, const std::string& user_token = {});
+
+    HestiaConfig& operator=(const HestiaConfig& other);
 
   private:
-    void load_logger_config();
+    void init();
 
-    void load_object_store_clients(
-        const Dictionary& backends, const Dictionary& tiers);
+    void find_config_file(const std::string& config_path);
 
-    void load_kv_store(
-        const Dictionary& kv_store_config, const Dictionary& kv_store_clients);
+    void find_user_token(const std::string& user_token);
 
-    void load_event_feed(const Dictionary& event_feed_config);
+    std::string m_path;
+    std::string m_user_token;
+    StringField m_cache_path{"cache_path"};
+    TypedDictField<ServerConfig> m_server_config{ServerConfig::get_type()};
 
-    void load_event_feed_defaults();
-
-    void load_object_store_defaults();
-
-    void load_kv_store_defaults();
-
-    void load_server_config(const Dictionary& config);
+    TypedDictField<LoggerConfig> m_logger{LoggerConfig::get_type()};
+    TypedDictField<KeyValueStoreClientConfig> m_key_value_store_config{
+        KeyValueStoreClientConfig::get_type()};
+    SequenceField<std::vector<HsmObjectStoreClientBackend>> m_backends{
+        std::string(HsmObjectStoreClientBackend::get_type()) + "s"};
+    SequenceField<std::vector<StorageTier>> m_tiers{
+        std::string(HsmItem::tier_name) + "s"};
+    TypedDictField<EventFeedConfig> m_event_feed_config{
+        EventFeedConfig::get_type()};
 };
 
 }  // namespace hestia

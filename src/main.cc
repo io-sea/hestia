@@ -1,48 +1,35 @@
-#include "ApplicationContext.h"
-#include "EventFeed.h"
 #include "HestiaCli.h"
-#include "Logger.h"
-#include "ProjectConfig.h"
-#include "TimeUtils.h"
+#include "HestiaClient.h"
+#include "HestiaServer.h"
 
-#include <ctime>
-#include <filesystem>
 #include <iostream>
 
 int main(int argc, char** argv)
 {
     hestia::HestiaCli hestia_cli;
     try {
-        hestia_cli.parse(argc, argv);
+        hestia_cli.parse_args(argc, argv);
     }
     catch (const std::exception& e) {
         return EXIT_FAILURE;
     }
 
-    hestia::Logger::Config logger_config;
-    logger_config.m_active       = true;
-    logger_config.m_level        = hestia::Logger::Level::INFO;
-    logger_config.m_console_only = false;
-    logger_config.m_assert       = false;
-    logger_config.m_log_prefix   = "hestia_cli";
-    logger_config.m_log_file_path =
-        hestia_cli.m_config.m_cache_path + "/hestia_log_"
-        + hestia::TimeUtils::get_current_time_hr() + ".txt";
-
-    hestia::Logger::get_instance().do_initialize(logger_config);
-
-    LOG_INFO(
-        "Starting Hestia Version: "
-        << hestia::project_config::get_project_version());
+    std::unique_ptr<hestia::HestiaApplication> hestia_app;
+    if (hestia_cli.is_client()) {
+        hestia_app = std::make_unique<hestia::HestiaClient>();
+    }
+    else if (hestia_cli.is_server()) {
+        hestia_app = std::make_unique<hestia::HestiaServer>();
+    }
 
     int rc = 0;
     try {
-        const auto cli_status = hestia_cli.run();
+        const auto cli_status = hestia_cli.run(hestia_app.get());
         if (!cli_status.ok()) {
             rc = -1;
             std::cerr << cli_status.str() << "\n";
-            std::cerr << "See " << logger_config.m_log_file_path
-                      << " for details." << std::endl;
+            // std::cerr << "See " << logger_config.m_log_file_path
+            //<< " for details." << std::endl;
         }
     }
     catch (const std::exception& e) {
@@ -51,13 +38,15 @@ int main(int argc, char** argv)
         rc = -1;
     }
 
-    try {
-        hestia::ApplicationContext::get().clear();
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Uncaught exception clearing Hestia Context: " << e.what()
-                  << std::endl;
-        rc = -1;
+    if (hestia_app) {
+        try {
+            hestia_app.reset();
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Uncaught exception clearing Hestia Context: "
+                      << e.what() << std::endl;
+            rc = -1;
+        }
     }
 
     LOG_INFO("Hestia Finished");

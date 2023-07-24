@@ -19,7 +19,7 @@ TEST_CASE_METHOD(
     InMemoryStoreTestFixture, "In Memory object store - Metadata", "[storage]")
 {
     hestia::StorageObject obj("0000");
-    obj.m_metadata.set_item("mykey", "myval");
+    obj.set_metadata("mykey", "myval");
 
     WHEN("There is no existing object")
     {
@@ -45,7 +45,7 @@ TEST_CASE_METHOD(
 
             THEN("It retains the metadata")
             {
-                REQUIRE(fetched_obj.m_metadata.get_item("mykey") == "myval");
+                REQUIRE(fetched_obj.metadata().get_item("mykey") == "myval");
             }
         }
 
@@ -77,10 +77,10 @@ TEST_CASE_METHOD(
     InMemoryStoreTestFixture, "In Memory object store - Data", "[storage]")
 {
     hestia::StorageObject obj("0000");
-    obj.m_metadata.set_item("mykey", "myval");
+    obj.set_metadata("mykey", "myval");
 
     std::string content = "The quick brown fox jumps over the lazy dog";
-    obj.m_size          = content.size();
+    obj.set_size(content.size());
 
     hestia::Stream stream;
     put(obj, &stream);

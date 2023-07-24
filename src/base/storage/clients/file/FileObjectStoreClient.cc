@@ -7,7 +7,6 @@
 #include "Logger.h"
 #include "ProjectConfig.h"
 #include "StringUtils.h"
-#include "UuidUtils.h"
 
 #include <exception>
 #include <fstream>
@@ -54,7 +53,7 @@ void FileObjectStoreClient::remove(const StorageObject& object) const
 }
 
 void FileObjectStoreClient::migrate(
-    const Uuid& object_id,
+    const std::string& object_id,
     const std::filesystem::path& root,
     bool keep_existing)
 {
@@ -121,7 +120,7 @@ void FileObjectStoreClient::put(
             [&meta_file](const std::string& key, const std::string& value) {
                 meta_file << key << " " << value << "\n";
             };
-        object.m_metadata.for_each_item(for_item);
+        object.metadata().for_each_item(for_item);
     }
 
     if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
@@ -140,7 +139,7 @@ void FileObjectStoreClient::get(
 
     if (!exists(object)) {
         const std::string msg =
-            "Requested object: " + UuidUtils::to_string(object.id())
+            "Requested object: " + object.id()
             + " not found in: " + get_data_path(object.id()).string();
         LOG_ERROR(msg);
         throw ObjectStoreException(
@@ -160,20 +159,19 @@ void FileObjectStoreClient::get(
     }
 }
 
-bool FileObjectStoreClient::has_data(const Uuid& object_id) const
+bool FileObjectStoreClient::has_data(const std::string& object_id) const
 {
     return std::filesystem::is_regular_file(get_data_path(object_id));
 }
 
 void FileObjectStoreClient::list(
-    const Metadata::Query& query, std::vector<StorageObject>& objects) const
+    const KeyValuePair& query, std::vector<StorageObject>& objects) const
 {
     for (const auto& dir_entry : std::filesystem::directory_iterator(m_root)) {
         if (FileUtils::is_file_with_extension(dir_entry, ".meta")) {
-            const auto object_id_str =
+            const auto object_id =
                 FileUtils::get_filename_without_extension(dir_entry.path());
 
-            Uuid object_id = UuidUtils::from_string(object_id_str);
             if (const auto value = get_metadata_item(object_id, query.first);
                 value == query.second) {
                 StorageObject object(object_id);
@@ -185,7 +183,7 @@ void FileObjectStoreClient::list(
 }
 
 std::string FileObjectStoreClient::get_metadata_item(
-    const Uuid& object_id, const std::string& search_key) const
+    const std::string& object_id, const std::string& search_key) const
 {
     std::ifstream md_file(get_metadata_path(object_id));
     std::string line;
@@ -205,25 +203,25 @@ void FileObjectStoreClient::read_metadata(StorageObject& object) const
     std::ifstream md_file(get_metadata_path(object.id()));
     std::pair<std::string, std::string> pair;
     while (md_file >> pair.first >> pair.second) {
-        object.m_metadata.set_item(pair.first, pair.second);
+        object.set_metadata(pair.first, pair.second);
     }
 }
 
 std::filesystem::path FileObjectStoreClient::get_data_path(
-    const Uuid& object_id, const std::filesystem::path& root) const
+    const std::string& object_id, const std::filesystem::path& root) const
 {
-    std::string id = UuidUtils::to_string(object_id);
-    return root.empty() ? m_root / (id + ".data") : root / (id + ".data");
+    return root.empty() ? m_root / (object_id + ".data") :
+                          root / (object_id + ".data");
 }
 
 std::filesystem::path FileObjectStoreClient::get_metadata_path(
-    const Uuid& object_id, const std::filesystem::path& root) const
+    const std::string& object_id, const std::filesystem::path& root) const
 {
-    std::string id = UuidUtils::to_string(object_id);
-    return root.empty() ? m_root / (id + ".meta") : root / (id + ".meta");
+    return root.empty() ? m_root / (object_id + ".meta") :
+                          root / (object_id + ".meta");
 }
 
-bool FileObjectStoreClient::exists(const Uuid& object_id) const
+bool FileObjectStoreClient::exists(const std::string& object_id) const
 {
     if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
         return std::filesystem::is_regular_file(get_metadata_path(object_id));

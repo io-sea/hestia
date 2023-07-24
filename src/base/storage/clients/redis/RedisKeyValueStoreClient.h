@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KeyValueStoreClient.h"
+#include "SerializeableWithFields.h"
 
 #include <memory>
 #include <string>
@@ -10,10 +11,17 @@ namespace hestia {
 class RedisReplyWrapper;
 class RedisContextWrapper;
 
-class RedisKeyValueStoreClientConfig {
+class RedisKeyValueStoreClientConfig : public SerializeableWithFields {
   public:
-    std::string m_redis_backend_address{"127.0.0.1"};
-    int m_redis_backend_port{6379};
+    RedisKeyValueStoreClientConfig() :
+        SerializeableWithFields("redis_kv_store_config")
+    {
+        register_scalar_field(&m_backend_address);
+        register_scalar_field(&m_backend_port);
+    }
+
+    StringField m_backend_address{"backend_address", "127.0.0.1"};
+    UIntegerField m_backend_port{"backend_port", 6379};
 };
 
 class RedisKeyValueStoreClient : public KeyValueStoreClient {
@@ -22,29 +30,32 @@ class RedisKeyValueStoreClient : public KeyValueStoreClient {
 
     virtual ~RedisKeyValueStoreClient();
 
-    void initialize(const Metadata& config) override;
+    void initialize(
+        const std::string& cache_path, const Dictionary& config_data) override;
 
-    void do_initialize(const RedisKeyValueStoreClientConfig& config);
+    void do_initialize(
+        const std::string& cache_path,
+        const RedisKeyValueStoreClientConfig& config);
 
-    bool string_exists(const std::string& key) const override;
+    void string_exists(
+        const std::vector<std::string>& key,
+        std::vector<bool>& found) const override;
 
-    void string_get(const std::string& key, std::string& value) const override;
-
-    void string_multi_get(
+    void string_get(
         const std::vector<std::string>& key,
         std::vector<std::string>& value) const override;
 
-    void string_set(
-        const std::string& key, const std::string& value) const override;
+    void string_set(const VecKeyValuePair& kv_pairs) const override;
 
-    void string_remove(const std::string& key) const override;
+    void string_remove(const std::vector<std::string>& key) const override;
 
-    void set_add(const std::string& key, const Uuid& value) const override;
+    void set_add(const VecKeyValuePair& entry) const override;
 
     void set_list(
-        const std::string& key, std::vector<Uuid>& value) const override;
+        const std::vector<std::string>& key,
+        std::vector<std::vector<std::string>>& values) const override;
 
-    void set_remove(const std::string& key, const Uuid& value) const override;
+    void set_remove(const VecKeyValuePair& entry) const override;
 
   private:
     std::unique_ptr<RedisReplyWrapper> make_request(

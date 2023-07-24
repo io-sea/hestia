@@ -21,7 +21,7 @@ class DataPlacementEngineFactory {
         PlacementEngineType placement_engine_type);
 
     static std::unique_ptr<DataPlacementEngine> get_engine(
-        PlacementEngineType placement_engine_type, TierService* tier_service);
+        PlacementEngineType placement_engine_type, CrudService* tier_service);
 };
 
 }  // namespace hestia

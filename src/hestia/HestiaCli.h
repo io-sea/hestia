@@ -1,11 +1,7 @@
 #pragma once
 
-#include "Dictionary.h"
-#include "ErrorUtils.h"
-#include "HestiaConfig.h"
-
-#include <filesystem>
-#include <string>
+#include "HestiaApplication.h"
+#include "HestiaCommands.h"
 
 namespace CLI {  // NOLINT
 class App;
@@ -13,59 +9,58 @@ class App;
 
 namespace hestia {
 
+class IHestiaClient;
+
 class HestiaCli {
   public:
-    enum class Command { UNKNOWN, HSM, DAEMON_START, DAEMON_STOP, SERVER };
-
-    struct HsmCommand {
-        enum class Method {
-            CREATE,
-            PUT,
-            GET,
-            COPY,
-            MOVE,
-            RELEASE,
-            LIST,
-            LIST_TIERS,
-            PUT_METADATA,
-            GET_METADATA,
-            UNKNOWN
-        };
-        Method m_method{Method::UNKNOWN};
-        std::string m_object_id;
-        std::string m_attributes;
-        uint8_t m_source_tier{0};
-        uint8_t m_target_tier{0};
-        std::filesystem::path m_path;
+    enum class AppCommand {
+        UNKNOWN,
+        CLIENT,
+        DAEMON_START,
+        DAEMON_STOP,
+        SERVER
     };
 
-    void parse(int argc, char* argv[]);
+    bool is_client() const;
 
-    OpStatus run();
+    bool is_server() const;
 
-    Command m_command{Command::UNKNOWN};
+    void parse_args(int argc, char* argv[]);
 
-    HsmCommand m_hsm_command;
-    std::string m_config_path;
-    Dictionary m_raw_config;
-    HestiaConfig m_config;
+    OpStatus run(IHestiaApplication* app);
+
+  protected:
+    virtual void console_write(const std::string& output) const;
 
   private:
-    void add_get_options(CLI::App* command);
-    void add_put_options(CLI::App* command);
-    void add_copy_options(CLI::App* command);
-    void add_move_options(CLI::App* command);
-    void add_release_options(CLI::App* command);
+    void add_crud_commands(
+        std::unordered_map<std::string, CLI::App*>& commands,
+        CLI::App& app,
+        const std::string& subject);
+    void on_crud_option(const std::string& subject, const std::string& method);
 
-    void add_get_metadata_options(CLI::App* command);
-    void add_put_metadata_options(CLI::App* command);
+    void add_hsm_actions(
+        std::unordered_map<std::string, CLI::App*>& commands,
+        CLI::App* command,
+        const std::string& subject);
+    void add_get_data_options(CLI::App* command);
+    void add_put_data_options(CLI::App* command);
+    void add_copy_data_options(CLI::App* command);
+    void add_move_data_options(CLI::App* command);
+    void add_release_data_options(CLI::App* command);
 
-    void add_list_options(CLI::App* command);
-    void add_list_tiers_options(CLI::App* command);
+    OpStatus run_client(IHestiaApplication* app);
+    OpStatus on_crud_method(IHestiaClient* client);
 
-    OpStatus run_hsm();
-    OpStatus run_server(const ServerConfig& config);
-    OpStatus start_daemon();
+    OpStatus run_server(IHestiaApplication* app);
+    OpStatus start_daemon(IHestiaApplication* app);
     OpStatus stop_daemon();
+
+    std::string m_user_token;
+    std::string m_config_path;
+    std::string m_server_host;
+    std::string m_server_port;
+    AppCommand m_app_command{AppCommand::UNKNOWN};
+    HestiaClientCommand m_client_command;
 };
 }  // namespace hestia

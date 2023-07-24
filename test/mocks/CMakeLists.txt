@@ -8,8 +8,17 @@ add_module(
         MockS3Server.h
         MockWebService.h
         MockWebView.h
+        MockModel.h 
+        MockCrudService.h
+        MockCrudWebApp.h
+        MockCrudView.h
     SOURCES
         MockS3Server.cc
+        MockCrudView.cc
+        MockModel.cc
+        MockCrudView.cc
+        MockCrudService.cc
+        MockCrudWebApp.cc
     INTERNAL_DEPENDENCIES 
         protocol
         web

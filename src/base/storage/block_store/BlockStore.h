@@ -49,7 +49,7 @@ class BlockStore {
      *
      * @param directory Path to write the store to
      */
-    void dump(const std::filesystem::path& directory);
+    std::string dump() const;
 
     /**
      * Return whether an object with this key has been added to the store
@@ -65,6 +65,10 @@ class BlockStore {
      * @return the store id
      */
     const Uuid& id() const;
+
+    const BlockList& get_block_list(const std::string& key) const;
+
+    void set_block_list(const std::string& key, const BlockList& blocks);
 
     /**
      * Load the store into memory from the filesystem

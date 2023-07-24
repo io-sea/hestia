@@ -9,6 +9,7 @@ add_module(
         HsmObjectStoreClientManager.h
         HsmObjectStoreClientFactory.h
         file/FileHsmObjectStoreClient.h
+        memory/InMemoryHsmObjectStoreClient.h
     SOURCES
         HsmObjectStoreClient.cc
         HsmObjectStoreClientBackend.cc
@@ -16,8 +17,10 @@ add_module(
         HsmObjectStoreClientManager.cc
         HsmObjectStoreClientFactory.cc
         file/FileHsmObjectStoreClient.cc
+        memory/InMemoryHsmObjectStoreClient.cc
     INTERNAL_INCLUDE_DIRS
         file
+        memory
     INTERNAL_DEPENDENCIES 
         hsm_object_store_common
         hsm_base_types

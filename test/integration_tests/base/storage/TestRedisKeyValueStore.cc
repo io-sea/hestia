@@ -13,8 +13,8 @@ TEST_CASE("Test Redis KV store backend", "[integration]")
     hestia::RedisKeyValueStoreClient kv_store;
 
     hestia::RedisKeyValueStoreClientConfig config;
-    config.m_redis_backend_address = "localhost";
-    kv_store.do_initialize(config);
+    config.m_backend_address.update_value("localhost");
+    kv_store.do_initialize({}, config);
 
     // String Tests
     std::string sample_key1 = "hestia:object_name:object1";
@@ -22,65 +22,61 @@ TEST_CASE("Test Redis KV store backend", "[integration]")
     std::string json_value =
         "{\"acl\":{\"group\":[],\"user\":[]},\"created_by\":{\"creation_time\":\"1688558849220062831\",\"display_name\":\"\",\"id\":\"00000000-0000-0000-0000-000000000000\",\"is_admin\":\"false\",\"last_modified_time\":\"1688558849220062831\",\"name\":\"\",\"password\":\"\",\"token\":{\"created\":\"0\",\"value\":\"\"},\"type\":\"user\"}}";
     std::string uuid_string = "ffffffff-ffff-ffc8-ffff-ffffffffffff";
-    std::vector<std::string> return_values;
-    std::string return_value;
 
     // Set test
-    REQUIRE_NOTHROW(kv_store.string_set(sample_key1, json_value));
-    REQUIRE_NOTHROW(kv_store.string_set(sample_key2, uuid_string));
+    REQUIRE_NOTHROW(kv_store.string_set({{sample_key1, json_value}}));
+    REQUIRE_NOTHROW(kv_store.string_set({{sample_key2, uuid_string}}));
 
     // Existence test
-    bool exists;
-    REQUIRE_NOTHROW(exists = kv_store.string_exists(sample_key1));
-    REQUIRE(exists);
+    std::vector<bool> exists;
+    REQUIRE_NOTHROW(kv_store.string_exists({sample_key1}, exists));
+    REQUIRE(exists[0]);
+    exists.clear();
 
     // Get test
-    REQUIRE_NOTHROW(kv_store.string_get(sample_key1, return_value));
-    REQUIRE(return_value == json_value);
-    REQUIRE_NOTHROW(kv_store.string_get(sample_key2, return_value));
-    REQUIRE(return_value == uuid_string);
+    std::vector<std::string> return_value;
+    REQUIRE_NOTHROW(kv_store.string_get({sample_key1}, return_value));
+    REQUIRE(return_value[0] == json_value);
+    return_value.clear();
 
-    // Multi-Get Test
-    REQUIRE_NOTHROW(
-        kv_store.string_multi_get({sample_key1, sample_key2}, return_values));
-    REQUIRE(return_values.size() == 2);
-    REQUIRE(return_values[0] == json_value);
-    REQUIRE(return_values[1] == uuid_string);
+    REQUIRE_NOTHROW(kv_store.string_get({sample_key2}, return_value));
+    REQUIRE(return_value[0] == uuid_string);
+    return_value.clear();
 
     // Update test
-    REQUIRE_NOTHROW(kv_store.string_set(sample_key1, uuid_string));
-    REQUIRE_NOTHROW(kv_store.string_get(sample_key1, return_value));
-    REQUIRE(return_value == uuid_string);
+    REQUIRE_NOTHROW(kv_store.string_set({{sample_key1, uuid_string}}));
+    REQUIRE_NOTHROW(kv_store.string_get({sample_key1}, return_value));
+    REQUIRE(return_value[0] == uuid_string);
+    return_value.clear();
 
     // Delete test
-    REQUIRE_NOTHROW(kv_store.string_remove(sample_key1));
-    REQUIRE_NOTHROW(kv_store.string_remove(sample_key2));
+    REQUIRE_NOTHROW(kv_store.string_remove({sample_key1}));
+    REQUIRE_NOTHROW(kv_store.string_remove({sample_key2}));
 
-    REQUIRE_NOTHROW(exists = kv_store.string_exists(sample_key1));
-    REQUIRE_FALSE(exists);
-    REQUIRE_NOTHROW(exists = kv_store.string_exists(sample_key2));
-    REQUIRE_FALSE(exists);
+    REQUIRE_NOTHROW(kv_store.string_exists({sample_key1}, exists));
+    REQUIRE_FALSE(exists[0]);
+    exists.clear();
+
+    REQUIRE_NOTHROW(kv_store.string_exists({sample_key2}, exists));
+    REQUIRE_FALSE(exists[0]);
+    exists.clear();
 
     // Set tests
-    hestia::Uuid uuid = {0000, 0001};
-    std::vector<hestia::Uuid> return_values_uuid;
+    std::string id{"0000-1111"};
+    std::vector<std::vector<std::string>> return_values_uuid;
 
-    REQUIRE_NOTHROW(kv_store.set_add(sample_key1, uuid));
+    REQUIRE_NOTHROW(kv_store.set_add({{sample_key1, id}}));
 
-    REQUIRE_NOTHROW(exists = kv_store.string_exists(sample_key1));
-    REQUIRE(exists);
+    REQUIRE_NOTHROW(kv_store.set_list({sample_key1}, return_values_uuid));
 
-    REQUIRE_NOTHROW(kv_store.set_list(sample_key1, return_values_uuid));
     REQUIRE(return_values_uuid.size() == 1);
-    REQUIRE(return_values_uuid[0] == uuid);
+    REQUIRE(return_values_uuid[0].size() == 1);
+    REQUIRE(return_values_uuid[0][0] == id);
 
     return_values_uuid.clear();
-    REQUIRE_NOTHROW(kv_store.set_remove(sample_key1, uuid));
-    REQUIRE_NOTHROW(kv_store.set_list(sample_key1, return_values_uuid));
-    REQUIRE(return_values_uuid.empty());
 
-    REQUIRE_NOTHROW(kv_store.string_remove(sample_key1));
-    REQUIRE_NOTHROW(exists = kv_store.string_exists(sample_key1));
-    REQUIRE_FALSE(exists);
+    REQUIRE_NOTHROW(kv_store.set_remove({{sample_key1, id}}));
+    REQUIRE_NOTHROW(kv_store.set_list({sample_key1}, return_values_uuid));
+    REQUIRE(return_values_uuid[0].empty());
 }
 #endif

@@ -57,7 +57,7 @@ void PhobosInterface::remove(const StorageObject& object)
 }
 
 void PhobosInterface::list(
-    const Metadata::Query& query, std::vector<StorageObject>& found)
+    const KeyValuePair& query, std::vector<StorageObject>& found)
 {
     m_impl->list(query, found);
 }

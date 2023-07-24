@@ -1,5 +1,4 @@
 #include "hestia/hestia.h"
-#include "hestia/Logger.h"
 
 #include <iostream>
 #include <string>
@@ -7,40 +6,40 @@
 
 int main(int argc, char** argv)
 {
-    hestia::Logger::Config logger_config;
-    logger_config.m_active       = true;
-    logger_config.m_level        = hestia::Logger::Level::INFO;
-    logger_config.m_console_only = true;
-    logger_config.m_assert       = false;
-    logger_config.m_log_prefix   = "hestia_cmake_sampleapp";
-
-    hestia::Logger::get_instance().do_initialize(logger_config);
-
     if (argc == 2) {
-        hestia::initialize(argv[1]);
+        hestia_initialize(argv[1], nullptr, nullptr);
     }
     else {
-        hestia::initialize();
+        hestia_initialize(nullptr, nullptr, nullptr);
     }
 
-    std::string content{"The quick brown fox jumps over the lazy dog"};
-    hestia::put({0000, 0001}, false, content.data(), 0, content.length(), 0);
+    /*
+    std::vector<char> buffer(HESTIA_UUID_SIZE);
+    int rc = hestia_object_create(buffer.data());
+    std::string id(buffer.begin(), buffer.end());
 
-    hestia::move({0000, 0001}, 0, 1);
+    std::string content("The quick brown fox jumps over the lazy dog");
+    hestia_object_put(id.c_str(), content.data(), 0, content.length(), 0);
 
-    std::vector<char> buffer(content.length());
-    hestia::get({0000, 0001}, buffer.data(), 0, content.length(), 1, 1);
+    hestia_object_move(id.c_str(), 0, 1);
 
-    std::string returned_content(buffer.begin(), buffer.end());
+    std::vector<char> data_buffer(content.length());
+    hestia_object_get(id.c_str(), buffer.data(), 0, content.length(), 1);
+
+    std::string returned_content(data_buffer.begin(), data_buffer.end());
 
     if (content == returned_content) {
         std::cout << "Sanity check OK" << std::endl;
-        hestia::finish();
+        hestia_finish();
         return 0;
     }
     else {
         std::cerr << "Sanity check failed" << std::endl;
-        hestia::finish();
+        hestia_finish();
         return -1;
     }
+    */
+   hestia_finish();
+   return 0;
 }
+

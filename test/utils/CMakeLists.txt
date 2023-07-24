@@ -5,18 +5,20 @@ configure_file(TestDirectories.h.in ${PROJECT_BINARY_DIR}/TestDirectories.h)
 add_module(
     MODULE_NAME test_utils 
     HEADERS
+        CacheTestFixture.h 
         ObjectStoreTestWrapper.h
         HsmObjectStoreTestWrapper.h
         DistributedHsmServiceTestWrapper.h
-        CppClientTestWrapper.h
         TestContext.h
         TestUtils.h
+        TestClientConfigs.h
     SOURCES
+        CacheTestFixture.cc
         ObjectStoreTestWrapper.cc
         HsmObjectStoreTestWrapper.cc
         DistributedHsmServiceTestWrapper.cc
-        CppClientTestWrapper.cc
         TestContext.cc
+        TestClientConfigs.cc
     INTERNAL_DEPENDENCIES 
         web
         hsm_object_store_client

@@ -43,7 +43,7 @@ class SampleAppTests(hestia_tests.utils.BaseTest):
             cmake_args = ""
             runtime_env["LD_LIBRARY_PATH"] = "/usr/lib/hestia/"
 
-        cmd = f"mkdir {build_dir}; cd {build_dir}; cmake {cmake_args} ../; make; ./{self.project_name}_sample_app"
+        cmd = f"mkdir {build_dir}; cd {build_dir}; cmake {cmake_args} ../; make; ./{self.project_name}_sample_app_cpp"
         subprocess.run(cmd, shell=True, cwd=runtime_path, env=runtime_env)
 
     def run_autotools_sample_app(self):

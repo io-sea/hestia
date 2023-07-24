@@ -1,144 +1,102 @@
 #include "HsmObjectStoreClientBackend.h"
 
+#include <iostream>
+
 namespace hestia {
-HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
-    Type client_type, Source source, const std::string& identifier) :
-    m_type(client_type), m_source(source), m_identifier(identifier)
+
+HsmObjectStoreClientBackend::HsmObjectStoreClientBackend() :
+    SerializeableWithFields(s_type)
 {
+    init();
 }
 
 HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
+    Type client_type, const std::string& identifier) :
+    SerializeableWithFields(s_type)
+{
+    m_backend_type.update_value(client_type);
+    m_identifier.update_value(identifier);
+    init();
+}
+
+HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
+    const HsmObjectStoreClientBackend& other) :
+    SerializeableWithFields(other)
+{
+    *this = other;
+}
+
+HsmObjectStoreClientBackend& HsmObjectStoreClientBackend::operator=(
     const HsmObjectStoreClientBackend& other)
 {
-    m_type         = other.m_type;
-    m_source       = other.m_source;
-    m_identifier   = other.m_identifier;
-    m_extra_config = other.m_extra_config;
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_backend_type = other.m_backend_type;
+        m_identifier   = other.m_identifier;
+        m_config       = other.m_config;
+        m_plugin_path  = other.m_plugin_path;
+        init();
+    }
+    return *this;
 }
 
-HsmObjectStoreClientBackend::HsmObjectStoreClientBackend(
-    const Dictionary& config, const std::string& cache_path)
+void HsmObjectStoreClientBackend::init()
 {
-    if (const auto identifier_dict = config.get_map_item("identifier")) {
-        m_identifier = identifier_dict->get_scalar();
-    }
-
-    if (const auto source_dict = config.get_map_item("source")) {
-        set_source(source_dict->get_scalar());
-    }
-
-    if (const auto type_dict = config.get_map_item("type")) {
-        set_type(type_dict->get_scalar());
-    }
-    config.get_map_items(m_extra_config, {"identifier", "source", "type"});
-
-    if (m_extra_config.get_item("root").empty()) {
-        if (!cache_path.empty()) {
-            std::string default_root = cache_path + "/hsm_object_store";
-            m_extra_config.set_item("root", default_root);
-        }
-    }
+    register_scalar_field(&m_backend_type);
+    register_scalar_field(&m_identifier);
+    register_scalar_field(&m_plugin_path);
+    register_map_field(&m_config);
 }
 
-void HsmObjectStoreClientBackend::set_source(const std::string& source)
+const Dictionary& HsmObjectStoreClientBackend::get_config() const
 {
-    if (source == "built_in") {
-        m_source = Source::BUILT_IN;
-    }
-    else if (source == "plugin") {
-        m_source = Source::PLUGIN;
-    }
-    else if (source == "mock") {
-        m_source = Source::MOCK;
-    }
+    return m_config.value();
 }
 
-void HsmObjectStoreClientBackend::set_type(const std::string& type)
+std::string HsmObjectStoreClientBackend::get_type()
 {
-    if (type == "basic") {
-        m_type = Type::BASIC;
-    }
-    else if (type == "hsm") {
-        m_type = Type::HSM;
-    }
+    return s_type;
 }
 
 bool HsmObjectStoreClientBackend::is_hsm() const
 {
-    return m_type == Type::HSM;
+    return m_backend_type.get_value() == Type::MOTR
+           || m_backend_type.get_value() == Type::FILE_HSM
+           || m_backend_type.get_value() == Type::MEMORY_HSM;
 }
 
-std::string source_to_string(const HsmObjectStoreClientBackend::Source& source)
+bool HsmObjectStoreClientBackend::is_plugin() const
 {
-    if (source == HsmObjectStoreClientBackend::Source::BUILT_IN) {
-        return "built_in";
-    }
-    else if (source == HsmObjectStoreClientBackend::Source::PLUGIN) {
-        return "plugin";
-    }
-    else if (source == HsmObjectStoreClientBackend::Source::MOCK) {
-        return "mock";
-    }
-    return "";
+    return m_backend_type.get_value() == Type::MOTR
+           || m_backend_type.get_value() == Type::PHOBOS
+           || m_backend_type.get_value() == Type::S3
+           || m_backend_type.get_value() == Type::MOCK_MOTR
+           || m_backend_type.get_value() == Type::MOCK_PHOBOS
+           || m_backend_type.get_value() == Type::MOCK_S3;
 }
 
-Dictionary::Ptr HsmObjectStoreClientBackend::serialize() const
+bool HsmObjectStoreClientBackend::is_mock() const
 {
-    auto dict = std::make_unique<Dictionary>();
-
-    dict->set_map(
-        {{"identifier", m_identifier},
-         {"type", m_type == Type::HSM ? "hsm" : "basic"},
-         {"source", source_to_string(m_source)}});
-
-    auto metadata_dict = std::make_unique<Dictionary>();
-    metadata_dict->set_map(m_extra_config.get_raw_data());
-
-    dict->set_map_item("extra_config", std::move(metadata_dict));
-
-    return dict;
+    return m_backend_type.get_value() == Type::MOCK_MOTR
+           || m_backend_type.get_value() == Type::MOCK_PHOBOS
+           || m_backend_type.get_value() == Type::MOCK_S3;
 }
 
-void HsmObjectStoreClientBackend::deserialize(const Dictionary& dict)
+bool HsmObjectStoreClientBackend::is_built_in() const
 {
-    Metadata scalar_data;
-    dict.get_map_items(scalar_data);
+    return !is_plugin();
+}
 
-    auto each_item = [this](const std::string& key, const std::string& value) {
-        if (key == "identifier") {
-            m_identifier = value;
-        }
-        else if (key == "type") {
-            m_type = value == "hsm" ? Type::HSM : Type::BASIC;
-        }
-        else if (key == "source") {
-            set_source(value);
-        }
-    };
-    scalar_data.for_each_item(each_item);
-
-    auto extra_config_dict = dict.get_map_item("extra_config");
-    if (extra_config_dict != nullptr) {
-        extra_config_dict->get_map_items(m_extra_config);
-    }
+const std::string& HsmObjectStoreClientBackend::get_identifier() const
+{
+    return m_identifier.get_value();
 }
 
 std::string HsmObjectStoreClientBackend::to_string() const
 {
-    const std::string type_str = m_type == Type::BASIC ? "Basic" : "HSM";
-    std::string source_str;
-    switch (m_source) {
-        case Source::MOCK:
-            source_str = "MOCK";
-            break;
-        case Source::BUILT_IN:
-            source_str = "BUILT_IN";
-            break;
-        case Source::PLUGIN:
-            source_str = "PLUGIN";
-            break;
-    }
-    return "Type: " + type_str + " | Source: " + source_str
-           + " | Identifier: " + m_identifier;
+    Type_enum_string_converter type_converter;
+    type_converter.init();
+    return "Type: " + type_converter.to_string(m_backend_type.get_value())
+           + " | Identifier: " + m_identifier.get_value();
 }
 }  // namespace hestia

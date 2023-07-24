@@ -1,10 +1,10 @@
 #include "RedisKeyValueStoreClient.h"
 
 #include "Logger.h"
-#include "UuidUtils.h"
 
 #include <hiredis.h>
 
+#include <optional>
 #include <stdexcept>
 
 namespace hestia {
@@ -27,16 +27,18 @@ class RedisReplyWrapper {
         }
     }
 
-    std::string as_string_or_nill()
+    std::optional<std::string> as_string_or_nill()
     {
         if (m_reply->type == REDIS_REPLY_STRING) {
             return std::string(m_reply->str, m_reply->len);
         }
-        else if (m_reply->type != REDIS_REPLY_NIL) {
+        else if (m_reply->type == REDIS_REPLY_STRING) {
+            return std::nullopt;
+        }
+        else {
             LOG_ERROR("Error making GET request");
             throw std::runtime_error("Error making GET request");
         }
-        return {};
     }
 
     void as_array(std::vector<std::string>& array)
@@ -50,26 +52,6 @@ class RedisReplyWrapper {
             auto each_reply = m_reply->element[idx];
             if (each_reply->type == REDIS_REPLY_STRING) {
                 array.push_back(std::string(each_reply->str, each_reply->len));
-            }
-            else if (m_reply->type != REDIS_REPLY_NIL) {
-                LOG_ERROR("Error making MULTIGET request");
-                throw std::runtime_error("Error making MULTIGET request");
-            }
-        }
-    }
-
-    void as_array(std::vector<Uuid>& array)
-    {
-        if (m_reply->type != REDIS_REPLY_ARRAY) {
-            LOG_ERROR("Error making SADD request");
-            throw std::runtime_error("Error making SADD request");
-        }
-
-        for (std::size_t idx = 0; idx < m_reply->elements; idx++) {
-            auto each_reply = m_reply->element[idx];
-            if (each_reply->type == REDIS_REPLY_STRING) {
-                array.push_back(
-                    UuidUtils::from_string({each_reply->str, each_reply->len}));
             }
             else if (m_reply->type != REDIS_REPLY_NIL) {
                 LOG_ERROR("Error making MULTIGET request");
@@ -123,28 +105,21 @@ RedisKeyValueStoreClient::~RedisKeyValueStoreClient()
     LOG_INFO("Destroying");
 }
 
-void RedisKeyValueStoreClient::initialize(const Metadata& config_data)
+void RedisKeyValueStoreClient::initialize(
+    const std::string& cache_path, const Dictionary& config_data)
 {
     RedisKeyValueStoreClientConfig config;
-    auto on_item = [&config](const std::string& key, const std::string& value) {
-        if (key == "backend_address") {
-            config.m_redis_backend_address = value;
-        }
-        else if (key == "backend_port") {
-            config.m_redis_backend_port = std::stoi(value);
-        }
-    };
-    config_data.for_each_item(on_item);
-    do_initialize(config);
+    config.deserialize(config_data);
+    do_initialize(cache_path, config);
 }
 
 void RedisKeyValueStoreClient::do_initialize(
-    const RedisKeyValueStoreClientConfig& config)
+    const std::string&, const RedisKeyValueStoreClientConfig& config)
 {
     m_config     = config;
     auto context = redisConnect(
-        m_config.m_redis_backend_address.c_str(),
-        m_config.m_redis_backend_port);
+        m_config.m_backend_address.get_value().c_str(),
+        m_config.m_backend_port.get_value());
     m_context = std::make_unique<RedisContextWrapper>(context);
     m_context->check_if_valid();
 }
@@ -168,80 +143,97 @@ std::unique_ptr<RedisReplyWrapper> RedisKeyValueStoreClient::make_request(
     return std::make_unique<RedisReplyWrapper>(reply);
 }
 
-bool RedisKeyValueStoreClient::string_exists(const std::string& key) const
+void RedisKeyValueStoreClient::string_exists(
+    const std::vector<std::string>& keys, std::vector<bool>& found) const
 {
-    if (!key.empty()) {
-        const std::string command = "EXISTS " + key;
-        auto reply                = make_request(command);
-        return reply->as_int() == 1;
+    for (const auto& key : keys) {
+        if (!key.empty()) {
+            const std::string command = "EXISTS " + key;
+            auto reply                = make_request(command);
+            found.push_back(reply->as_int() == 1);
+        }
+        else {
+            found.push_back(false);
+        }
     }
-    return false;
 }
 
 void RedisKeyValueStoreClient::string_get(
-    const std::string& key, std::string& value) const
+    const std::vector<std::string>& keys,
+    std::vector<std::string>& values) const
 {
-    if (!key.empty()) {
-        const std::string command = "GET " + key;
+    if (keys.size() == 1) {
+        const std::string command = "GET " + keys[0];
         auto reply                = make_request(command);
-        value                     = reply->as_string_or_nill();
+        const auto value_opt      = reply->as_string_or_nill();
+        if (value_opt) {
+            values.push_back(*value_opt);
+        }
+        else {
+            values.push_back("");
+        }
     }
-}
-
-void RedisKeyValueStoreClient::string_multi_get(
-    const std::vector<std::string>& key, std::vector<std::string>& value) const
-{
-    if (!key.empty()) {
+    else if (!keys.empty()) {
         std::string command = "MGET ";
-        for (const auto& k : key) {
+        for (const auto& k : keys) {
             command += k + " ";
         }
         auto reply = make_request(command);
-        reply->as_array(value);
+        reply->as_array(values);
     }
 }
 
 void RedisKeyValueStoreClient::string_set(
-    const std::string& key, const std::string& value) const
+    const std::vector<KeyValuePair>& kv_pairs) const
 {
-    const std::string command = "SET " + key + " %b";
-    auto reply                = make_request(command, value);
-    reply->check_ok();
-}
-
-void RedisKeyValueStoreClient::string_remove(const std::string& key) const
-{
-    const std::string command = "DEL " + key;
-    auto reply                = make_request(command);
-    reply->as_int();
-}
-
-void RedisKeyValueStoreClient::set_add(
-    const std::string& key, const Uuid& value) const
-{
-    const std::string command =
-        "SADD " + key + " " + UuidUtils::to_string(value);
-    auto reply = make_request(command);
-    reply->as_int();
-}
-
-void RedisKeyValueStoreClient::set_list(
-    const std::string& key, std::vector<Uuid>& value) const
-{
-    if (!key.empty()) {
-        const std::string command = "SMEMBERS " + key;
-        auto reply                = make_request(command);
-        reply->as_array(value);
+    for (const auto& pair : kv_pairs) {
+        const std::string command = "SET " + pair.first + " %b";
+        auto reply                = make_request(command, pair.second);
+        reply->check_ok();
     }
 }
 
-void RedisKeyValueStoreClient::set_remove(
-    const std::string& key, const Uuid& value) const
+void RedisKeyValueStoreClient::string_remove(
+    const std::vector<std::string>& keys) const
 {
-    const std::string command =
-        "SREM " + key + " " + UuidUtils::to_string(value);
-    auto reply = make_request(command);
-    reply->as_int();
+    for (const auto& key : keys) {
+        const std::string command = "DEL " + key;
+        auto reply                = make_request(command);
+        reply->as_int();
+    }
+}
+
+void RedisKeyValueStoreClient::set_add(const VecKeyValuePair& entries) const
+{
+    for (const auto& entry : entries) {
+        const std::string command = "SADD " + entry.first + " " + entry.second;
+        auto reply                = make_request(command);
+        reply->as_int();
+    }
+}
+
+void RedisKeyValueStoreClient::set_list(
+    const std::vector<std::string>& keys,
+    std::vector<std::vector<std::string>>& total_values) const
+{
+    for (const auto& key : keys) {
+        std::vector<std::string> value;
+        if (!key.empty()) {
+            const std::string command = "SMEMBERS " + key;
+            auto reply                = make_request(command);
+            reply->as_array(value);
+        }
+        total_values.push_back(value);
+    }
+}
+
+void RedisKeyValueStoreClient::set_remove(const VecKeyValuePair& entries) const
+{
+    for (const auto& entry : entries) {
+        const std::string command = "SREM " + entry.first + " " + entry.second;
+        auto reply                = make_request(command);
+        reply->as_int();
+    }
 }
 
 }  // namespace hestia

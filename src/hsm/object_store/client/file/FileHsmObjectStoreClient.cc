@@ -27,22 +27,23 @@ FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::create()
     return std::make_unique<FileHsmObjectStoreClient>();
 }
 
-void FileHsmObjectStoreClient::initialize(const Metadata& config_data)
+void FileHsmObjectStoreClient::initialize(
+    const std::string& cache_path, const Dictionary& config_data)
 {
     FileHsmObjectStoreClientConfig config;
-    auto on_item = [&config](const std::string& key, const std::string& value) {
-        if (key == "root") {
-            config.m_root = value;
-        }
-    };
-    config_data.for_each_item(on_item);
-    do_initialize(config);
+    config.deserialize(config_data);
+    do_initialize(cache_path, config);
 }
 
 void FileHsmObjectStoreClient::do_initialize(
-    const FileHsmObjectStoreClientConfig& config)
+    const std::string& cache_path, const FileHsmObjectStoreClientConfig& config)
 {
-    m_store = config.m_root;
+    m_store = config.m_root.get_value();
+
+    if (m_store.is_relative()) {
+        m_store = std::filesystem::path(cache_path) / m_store;
+    }
+
     LOG_INFO("Initializing with root: " + m_store.string());
 
     if (!std::filesystem::exists(m_store)) {

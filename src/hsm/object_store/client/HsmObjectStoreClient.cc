@@ -96,7 +96,7 @@ bool HsmObjectStoreClient::exists(const StorageObject& object) const
 }
 
 void HsmObjectStoreClient::list(
-    const Metadata::Query& query, std::vector<StorageObject>& fetched) const
+    const KeyValuePair& query, std::vector<StorageObject>& fetched) const
 {
     (void)query;
     (void)fetched;

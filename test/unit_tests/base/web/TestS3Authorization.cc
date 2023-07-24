@@ -1,42 +1,77 @@
 #include <catch2/catch_all.hpp>
 
 #include <fstream>
+#include <iostream>
 
 #include "S3AuthorisationSession.h"
 
 #include "HttpRequest.h"
 #include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
+#include "UserTokenGenerator.h"
+
+class MockTokenGenerator : public hestia::UserTokenGenerator {
+  public:
+    std::string generate(const std::string& key = {}) const override
+    {
+        (void)key;
+        return m_token;
+    }
+
+    std::string m_token{"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"};
+};
 
 class TestS3AuthorizationFixture {
   public:
     TestS3AuthorizationFixture()
     {
+        m_original_assert_state = hestia::Logger::get_instance()
+                                      .get_modifiable_context()
+                                      .m_config.should_assert();
+        hestia::Logger::get_instance()
+            .get_modifiable_context()
+            .m_config.set_should_assert_on_error(false);
+
         m_user.set_name("AKIAIOSFODNN7EXAMPLE");
-        m_user.m_api_token.m_value = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
-        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+
+        auto token_generator = std::make_unique<MockTokenGenerator>();
+        m_token_generator    = token_generator.get();
+
+        hestia::KeyValueStoreCrudServiceBackend backend(&m_kv_store_client);
+        m_user_service = hestia::UserService::create(
+            {}, &backend, nullptr, nullptr, std::move(token_generator));
 
         add_user();
     }
 
+    ~TestS3AuthorizationFixture()
+    {
+        hestia::Logger::get_instance()
+            .get_modifiable_context()
+            .m_config.set_should_assert_on_error(m_original_assert_state);
+    }
+
     void add_user()
     {
-        auto response =
-            m_user_service->make_request({m_user, hestia::CrudMethod::PUT});
+        auto response = m_user_service->register_user(m_user.name(), "");
         REQUIRE(response->ok());
-        m_user = response->item();
+        m_user = *response->get_item_as<hestia::User>();
     }
 
     void remove_user()
     {
-        REQUIRE(
-            m_user_service->make_request({m_user, hestia::CrudMethod::REMOVE})
-                ->ok());
+        REQUIRE(m_user_service
+                    ->make_request(hestia::CrudRequest{
+                        hestia::CrudMethod::REMOVE,
+                        {hestia::CrudIdentifier(m_user.id())}})
+                    ->ok());
     }
 
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;
+    MockTokenGenerator* m_token_generator{nullptr};
     std::unique_ptr<hestia::UserService> m_user_service;
     hestia::User m_user;
+    bool m_original_assert_state{false};
 };
 
 std::string empty_body_hash =
@@ -79,6 +114,7 @@ TEST_CASE_METHOD(
                 REQUIRE(result.is_valid());
             }
         }
+
 
         WHEN("The request is NOT valid")
         {
@@ -123,7 +159,7 @@ TEST_CASE_METHOD(
 
     WHEN("The GET request contains one empty valued query")
     {
-        hestia::Metadata queries;
+        hestia::Map queries;
         queries.set_item("lifecycle", "");
         request.set_queries(queries);
         const std::string sig =
@@ -142,7 +178,7 @@ TEST_CASE_METHOD(
 
     WHEN("The GET request contains two queries")
     {
-        hestia::Metadata queries;
+        hestia::Map queries;
         queries.set_item("max-keys", "2");
         queries.set_item("prefix", "J");
         request.set_queries(queries);
@@ -242,7 +278,7 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     TestS3AuthorizationFixture,
     "S3 authorization - unsigned-payload",
-    "[authorisation]")
+    "[.authorisation]")
 {
     hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
@@ -263,8 +299,11 @@ TEST_CASE_METHOD(
     request.get_header().set_item("x-amz-meta-uid", "0");
     request.get_header().set_item("Content-Length", "52");
 
+    m_token_generator->m_token = "SECRET_KEY";
+    remove_user();
+
+    m_user = hestia::User();
     m_user.set_name("OPEN_KEY");
-    m_user.m_api_token.m_value = "SECRET_KEY";
     add_user();
 
     const std::string credential =

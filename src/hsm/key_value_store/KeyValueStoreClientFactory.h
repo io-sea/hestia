@@ -1,39 +1,52 @@
 #pragma once
 
-#include "FileKeyValueStoreClient.h"
-#include "Metadata.h"
+#include "EnumUtils.h"
+#include "Map.h"
+#include "SerializeableWithFields.h"
 
-#ifdef HAS_KVSAL
-#include "KVSalKeyValueStore.h"
-#endif
-
-#include <string>
+#include "KeyValueStoreClient.h"
 
 namespace hestia {
-class KeyValueStoreClientSpec {
+class KeyValueStoreClientConfig : public SerializeableWithFields {
   public:
-    enum class Type { FILE, KVSAL, REDIS };
+    STRINGABLE_ENUM(Type, FILE, MEMORY, KVSAL, REDIS)
 
-    KeyValueStoreClientSpec(Type type, const Metadata& config = {}) :
-        m_type(type), m_config(config)
+    KeyValueStoreClientConfig();
+
+    KeyValueStoreClientConfig(const KeyValueStoreClientConfig& other);
+
+    static std::string get_type();
+
+    const Dictionary& get_config() const;
+
+    Type get_client_type() const;
+
+    std::string get_client_type_as_client() const;
+
+    void set_client_type(Type client_type)
     {
+        m_client_type.update_value(client_type);
     }
 
-    Type m_type{Type::FILE};
-    Metadata m_config;
+    KeyValueStoreClientConfig& operator=(
+        const KeyValueStoreClientConfig& other);
+
+  private:
+    void init();
+
+    static constexpr const char s_type[]{"key_value_store_client"};
+    EnumField<Type, Type_enum_string_converter> m_client_type{
+        "client_type", Type::FILE};
+    RawDictField m_config{"config"};
 };
 
 
 class KeyValueStoreClientFactory {
-
   public:
     ~KeyValueStoreClientFactory();
-    static std::string to_string(const KeyValueStoreClientSpec& client_spec);
-
-    static bool is_client_type_available(
-        const KeyValueStoreClientSpec& client_spec);
 
     static std::unique_ptr<KeyValueStoreClient> get_client(
-        const KeyValueStoreClientSpec& client_spec);
+        const std::string& config_path,
+        const KeyValueStoreClientConfig& client_config);
 };
 }  // namespace hestia

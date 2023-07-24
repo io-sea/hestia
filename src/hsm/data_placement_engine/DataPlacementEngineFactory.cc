@@ -33,7 +33,7 @@ bool DataPlacementEngineFactory::is_placement_engine_available(
 
 
 std::unique_ptr<DataPlacementEngine> DataPlacementEngineFactory::get_engine(
-    PlacementEngineType placement_engine_type, TierService* tier_service)
+    PlacementEngineType placement_engine_type, CrudService* tier_service)
 {
     switch (placement_engine_type) {
         case PlacementEngineType::BASIC:

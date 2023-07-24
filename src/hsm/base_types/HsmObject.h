@@ -1,82 +1,43 @@
 #pragma once
 
-#include "Metadata.h"
-#include "OwnableModel.h"
-#include "StorageObject.h"
+#include "HsmItem.h"
+#include "LockableOwnableModel.h"
 #include "TierExtents.h"
-#include "TimedLock.h"
-
-#include <map>
+#include "UserMetadata.h"
 
 namespace hestia {
-class HsmObject : public OwnableModel {
+class HsmObject : public HsmItem, public LockableOwnableModel {
   public:
     HsmObject();
 
-    HsmObject(const Uuid& id);
+    HsmObject(const std::string& id);
 
-    HsmObject(const StorageObject& object);
+    HsmObject(const HsmObject& other);
 
-    void add_extent(uint8_t tier_id, const Extent& extent = {});
+    static std::string get_type();
 
-    const Uuid& dataset() const;
+    const std::string& dataset() const;
 
-    void deserialize(
-        const Dictionary& dict,
-        SerializeFormat format = SerializeFormat::FULL) override;
-
-    const Metadata& metadata() const;
-
-    Metadata& metadata();
-
-    StorageObject& object();
-
-    const StorageObject& object() const;
-
-    void remove_extent(uint8_t tier_id, const Extent& extent);
-
-    void remove_tier(uint8_t tier_id);
-
-    void remove_all_tiers();
-
-    void read_lock();
-
-    void write_lock();
-
-    void read_unlock();
-
-    void write_unlock();
-
-    bool is_read_locked();
-
-    bool is_write_locked();
-
-    void serialize(
-        Dictionary& dict,
-        SerializeFormat format = SerializeFormat::FULL,
-        const Uuid& id         = {}) const override;
-
-    void set_creation_time(std::time_t time) override;
-
-    void set_id(const Uuid& id) override;
-
-    const std::map<uint8_t, TierExtents>& tiers() const;
+    const Map& metadata() const;
 
     std::string to_string() const;
 
-    void set_size(std::size_t size) { m_storage_object.m_size = size; }
+    void set_size(std::size_t size);
 
-    std::size_t size() const { return m_storage_object.m_size; }
+    std::size_t size() const;
 
-    void set_dataset_id(const Uuid& id) { m_dataset = id; }
+    void set_dataset_id(const std::string& id);
 
-    void update_modified_time(std::time_t time) override;
+    const std::vector<TierExtents>& tiers() const;
+
+    HsmObject& operator=(const HsmObject& other);
 
   private:
-    TimedLock m_read_lock;
-    TimedLock m_write_lock;
-    StorageObject m_storage_object;
-    std::map<uint8_t, TierExtents> m_tier_extents;
-    Uuid m_dataset;
+    void init();
+
+    UIntegerField m_size{"size"};
+    OneToOneProxyField<UserMetadata> m_metadata{"user_metadata"};
+    ForeignKeyProxyField<TierExtents> m_tier_extents{"tiers"};
+    NamedForeignKeyField m_dataset{"dataset", HsmItem::dataset_name};
 };
 }  // namespace hestia

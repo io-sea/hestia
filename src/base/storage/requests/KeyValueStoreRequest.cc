@@ -3,21 +3,11 @@
 namespace hestia {
 KeyValueStoreRequest::KeyValueStoreRequest(
     KeyValueStoreRequestMethod method,
-    const Metadata::Query& query,
+    const VecKeyValuePair& kv_pairs,
     const std::string& url) :
     MethodRequest<KeyValueStoreRequestMethod>(method),
     BaseRequest(url),
-    m_query(query)
-{
-}
-
-KeyValueStoreRequest::KeyValueStoreRequest(
-    KeyValueStoreRequestMethod method,
-    const std::string& key,
-    const std::string& url) :
-    MethodRequest<KeyValueStoreRequestMethod>(method),
-    BaseRequest(url),
-    m_key(key)
+    m_kv_pairs(kv_pairs)
 {
 }
 
@@ -31,14 +21,9 @@ KeyValueStoreRequest::KeyValueStoreRequest(
 {
 }
 
-const Metadata::Query& KeyValueStoreRequest::get_query() const
+const VecKeyValuePair& KeyValueStoreRequest::get_kv_pairs() const
 {
-    return m_query;
-}
-
-const std::string& KeyValueStoreRequest::get_key() const
-{
-    return m_key;
+    return m_kv_pairs;
 }
 
 const std::vector<std::string>& KeyValueStoreRequest::get_keys() const
@@ -53,8 +38,6 @@ std::string KeyValueStoreRequest::method_as_string() const
             return "STRING_EXISTS";
         case KeyValueStoreRequestMethod::STRING_GET:
             return "STRING_GET";
-        case KeyValueStoreRequestMethod::STRING_MULTI_GET:
-            return "STRING_MULTI_GET";
         case KeyValueStoreRequestMethod::STRING_SET:
             return "STRING_SET";
         case KeyValueStoreRequestMethod::STRING_REMOVE:

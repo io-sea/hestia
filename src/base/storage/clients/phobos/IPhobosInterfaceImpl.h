@@ -24,6 +24,6 @@ class IPhobosInterfaceImpl {
     virtual void remove(const StorageObject& object) = 0;
 
     virtual void list(
-        const Metadata::Query& query, std::vector<StorageObject>& found) = 0;
+        const KeyValuePair& query, std::vector<StorageObject>& found) = 0;
 };
 }  // namespace hestia

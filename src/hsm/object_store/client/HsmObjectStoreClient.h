@@ -46,7 +46,7 @@ class HsmObjectStoreClient : public ObjectStoreClient {
 
     void remove(const StorageObject& object) const override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& fetched)
+    void list(const KeyValuePair& query, std::vector<StorageObject>& fetched)
         const override;
 
   private:

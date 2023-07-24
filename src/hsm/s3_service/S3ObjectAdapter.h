@@ -7,7 +7,7 @@
 #include <memory>
 
 namespace hestia {
-class S3ObjectAdapter : public StringAdapter<HsmObject> {
+class S3ObjectAdapter : public StringAdapter {
   public:
     using Ptr = std::unique_ptr<S3ObjectAdapter>;
 
@@ -15,13 +15,14 @@ class S3ObjectAdapter : public StringAdapter<HsmObject> {
 
     static Ptr create(const std::string& metadata_prefix = {});
 
-    Dictionary::Ptr dict_from_string(const std::string& input) const override;
+    void dict_from_string(
+        const std::string& input, Dictionary& dict) const override;
 
     void dict_to_string(
         const Dictionary& dict, std::string& output) const override;
 
     void get_headers(
-        const Dataset& dataset, const HsmObject& object, Metadata& header);
+        const Dataset& dataset, const HsmObject& object, Map& header);
 
   private:
     std::string m_metadata_prefix;

@@ -6,7 +6,7 @@ namespace hestia {
 
 class BasicDataPlacementEngine : public DataPlacementEngine {
   public:
-    BasicDataPlacementEngine(TierService* tier_service);
+    BasicDataPlacementEngine(CrudService* tier_service);
 
     virtual ~BasicDataPlacementEngine() = default;
 

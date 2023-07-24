@@ -92,6 +92,9 @@ class Stream {
      */
     [[nodiscard]] StreamState reset();
 
+    using completionFunc = std::function<void(StreamState)>;
+    void set_completion_func(completionFunc func);
+
     /**
      * Sets the source for the stream - if there already is one it will be
      * destroyed.
@@ -131,6 +134,7 @@ class Stream {
     [[nodiscard]] IOResult write(const ReadableBufferView& buffer) noexcept;
 
   protected:
+    completionFunc m_completion_func;
     StreamSource::Ptr m_source;
     StreamSink::Ptr m_sink;
 };

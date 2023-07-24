@@ -23,23 +23,16 @@ std::string HttpObjectStoreClient::get_registry_identifier()
            + "::HttpObjectStoreClient";
 }
 
-void HttpObjectStoreClient::initialize(const Metadata& config_data)
+void HttpObjectStoreClient::initialize(
+    const std::string& cache_path, const Dictionary& config_data)
 {
     HttpObjectStoreClientConfig config;
-    auto on_item = [&config](const std::string& key, const std::string& value) {
-        if (key == "endpoint") {
-            config.m_endpoint = value;
-        }
-        else if (key == "endpoint_suffix") {
-            config.m_endpoint_suffix = value;
-        }
-    };
-    config_data.for_each_item(on_item);
-    do_initialize(config);
+    config.deserialize(config_data);
+    do_initialize(cache_path, config);
 }
 
 void HttpObjectStoreClient::do_initialize(
-    const HttpObjectStoreClientConfig& config)
+    const std::string&, const HttpObjectStoreClientConfig& config)
 {
     m_config = config;
 }
@@ -55,7 +48,7 @@ void HttpObjectStoreClient::put(
 void HttpObjectStoreClient::get(
     StorageObject& object, const Extent& extent, Stream* stream) const
 {
-    const auto path = m_config.m_endpoint + "/" + object.id().to_string();
+    const auto path = m_config.m_endpoint.get_value() + "/" + object.id();
     auto http_response =
         m_http_client->make_request({path, HttpRequest::Method::GET});
     if (http_response->error()) {
@@ -74,7 +67,7 @@ void HttpObjectStoreClient::remove(const StorageObject& object) const
 }
 
 void HttpObjectStoreClient::list(
-    const Metadata::Query& query, std::vector<StorageObject>& found) const
+    const KeyValuePair& query, std::vector<StorageObject>& found) const
 {
     (void)query;
     (void)found;

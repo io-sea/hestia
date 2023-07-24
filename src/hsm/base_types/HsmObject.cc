@@ -1,239 +1,163 @@
 #include "HsmObject.h"
 
 #include "Logger.h"
-#include "UuidUtils.h"
 
 #include <algorithm>
 #include <iostream>
 
 namespace hestia {
-HsmObject::HsmObject() : OwnableModel("hsm_object") {}
-
-HsmObject::HsmObject(const Uuid& id) : OwnableModel(id), m_storage_object(id) {}
-
-HsmObject::HsmObject(const StorageObject& object) :
-    OwnableModel(object.id()), m_storage_object(object)
+HsmObject::HsmObject() :
+    HsmItem(HsmItem::Type::OBJECT),
+    LockableOwnableModel(HsmItem::hsm_object_name, {})
 {
-    if (m_id.is_unset() && !m_storage_object.name().empty()) {
-        m_name = m_storage_object.name();
-        m_type = "hsm_object";
-    }
-
-    m_creation_time      = object.get_creation_time();
-    m_last_modified_time = object.get_last_modified_time();
+    init();
 }
 
+HsmObject::HsmObject(const std::string& id) :
+    HsmItem(HsmItem::Type::OBJECT),
+    LockableOwnableModel(id, HsmItem::hsm_object_name, {})
+{
+    init();
+}
+
+HsmObject::HsmObject(const HsmObject& other) :
+    HsmItem(other), LockableOwnableModel(other)
+{
+    *this = other;
+}
+
+std::string HsmObject::get_type()
+{
+    return HsmItem::hsm_object_name;
+}
+
+HsmObject& HsmObject::operator=(const HsmObject& other)
+{
+    if (this != &other) {
+        LockableOwnableModel::operator=(other);
+        m_size         = other.m_size;
+        m_metadata     = other.m_metadata;
+        m_tier_extents = other.m_tier_extents;
+        m_dataset      = other.m_dataset;
+        init();
+    }
+    return *this;
+}
+
+void HsmObject::init()
+{
+    register_scalar_field(&m_size);
+    register_map_field(&m_metadata);
+    register_foreign_key_proxy_field(&m_tier_extents);
+    register_named_foreign_key_field(&m_dataset);
+}
+
+/*
 void HsmObject::add_extent(uint8_t tier_id, const Extent& extent)
 {
     Extent working_extent = extent;
     if (working_extent.empty()) {
-        working_extent = Extent(0, m_storage_object.m_size);
+        working_extent = Extent(0, m_size.get_value());
     }
 
-    if (auto it = m_tier_extents.find(tier_id); it != m_tier_extents.end()) {
+    const auto id_str = std::to_string(tier_id);
+
+    if (auto it = m_tier_extents.get_container_as_writeable().find(id_str);
+        it != m_tier_extents.get_container_as_writeable().end()) {
         it->second.add_extent(working_extent);
         const auto size = it->second.get_size();
-        if (m_storage_object.m_size < size) {
-            m_storage_object.m_size = size;
+        if (m_size.get_value() < size) {
+            m_size.update_value(size);
         }
     }
     else {
-        m_tier_extents.emplace(tier_id, TierExtents(tier_id, working_extent));
-        if (m_storage_object.m_size < working_extent.get_end()) {
-            m_storage_object.m_size = working_extent.get_end();
+        m_tier_extents.get_container_as_writeable().emplace(
+            id_str, TierExtents(tier_id, working_extent));
+        if (m_size.get_value() < working_extent.get_end()) {
+            m_size.update_value(working_extent.get_end());
         }
     }
 }
+*/
 
+/*
 void HsmObject::remove_extent(uint8_t tier_id, const Extent& extent)
 {
     Extent working_extent = extent;
     if (working_extent.empty()) {
-        working_extent = Extent(0, m_storage_object.m_size);
+        working_extent = Extent(0, m_size.get_value());
     }
 
     bool remove_tier{false};
-    if (auto it = m_tier_extents.find(tier_id); it != m_tier_extents.end()) {
+    const auto id_str = std::to_string(tier_id);
+    if (auto it = m_tier_extents.get_container_as_writeable().find(id_str);
+        it != m_tier_extents.get_container_as_writeable().end()) {
         it->second.remove_extent(extent);
         std::size_t max_size{0};
-        for (const auto& [key, tier] : m_tier_extents) {
+        for (const auto& [key, tier] : m_tier_extents.container()) {
             const auto tier_size = tier.get_size();
             if (tier_size > max_size) {
                 max_size = tier_size;
             }
         }
-        m_storage_object.m_size = max_size;
+        m_size.update_value(max_size);
         if (it->second.empty()) {
             remove_tier = true;
         }
     }
     if (remove_tier) {
-        m_tier_extents.erase(tier_id);
+        m_tier_extents.get_container_as_writeable().erase(id_str);
     }
 }
+*/
 
+/*
 void HsmObject::remove_tier(uint8_t tier_id)
 {
-    m_tier_extents.erase(tier_id);
-}
+    m_tier_extents.get_container_as_writeable().erase(std::to_string(tier_id));
+}*/
 
-void HsmObject::update_modified_time(std::time_t time)
-{
-    Model::update_modified_time(time);
-    m_storage_object.update_modified_time(time);
-}
-
-void HsmObject::set_creation_time(std::time_t time)
-{
-    Model::set_creation_time(time);
-    m_storage_object.set_creation_time(time);
-}
-
-void HsmObject::set_id(const Uuid& id)
-{
-    Model::set_id(id);
-    m_storage_object.set_id(id);
-}
-
-Metadata& HsmObject::metadata()
-{
-    return m_storage_object.m_metadata;
-}
-
-void HsmObject::read_lock()
-{
-    m_read_lock.lock();
-}
-
-void HsmObject::write_lock()
-{
-    m_write_lock.lock();
-}
-
-void HsmObject::read_unlock()
-{
-    m_read_lock.unlock();
-}
-
-void HsmObject::write_unlock()
-{
-    m_write_lock.unlock();
-}
-
-bool HsmObject::is_read_locked()
-{
-    return m_read_lock.m_active;
-}
-
-bool HsmObject::is_write_locked()
-{
-    return m_write_lock.m_active;
-}
-
+/*
 void HsmObject::remove_all_tiers()
 {
-    m_tier_extents.clear();
+    m_tier_extents.get_container_as_writeable().clear();
+}
+*/
+
+const Map& HsmObject::metadata() const
+{
+    return m_metadata.value().data();
 }
 
-StorageObject& HsmObject::object()
+const std::string& HsmObject::dataset() const
 {
-    return m_storage_object;
+    return m_dataset.get_id();
 }
 
-const StorageObject& HsmObject::object() const
+const std::vector<TierExtents>& HsmObject::tiers() const
 {
-    return m_storage_object;
+    return m_tier_extents.models();
 }
 
-const Metadata& HsmObject::metadata() const
+void HsmObject::set_size(std::size_t size)
 {
-    return m_storage_object.m_metadata;
+    m_size.update_value(size);
 }
 
-const Uuid& HsmObject::dataset() const
+std::size_t HsmObject::size() const
 {
-    return m_dataset;
+    return m_size.get_value();
 }
 
-const std::map<uint8_t, TierExtents>& HsmObject::tiers() const
+void HsmObject::set_dataset_id(const std::string& id)
 {
-    return m_tier_extents;
+    m_dataset.set_id(id);
 }
 
 std::string HsmObject::to_string() const
 {
-    return m_storage_object.to_string();
-}
-
-void HsmObject::deserialize(const Dictionary& dict, SerializeFormat format)
-{
-    OwnableModel::deserialize(dict, format);
-
-    if (format == SerializeFormat::ID) {
-        return;
-    }
-
-    Metadata scalar_data;
-    dict.get_map_items(scalar_data);
-
-    auto on_item = [this](const std::string& key, const std::string& value) {
-        if (key == "size" && !value.empty()) {
-            m_storage_object.m_size = std::stoul(value);
-        }
-        else if (key == "dataset_id" && !value.empty()) {
-            m_dataset = UuidUtils::from_string(value);
-        }
-    };
-    scalar_data.for_each_item(on_item);
-
-    for (const auto& [key, dict_item] : dict.get_map()) {
-        if (key == "read_lock") {
-            m_read_lock.deserialize(*dict_item);
-        }
-        else if (key == "write_lock") {
-            m_write_lock.deserialize(*dict_item);
-        }
-        else if (key == "user_metadata") {
-            dict_item->get_map_items(m_storage_object.m_metadata);
-        }
-        else if (key == "tiers") {
-            if (dict_item->get_type() == Dictionary::Type::SEQUENCE) {
-                TierExtents tier_extents;
-                for (const auto& tiers_dict : dict_item->get_sequence()) {
-                    tier_extents.deserialize(*tiers_dict);
-                    m_tier_extents[tier_extents.tier()] = tier_extents;
-                }
-            }
-        }
-    }
-}
-
-void HsmObject::serialize(
-    Dictionary& dict, SerializeFormat format, const Uuid& id) const
-{
-    OwnableModel::serialize(dict, format, id);
-
-    if (format == SerializeFormat::ID) {
-        return;
-    }
-
-    auto user_md_dict = std::make_unique<Dictionary>();
-    user_md_dict->set_map(m_storage_object.m_metadata.get_raw_data());
-    dict.set_map_item("user_metadata", std::move(user_md_dict));
-
-    std::unordered_map<std::string, std::string> data{
-        {"size", std::to_string(m_storage_object.m_size)},
-        {"dataset_id", UuidUtils::to_string(m_dataset)}};
-    dict.set_map(data);
-
-    auto tiers_dict = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-    for (const auto& [key, value] : m_tier_extents) {
-        tiers_dict->add_sequence_item(value.serialize());
-    }
-    dict.set_map_item("tiers", std::move(tiers_dict));
-
-    dict.set_map_item("read_lock", m_read_lock.serialize());
-    dict.set_map_item("write_lock", m_write_lock.serialize());
+    return "";
+    // return m_storage_object.to_string();
 }
 
 }  // namespace hestia

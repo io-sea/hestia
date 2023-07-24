@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Metadata.h"
+#include "Map.h"
 
 #include <string>
 
@@ -9,6 +9,6 @@ struct HttpPreamble {
     std::string m_method;
     std::string m_path;
     std::string m_version;
-    Metadata m_queries;
+    Map m_queries;
 };
 }  // namespace hestia

@@ -1,8 +1,9 @@
 #include "HsmObjectStoreClientFactory.h"
 
 #include "FileHsmObjectStoreClient.h"
-
 #include "FileObjectStoreClient.h"
+#include "InMemoryHsmObjectStoreClient.h"
+#include "InMemoryObjectStoreClient.h"
 
 #include "Logger.h"
 
@@ -17,11 +18,11 @@ ObjectStorePluginHandler::ObjectStorePluginHandler(
 bool ObjectStorePluginHandler::has_plugin(
     const HsmObjectStoreClientBackend& client_spec)
 {
-    if (client_spec.m_type == HsmObjectStoreClientBackend::Type::BASIC) {
-        return bool(get_object_store_plugin(client_spec));
+    if (client_spec.is_hsm()) {
+        return bool(get_hsm_object_store_plugin(client_spec));
     }
     else {
-        return bool(get_hsm_object_store_plugin(client_spec));
+        return bool(get_object_store_plugin(client_spec));
     }
 }
 
@@ -29,7 +30,7 @@ std::unique_ptr<ObjectStoreClientPlugin>
 ObjectStorePluginHandler::get_object_store_plugin(
     const HsmObjectStoreClientBackend& client_spec)
 {
-    const auto plugin_path = client_spec.m_extra_config.get_item("plugin_path");
+    const auto plugin_path = client_spec.get_plugin_path();
     LOG_INFO("Looking for plugin: " << plugin_path);
 
     ObjectStorePluginFactory plugin_factory(plugin_path);
@@ -53,7 +54,7 @@ std::unique_ptr<HsmObjectStoreClientPlugin>
 ObjectStorePluginHandler::get_hsm_object_store_plugin(
     const HsmObjectStoreClientBackend& client_spec)
 {
-    const auto plugin_path = client_spec.m_extra_config.get_item("plugin_path");
+    const auto plugin_path = client_spec.get_plugin_path();
     LOG_INFO("Looking for plugin: " << plugin_path);
 
     HsmObjectStorePluginFactory plugin_factory(plugin_path);
@@ -83,7 +84,7 @@ HsmObjectStoreClientFactory::HsmObjectStoreClientFactory(
 bool HsmObjectStoreClientFactory::is_client_type_available(
     const HsmObjectStoreClientBackend& client_spec) const
 {
-    if (client_spec.m_source == HsmObjectStoreClientBackend::Source::BUILT_IN) {
+    if (client_spec.is_built_in()) {
         return true;
     }
     return m_plugin_handler->has_plugin(client_spec);
@@ -92,17 +93,30 @@ bool HsmObjectStoreClientFactory::is_client_type_available(
 ObjectStoreClient::Ptr HsmObjectStoreClientFactory::get_client(
     const HsmObjectStoreClientBackend& client_spec) const
 {
-    if (client_spec.m_source == HsmObjectStoreClientBackend::Source::BUILT_IN) {
-        if (client_spec.m_identifier
+    if (client_spec.is_built_in()) {
+        if (client_spec.get_identifier()
             == FileHsmObjectStoreClient::get_registry_identifier()) {
             LOG_INFO("Setting up FileHsmObjectStoreClient");
             return FileHsmObjectStoreClient::create();
         }
         else if (
-            client_spec.m_identifier
+            client_spec.get_identifier()
             == hestia::FileObjectStoreClient::get_registry_identifier()) {
             LOG_INFO("Setting up FileObjectStoreClient");
             return hestia::FileObjectStoreClient::create();
+        }
+        else if (
+            client_spec.get_identifier()
+            == hestia::InMemoryHsmObjectStoreClient::
+                get_registry_identifier()) {
+            LOG_INFO("Setting up InMemoryHsmObjectStoreClient");
+            return hestia::InMemoryHsmObjectStoreClient::create();
+        }
+        else if (
+            client_spec.get_identifier()
+            == hestia::InMemoryObjectStoreClient::get_registry_identifier()) {
+            LOG_INFO("Setting up InMemoryObjectStoreClient");
+            return hestia::InMemoryObjectStoreClient::create();
         }
     }
     LOG_ERROR(
@@ -116,8 +130,7 @@ ObjectStoreClientPlugin::Ptr
 HsmObjectStoreClientFactory::get_client_from_plugin(
     const HsmObjectStoreClientBackend& client_spec) const
 {
-    if (client_spec.m_source == HsmObjectStoreClientBackend::Source::PLUGIN
-        || client_spec.m_source == HsmObjectStoreClientBackend::Source::MOCK) {
+    if (client_spec.is_plugin() || client_spec.is_mock()) {
         if (!client_spec.is_hsm()) {
             return m_plugin_handler->get_object_store_plugin(client_spec);
         }
@@ -133,8 +146,7 @@ HsmObjectStoreClientPlugin::Ptr
 HsmObjectStoreClientFactory::get_hsm_client_from_plugin(
     const HsmObjectStoreClientBackend& client_spec) const
 {
-    if (client_spec.m_source == HsmObjectStoreClientBackend::Source::PLUGIN
-        || client_spec.m_source == HsmObjectStoreClientBackend::Source::MOCK) {
+    if (client_spec.is_plugin() || client_spec.is_mock()) {
         if (client_spec.is_hsm()) {
             return m_plugin_handler->get_hsm_object_store_plugin(client_spec);
         }

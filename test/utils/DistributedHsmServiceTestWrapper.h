@@ -1,27 +1,18 @@
 #pragma once
 
 #include "DistributedHsmService.h"
-#include "FileHsmObjectStoreClient.h"
-#include "FileKeyValueStoreClient.h"
+#include "InMemoryHsmObjectStoreClient.h"
+#include "InMemoryKeyValueStoreClient.h"
+#include "UserService.h"
 
 class DistributedHsmServiceTestWrapper {
   public:
-    DistributedHsmServiceTestWrapper(
-        const std::string& test_file, const std::string& test_name);
-
-    ~DistributedHsmServiceTestWrapper();
+    DistributedHsmServiceTestWrapper();
 
     void add_tiers(std::size_t num_tiers);
 
-    void get_store_path() const;
-
-    hestia::FileKeyValueStoreClient* get_kv_store_client()
-    {
-        return &m_kv_store_client;
-    }
-
-    std::string m_store_path;
-    hestia::FileKeyValueStoreClient m_kv_store_client;
-    hestia::FileHsmObjectStoreClient m_obj_store_client;
+    hestia::InMemoryKeyValueStoreClient m_kv_store_client;
+    hestia::InMemoryHsmObjectStoreClient m_obj_store_client;
+    std::unique_ptr<hestia::UserService> m_user_service;
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
 };

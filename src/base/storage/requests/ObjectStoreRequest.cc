@@ -14,7 +14,7 @@ ObjectStoreRequest::ObjectStoreRequest(
 {
 }
 
-ObjectStoreRequest::ObjectStoreRequest(const Metadata::Query& query) :
+ObjectStoreRequest::ObjectStoreRequest(const KeyValuePair& query) :
     MethodObjectStoreRequest<ObjectStoreRequestMethod>(
         query, ObjectStoreRequestMethod::LIST)
 {

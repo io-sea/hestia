@@ -1,10 +1,8 @@
 #pragma once
 
 #include "Dictionary.h"
-#include "Metadata.h"
 
 #include <filesystem>
-#include <vector>
 
 namespace hestia {
 
@@ -30,18 +28,20 @@ class JsonUtils {
      * @param metadata metadata to convert
      * @return The json as a string
      */
-    static std::string to_json(const Metadata& metadata);
+    static std::string to_json(const Map& metadata);
 
-    static std::string to_json(
+    static void to_json(
         const Dictionary& dict,
+        std::string& output,
         const std::vector<std::string>& exclude_keys = {});
 
-    static std::unique_ptr<Dictionary> from_json(
+    static void from_json(
         const std::string& str,
+        Dictionary& dict,
         const std::vector<std::string>& exclude_keys = {});
 
     static std::string to_json(
-        const std::vector<Metadata>& metadata, const std::string& key = {});
+        const std::vector<Map>& metadata, const std::string& key = {});
 
     /**
      * Read Metadata from json - only reads the top level keys
@@ -49,12 +49,11 @@ class JsonUtils {
      * @param json json to read from
      * @param metadata to populate
      */
-    static void from_json(const std::string& json, Metadata& metadata);
+    static void from_json(const std::string& json, Map& metadata);
 
-    static void from_json(
-        const std::string& json, std::vector<Metadata>& metadata);
+    static void from_json(const std::string& json, std::vector<Map>& metadata);
 
-    static void get_value(
+    static bool get_value(
         const std::filesystem::path& path,
         const std::string& key,
         std::string& value);
@@ -69,11 +68,23 @@ class JsonUtils {
         const std::string& key,
         const std::string& value);
 
+    static void set_values(
+        const std::filesystem::path& path,
+        const std::vector<KeyValuePair>& kv_pairs);
+
     static bool has_key(
         const std::filesystem::path& path, const std::string& key);
 
+    static void has_keys(
+        const std::filesystem::path& path,
+        const std::vector<std::string>& keys,
+        std::vector<bool>& found);
+
     static void remove_key(
         const std::filesystem::path& path, const std::string& key);
+
+    static void remove_keys(
+        const std::filesystem::path& path, const std::vector<std::string>& key);
 
     /**
      * Read the specified keys from a file containing json into Metadata
@@ -84,7 +95,7 @@ class JsonUtils {
      */
     static void read(
         const std::filesystem::path& path,
-        Metadata& metadata,
+        Map& metadata,
         const std::vector<std::string>& keys = {});
 
     /**
@@ -96,7 +107,7 @@ class JsonUtils {
      */
     static void write(
         const std::filesystem::path& path,
-        const Metadata& metadata,
+        const Map& metadata,
         bool merge = true);
 };
 }  // namespace hestia

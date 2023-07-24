@@ -4,13 +4,14 @@
 #include "InMemoryStreamSource.h"
 
 #include "Logger.h"
+#include "UuidUtils.h"
 
 #include <stdexcept>
 
 namespace hestia {
 class MotrObject {
   public:
-    MotrObject(const hestia::Uuid& oid) : m_id(oid) {}
+    MotrObject(const std::string& oid) : m_id(oid) {}
 
     ~MotrObject() = default;
 
@@ -18,18 +19,16 @@ class MotrObject {
 
     mock::motr::Obj* get_motr_obj() { return &m_handle; }
 
-    static mock::motr::Id to_motr_id(const hestia::Uuid& id)
+    static mock::motr::Id to_motr_id(const std::string& id)
     {
-        mock::motr::Id motr_id;
-        motr_id.m_lo = id.m_lo;
-        motr_id.m_hi = id.m_hi;
+        mock::motr::Id motr_id = UuidUtils::from_string(id);
         return motr_id;
     }
 
     std::size_t m_size{0};
 
   private:
-    hestia::Uuid m_id;
+    std::string m_id;
     mock::motr::Obj m_handle;
 };
 
@@ -44,14 +43,16 @@ void MockMotrInterfaceImpl::initialize(const MotrConfig& config)
         &m_container, nullptr, &realm_id, &m_client);
 
     std::size_t pool_count{0};
-    LOG_INFO("Initializing with: " << config.m_tier_info.size() << " pools.");
-    for (const auto& entry : config.m_tier_info) {
+    LOG_INFO(
+        "Initializing with: " << config.m_tier_info.container().size()
+                              << " pools.");
+    for (const auto& entry : config.m_tier_info.container()) {
         (void)entry;
         m_client.add_pool({pool_count, 0});
         pool_count++;
     }
 
-    initialize_hsm(config.m_tier_info);
+    initialize_hsm(config.m_tier_info.container());
 }
 
 void MockMotrInterfaceImpl::initialize_hsm(
@@ -127,7 +128,7 @@ void MockMotrInterfaceImpl::get(
     (void)object;
 
     MotrObject motr_obj(request.object().id());
-    motr_obj.m_size = request.object().m_size;
+    motr_obj.m_size = request.object().size();
 
     auto rc = m_hsm.m0hsm_set_read_tier(
         motr_obj.get_motr_id(), request.source_tier());

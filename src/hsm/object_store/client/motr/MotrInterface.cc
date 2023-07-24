@@ -28,12 +28,12 @@ void MotrInterface::initialize(const MotrConfig& config)
 
 void MotrInterface::validate_config(MotrConfig& config)
 {
-    auto working_path = config.m_hsm_config_path;
+    auto working_path = config.m_hsm_config_path.get_value();
     if (working_path.empty()) {
         working_path = std::filesystem::current_path() / "config";
-        write_tier_info(working_path, config.m_tier_info);
+        write_tier_info(working_path, config.m_tier_info.container());
     }
-    config.m_hsm_config_path = working_path;
+    config.m_hsm_config_path.update_value(working_path);
 }
 
 void MotrInterface::copy(const HsmObjectStoreRequest& request) const
@@ -72,7 +72,8 @@ void MotrInterface::write_tier_info(
     std::ofstream f_out;
     f_out.open(path);
     for (const auto& tier : tier_info) {
-        f_out << tier.m_name << " = <" << tier.m_identifier << "> \n";
+        f_out << tier.m_name.get_value() << " = <"
+              << tier.m_identifier.get_value() << "> \n";
     }
     f_out.close();
 }

@@ -167,6 +167,9 @@ HttpResponse::Ptr CurlClient::make_request(
     else if (request.get_method() == HttpRequest::Method::PUT) {
         handle->prepare_put(request, stream);
     }
+    else if (request.get_method() == HttpRequest::Method::PUT) {
+        handle->prepare_put(request, stream);
+    }
 
     handle->prepare_headers(request.get_header());
 

@@ -1,5 +1,4 @@
 #include "hestia/hestia.h"
-#include "hestia/Logger.h"
 
 #include <iostream>
 #include <string>
@@ -7,22 +6,14 @@
 
 int main(int argc, char** argv)
 {
-    hestia::Logger::Config logger_config;
-    logger_config.m_active       = true;
-    logger_config.m_level        = hestia::Logger::Level::INFO;
-    logger_config.m_console_only = true;
-    logger_config.m_assert       = false;
-    logger_config.m_log_prefix   = "hestia_atools_sampleapp";
-
-    hestia::Logger::get_instance().do_initialize(logger_config);
-
     if (argc == 2) {
-        hestia::initialize(argv[1]);
+        hestia_initialize(argv[1], nullptr, nullptr);
     }
     else {
-        hestia::initialize();
+        hestia_initialize(nullptr, nullptr, nullptr);
     }
 
+    /*
     std::string content{"The quick brown fox jumps over the lazy dog"};
     hestia::put({0000, 0001}, false, content.data(), 0, content.length(), 0);
 
@@ -43,5 +34,7 @@ int main(int argc, char** argv)
         hestia::finish();
         return -1;
     }
-    
+    */
+    hestia_finish();
 }
+

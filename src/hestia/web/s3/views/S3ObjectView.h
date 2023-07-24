@@ -22,7 +22,6 @@ class S3ObjectView : public WebView {
     HttpResponse::Ptr on_head(
         const HttpRequest& request, const User& user) override;
 
-  private:
     S3Service* m_service{nullptr};
     std::unique_ptr<S3ObjectAdapter> m_object_adatper;
 };

@@ -1,6 +1,7 @@
 #include "BlockStore.h"
 
 #include <fstream>
+#include <stdexcept>
 
 namespace hestia {
 
@@ -23,18 +24,29 @@ void BlockStore::remove(const std::string& key)
     }
 }
 
-void BlockStore::dump(const std::filesystem::path& directory)
+const BlockList& BlockStore::get_block_list(const std::string& key) const
 {
-    if (!std::filesystem::is_directory(directory)) {
-        std::filesystem::create_directories(directory);
+    if (auto iter = m_data.find(key); iter != m_data.end()) {
+        return iter->second;
     }
+    else {
+        throw std::runtime_error("Requested blocklist not found");
+    }
+}
 
+void BlockStore::set_block_list(const std::string& key, const BlockList& blocks)
+{
+    m_data[key] = blocks;
+}
+
+std::string BlockStore::dump() const
+{
+    std::string output;
     for (const auto& [key, blocklist] : m_data) {
-        std::filesystem::path filename = key + ".dat";
-        std::ofstream out;
-        out.open(directory / filename);
-        out << blocklist.dump();
+        output += "Key: " + key + '\n';
+        output += blocklist.dump() + '\n';
     }
+    return output;
 }
 
 void BlockStore::load(const std::filesystem::path& directory)

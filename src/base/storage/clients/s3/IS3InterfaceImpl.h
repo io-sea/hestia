@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SerializeableWithFields.h"
+
 #include "S3Container.h"
 #include "S3Object.h"
 
@@ -9,10 +11,19 @@
 #include <memory>
 
 namespace hestia {
-struct S3Config {
-    std::string m_metadataprefix;
-    std::string m_user_agent;
-    std::string m_default_host;
+class S3Config : public SerializeableWithFields {
+
+  public:
+    S3Config() : SerializeableWithFields("s3_object_store_client_config")
+    {
+        register_scalar_field(&m_metadataprefix);
+        register_scalar_field(&m_user_agent);
+        register_scalar_field(&m_default_host);
+    }
+
+    StringField m_metadataprefix{"metadata_prefix"};
+    StringField m_user_agent{"user_agent"};
+    StringField m_default_host{"default_host"};
 };
 
 class IS3InterfaceImpl {

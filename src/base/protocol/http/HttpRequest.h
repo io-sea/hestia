@@ -29,12 +29,11 @@ class HttpRequest {
 
     const Method& get_method() const;
 
-    const Metadata& get_queries() const { return m_preamble.m_queries; }
+    const Map& get_queries() const { return m_preamble.m_queries; }
 
-    void set_queries(const Metadata& queries)
-    {
-        m_preamble.m_queries = queries;
-    }
+    void overwrite_path(const std::string& new_path);
+
+    void set_queries(const Map& queries) { m_preamble.m_queries = queries; }
 
     const HttpHeader& get_header() const;
 

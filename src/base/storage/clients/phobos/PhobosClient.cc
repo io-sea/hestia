@@ -85,7 +85,7 @@ void PhobosClient::get(
 }
 
 void PhobosClient::list(
-    const Metadata::Query& query, std::vector<StorageObject>& found) const
+    const KeyValuePair& query, std::vector<StorageObject>& found) const
 {
     m_phobos_interface->list(query, found);
 }

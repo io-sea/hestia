@@ -1,14 +1,37 @@
 #pragma once
 
+#include "SerializeableWithFields.h"
+
 #include <filesystem>
 #include <fstream>
 
 namespace hestia {
 
-struct EventFeedConfig {
-    std::string m_event_feed_file_path{"event_feed.yaml"};
-    bool m_active{true};
-    bool m_sorted_keys{false};  // For debug purposes only
+class EventFeedConfig : public SerializeableWithFields {
+
+  public:
+    EventFeedConfig();
+
+    EventFeedConfig(const EventFeedConfig& other);
+
+    static std::string get_type();
+
+    bool is_active() const;
+
+    const std::string& get_output_path() const;
+
+    bool should_sort_keys() const;
+
+    EventFeedConfig& operator=(const EventFeedConfig& other);
+
+  private:
+    void init();
+
+    static constexpr const char s_type[]{"event_feed"};
+    StringField m_output_path{"output_path", "event_feed.yaml"};
+    BooleanField m_active{"active", true};
+    BooleanField m_sorted_keys{
+        "sorted_keys", false};  // For debug purposes only
 };
 
 /// Class for logging filesystem events to librobinhood-compatible YAML
@@ -18,10 +41,10 @@ class EventFeed {
         enum class Method { PUT, REMOVE, REMOVE_ALL, COPY, MOVE };
 
         std::string m_id;
-        unsigned long m_length;
+        unsigned long m_length{0};
 
-        unsigned int m_source_tier;
-        unsigned int m_target_tier;
+        unsigned int m_source_tier{0};
+        unsigned int m_target_tier{0};
 
         Method m_method;
         void method_to_string(std::string& out);

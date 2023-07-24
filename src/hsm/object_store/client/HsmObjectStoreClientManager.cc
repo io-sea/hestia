@@ -2,6 +2,8 @@
 
 #include "Logger.h"
 
+#include <algorithm>
+
 namespace hestia {
 HsmObjectStoreClientManager::HsmObjectStoreClientManager(
     HsmObjectStoreClientFactory::Ptr client_factory) :
@@ -34,16 +36,6 @@ hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
 HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
     const std::string& identifier) const
 {
-    if (auto iter = m_backends.find(identifier); iter != m_backends.end()) {
-        if (!iter->second.is_hsm()) {
-            throw std::runtime_error(
-                "Requested HSM client for non-hsm client type.");
-        }
-    }
-    else {
-        throw std::runtime_error("Requested backend not found.");
-    }
-
     if (const auto iter = m_hsm_clients.find(identifier);
         iter != m_hsm_clients.end()) {
         return iter->second.get();
@@ -57,29 +49,26 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
 
 bool HsmObjectStoreClientManager::is_hsm_client(uint8_t tier_id) const
 {
-    if (const auto backend_iter = m_backends.find(get_client_backend(tier_id));
-        backend_iter != m_backends.end()) {
-        return backend_iter->second.is_hsm();
-    }
-    return false;
+    return get_hsm_client(get_backend(tier_id)) != nullptr;
 }
 
 ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     uint8_t tier_id) const
 {
-    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
-        return get_client(iter->second.m_backend);
+    if (const auto iter = m_tier_backends.find(tier_id);
+        iter != m_tier_backends.end()) {
+        return get_client(iter->second);
     }
     else {
         return nullptr;
     }
 }
 
-std::string HsmObjectStoreClientManager::get_client_backend(
-    uint8_t tier_id) const
+std::string HsmObjectStoreClientManager::get_backend(uint8_t tier_id) const
 {
-    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
-        return iter->second.m_backend;
+    if (const auto iter = m_tier_backends.find(tier_id);
+        iter != m_tier_backends.end()) {
+        return iter->second;
     }
     else {
         return {};
@@ -89,8 +78,9 @@ std::string HsmObjectStoreClientManager::get_client_backend(
 HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
     uint8_t tier_id) const
 {
-    if (const auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
-        return get_hsm_client(iter->second.m_backend);
+    if (const auto iter = m_tier_backends.find(tier_id);
+        iter != m_tier_backends.end()) {
+        return get_hsm_client(iter->second);
     }
     else {
         return nullptr;
@@ -99,36 +89,49 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
 
 bool HsmObjectStoreClientManager::has_client(uint8_t tier_id) const
 {
-    if (const auto backend_iter = m_backends.find(get_client_backend(tier_id));
-        backend_iter != m_backends.end()) {
-        return true;
+    const auto backend = get_backend(tier_id);
+    if (backend.empty()) {
+        return false;
     }
-    return false;
+    return has_backend(backend);
+}
+
+bool HsmObjectStoreClientManager::has_backend(const std::string& backend) const
+{
+    return std::find(m_backends.begin(), m_backends.end(), backend)
+           != m_backends.end();
 }
 
 bool HsmObjectStoreClientManager::have_same_client_types(
     uint8_t tier_id0, uint8_t tier_id1) const
 {
-    auto type0 = m_tiers.find(tier_id0)->second;
-    auto type1 = m_tiers.find(tier_id1)->second;
-    return type0.m_backend == type1.m_backend;
+    auto tier0_iter = m_tier_backends.find(tier_id0);
+    if (tier0_iter == m_tier_backends.end()) {
+        throw std::runtime_error("Requested tier not found");
+    }
+
+    auto tier1_iter = m_tier_backends.find(tier_id1);
+    if (tier1_iter == m_tier_backends.end()) {
+        throw std::runtime_error("Requested tier not found");
+    }
+    return tier0_iter->second == tier1_iter->second;
 }
 
 void HsmObjectStoreClientManager::setup_clients(
-    const std::unordered_map<std::string, HsmObjectStoreClientBackend>&
-        backends,
-    const std::unordered_map<uint8_t, StorageTier>& tiers)
+    const std::string& cache_path,
+    const std::vector<HsmObjectStoreClientBackend>& backends,
+    const std::vector<StorageTier>& tiers)
 {
-    m_tiers = tiers;
-    for (const auto& [id, tier] : m_tiers) {
-        LOG_INFO(
-            "Adding tier: " << std::to_string(id)
-                            << " with backend: " << tier.m_backend);
+    LOG_INFO("Got: " << backends.size() << " backends");
+
+    for (const auto& tier : tiers) {
+        m_tier_backends[tier.id_uint()] = tier.get_backend();
     }
 
-    m_backends = backends;
+    for (const auto& backend : backends) {
+        const auto identifier = backend.get_identifier();
+        m_backends.push_back(identifier);
 
-    for (const auto& [identifier, backend] : m_backends) {
         LOG_INFO("Processing backend: " + identifier);
 
         if (!m_client_factory->is_client_type_available(backend)) {
@@ -140,8 +143,7 @@ void HsmObjectStoreClientManager::setup_clients(
             if (get_hsm_client(identifier) == nullptr) {
                 LOG_INFO("Setting up hsm client of type: " + identifier);
 
-                if (backend.m_source
-                    == HsmObjectStoreClientBackend::Source::BUILT_IN) {
+                if (backend.is_built_in()) {
                     HsmObjectStoreClient::Ptr hsm_client;
                     auto client = m_client_factory->get_client(backend);
 
@@ -151,7 +153,8 @@ void HsmObjectStoreClientManager::setup_clients(
                         auto hsm_client =
                             std::unique_ptr<HsmObjectStoreClient>(raw_client);
 
-                        hsm_client->initialize(backend.m_extra_config);
+                        hsm_client->initialize(
+                            cache_path, backend.get_config());
                         m_hsm_clients[identifier] = std::move(hsm_client);
                     }
                     else {
@@ -163,7 +166,7 @@ void HsmObjectStoreClientManager::setup_clients(
                     auto client_plugin =
                         m_client_factory->get_hsm_client_from_plugin(backend);
                     client_plugin->get_client()->initialize(
-                        backend.m_extra_config);
+                        cache_path, backend.get_config());
                     m_hsm_plugin_clients[identifier] = std::move(client_plugin);
                 }
             }
@@ -171,10 +174,9 @@ void HsmObjectStoreClientManager::setup_clients(
         else if (get_client(identifier) == nullptr) {
             LOG_INFO("Setting up client of type: " + identifier);
 
-            if (backend.m_source
-                == HsmObjectStoreClientBackend::Source::BUILT_IN) {
+            if (backend.is_built_in()) {
                 auto client = m_client_factory->get_client(backend);
-                client->initialize(backend.m_extra_config);
+                client->initialize(cache_path, backend.get_config());
                 if (!client) {
                     throw std::runtime_error(
                         "Failed to retrieve client of type: " + identifier);
@@ -184,7 +186,8 @@ void HsmObjectStoreClientManager::setup_clients(
             else {
                 auto client_plugin =
                     m_client_factory->get_client_from_plugin(backend);
-                client_plugin->get_client()->initialize(backend.m_extra_config);
+                client_plugin->get_client()->initialize(
+                    cache_path, backend.get_config());
                 m_plugin_clients[identifier] = std::move(client_plugin);
             }
         }

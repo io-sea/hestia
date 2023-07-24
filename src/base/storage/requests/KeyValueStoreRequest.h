@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Metadata.h"
 #include "Request.h"
 
+#include <string>
 #include <vector>
 
 namespace hestia {
 enum class KeyValueStoreRequestMethod {
     STRING_EXISTS,
     STRING_GET,
-    STRING_MULTI_GET,
     STRING_SET,
     STRING_REMOVE,
     SET_ADD,
@@ -17,18 +16,16 @@ enum class KeyValueStoreRequestMethod {
     SET_REMOVE
 };
 
+using KeyValuePair    = std::pair<std::string, std::string>;
+using VecKeyValuePair = std::vector<KeyValuePair>;
+
 class KeyValueStoreRequest :
     public MethodRequest<KeyValueStoreRequestMethod>,
     public BaseRequest {
   public:
     KeyValueStoreRequest(
         KeyValueStoreRequestMethod method,
-        const Metadata::Query& query,
-        const std::string& url = {});
-
-    KeyValueStoreRequest(
-        KeyValueStoreRequestMethod method,
-        const std::string& key,
+        const VecKeyValuePair& kv_pairs,
         const std::string& url = {});
 
     KeyValueStoreRequest(
@@ -36,17 +33,14 @@ class KeyValueStoreRequest :
         const std::vector<std::string>& keys,
         const std::string& url = {});
 
-    const Metadata::Query& get_query() const;
-
-    const std::string& get_key() const;
+    const VecKeyValuePair& get_kv_pairs() const;
 
     const std::vector<std::string>& get_keys() const;
 
     std::string method_as_string() const override;
 
   private:
-    std::string m_key;
     std::vector<std::string> m_keys;
-    Metadata::Query m_query;
+    VecKeyValuePair m_kv_pairs;
 };
 }  // namespace hestia

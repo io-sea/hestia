@@ -28,7 +28,7 @@ class PhobosClient : public ObjectStoreClient {
 
     void remove(const StorageObject& object) const override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found)
+    void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
 
     std::unique_ptr<PhobosInterface> m_phobos_interface;

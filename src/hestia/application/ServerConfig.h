@@ -1,42 +1,52 @@
 #pragma once
 
-#include "Dictionary.h"
-#include "Metadata.h"
+#include "WebAppConfig.h"
 
 namespace hestia {
 
-struct WebAppConfig {
-    enum class Interface { S3, HTTP };
+class ServerConfig : public SerializeableWithFields {
 
-    void load(const Metadata& items);
+  public:
+    ServerConfig();
 
-    static std::string to_string(Interface interface)
-    {
-        switch (interface) {
-            case Interface::S3:
-                return "s3";
-            case Interface::HTTP:
-                return "http";
-        }
-        return {};
-    }
+    ServerConfig(const ServerConfig& other);
 
-    std::string m_identifier{"hestia::HsmService"};
-    Interface m_interface{Interface::HTTP};
-};
+    const std::string& get_static_resource_path() const;
 
-struct ServerConfig {
+    const std::string& get_host_address() const;
 
-    void load(const Dictionary& config);
+    unsigned get_port() const;
 
-    std::string m_host{"127.0.0.1"};
-    std::string m_port{"8080"};
-    std::string m_backend{"hestia::Basic"};
-    std::string m_tag;
-    std::string m_controller_address;
-    std::string m_static_resource_path;
-    bool m_cache_static_resources{true};
-    bool m_controller{true};
-    WebAppConfig m_web_app_config;
+    const std::string& get_tag() const { return m_tag.get_value(); }
+
+    const WebAppConfig& get_web_app_config() const;
+
+    static std::string get_type() { return s_type; }
+
+    const std::string& get_controller_address() const;
+
+    bool has_controller_address() const;
+
+    bool is_controller() const;
+
+    bool should_cache_static_resources() const;
+
+    ServerConfig& operator=(const ServerConfig& other);
+
+  private:
+    void init();
+
+    static constexpr const char s_type[]{"server"};
+    StringField m_host{"host", "127.0.0.1"};
+    UIntegerField m_port{"port", 8080};
+
+    TypedDictField<WebAppConfig> m_web_app{"web_app"};
+    StringField m_backend{"backend", "hestia::Basic"};
+    BooleanField m_cache_static_resources{"cache_static"};
+    StringField m_static_resource_path{"static_resource_path"};
+
+    StringField m_controller_address{"controller_address"};
+    BooleanField m_controller{"is_controller"};
+    StringField m_tag{"tag"};
 };
 }  // namespace hestia

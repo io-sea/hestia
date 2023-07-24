@@ -1,12 +1,11 @@
 
 set(UNIT_TEST_MODULE ${PROJECT_NAME}_unit_tests)
 
-include(external/code-coverage)
-
 set(UNIT_TEST_SOURCES
     base/common/TestBlockList.cc
     base/common/TestExtent.cc
     base/common/TestDictionary.cc
+    base/common/TestEnumUtils.cc
     base/common/TestHashUtils.cc
     base/common/TestJsonUtils.cc
     base/common/TestStream.cc
@@ -15,7 +14,6 @@ set(UNIT_TEST_SOURCES
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
-    base/protocol/TestHttpCrudClient.cc
     base/protocol/TestHttpRequest.cc
     base/protocol/TestS3Path.cc
     base/protocol/TestS3Error.cc
@@ -24,21 +22,27 @@ set(UNIT_TEST_SOURCES
     base/storage/TestFileObjectStoreClient.cc
     base/storage/TestPhobosClient.cc
     base/storage/TestS3Client.cc
+    base/crud/TestLockableModel.cc
+    base/crud/TestCrudService.cc
+    base/crud/TestHttpCrudClient.cc
     base/web/TestWebApp.cc
-    base/web/TestS3Authorization.cc
     base/web/TestUserService.cc
-    hestia/TestHestiaCppClient.cc
-    hestia/TestS3WebApp.cc
-    hsm/TestDistributedHsmService.cc
+    base/web/TestS3Authorization.cc
     hsm/TestEventFeed.cc
     hsm/TestMockMotrBackend.cc
     hsm/TestMockMotrHsm.cc
     hsm/TestMotrHsmClient.cc
+    hsm/TestStorageTier.cc
+    hsm/TestHsmNode.cc
+    hsm/TestHsmObject.cc
+    hsm/TestTierExtents.cc
     hsm/TestHsmService.cc
+    hsm/TestDistributedHsmService.cc
     hsm/TestS3HsmService.cc
-    hsm/TestHsmNodeAdapter.cc
-    hsm/TestObjectService.cc
-    hsm/TestTierService.cc
+    hestia/TestHestiaClient.cc
+    hestia/TestHestiaCApi.cc
+    hestia/TestHestiaCli.cc
+    hestia/TestS3WebApp.cc
 )
 
 add_executable(${UNIT_TEST_MODULE} 
@@ -86,3 +90,4 @@ target_code_coverage(hestia_lib ALL)
 
 target_code_coverage(${UNIT_TEST_MODULE} ALL)
 catch_discover_tests(${UNIT_TEST_MODULE})
+

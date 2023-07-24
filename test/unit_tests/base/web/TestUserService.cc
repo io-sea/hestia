@@ -3,35 +3,50 @@
 #include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
 
+#include "MockIdGenerator.h"
+#include "MockTimeProvider.h"
+
+#include <iostream>
+
 class TestUserServiceFixture {
   public:
     TestUserServiceFixture()
     {
-        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+        m_id_generator  = std::make_unique<hestia::mock::MockIdGenerator>();
+        m_time_provider = std::make_unique<hestia::mock::MockTimeProvider>();
+
+        hestia::KeyValueStoreCrudServiceBackend backend(&m_kv_store_client);
+        m_user_service = hestia::UserService::create(
+            {}, &backend, m_id_generator.get(), m_time_provider.get());
     }
 
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;
     std::unique_ptr<hestia::UserService> m_user_service;
+    std::unique_ptr<hestia::mock::MockIdGenerator> m_id_generator;
+    std::unique_ptr<hestia::mock::MockTimeProvider> m_time_provider;
 };
 
 TEST_CASE_METHOD(TestUserServiceFixture, "Test User Service", "[user-service]")
 {
-    std::string username = "my_user";
-    std::string password = "my_password";
+    const std::string username = "my_user";
+    const std::string password = "my_password";
 
-    auto register_response = m_user_service->register_user(username, password);
+    const auto register_response =
+        m_user_service->register_user(username, password);
+
     REQUIRE(register_response->ok());
 
-    auto id = register_response->item().id();
+    const auto id = register_response->get_item()->id();
 
-    auto auth_response = m_user_service->authenticate_user(username, password);
+    const auto auth_response =
+        m_user_service->authenticate_user(username, password);
     REQUIRE(auth_response->ok());
 
-    REQUIRE(auth_response->item().id() == id);
+    REQUIRE(auth_response->get_item()->id() == id);
 
-    REQUIRE_FALSE(auth_response->item().m_api_token.m_value.empty());
-
-    auto token_response = m_user_service->authenticate_with_token(
-        auth_response->item().m_api_token.m_value);
+    const auto token_response = m_user_service->authenticate_with_token(
+        auth_response->get_item_as<hestia::User>()->token().value());
     REQUIRE(token_response->ok());
+
+    REQUIRE(token_response->get_item()->id() == id);
 }

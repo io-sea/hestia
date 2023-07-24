@@ -16,7 +16,7 @@ std::unique_ptr<MockPhobosInterface> MockPhobosInterface::create()
 
 void MockPhobosInterface::get(const StorageObject& obj, int fd)
 {
-    const auto id_str = UuidUtils::to_string(obj.id());
+    const auto id_str = obj.id();
 
     pho_xfer_desc desc;
     desc.xd_objid = id_str;
@@ -35,7 +35,7 @@ void MockPhobosInterface::get(const StorageObject& obj, int fd)
 
 void MockPhobosInterface::put(const StorageObject& obj, int fd)
 {
-    const auto id_str = UuidUtils::to_string(obj.id());
+    const auto id_str = obj.id();
 
     pho_xfer_desc desc;
     desc.xd_objid = id_str;
@@ -43,13 +43,13 @@ void MockPhobosInterface::put(const StorageObject& obj, int fd)
 
     if (fd > -1) {
         desc.xd_fd              = fd;
-        desc.xd_put_params.size = obj.m_size;
+        desc.xd_put_params.size = obj.size();
     }
 
     auto each_item = [&desc](const std::string& key, const std::string& value) {
         desc.xd_attrs.attr_set.set_item(key, value);
     };
-    obj.m_metadata.for_each_item(each_item);
+    obj.metadata().for_each_item(each_item);
 
     ssize_t rc = m_phobos.phobos_put(&desc, 1, nullptr, nullptr);
     if (fd > 0) {
@@ -63,7 +63,7 @@ void MockPhobosInterface::put(const StorageObject& obj, int fd)
 
 bool MockPhobosInterface::exists(const StorageObject& obj)
 {
-    const auto id_str = UuidUtils::to_string(obj.id());
+    const auto id_str = obj.id();
 
     pho_xfer_desc desc;
     desc.xd_objid = id_str;
@@ -75,7 +75,7 @@ bool MockPhobosInterface::exists(const StorageObject& obj)
 
 void MockPhobosInterface::get_metadata(StorageObject& obj)
 {
-    const auto id_str = UuidUtils::to_string(obj.id());
+    const auto id_str = obj.id();
 
     pho_xfer_desc desc;
     desc.xd_objid = id_str;
@@ -89,7 +89,7 @@ void MockPhobosInterface::get_metadata(StorageObject& obj)
     auto on_metadata_item = [](const char* key, const char* value,
                                void* udata) {
         auto obj = reinterpret_cast<StorageObject*>(udata);
-        obj->m_metadata.set_item(key, value);
+        obj->get_metadata_as_writeable().set_item(key, value);
         return 0;
     };
     rc = m_phobos.phobos_attrs_foreach(&desc.xd_attrs, on_metadata_item, &obj);
@@ -100,7 +100,7 @@ void MockPhobosInterface::get_metadata(StorageObject& obj)
 
 void MockPhobosInterface::remove(const StorageObject& obj)
 {
-    const auto id_str = UuidUtils::to_string(obj.id());
+    const auto id_str = obj.id();
 
     pho_xfer_desc desc;
     desc.xd_objid = id_str;
@@ -109,7 +109,7 @@ void MockPhobosInterface::remove(const StorageObject& obj)
     m_phobos.phobos_delete(&desc, 1);
 }
 
-void from_string(Metadata& metadata, const std::string& str)
+void from_string(Map& metadata, const std::string& str)
 {
     std::stringstream ss(str);
     std::string key, value, dump;
@@ -123,7 +123,7 @@ void from_string(Metadata& metadata, const std::string& str)
 }
 
 void MockPhobosInterface::list(
-    const Metadata::Query& query, std::vector<StorageObject>& found)
+    const KeyValuePair& query, std::vector<StorageObject>& found)
 {
     const std::string skey = query.first + "=" + query.second;
     const char* key        = skey.c_str();
@@ -142,8 +142,8 @@ void MockPhobosInterface::list(
 
     for (int idx = 0; idx < num_objects; idx++) {
         StorageObject obj(obj_info[idx].oid);
-        from_string(obj.m_metadata, obj_info[idx].user_md);
-        obj.m_metadata.set_item("key", obj_info[idx].oid);
+        from_string(obj.get_metadata_as_writeable(), obj_info[idx].user_md);
+        obj.get_metadata_as_writeable().set_item("key", obj_info[idx].oid);
         found.push_back(obj);
     }
 

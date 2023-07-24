@@ -1,19 +1,22 @@
 #pragma once
 
-#include "Dictionary.h"
-#include "TimeUtils.h"
+#include "Serializeable.h"
+
+#include <ctime>
 
 namespace hestia {
 
-class TimedLock {
+class TimedLock : public Serializeable {
   public:
     TimedLock(std::time_t timeout = 5000);
 
-    void deserialize(const Dictionary& dict);
+    void serialize(
+        Dictionary& dict, Format format = Format::FULL) const override;
+
+    void deserialize(
+        const Dictionary& dict, Format format = Format::FULL) override;
 
     void lock();
-
-    Dictionary::Ptr serialize() const;
 
     void unlock();
 

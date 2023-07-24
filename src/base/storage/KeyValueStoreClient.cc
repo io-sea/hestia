@@ -1,7 +1,6 @@
 #include "KeyValueStoreClient.h"
 
 #include "RequestException.h"
-#include "UuidUtils.h"
 
 #include "Logger.h"
 
@@ -23,7 +22,10 @@
     }
 
 namespace hestia {
-KeyValueStoreResponsePtr KeyValueStoreClient::make_request(
+
+void KeyValueStoreClient::initialize(const std::string&, const Dictionary&) {}
+
+KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
     const KeyValueStoreRequest& request) const noexcept
 {
     auto response = std::make_unique<KeyValueStoreResponse>(request);
@@ -31,55 +33,43 @@ KeyValueStoreResponsePtr KeyValueStoreClient::make_request(
     switch (request.method()) {
         case KeyValueStoreRequestMethod::STRING_EXISTS:
             try {
-                const auto exists = string_exists(request.get_key());
-                response->set_found(exists);
+                string_exists(request.get_keys(), response->found());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::STRING_GET:
             try {
-                string_get(request.get_key(), response->item());
-            }
-            CATCH_FLOW();
-            break;
-        case KeyValueStoreRequestMethod::STRING_MULTI_GET:
-            try {
-                string_multi_get(request.get_keys(), response->items());
+                string_get(request.get_keys(), response->items());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::STRING_SET:
             try {
-                string_set(
-                    request.get_query().first, request.get_query().second);
+                string_set(request.get_kv_pairs());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::STRING_REMOVE:
             try {
-                string_remove(request.get_key());
+                string_remove(request.get_keys());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::SET_ADD:
             try {
-                set_add(
-                    request.get_query().first,
-                    UuidUtils::from_string(request.get_query().second));
+                set_add(request.get_kv_pairs());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::SET_LIST:
             try {
-                set_list(request.get_key(), response->ids());
+                set_list(request.get_keys(), response->ids());
             }
             CATCH_FLOW();
             break;
         case KeyValueStoreRequestMethod::SET_REMOVE:
             try {
-                set_remove(
-                    request.get_query().first,
-                    UuidUtils::from_string(request.get_query().second));
+                set_add(request.get_kv_pairs());
             }
             CATCH_FLOW();
             break;

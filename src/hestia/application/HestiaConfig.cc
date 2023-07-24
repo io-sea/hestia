@@ -4,223 +4,181 @@
 #include "Logger.h"
 #include "YamlUtils.h"
 
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 
 namespace hestia {
 
-std::string HestiaConfig::load(const std::string& path)
+HestiaConfig::HestiaConfig() : SerializeableWithFields("hestia_config")
 {
-    auto config_path = path;
-    if (!std::filesystem::is_regular_file(config_path)) {
-        config_path = std::filesystem::current_path() / "hestia.yaml";
-    }
-
-    if (!std::filesystem::is_regular_file(config_path)) {
-        return {};
-    }
-
-    Dictionary dict;
-    YamlUtils::load(config_path, dict);
-
-    const auto root = dict.get_map_item("root");
-    load(*root);
-
-    if (m_backends.empty()) {
-        load_object_store_defaults();
-    }
-    return config_path;
+    init();
 }
 
-void HestiaConfig::load_server_config(const Dictionary& config)
+HestiaConfig::HestiaConfig(const HestiaConfig& other) :
+    SerializeableWithFields(other)
 {
-    m_server_config.load(config);
+    *this = other;
 }
 
-void HestiaConfig::load_defaults()
+HestiaConfig& HestiaConfig::operator=(const HestiaConfig& other)
 {
-    m_cache_path = HestiaCache::get_default_cache_dir();
-    load_object_store_defaults();
-    load_kv_store_defaults();
-    load_event_feed_defaults();
-}
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_path          = other.m_path;
+        m_user_token    = other.m_user_token;
+        m_cache_path    = other.m_cache_path;
+        m_server_config = other.m_server_config;
 
-void HestiaConfig::load_object_store_defaults()
-{
-    std::string default_root = m_cache_path + "/hsm_object_store";
-
-    HsmObjectStoreClientBackend client_config(
-        HsmObjectStoreClientBackend::Type::HSM,
-        HsmObjectStoreClientBackend::Source::BUILT_IN,
-        "hestia::FileHsmObjectStoreClient");
-    client_config.m_extra_config.set_item("root", default_root);
-
-    m_backends.emplace(client_config.m_identifier, client_config);
-
-    for (uint8_t idx = 0; idx < 5; idx++) {
-        StorageTier tier(idx);
-        tier.m_backend = client_config.m_identifier;
-        m_tiers.emplace(idx, tier);
+        m_logger                 = other.m_logger;
+        m_key_value_store_config = other.m_key_value_store_config;
+        m_backends               = other.m_backends;
+        m_tiers                  = other.m_tiers;
+        m_event_feed_config      = other.m_event_feed_config;
+        init();
     }
+    return *this;
 }
 
-void HestiaConfig::load_kv_store_defaults()
+void HestiaConfig::init()
 {
-    std::string default_root = m_cache_path + "/hsm_key_value_store";
-
-    Metadata config;
-    config.set_item("root", default_root);
-    m_key_value_store_spec =
-        KeyValueStoreClientSpec(KeyValueStoreClientSpec::Type::FILE, config);
+    register_scalar_field(&m_cache_path);
+    register_map_field(&m_logger);
+    register_map_field(&m_key_value_store_config);
+    register_sequence_field(&m_backends);
+    register_sequence_field(&m_tiers);
+    register_map_field(&m_event_feed_config);
 }
 
-void HestiaConfig::load_kv_store(
-    const Dictionary& kv_store_config, const Dictionary& kv_store_clients)
+void HestiaConfig::add_object_store_backend(
+    const HsmObjectStoreClientBackend& backend)
 {
-    std::string client_identifier;
-    if (auto client_id = kv_store_config.get_map_item("client_identifier");
-        client_id != nullptr) {
-        client_identifier = client_id->get_scalar();
-    }
-
-    for (const auto& config : kv_store_clients.get_sequence()) {
-        std::string identifier;
-        if (const auto identifier_dict = config->get_map_item("identifier");
-            identifier_dict != nullptr) {
-            identifier = identifier_dict->get_scalar();
-        }
-
-        if (identifier == client_identifier) {
-            Metadata client_config;
-            config->get_map_items(client_config);
-            if (client_identifier == "hestia::FileKeyValueStoreClient") {
-                if (client_config.get_item("root").empty()) {
-                    std::string default_root =
-                        m_cache_path + "/hsm_key_value_store";
-                    client_config.set_item("root", default_root);
-                }
-                m_key_value_store_spec = KeyValueStoreClientSpec(
-                    KeyValueStoreClientSpec::Type::FILE, client_config);
-            }
-            if (client_identifier == "hestia::RedisKeyValueStoreClient") {
-                m_key_value_store_spec = KeyValueStoreClientSpec(
-                    KeyValueStoreClientSpec::Type::REDIS, client_config);
-            }
-            break;
-        }
-    }
+    m_backends.get_container_as_writeable().push_back(backend);
 }
 
-void HestiaConfig::load_event_feed(const Dictionary& event_feed_config)
+void HestiaConfig::add_storage_tier(const StorageTier& tier)
 {
-    if (const auto event_feed_path_dict =
-            event_feed_config.get_map_item("event_feed_path");
-        event_feed_path_dict != nullptr) {
-        m_event_feed_config.m_event_feed_file_path =
-            event_feed_path_dict->get_scalar();
+    m_tiers.get_container_as_writeable().push_back(tier);
+}
+
+const EventFeedConfig& HestiaConfig::get_event_feed_config() const
+{
+    return m_event_feed_config.value();
+}
+
+const KeyValueStoreClientConfig& HestiaConfig::get_key_value_store_config()
+    const
+{
+    return m_key_value_store_config.value();
+}
+
+const std::string& HestiaConfig::get_user_token() const
+{
+    return m_user_token;
+}
+
+const LoggerConfig& HestiaConfig::get_logger_config() const
+{
+    return m_logger.value();
+}
+
+const std::vector<HsmObjectStoreClientBackend>&
+HestiaConfig::get_object_store_backends() const
+{
+    return m_backends.container();
+}
+
+const std::vector<StorageTier>& HestiaConfig::get_storage_tiers() const
+{
+    return m_tiers.container();
+}
+
+void HestiaConfig::find_config_file(const std::string& config_path)
+{
+    if (!config_path.empty() && std::filesystem::is_regular_file(config_path)) {
+        m_path = config_path;
+        return;
     }
-    if (const auto event_feed_active_dict =
-            event_feed_config.get_map_item("event_feed_active");
-        event_feed_active_dict != nullptr) {
-        auto event_feed_active = event_feed_active_dict->get_scalar();
-        if (event_feed_active == "n") {
-            m_event_feed_config.m_active = false;
-        }
-        else {
-            m_event_feed_config.m_active = true;
+
+    if (!m_path.empty() && std::filesystem::is_regular_file(m_path)) {
+        return;
+    }
+
+    if (auto config_path_env = std::getenv("HESTIA_CONFIG_PATH");
+        config_path_env != nullptr) {
+        const auto check_path = std::string(config_path_env);
+        if (std::filesystem::is_regular_file(check_path)) {
+            m_path = check_path;
+            return;
         }
     }
-    if (const auto event_feed_sorted_dict =
-            event_feed_config.get_map_item("event_feed_sorted");
-        event_feed_sorted_dict != nullptr) {
-        auto event_feed_sorted = event_feed_sorted_dict->get_scalar();
-        if (event_feed_sorted == "y") {
-            m_event_feed_config.m_sorted_keys = true;
-        }
-        else {
-            m_event_feed_config.m_sorted_keys = false;
+
+    if (auto home_dir = std::getenv("HOME"); home_dir != nullptr) {
+        const std::string home_str =
+            std::string(home_dir) + "/.config/hestia/hestia.yaml";
+        if (std::filesystem::is_regular_file(home_str)) {
+            m_path = home_str;
         }
     }
 }
 
-void HestiaConfig::load_event_feed_defaults()
+void HestiaConfig::find_user_token(const std::string& user_token)
 {
-    m_event_feed_config.m_active      = true;
-    m_event_feed_config.m_sorted_keys = false;
-}
-
-void HestiaConfig::load(const Dictionary& dict)
-{
-    if (auto cache_loc = dict.get_map_item("cache_location"); cache_loc) {
-        m_cache_path = cache_loc->get_scalar();
-    }
-
-    if (m_cache_path.empty()) {
-        m_cache_path = HestiaCache::get_default_cache_dir();
-    }
-
-    auto backends = dict.get_map_item("object_store_clients");
-    auto tiers    = dict.get_map_item("tier_registry");
-
-    if ((backends != nullptr) && (tiers != nullptr)) {
-        load_object_store_clients(*backends, *tiers);
-    }
-
-    auto kv_store_config   = dict.get_map_item("key_value_store");
-    auto kv_store_registry = dict.get_map_item("key_value_store_clients");
-
-    if ((kv_store_config != nullptr) && (kv_store_registry != nullptr)) {
-        load_kv_store(*kv_store_config, *kv_store_registry);
+    if (user_token.empty()) {
+        if (auto user_token_env = std::getenv("HESTIA_USER_TOKEN");
+            user_token_env != nullptr) {
+            m_user_token = std::string(user_token_env);
+        }
     }
     else {
-        load_kv_store_defaults();
+        m_user_token = user_token;
     }
+}
 
-    auto event_feed_config = dict.get_map_item("event_feed");
-    if (event_feed_config != nullptr) {
-        load_event_feed(*event_feed_config);
+void HestiaConfig::load(
+    const std::string& config_path,
+    const std::string& user_token,
+    const Dictionary& extra_config)
+{
+    find_config_file(config_path);
+
+    if (m_path.empty()) {
+        load_from_dict(extra_config, user_token);
     }
     else {
-        load_event_feed_defaults();
-    }
+        Dictionary dict;
+        YamlUtils::load(m_path, dict);
 
-    load_server_config(dict);
+        const auto root = dict.get_map_item("root");
+        root->merge(extra_config);
+        load_from_dict(*root, user_token);
+    }
 }
 
-void HestiaConfig::load_object_store_clients(
-    const Dictionary& backends, const Dictionary& tiers)
+void HestiaConfig::load_from_dict(
+    const Dictionary& dict, const std::string& user_token)
 {
-    for (const auto& store : backends.get_sequence()) {
-        std::string identifier;
-        if (const auto identifier_dict = store->get_map_item("identifier");
-            identifier_dict != nullptr) {
-            identifier = identifier_dict->get_scalar();
-        }
+    find_user_token(user_token);
+    deserialize(dict);
 
-        m_backends.emplace(
-            identifier, HsmObjectStoreClientBackend(*store, m_cache_path));
-    }
-
-    for (const auto& tier : tiers.get_sequence()) {
-        uint8_t identifier{0};
-        if (const auto identifier_dict = tier->get_map_item("identifier");
-            identifier_dict != nullptr) {
-            identifier =
-                static_cast<uint8_t>(std::stoi(identifier_dict->get_scalar()));
-        }
-
-        std::string client_identifier;
-        if (const auto identifier_dict =
-                tier->get_map_item("client_identifier");
-            identifier_dict != nullptr) {
-            client_identifier = identifier_dict->get_scalar();
-        }
-
-        if (!client_identifier.empty()) {
-            StorageTier tier_obj(identifier);
-            tier_obj.m_backend = client_identifier;
-            m_tiers.emplace(identifier, tier_obj);
-        }
+    if (m_cache_path.get_value().empty()) {
+        m_cache_path.update_value(HestiaCache::get_default_cache_dir());
     }
 }
+
+const std::string& HestiaConfig::get_cache_path() const
+{
+    return m_cache_path.get_value();
+}
+
+bool HestiaConfig::has_object_store_backends() const
+{
+    return !m_backends.container().empty();
+}
+
+const ServerConfig& HestiaConfig::get_server_config() const
+{
+    return m_server_config.value();
+}
+
 }  // namespace hestia

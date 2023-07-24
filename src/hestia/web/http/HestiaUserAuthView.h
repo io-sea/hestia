@@ -20,6 +20,6 @@ class HestiaUserAuthView : public WebView {
 
   private:
     UserService* m_user_service{nullptr};
-    std::unique_ptr<JsonAdapter<User>> m_user_adapter;
+    std::unique_ptr<JsonAdapter> m_adapter;
 };
 }  // namespace hestia

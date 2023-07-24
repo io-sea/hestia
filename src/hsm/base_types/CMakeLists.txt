@@ -3,13 +3,27 @@ include(AddModule)
 add_module(
     MODULE_NAME hsm_base_types
     HEADERS
+        HsmItem.h
         HsmObject.h
+        HsmAction.h
+        HsmEvent.h
         StorageTier.h
         TierExtents.h
+        Dataset.h
+        Namespace.h
+        UserMetadata.h
     SOURCES
+        HsmItem.cc
         HsmObject.cc
+        HsmAction.cc
+        HsmEvent.cc
         StorageTier.cc 
         TierExtents.cc
+        Dataset.cc
+        Namespace.cc
+        UserMetadata.cc
     INTERNAL_DEPENDENCIES 
         common
+        models
+        storage
 )

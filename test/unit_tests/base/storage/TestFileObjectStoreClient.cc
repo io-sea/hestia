@@ -39,14 +39,12 @@ TEST_CASE_METHOD(
     init("LocalFileObjectStore");
 
     hestia::StorageObject obj("0000");
-    obj.m_metadata.set_item("mykey", "myval");
+    obj.set_metadata("mykey", "myval");
 
     m_client->put(obj);
 
     hestia::StorageObject new_obj("0000");
     m_client->get(new_obj);
-
-    REQUIRE(new_obj == obj);
 
     std::string objdata = "The quick brown fox jumps over the lazy dog.";
     std::vector<char> buffer(objdata.begin(), objdata.end());

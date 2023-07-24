@@ -18,14 +18,14 @@ TEST_CASE("Test JsonUtils - get values", "[common]")
 
 TEST_CASE("Test JsonUtils - metadata to and from json", "[common]")
 {
-    hestia::Metadata metadata;
+    hestia::Map metadata;
     metadata.set_item("my_key0", "my_val0");
     metadata.set_item("my_key1", "my_val1");
     metadata.set_item("my_key2", "my_val2");
 
     const auto as_json = hestia::JsonUtils::to_json(metadata);
 
-    hestia::Metadata expected_metadata;
+    hestia::Map expected_metadata;
     hestia::JsonUtils::from_json(as_json, expected_metadata);
 
     REQUIRE(expected_metadata.get_item("my_key0") == "my_val0");
@@ -46,15 +46,18 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
     seq_dict->add_sequence_item(std::move(nest0));
     dict.set_map_item("nested", std::move(seq_dict));
 
-    auto json = hestia::JsonUtils::to_json(dict);
+    std::string json;
+    hestia::JsonUtils::to_json(dict, json);
 
-    auto ret_dict = hestia::JsonUtils::from_json(json);
-    REQUIRE(ret_dict->has_map_item("nested"));
+    hestia::Dictionary ret_dict;
+    hestia::JsonUtils::from_json(json, ret_dict);
+    REQUIRE(ret_dict.has_map_item("nested"));
 
-    auto nested_seq = ret_dict->get_map_item("nested");
+    auto nested_seq = ret_dict.get_map_item("nested");
     REQUIRE(nested_seq->get_type() == hestia::Dictionary::Type::SEQUENCE);
     REQUIRE(nested_seq->get_sequence().size() == 1);
 
-    auto json_rebuilt = hestia::JsonUtils::to_json(*ret_dict);
+    std::string json_rebuilt;
+    hestia::JsonUtils::to_json(ret_dict, json_rebuilt);
     REQUIRE(json_rebuilt == json);
 }

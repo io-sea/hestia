@@ -14,6 +14,13 @@ class InMemoryObjectStoreClient : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
+    void migrate(
+        const std::string& object_id,
+        InMemoryObjectStoreClient* target_client,
+        bool delete_after = false);
+
+    std::string dump() const;
+
   private:
     bool exists(const StorageObject& object) const override;
 
@@ -28,10 +35,10 @@ class InMemoryObjectStoreClient : public ObjectStoreClient {
     bool exists(const Uuid& object_id) const;
 
     void list(
-        const Metadata::Query& query,
+        const KeyValuePair& query,
         std::vector<StorageObject>& matching_objects) const override;
 
     mutable BlockStore m_data;
-    mutable std::unordered_map<std::string, hestia::Metadata> m_metadata;
+    mutable std::unordered_map<std::string, Map> m_metadata;
 };
 }  // namespace hestia

@@ -4,20 +4,17 @@ add_module(
     MODULE_NAME app
     HEADERS
         HestiaCli.h
-        HestiaCppInterface.h
-        application/ApplicationContext.h
+        HestiaClient.h
+        HestiaServer.h
         application/HestiaConfig.h
         application/HestiaCache.h
-        application/HestiaConfigurator.h
-        application/HestiaServer.h
+        application/HestiaApplication.h
+        application/HestiaCommands.h
         application/ServerConfig.h
+        application/WebAppConfig.h
         web/http/HestiaWebApp.h 
-        web/http/HestiaObjectView.h 
-        web/http/HestiaTierView.h 
-        web/http/HestiaNodeView.h
-        web/http/HestiaUserView.h
+        web/http/HestiaHsmActionView.h 
         web/http/HestiaUserAuthView.h
-        web/http/HestiaDatasetView.h
         web/s3/HestiaS3WebApp.h
         web/s3/S3UrlRouter.h
         web/s3/middleware/S3AuthenticationMiddleware.h 
@@ -28,20 +25,17 @@ add_module(
         web/s3/views/S3ContainerListView.h
     SOURCES
         HestiaCli.cc
-        HestiaCppInterface.cc
-        application/ApplicationContext.cc
+        HestiaClient.cc
+        HestiaServer.cc
         application/HestiaConfig.cc
         application/HestiaCache.cc
-        application/HestiaConfigurator.cc
-        application/HestiaServer.cc
+        application/HestiaApplication.cc
+        application/HestiaCommands.cc
         application/ServerConfig.cc
+        application/WebAppConfig.cc
         web/http/HestiaWebApp.cc 
-        web/http/HestiaObjectView.cc 
-        web/http/HestiaTierView.cc 
-        web/http/HestiaNodeView.cc
-        web/http/HestiaUserView.cc
+        web/http/HestiaHsmActionView.cc 
         web/http/HestiaUserAuthView.cc
-        web/http/HestiaDatasetView.cc
         web/s3/HestiaS3WebApp.cc
         web/s3/S3UrlRouter.cc
         web/s3/middleware/S3AuthenticationMiddleware.cc 

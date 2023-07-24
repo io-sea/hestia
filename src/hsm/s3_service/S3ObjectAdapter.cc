@@ -2,7 +2,7 @@
 
 namespace hestia {
 S3ObjectAdapter::S3ObjectAdapter(const std::string& metadata_prefix) :
-    m_metadata_prefix(metadata_prefix)
+    StringAdapter(nullptr), m_metadata_prefix(metadata_prefix)
 {
 }
 
@@ -11,11 +11,11 @@ S3ObjectAdapter::Ptr S3ObjectAdapter::create(const std::string& metadata_prefix)
     return std::make_unique<S3ObjectAdapter>(metadata_prefix);
 }
 
-Dictionary::Ptr S3ObjectAdapter::dict_from_string(
-    const std::string& input) const
+void S3ObjectAdapter::dict_from_string(
+    const std::string& input, Dictionary& dict) const
 {
     (void)input;
-    return nullptr;
+    (void)dict;
 }
 
 void S3ObjectAdapter::dict_to_string(
@@ -26,7 +26,7 @@ void S3ObjectAdapter::dict_to_string(
 }
 
 void S3ObjectAdapter::get_headers(
-    const Dataset& dataset, const HsmObject& object, Metadata& header)
+    const Dataset& dataset, const HsmObject& object, Map& header)
 {
     header.set_item(
         "Creation-Time", std::to_string(object.get_creation_time()));

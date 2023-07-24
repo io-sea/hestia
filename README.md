@@ -93,10 +93,20 @@ Create a new object
 curl -X PUT $HESTIA_ENDPOINT/api/v1/hsm/objects
 ```
 
-The object id will be returned in the response in `json` format. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` on tier `0` do:
+```json
+{"acl":{"group":[],"user":[]},"created_by":{"id":"00000000-0000-0000-0000-000000000000"},"creation_time":"1687957204420770","dataset_id":"00000000-0000-0000-0000-000000000000","id":"ffffffff-ffff-f719-ffff-fffffffff95a","last_modified_time":"1687957204420770","name":"","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"hsm_object","user_metadata":{},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
+```
+
+The object id will be returned in the `id` field in the response `json`. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` on tier `0` do:
 
 ```bash
 curl -X PUT --upload-file "my_file.dat" $HESTIA_ENDPOINT/api/v1/hsm/objects/550e8400-e29b-41d4-a716-446655440000/tiers/0
+```
+
+```bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   249    0     0  100   249      0    241  0:00:01  0:00:01 --:--:--   242
 ```
 
 Copy it to another tier, tier `1`:

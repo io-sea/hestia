@@ -7,14 +7,13 @@
 #include "HsmService.h"
 #include "HttpObjectStoreClient.h"
 #include "Logger.h"
-#include "TierService.h"
 
 #include "HttpClient.h"
 
 namespace hestia {
 DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
-    std::unique_ptr<HttpObjectStoreClient> http_client,
-    std::unique_ptr<HsmObjectStoreClientManager> client_manager) :
+    std::unique_ptr<HsmObjectStoreClientManager> client_manager,
+    std::unique_ptr<HttpObjectStoreClient> http_client) :
     HsmObjectStoreClient(),
     m_http_client(std::move(http_client)),
     m_client_manager(std::move(client_manager))
@@ -34,31 +33,28 @@ DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
     auto client_manager = std::make_unique<HsmObjectStoreClientManager>(
         std::move(client_factory));
     return std::make_unique<DistributedHsmObjectStoreClient>(
-        std::move(http_client), std::move(client_manager));
+        std::move(client_manager), std::move(http_client));
 }
 
 void DistributedHsmObjectStoreClient::do_initialize(
-    DistributedHsmService* hsm_service)
+    const std::string& cache_path, DistributedHsmService* hsm_service)
 {
     m_hsm_service = hsm_service;
 
-    std::unordered_map<std::string, HsmObjectStoreClientBackend> backends;
-    for (const auto& backend :
-         m_hsm_service->get_self_config().m_self.m_backends) {
-        LOG_INFO("Adding backend: " << backend.to_string());
-        backends[backend.m_identifier] = backend;
+    auto response = m_hsm_service->get_hsm_service()
+                        ->get_service(HsmItem::Type::TIER)
+                        ->make_request(CrudRequest{
+                            CrudQuery{CrudQuery::OutputFormat::ITEM}});
+
+    std::vector<StorageTier> tiers;
+    for (const auto& item : response->items()) {
+        const auto tier = dynamic_cast<const StorageTier*>(item.get());
+        LOG_INFO("Adding tier: " << std::to_string(tier->id_uint()));
+        tiers.emplace_back(*tier);
     }
 
-    auto response =
-        m_hsm_service->get_hsm_service()->get_tier_service()->make_request(
-            CrudMethod::MULTI_GET);
-    std::unordered_map<uint8_t, StorageTier> tiers;
-    for (const auto& tier : response->items()) {
-        LOG_INFO("Adding tier: " << std::to_string(tier.id_uint()));
-        tiers[tier.id_uint()] = tier;
-    }
-
-    m_client_manager->setup_clients(backends, tiers);
+    m_client_manager->setup_clients(
+        cache_path, m_hsm_service->get_self_config().m_self.backends(), tiers);
 }
 
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
@@ -82,11 +78,14 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
             }
         }
         else {
-            Metadata query;
-            query.set_item(
-                "backend",
-                m_client_manager->get_client_backend(request.source_tier()));
-            auto list_response = m_hsm_service->make_request(query);
+            CrudQuery query(
+                KeyValuePair{
+                    "backend",
+                    m_client_manager->get_backend(request.source_tier())},
+                CrudQuery::OutputFormat::ITEM);
+            auto list_response =
+                m_hsm_service->get_node_service()->make_request(
+                    CrudRequest{query});
             if (!list_response->ok()) {
                 auto response = HsmObjectStoreResponse::create(request);
                 response->on_error(
@@ -95,7 +94,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 return response;
             }
 
-            if (list_response->items().empty()) {
+            if (!list_response->found()) {
                 auto response = HsmObjectStoreResponse::create(request);
                 response->on_error(
                     {HsmObjectStoreErrorCode::ERROR,
@@ -103,13 +102,14 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 return response;
             }
 
-            auto address = list_response->items()[0].m_host_address;
-            auto port    = list_response->items()[0].m_port;
+            const auto node = list_response->get_item_as<HsmNode>();
+            auto address    = node->host();
+            auto port       = node->port();
 
             HttpObjectStoreClientConfig http_config;
-            http_config.m_endpoint =
-                address + ":" + port + "/api/v1/hsm/object";
-            http_config.m_endpoint_suffix = "data";
+            http_config.m_endpoint.update_value(
+                address + ":" + std::to_string(port) + "/api/v1/hsm/object");
+            http_config.m_endpoint_suffix.update_value("data");
 
             ObjectStoreRequest get_request(
                 request.object(), ObjectStoreRequestMethod::GET);

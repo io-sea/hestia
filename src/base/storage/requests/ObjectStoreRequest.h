@@ -14,11 +14,11 @@ class BaseObjectStoreRequest : public BaseRequest {
     {
     }
 
-    BaseObjectStoreRequest(const Metadata::Query& query) : m_query(query) {}
+    BaseObjectStoreRequest(const KeyValuePair& query) : m_query(query) {}
 
     virtual ~BaseObjectStoreRequest() = default;
 
-    const Metadata::Query& query() const { return m_query; }
+    const KeyValuePair& query() const { return m_query; }
 
     const Extent& extent() const { return m_extent; }
 
@@ -28,15 +28,12 @@ class BaseObjectStoreRequest : public BaseRequest {
 
     const StorageObject& object() const { return m_object; }
 
-    bool should_overwrite() const { return m_overwrite; }
-
   protected:
     StorageObject m_object;
 
   private:
     Extent m_extent;
-    Metadata::Query m_query;
-    bool m_overwrite{false};
+    KeyValuePair m_query;
 };
 
 template<typename METHOD>
@@ -55,7 +52,7 @@ class MethodObjectStoreRequest :
     {
     }
 
-    MethodObjectStoreRequest(const Metadata::Query& query, METHOD method) :
+    MethodObjectStoreRequest(const KeyValuePair& query, METHOD method) :
         MethodRequest<METHOD>(method), BaseObjectStoreRequest(query)
     {
     }
@@ -78,7 +75,7 @@ class ObjectStoreRequest :
         const StorageObject& object, ObjectStoreRequestMethod method);
     ObjectStoreRequest(
         const std::string& object_id, ObjectStoreRequestMethod method);
-    ObjectStoreRequest(const Metadata::Query& query);
+    ObjectStoreRequest(const KeyValuePair& query);
 
     virtual ~ObjectStoreRequest() = default;
 

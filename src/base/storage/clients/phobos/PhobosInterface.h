@@ -29,7 +29,7 @@ class PhobosInterface {
 
     void remove(const StorageObject& object);
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found);
+    void list(const KeyValuePair& query, std::vector<StorageObject>& found);
 
   private:
     std::unique_ptr<IPhobosInterfaceImpl> m_impl;

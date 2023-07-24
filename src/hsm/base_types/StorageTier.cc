@@ -1,59 +1,92 @@
 #include "StorageTier.h"
 
 namespace hestia {
-StorageTier::StorageTier() : Model("tier") {}
 
-StorageTier::StorageTier(const std::string& name) : Model(name, "tier") {}
+StorageTier::StorageTier(const std::string& id) :
+    HsmItem(HsmItem::Type::TIER), Model(id, HsmItem::tier_name)
+{
+    init();
+}
 
-StorageTier::StorageTier(uint8_t name) : Model(std::to_string(name), "tier") {}
+StorageTier::StorageTier() :
+    HsmItem(HsmItem::Type::TIER), Model(HsmItem::tier_name)
+{
+    init();
+}
+
+StorageTier::StorageTier(uint8_t name) :
+    HsmItem(HsmItem::Type::TIER), Model(HsmItem::tier_name)
+{
+    m_name.update_value(std::to_string(name));
+    init();
+}
+
+StorageTier::StorageTier(const StorageTier& other) :
+    HsmItem(HsmItem::Type::TIER), Model(other)
+{
+    *this = other;
+}
+
+StorageTier& StorageTier::operator=(const StorageTier& other)
+{
+    if (this != &other) {
+        Model::operator=(other);
+        m_backend   = other.m_backend;
+        m_capacity  = other.m_capacity;
+        m_bandwidth = other.m_bandwidth;
+        init();
+    }
+    return *this;
+}
+
+void StorageTier::init()
+{
+    register_scalar_field(&m_backend);
+    register_scalar_field(&m_capacity);
+    register_scalar_field(&m_bandwidth);
+}
+
+std::string StorageTier::get_type()
+{
+    return HsmItem::tier_name;
+}
+
+std::size_t StorageTier::get_capacity() const
+{
+    return m_capacity.get_value();
+}
+
+std::size_t StorageTier::get_bandwidth() const
+{
+    return m_bandwidth.get_value();
+}
+
+void StorageTier::set_capacity(std::size_t capacity)
+{
+    m_capacity.update_value(capacity);
+}
+
+void StorageTier::set_bandwidth(std::size_t bandwidth)
+{
+    m_bandwidth.update_value(bandwidth);
+}
 
 uint8_t StorageTier::id_uint() const
 {
-    if (m_name.empty()) {
+    if (m_name.get_value().empty()) {
         return 0;
     }
-    return std::stoul(m_name);
+    return std::stoul(m_name.get_value());
 }
 
-void StorageTier::deserialize(const Dictionary& dict, SerializeFormat format)
+const std::string& StorageTier::get_backend() const
 {
-    Model::deserialize(dict, format);
-
-    if (format == SerializeFormat::ID) {
-        return;
-    }
-
-    Metadata scalar_data;
-    dict.get_map_items(scalar_data);
-
-    auto on_item = [this](const std::string& key, const std::string& value) {
-        if (key == "backend" && !value.empty()) {
-            m_backend = value;
-        }
-        else if (key == "capacity" && !value.empty()) {
-            m_capacity = std::stoul(value);
-        }
-        else if (key == "bandwidth" && !value.empty()) {
-            m_bandwith = std::stoul(value);
-        }
-    };
-    scalar_data.for_each_item(on_item);
+    return m_backend.get_value();
 }
 
-void StorageTier::serialize(
-    Dictionary& dict, SerializeFormat format, const Uuid& id) const
+void StorageTier::set_backend(const std::string& backend)
 {
-    Model::serialize(dict, format, id);
-
-    if (format == SerializeFormat::ID) {
-        return;
-    }
-
-    std::unordered_map<std::string, std::string> data{
-        {"backend", m_backend},
-        {"capacity", std::to_string(m_capacity)},
-        {"bandwidth", std::to_string(m_bandwith)}};
-    dict.set_map(data);
+    m_backend.update_value(backend);
 }
 
 }  // namespace hestia

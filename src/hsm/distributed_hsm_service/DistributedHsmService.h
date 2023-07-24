@@ -1,16 +1,18 @@
 #pragma once
 
-#include "DistributedHsmServiceRequest.h"
-#include "HsmNodeService.h"
+#include "CrudServiceBackend.h"
+#include "CrudServiceWithUser.h"
+#include "HsmNode.h"
 
-#include <memory>
-#include <string>
 #include <vector>
 
 namespace hestia {
-class HsmService;
 class KeyValueStoreClient;
 class HttpClient;
+class UserService;
+
+class HsmService;
+using HsmServicePtr = std::unique_ptr<HsmService>;
 
 class DistributedHsmServiceConfig {
   public:
@@ -25,42 +27,29 @@ class DistributedHsmService {
     using Ptr = std::unique_ptr<DistributedHsmService>;
     DistributedHsmService(
         DistributedHsmServiceConfig config,
-        std::unique_ptr<HsmService> hsm_service,
-        std::unique_ptr<HsmNodeService> node_service);
+        HsmServicePtr hsm_service,
+        CrudService::Ptr node_service);
 
     static Ptr create(
         DistributedHsmServiceConfig config,
-        std::unique_ptr<HsmService> hsm_service,
-        KeyValueStoreClient* client);
-    static Ptr create(
-        DistributedHsmServiceConfig config,
-        std::unique_ptr<HsmService> hsm_service,
-        HttpClient* client);
+        HsmServicePtr hsm_service,
+        CrudServiceBackend* backend,
+        UserService* user_service);
 
     ~DistributedHsmService();
 
     HsmService* get_hsm_service();
 
+    CrudService* get_node_service();
+
     const DistributedHsmServiceConfig& get_self_config() const;
 
-    DistributedHsmServiceResponse::Ptr make_request(
-        const DistributedHsmServiceRequest& req) const noexcept;
-
-  private:
     void register_self();
 
-    DistributedHsmServiceResponse::Ptr get(
-        const DistributedHsmServiceRequest& req) const;
-
-    DistributedHsmServiceResponse::Ptr put(
-        const DistributedHsmServiceRequest& req) const;
-
-    DistributedHsmServiceResponse::Ptr list(
-        const DistributedHsmServiceRequest& req) const;
-
+  private:
     DistributedHsmServiceConfig m_config;
-    std::unique_ptr<HsmService> m_hsm_service;
-    std::unique_ptr<HsmNodeService> m_node_service;
+    HsmServicePtr m_hsm_service;
+    CrudService::Ptr m_node_service;
 };
 
 }  // namespace hestia

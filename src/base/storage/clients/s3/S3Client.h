@@ -25,9 +25,10 @@ class S3Client : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const Metadata& config) override;
+    void initialize(
+        const std::string& cache_path, const Dictionary& config) override;
 
-    void do_initialize(const S3Config& config);
+    void do_initialize(const std::string& cache_path, const S3Config& config);
 
   private:
     bool exists(const StorageObject& object) const override;
@@ -40,7 +41,7 @@ class S3Client : public ObjectStoreClient {
 
     void remove(const StorageObject& obj) const override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found)
+    void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
 
     IS3InterfaceImpl::Ptr m_impl;

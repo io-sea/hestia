@@ -392,7 +392,8 @@ void MotrInterfaceImpl::get(
 {
     LOG_INFO("Starting m0hsm get");
 
-    auto motr_obj = std::make_shared<MotrObject>(request.object().id());
+    auto motr_obj = std::make_shared<MotrObject>(
+        UuidUtils::from_string(request.object().id()));
 
     if (request.extent().empty()) {
         motr_obj->m_total_size = request.object().m_size;
@@ -464,7 +465,8 @@ void MotrInterfaceImpl::put(
 {
     LOG_INFO("Starting m0hsm put");
 
-    auto motr_obj = std::make_shared<MotrObject>(request.object().id());
+    auto motr_obj = std::make_shared<MotrObject>(
+        UuidUtils::from_string(request.object().id()));
 
     LOG_INFO(
         "Creating object with id: [" << motr_obj->m_uuid.to_string() << "]");
@@ -525,7 +527,7 @@ void MotrInterfaceImpl::put(
 
 void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid = request.object().id();
+    Uuid uuid = UuidUtils::from_string(request.object().id());
     // uuid=UuidUtils::from_string(request.object().id());
 
     struct m0_uint128 id;
@@ -545,7 +547,7 @@ void MotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid = request.object().id();
+    Uuid uuid = UuidUtils::from_string(request.object().id());
 
     struct m0_uint128 id;
     id.u_hi = uuid.m_hi;
@@ -571,7 +573,7 @@ void MotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    Uuid uuid = request.object().id();
+    Uuid uuid = UuidUtils::from_string(request.object().id());
     // uuid.from_string(request.object().id());
 
     struct m0_uint128 id;

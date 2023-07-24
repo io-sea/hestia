@@ -4,7 +4,7 @@
 #include "StringUtils.h"
 
 namespace hestia {
-bool HttpParser::parse_form_data(const std::string& input, Metadata& parsed)
+bool HttpParser::parse_form_data(const std::string& input, Map& parsed)
 {
     std::vector<std::string> elements;
     StringUtils::split(input, '&', elements);

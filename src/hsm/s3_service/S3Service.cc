@@ -2,16 +2,14 @@
 
 #include "DistributedHsmService.h"
 #include "HsmService.h"
-#include "NamespaceService.h"
 #include "S3DatasetAdapter.h"
 #include "S3ObjectAdapter.h"
 
 #include "Logger.h"
 
 namespace hestia {
-S3Service::S3Service(
-    DistributedHsmService* hsm_service, NamespaceService* namespace_service) :
-    m_hsm_service(hsm_service), m_namespace_service(namespace_service)
+S3Service::S3Service(DistributedHsmService* hsm_service) :
+    m_hsm_service(hsm_service)
 {
     LOG_INFO("Creating HsmS3Service");
 }
@@ -24,11 +22,6 @@ S3Service::~S3Service()
 HsmService* S3Service::get_hsm_service() const
 {
     return m_hsm_service->get_hsm_service();
-}
-
-NamespaceService* S3Service::get_namespace_service() const
-{
-    return m_namespace_service;
 }
 
 /*

@@ -16,8 +16,8 @@ class MockPhobosInterface : public IPhobosInterfaceImpl {
 
     void get_metadata(StorageObject& obj) override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found)
-        override;
+    void list(
+        const KeyValuePair& query, std::vector<StorageObject>& found) override;
 
     void put(const StorageObject& obj, int fd) override;
 

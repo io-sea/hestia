@@ -1,7 +1,7 @@
 #include "BasicDataPlacementEngine.h"
 
 namespace hestia {
-BasicDataPlacementEngine::BasicDataPlacementEngine(TierService* tier_service) :
+BasicDataPlacementEngine::BasicDataPlacementEngine(CrudService* tier_service) :
     DataPlacementEngine(tier_service)
 {
 }

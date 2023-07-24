@@ -1,7 +1,5 @@
 #include "MockMotrClient.h"
 
-// #include "MotrInterface.h"
-
 namespace hestia::mock {
 MockMotrHsmClient::MockMotrHsmClient() :
     MotrHsmClient(std::make_unique<hestia::MotrInterface>(

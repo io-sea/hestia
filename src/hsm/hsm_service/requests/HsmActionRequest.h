@@ -1,0 +1,40 @@
+#pragma once
+
+#include "Extent.h"
+#include "HsmAction.h"
+#include "Request.h"
+
+#include <memory>
+
+namespace hestia {
+
+class HsmActionRequest :
+    public BaseRequest,
+    public MethodRequest<HsmAction::Action> {
+  public:
+    using Ptr = std::unique_ptr<HsmActionRequest>;
+
+    HsmActionRequest(const HsmAction& action);
+
+    Extent extent() const;
+
+    const HsmAction& get_action() const;
+
+    std::string method_as_string() const override;
+
+    std::string subject_as_string() const;
+
+    void set_extent(const Extent& extent);
+
+    uint8_t source_tier() const;
+
+    uint8_t target_tier() const;
+
+    std::string to_string() const;
+
+    HsmItem::Type get_subject() const { return m_action.get_subject(); }
+
+  private:
+    HsmAction m_action;
+};
+}  // namespace hestia

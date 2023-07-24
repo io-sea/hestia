@@ -23,12 +23,22 @@ HttpHeader::HttpHeader(const std::vector<std::string>& lines)
     }
 }
 
+void HttpHeader::set_items(const Map& items)
+{
+    m_data.merge(items);
+}
+
+const Map& HttpHeader::get_data() const
+{
+    return m_data;
+}
+
 std::string HttpHeader::get_item(const std::string& key) const
 {
     return m_data.get_item(StringUtils::to_lower(key));
 }
 
-void HttpHeader::for_each(Metadata::onItem func) const
+void HttpHeader::for_each(Map::onItem func) const
 {
     m_data.for_each_item(func);
 }
@@ -49,9 +59,9 @@ std::string HttpHeader::to_string() const
     return sstr.str();
 }
 
-Metadata HttpHeader::get_items_with_prefix(const std::string& prefix) const
+Map HttpHeader::get_items_with_prefix(const std::string& prefix) const
 {
-    Metadata metadata;
+    Map metadata;
     auto on_header_item =
         [&metadata, prefix](const std::string& header, const std::string& val) {
             if (header.find(prefix) != std::string::npos) {

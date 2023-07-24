@@ -1,13 +1,15 @@
 set(LINK_MODULES_FOR_EXPORT
-        cli
-        common
-        server
-        protocol
-        storage
+        cli 
+        common 
+        protocol 
+        server 
+        http_client
+        storage 
+        models
+        crud
         web
         hsm
         event_feed
-        http_client
         hsm_base_types
         hsm_object_store_common
         hsm_object_store_client

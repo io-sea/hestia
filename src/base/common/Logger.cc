@@ -1,5 +1,7 @@
 #include "Logger.h"
 
+#include "TimeUtils.h"
+
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -19,73 +21,64 @@ Logger& Logger::get_instance()
     return instance;
 }
 
-void Logger::initialize(const Metadata& config_data)
-{
-    Config config;
-    auto on_item = [&config](const std::string& key, const std::string& value) {
-        if (key == "path") {
-            config.m_log_file_path = value;
-        }
-        else if (key == "prefix") {
-            config.m_log_prefix = std::stoi(value);
-        }
-        else if (key == "level") {
-            if (value == "INFO") {
-                config.m_level = Logger::Level::INFO;
-            }
-            else if (value == "WARN") {
-                config.m_level = Logger::Level::WARN;
-            }
-            else if (value == "DEBUG") {
-                config.m_level = Logger::Level::DEBUG;
-            }
-            else if (value == "ERROR") {
-                config.m_level = Logger::Level::ERROR;
-            }
-        }
-    };
-    config_data.for_each_item(on_item);
-    do_initialize(config);
-}
-
-void Logger::initialize(const LoggerContext& context)
-{
-    if (context.m_logger_impl) {
-        spdlog::set_default_logger(context.m_logger_impl);
-    }
-}
-
 const LoggerContext& Logger::get_context() const
 {
     return m_context;
 }
 
-void Logger::do_initialize(const Config& config)
+void Logger::initialize(const LoggerContext& context)
 {
-    m_config = config;
+    m_context.m_config = context.m_config;
 
-    if (m_config.m_active == false) {
+    if (context.m_logger_impl) {
+        spdlog::set_default_logger(context.m_logger_impl);
+    }
+}
+
+void Logger::do_initialize(
+    const std::string& cache_path, const LoggerConfig& config)
+{
+    m_context.m_config = config;
+
+    if (!m_context.m_config.is_active()) {
         return;
     }
 
-    if (!m_config.m_console_only) {
+    if (!m_context.m_config.is_console_only()) {
+        if (m_context.m_config.get_log_prefix().empty()) {
+            m_context.m_config.set_log_prefix("hestia_app");
+        }
+
+        if (m_context.m_config.get_log_path().empty()) {
+            m_context.m_config.set_log_path("hestia_log");
+        }
+
+        auto logger_path =
+            std::filesystem::path(m_context.m_config.get_log_path());
+        if (logger_path.is_relative()) {
+            logger_path = std::filesystem::path(cache_path) / logger_path;
+        }
+        const std::string suffix =
+            "_" + TimeUtils::get_current_time_hr() + ".txt";
+        logger_path += suffix;
+
         auto logger = spdlog::basic_logger_mt(
-            m_config.m_log_prefix, m_config.m_log_file_path, true);
+            m_context.m_config.get_log_prefix(), logger_path.string(), true);
         m_context.m_logger_impl = logger;
 
         spdlog::set_default_logger(logger);
     }
-    switch (m_config.m_level) {
-        case Level::ERROR:
+    switch (m_context.m_config.get_level()) {
+        case LoggerConfig::Level::ERROR:
             spdlog::set_level(spdlog::level::err);
             break;
-        case Level::WARN:
+        case LoggerConfig::Level::WARN:
             spdlog::set_level(spdlog::level::warn);
             break;
-        case Level::INFO:
+        case LoggerConfig::Level::INFO:
             spdlog::set_level(spdlog::level::info);
             break;
-        case Level::DEBUG:
+        case LoggerConfig::Level::DEBUG:
             spdlog::set_level(spdlog::level::debug);
             break;
         default:
@@ -105,14 +98,19 @@ std::string location_prefix(
            + "::" + function_name + "::" + std::to_string(line_number);
 }
 
+LoggerContext& Logger::get_modifiable_context()
+{
+    return m_context;
+}
+
 void Logger::log_line(
-    Level level,
+    LoggerConfig::Level level,
     const std::ostringstream& line,
     const std::string& file_name,
     const std::string& function_name,
     int line_number)
 {
-    if (!m_config.m_active) {
+    if (!m_context.m_config.is_active()) {
         return;
     }
 
@@ -122,16 +120,16 @@ void Logger::log_line(
          << line.str();
 
     switch (level) {
-        case Level::ERROR:
+        case LoggerConfig::Level::ERROR:
             spdlog::error(sstr.str());
             break;
-        case Level::WARN:
+        case LoggerConfig::Level::WARN:
             spdlog::warn(sstr.str());
             break;
-        case Level::INFO:
+        case LoggerConfig::Level::INFO:
             spdlog::info(sstr.str());
             break;
-        case Level::DEBUG:
+        case LoggerConfig::Level::DEBUG:
             spdlog::debug(sstr.str());
             break;
         default:
@@ -139,7 +137,9 @@ void Logger::log_line(
             break;
     }
 
-    if (m_config.m_assert && (level == Level::WARN || level == Level::ERROR)) {
+    if (m_context.m_config.should_assert()
+        && (level == LoggerConfig::Level::WARN
+            || level == LoggerConfig::Level::ERROR)) {
         assert(false);
     }
 }

@@ -89,6 +89,29 @@ void StringUtils::split(
     }
 }
 
+void StringUtils::ltrim(std::string& s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+                return std::isspace(ch) == 0;
+            }));
+}
+
+void StringUtils::rtrim(std::string& s)
+{
+    s.erase(
+        std::find_if(
+            s.rbegin(), s.rend(),
+            [](unsigned char ch) { return std::isspace(ch) == 0; })
+            .base(),
+        s.end());
+}
+
+void StringUtils::trim(std::string& str)
+{
+    ltrim(str);
+    rtrim(str);
+}
+
 void StringUtils::split(
     const std::string& str,
     const std::string& delimiter,
@@ -130,6 +153,19 @@ std::string StringUtils::to_lower(const std::string& str)
     std::transform(
         copy_str.begin(), copy_str.end(), copy_str.begin(), ::tolower);
     return copy_str;
+}
+
+void StringUtils::to_lines(
+    const std::string& input, std::vector<std::string>& lines)
+{
+    if (input.empty()) {
+        return;
+    }
+    std::stringstream ss(input);
+    std::string line;
+    while (std::getline(ss, line, '\n')) {
+        lines.push_back(line);
+    }
 }
 
 std::string StringUtils::replace(

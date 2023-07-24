@@ -1,11 +1,12 @@
 #include "S3DatasetAdapter.h"
 
+#include "Dataset.h"
 #include "XmlUtils.h"
 #include <sstream>
 
 namespace hestia {
 S3DatasetAdapter::S3DatasetAdapter(const std::string& metadata_prefix) :
-    m_metadata_prefix(metadata_prefix)
+    StringAdapter(nullptr), m_metadata_prefix(metadata_prefix)
 {
 }
 
@@ -15,11 +16,11 @@ S3DatasetAdapter::Ptr S3DatasetAdapter::create(
     return std::make_unique<S3DatasetAdapter>(metadata_prefix);
 }
 
-Dictionary::Ptr S3DatasetAdapter::dict_from_string(
-    const std::string& input) const
+void S3DatasetAdapter::dict_from_string(
+    const std::string& input, Dictionary& dict) const
 {
     (void)input;
-    return nullptr;
+    (void)dict;
 }
 
 void S3DatasetAdapter::dict_to_string(
@@ -46,8 +47,7 @@ void S3DatasetAdapter::on_list(const Dataset& dataset, std::string& output)
         XmlUtils::add_tag_and_text(
             sstr, "LastModified",
             std::to_string(object.get_last_modified_time()));
-        XmlUtils::add_tag_and_text(
-            sstr, "Size", std::to_string(object.object().m_size));
+        XmlUtils::add_tag_and_text(sstr, "Size", std::to_string(object.size()));
 
         XmlUtils::close_tag(sstr, "Contents");
     }
@@ -55,18 +55,17 @@ void S3DatasetAdapter::on_list(const Dataset& dataset, std::string& output)
     output = sstr.str();
 }
 
-void S3DatasetAdapter::on_list(
-    const std::vector<Dataset>& datasets, std::string& output)
+void S3DatasetAdapter::on_list(const VecModelPtr& items, std::string& output)
 {
     std::stringstream sstr;
     sstr << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     sstr << "<ListAllMyBucketsResult>\n";
     sstr << "<Buckets>\n";
 
-    for (const auto& dataset : datasets) {
+    for (const auto& dataset : items) {
         sstr << "<Bucket>\n";
-        sstr << "<Name>" << dataset.name() << "</Name>\n";
-        sstr << "<CreationDate>" << dataset.get_creation_time()
+        sstr << "<Name>" << dataset->name() << "</Name>\n";
+        sstr << "<CreationDate>" << dataset->get_creation_time()
              << "</CreationDate>\n";
         sstr << "</Bucket>\n";
     }

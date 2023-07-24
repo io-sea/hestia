@@ -115,7 +115,7 @@ static void build_layer_data(
 
         CompositeSubObject sub_object;
         sub_object.m_id        = layer->m_id;
-        sub_object.m_layout_id = layer->m_parent_id.m_lo;
+        sub_object.m_layout_id = layer->m_parent_id.lo();
         sub_objects.push_back(sub_object);
     }
 }
@@ -256,7 +256,7 @@ int MotrBackend::do_object_io(
 
 hestia::Uuid MotrBackend::obj_id_to_fid(Id id)
 {
-    return hestia::Uuid(id.m_lo, id.m_hi);
+    return hestia::Uuid(id);
 }
 
 void MotrBackend::set_layout(Realm* realm, Id obj_id, Layout* layout)

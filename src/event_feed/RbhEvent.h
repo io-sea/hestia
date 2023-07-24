@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Dictionary.h"
-#include "Metadata.h"
+#include "Map.h"
 
 #include <string>
 
@@ -20,7 +20,7 @@ class RbhEvent {
 
     static std::string type_to_string(const RbhTypes& event_type);
 
-    RbhEvent(const RbhTypes& event_type, const Metadata& meta);
+    RbhEvent(const RbhTypes& event_type, const Map& meta);
 
     void to_string(std::string& out, const bool sorted = false) const;
 
@@ -34,6 +34,6 @@ class RbhEvent {
 
 
     RbhTypes m_type;
-    Metadata m_meta;
+    Map m_meta;
 };
 }  // namespace hestia

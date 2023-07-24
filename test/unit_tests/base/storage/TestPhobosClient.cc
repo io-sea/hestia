@@ -16,7 +16,7 @@ class PhobosStoreTestFixture : public ObjectStoreTestWrapper {
 TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
 {
     hestia::StorageObject obj("0000");
-    obj.m_metadata.set_item("mykey", "myval");
+    obj.set_metadata("mykey", "myval");
 
     exists(obj, false);
 
@@ -27,13 +27,13 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     hestia::StorageObject fetched_obj("0000");
     get(fetched_obj);
 
-    REQUIRE(fetched_obj.m_metadata.get_item("mykey") == "myval");
+    REQUIRE(fetched_obj.metadata().get_item("mykey") == "myval");
 
     remove(obj);
     exists(fetched_obj, false);
 
     std::string content = "The quick brown fox jumps over the lazy dog";
-    obj.m_size          = content.size();
+    obj.set_size(content.size());
 
     hestia::Stream stream;
     put(obj, &stream);

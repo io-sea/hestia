@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Metadata.h"
+#include "Map.h"
 #include "ObjectStoreRequest.h"
 #include "ObjectStoreResponse.h"
 #include "Stream.h"
@@ -34,7 +34,12 @@ class ObjectStoreClient {
 
     virtual ~ObjectStoreClient() = default;
 
-    virtual void initialize(const Metadata& config) { (void)config; }
+    virtual void initialize(
+        const std::string& cache_path, const Dictionary& config)
+    {
+        (void)cache_path;
+        (void)config;
+    }
 
     /**
      * Make a request to the object store backend. Consumers should primarily
@@ -52,7 +57,7 @@ class ObjectStoreClient {
     virtual bool exists(const StorageObject& object) const = 0;
 
     virtual void list(
-        const Metadata::Query& query,
+        const KeyValuePair& query,
         std::vector<StorageObject>& fetched) const = 0;
 
     virtual void get(

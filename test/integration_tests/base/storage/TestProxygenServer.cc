@@ -36,7 +36,8 @@ class TestProxygenServerFixture {
   public:
     TestProxygenServerFixture()
     {
-        m_user_service = hestia::UserService::create({}, &m_kv_store_client);
+        hestia::KeyValueStoreCrudServiceBackend backend(&m_kv_store_client);
+        m_user_service = hestia::UserService::create({}, &backend);
         m_web_app      = std::make_unique<TestWebApp>(m_user_service.get());
     }
 

@@ -1,86 +1,91 @@
 #include "ServerConfig.h"
 
 namespace hestia {
-void WebAppConfig::load(const Metadata& items)
+
+ServerConfig::ServerConfig() : SerializeableWithFields(s_type)
 {
-    auto on_item = [this](const std::string& key, const std::string& value) {
-        if (key == "identifier") {
-            m_identifier = value;
-        }
-        else if (key == "interface") {
-            if (value == "http") {
-                m_interface = Interface::HTTP;
-            }
-            else if (value == "s3") {
-                m_interface = Interface::S3;
-            }
-        }
-    };
-    items.for_each_item(on_item);
+    init();
 }
 
-void ServerConfig::load(const Dictionary& config)
+ServerConfig::ServerConfig(const ServerConfig& other) :
+    SerializeableWithFields(s_type)
 {
-    auto server_conf = config.get_map_item("server");
-    if (server_conf == nullptr) {
-        return;
-    }
-
-    Metadata sub_config;
-    server_conf->get_map_items(sub_config);
-
-    std::string web_app_identifier;
-    auto each_item = [this, &web_app_identifier](
-                         const std::string& key, const std::string& value) {
-        if (key == "host_address") {
-            m_host = value;
-        }
-        else if (key == "host_port") {
-            m_port = value;
-        }
-        else if (key == "controller_address") {
-            m_controller_address = value;
-        }
-        else if (key == "web_app") {
-            web_app_identifier = value;
-        }
-        else if (key == "backend") {
-            m_backend = value;
-        }
-        else if (key == "static_resource_path") {
-            m_static_resource_path = value;
-        }
-        else if (key == "cache_static_resources") {
-            m_cache_static_resources = (value != "false");
-        }
-        else if (key == "tag") {
-            m_tag = value;
-        }
-        else if (key == "controller") {
-            m_controller = (value != "false");
-        }
-    };
-    sub_config.for_each_item(each_item);
-
-    if (!web_app_identifier.empty()) {
-        if (auto web_app_conf = config.get_map_item("web_apps");
-            web_app_conf != nullptr) {
-            for (const auto& config : web_app_conf->get_sequence()) {
-                std::string identifier;
-                if (const auto identifier_dict =
-                        config->get_map_item("identifier");
-                    identifier_dict != nullptr) {
-                    identifier = identifier_dict->get_scalar();
-                }
-
-                if (identifier == web_app_identifier) {
-                    Metadata client_config;
-                    config->get_map_items(client_config);
-                    m_web_app_config.load(client_config);
-                    break;
-                }
-            }
-        }
-    }
+    *this = other;
 }
+
+ServerConfig& ServerConfig::operator=(const ServerConfig& other)
+{
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_host = other.m_host;
+        m_port = other.m_port;
+
+        m_web_app                = other.m_web_app;
+        m_backend                = other.m_backend;
+        m_cache_static_resources = other.m_cache_static_resources;
+        m_static_resource_path   = other.m_static_resource_path;
+
+        m_controller_address = other.m_controller_address;
+        m_controller         = other.m_controller;
+        m_tag                = other.m_tag;
+        init();
+    }
+    return *this;
+}
+
+void ServerConfig::init()
+{
+    register_scalar_field(&m_host);
+    register_scalar_field(&m_port);
+
+    register_map_field(&m_web_app);
+    register_scalar_field(&m_backend);
+    register_scalar_field(&m_cache_static_resources);
+    register_scalar_field(&m_static_resource_path);
+
+    register_scalar_field(&m_controller_address);
+    register_scalar_field(&m_controller);
+    register_scalar_field(&m_tag);
+}
+
+const std::string& ServerConfig::get_static_resource_path() const
+{
+    return m_static_resource_path.get_value();
+}
+
+const std::string& ServerConfig::get_host_address() const
+{
+    return m_host.get_value();
+}
+
+unsigned ServerConfig::get_port() const
+{
+    return m_port.get_value();
+}
+
+const WebAppConfig& ServerConfig::get_web_app_config() const
+{
+    return m_web_app.value();
+}
+
+const std::string& ServerConfig::get_controller_address() const
+{
+    return m_controller_address.get_value();
+}
+
+bool ServerConfig::has_controller_address() const
+{
+    return !m_controller_address.get_value().empty();
+}
+
+bool ServerConfig::is_controller() const
+{
+    return m_controller.get_value();
+}
+
+bool ServerConfig::should_cache_static_resources() const
+{
+    return m_cache_static_resources.get_value();
+}
+
 }  // namespace hestia

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Metadata.h"
+#include "Map.h"
 
 #include <functional>
 #include <string>
@@ -8,7 +8,7 @@
 #include <vector>
 
 struct pho_attrs {
-    hestia::Metadata attr_set;
+    hestia::Map attr_set;
 };
 
 enum pho_xfer_op {
@@ -110,5 +110,5 @@ class MockPhobos {
 
   private:
     std::unordered_map<std::string, std::vector<char>> m_data_cache;
-    std::unordered_map<std::string, hestia::Metadata> m_metadata_cache;
+    std::unordered_map<std::string, hestia::Map> m_metadata_cache;
 };

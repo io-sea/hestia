@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjectStoreClient.h"
+#include "SerializeableWithFields.h"
 
 #include <memory>
 
@@ -8,10 +9,17 @@ namespace hestia {
 
 class HttpClient;
 
-class HttpObjectStoreClientConfig {
+class HttpObjectStoreClientConfig : public SerializeableWithFields {
   public:
-    std::string m_endpoint;
-    std::string m_endpoint_suffix;
+    HttpObjectStoreClientConfig() :
+        SerializeableWithFields("http_object_store_config")
+    {
+        register_scalar_field(&m_endpoint);
+        register_scalar_field(&m_endpoint_suffix);
+    }
+
+    StringField m_endpoint{"endpoint"};
+    StringField m_endpoint_suffix{"endpoint_suffix"};
 };
 
 class HttpObjectStoreClient : public ObjectStoreClient {
@@ -26,9 +34,12 @@ class HttpObjectStoreClient : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
-    void initialize(const Metadata& config) override;
+    void initialize(
+        const std::string& cache_path, const Dictionary& config) override;
 
-    void do_initialize(const HttpObjectStoreClientConfig& config);
+    void do_initialize(
+        const std::string& cache_path,
+        const HttpObjectStoreClientConfig& config);
 
   private:
     bool exists(const StorageObject& object) const override;
@@ -41,7 +52,7 @@ class HttpObjectStoreClient : public ObjectStoreClient {
 
     void remove(const StorageObject& obj) const override;
 
-    void list(const Metadata::Query& query, std::vector<StorageObject>& found)
+    void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
 
     HttpObjectStoreClientConfig m_config;

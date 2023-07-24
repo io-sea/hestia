@@ -1,50 +1,48 @@
 #pragma once
 
-#include "Dictionary.h"
 #include "Extent.h"
-#include "TimedLock.h"
+#include "HsmItem.h"
+#include "LockableModel.h"
 
-#include <ctime>
 #include <map>
 
 namespace hestia {
 
-class TierExtents {
+class TierExtents : public HsmItem, public LockableModel {
   public:
-    TierExtents() = default;
+    TierExtents();
 
     TierExtents(uint8_t tier_id, const Extent& extent);
 
-    void add_extent(const Extent& extent);
+    TierExtents(const TierExtents& other);
 
-    void remove_extent(const Extent& extent);
-
-    bool empty() const;
-
-    void read_lock();
-
-    void write_lock();
-
-    void read_unlock();
-
-    void write_unlock();
-
-    bool is_read_locked();
-
-    bool is_write_locked();
-
-    Dictionary::Ptr serialize() const;
-
-    void deserialize(const Dictionary& dict);
-
-    uint8_t tier() const { return m_tier_id; }
+    virtual ~TierExtents();
 
     std::size_t get_size() const;
 
+    static std::string get_type();
+
+    void add_extent(const Extent& extent);
+
+    bool empty() const;
+
+    void remove_extent(const Extent& extent);
+
+    void set_object_id(const std::string& id) { m_object.set_id(id); }
+
+    void set_tier_id(const std::string& id) { m_tier.set_id(id); }
+
+    uint8_t tier() const { return m_tier_id.get_value(); }
+
+    TierExtents& operator=(const TierExtents& other);
+
   private:
-    uint8_t m_tier_id{0};
-    TimedLock m_read_lock;
-    TimedLock m_write_lock;
-    std::map<std::size_t, Extent> m_extents;
+    void init();
+
+    UIntegerField m_tier_id{"tier_name", 0};
+    IntKeyedSequenceField<std::map<std::size_t, Extent>> m_extents{
+        "extents", "offset"};
+    NamedForeignKeyField m_object{"object", HsmItem::hsm_object_name};
+    NamedForeignKeyField m_tier{"tier", HsmItem::tier_name};
 };
 }  // namespace hestia

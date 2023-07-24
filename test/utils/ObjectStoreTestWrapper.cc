@@ -60,7 +60,7 @@ void ObjectStoreTestWrapper::exists(
 }
 
 void ObjectStoreTestWrapper::list(
-    const hestia::Metadata::Query& query,
+    const hestia::KeyValuePair& query,
     std::vector<hestia::StorageObject>& result)
 {
     hestia::ObjectStoreRequest request(query);

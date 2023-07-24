@@ -9,7 +9,7 @@ namespace hestia {
 HestiaUserAuthView::HestiaUserAuthView(UserService* user_service) :
     WebView(),
     m_user_service(user_service),
-    m_user_adapter(std::make_unique<JsonAdapter<User>>())
+    m_adapter(std::make_unique<JsonAdapter>(nullptr))
 {
 }
 
@@ -30,7 +30,7 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
         password = request.get_queries().get_item("password");
     }
     else {
-        Metadata form_data;
+        Map form_data;
         HttpParser::parse_form_data(request.body(), form_data);
         username = form_data.get_item("user");
         password = form_data.get_item("password");
@@ -40,7 +40,7 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
         return HttpResponse::create(400, "Bad Request");
     }
 
-    std::unique_ptr<UserServiceResponse> response;
+    CrudResponse::Ptr response;
 
     if (StringUtils::ends_with(path, "/register")) {
         response = m_user_service->register_user(username, password);
@@ -54,7 +54,7 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
 
     auto http_response = HttpResponse::create();
     std::string body;
-    m_user_adapter->to_string(response->item(), body);
+    m_adapter->to_string(response->items(), body);
     http_response->set_body(body);
     return http_response;
 }

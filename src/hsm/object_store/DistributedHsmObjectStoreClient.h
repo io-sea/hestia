@@ -16,16 +16,17 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     using Ptr = std::unique_ptr<DistributedHsmObjectStoreClient>;
 
     DistributedHsmObjectStoreClient(
-        std::unique_ptr<HttpObjectStoreClient> http_client,
-        std::unique_ptr<HsmObjectStoreClientManager> client_manager);
+        std::unique_ptr<HsmObjectStoreClientManager> client_manager,
+        std::unique_ptr<HttpObjectStoreClient> http_client = nullptr);
 
     static Ptr create(
-        std::unique_ptr<HttpObjectStoreClient> http_client,
+        std::unique_ptr<HttpObjectStoreClient> http_client     = nullptr,
         const std::vector<std::filesystem::path>& plugin_paths = {});
 
     virtual ~DistributedHsmObjectStoreClient();
 
-    void do_initialize(DistributedHsmService* hsm_service);
+    void do_initialize(
+        const std::string& cache_path, DistributedHsmService* hsm_service);
 
     [[nodiscard]] HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,

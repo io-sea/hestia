@@ -1,7 +1,12 @@
 #include "TimedLock.h"
 
+#include "TimeUtils.h"
+
 namespace hestia {
-TimedLock::TimedLock(std::time_t timeout) : m_max_lock_time(timeout) {}
+TimedLock::TimedLock(std::time_t timeout) :
+    Serializeable("timed_lock"), m_max_lock_time(timeout)
+{
+}
 
 void TimedLock::lock()
 {
@@ -15,19 +20,17 @@ void TimedLock::unlock()
     m_locked_at = 0;
 }
 
-Dictionary::Ptr TimedLock::serialize() const
+void TimedLock::serialize(Dictionary& dict, Format) const
 {
-    auto dict = std::make_unique<Dictionary>();
     std::unordered_map<std::string, std::string> data = {
         {"active", m_active ? "true" : "false"},
         {"locked_at", std::to_string(m_locked_at)},
         {"max_lock_time", std::to_string(m_max_lock_time)},
     };
-    dict->set_map(data);
-    return dict;
+    dict.set_map(data);
 }
 
-void TimedLock::deserialize(const Dictionary& dict)
+void TimedLock::deserialize(const Dictionary& dict, Format)
 {
     auto on_item = [this](const std::string& key, const std::string& value) {
         if (key == "active" && !value.empty()) {
@@ -36,7 +39,7 @@ void TimedLock::deserialize(const Dictionary& dict)
         else if (key == "locked_at" && !value.empty()) {
             m_locked_at = std::stoull(value);
         }
-        if (key == "max_lock_time" && !value.empty()) {
+        else if (key == "max_lock_time" && !value.empty()) {
             m_max_lock_time = std::stoull(value);
         }
     };

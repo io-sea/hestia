@@ -13,7 +13,7 @@ std::string HestiaCache::get_default_cache_dir()
         cache_path_env != nullptr) {
         cache_path = std::string(cache_path_env);
     }
-#ifndef DEBUG
+#ifdef NDEBUG
     if (cache_path.empty()) {
         if (auto home_env = std::getenv("HOME"); home_env != nullptr) {
             cache_path = std::string(home_env) + "/.cache/hestia";

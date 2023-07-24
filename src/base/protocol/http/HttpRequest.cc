@@ -86,6 +86,11 @@ bool HttpRequest::is_content_outstanding() const
     return std::stoul(content_length) > m_body.size();
 }
 
+void HttpRequest::overwrite_path(const std::string& new_path)
+{
+    m_preamble.m_path = new_path;
+}
+
 void HttpRequest::set_context(RequestContext* context)
 {
     m_context = context;

@@ -12,6 +12,8 @@ add_module(
         ObjectStoreClient.h 
         ObjectStoreClientPlugin.h 
         KeyValueStoreClient.h
+        base_types/StorageObject.h
+        base_types/Extent.h
         block_store/Block.h
         block_store/BlockList.h
         block_store/BlockStore.h
@@ -25,10 +27,13 @@ add_module(
         requests/ObjectStoreResponse.h
         requests/ObjectStoreError.h 
         requests/KeyValueStoreRequest.h
+        requests/KeyValueStoreResponse.h
     SOURCES
         ObjectStoreClient.cc
         ObjectStoreClientPlugin.cc
         KeyValueStoreClient.cc
+        base_types/StorageObject.cc
+        base_types/Extent.cc
         block_store/Block.cc
         block_store/BlockList.cc
         block_store/BlockStore.cc
@@ -42,7 +47,9 @@ add_module(
         requests/ObjectStoreResponse.cc
         requests/ObjectStoreError.cc
         requests/KeyValueStoreRequest.cc
+        requests/KeyValueStoreResponse.cc
     INTERNAL_INCLUDE_DIRS
+        base_types
         block_store
         clients/file
         clients/http

@@ -9,66 +9,46 @@ add_module(
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
-        dataset_service/Dataset.h 
-        dataset_service/DatasetService.h 
         distributed_hsm_service/DistributedHsmService.h
-        distributed_hsm_service/DistributedHsmServiceRequest.h
-        distributed_hsm_service/HsmNodeService.h
-        distributed_hsm_service/model/HsmNode.h
+        distributed_hsm_service/HsmNode.h
         hsm_service/HsmService.h
-        hsm_service/model/HsmAction.h
-        hsm_service/model/HsmActionAdapter.h
+        hsm_service/HsmServicesFactory.h
         hsm_service/model/CompositeLayer.h
-        hsm_service/requests/HsmServiceResponse.h 
-        hsm_service/requests/HsmServiceRequest.h
-        hsm_service/requests/HsmServiceError.h 
+        hsm_service/requests/HsmActionResponse.h 
+        hsm_service/requests/HsmActionRequest.h
+        hsm_service/requests/HsmActionError.h 
         key_value_store/KeyValueStoreClientFactory.h
-        namespace_service/Namespace.h 
-        namespace_service/NamespaceService.h 
-        object_service/ObjectService.h
-        tier_service/TierService.h 
         s3_service/S3Service.h
         s3_service/S3DatasetAdapter.h
         s3_service/S3ObjectAdapter.h
     SOURCES
-        dataset_service/Dataset.cc
-        dataset_service/DatasetService.cc
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
         distributed_hsm_service/DistributedHsmService.cc
-        distributed_hsm_service/DistributedHsmServiceRequest.cc
-        distributed_hsm_service/HsmNodeService.cc
-        distributed_hsm_service/model/HsmNode.cc
+        distributed_hsm_service/HsmNode.cc
         hsm_service/HsmService.cc
-        hsm_service/model/HsmAction.cc
-        hsm_service/model/HsmActionAdapter.cc
+        hsm_service/HsmServicesFactory.cc
         hsm_service/model/CompositeLayer.cc
-        hsm_service/requests/HsmServiceResponse.cc
-        hsm_service/requests/HsmServiceRequest.cc
-        hsm_service/requests/HsmServiceError.cc
+        hsm_service/requests/HsmActionResponse.cc
+        hsm_service/requests/HsmActionRequest.cc
+        hsm_service/requests/HsmActionError.cc
         key_value_store/KeyValueStoreClientFactory.cc
-        namespace_service/Namespace.cc 
-        namespace_service/NamespaceService.cc 
-        object_service/ObjectService.cc
-        tier_service/TierService.cc 
         s3_service/S3Service.cc
         s3_service/S3DatasetAdapter.cc
         s3_service/S3ObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
-        dataset_service
         distributed_hsm_service
-        distributed_hsm_service/model/
         hsm_service
         hsm_service/model
         hsm_service/requests
         key_value_store
         namespace_service
-        object_service
-        tier_service
         s3_service
     INTERNAL_DEPENDENCIES 
+        storage
         hsm_object_store_client
         http_client
+        web
         event_feed
 )

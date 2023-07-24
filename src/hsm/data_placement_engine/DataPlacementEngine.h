@@ -1,12 +1,13 @@
 #pragma once
 
-#include "TierService.h"
+#include "CrudService.h"
+
 #include <vector>
 
 namespace hestia {
 class DataPlacementEngine {
   public:
-    DataPlacementEngine(TierService* tier_service) :
+    DataPlacementEngine(CrudService* tier_service) :
         m_tier_service(tier_service){};
 
     virtual ~DataPlacementEngine() = default;
@@ -15,6 +16,6 @@ class DataPlacementEngine {
         const std::size_t length, const std::uint8_t hint = 0) = 0;
 
   protected:
-    TierService* m_tier_service{nullptr};
+    CrudService* m_tier_service{nullptr};
 };
 }  // namespace hestia

@@ -20,7 +20,7 @@ class ObjectStoreTestWrapper {
     void exists(const hestia::StorageObject& obj, bool should_exist);
 
     void list(
-        const hestia::Metadata::Query& query,
+        const hestia::KeyValuePair& query,
         std::vector<hestia::StorageObject>& result);
 
     void remove(const hestia::StorageObject& obj);

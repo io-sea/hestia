@@ -11,11 +11,11 @@ uint32_t HsmInternal::hsm_priority(uint32_t generation, uint8_t tier_idx)
 
 Id HsmInternal::hsm_subobj_id(Id id, uint32_t gen, uint8_t tier)
 {
-    Id newid = id;
-    newid.m_hi <<= 32;
-    newid.m_hi |= (1LL << 31);
-    newid.m_hi |= hsm_priority(gen, tier);
-    return newid;
+    auto hi = id.hi();
+    hi <<= 32;
+    hi |= (1LL << 31);
+    hi |= hsm_priority(gen, tier);
+    return {id.lo(), hi};
 }
 
 uint32_t HsmInternal::hsm_prio2gen(uint32_t priority)

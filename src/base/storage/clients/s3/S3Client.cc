@@ -33,7 +33,7 @@ S3Client::Ptr S3Client::create(
     const S3Config& config, IS3InterfaceImpl::Ptr impl)
 {
     auto instance = create(std::move(impl));
-    instance->do_initialize(config);
+    instance->do_initialize({}, config);
     return instance;
 }
 
@@ -42,27 +42,22 @@ std::string S3Client::get_registry_identifier()
     return hestia::project_config::get_project_name() + "::S3Client";
 }
 
-void S3Client::initialize(const Metadata& config_data)
+void S3Client::initialize(
+    const std::string& cache_path, const Dictionary& config_data)
 {
     S3Config config;
-    auto on_item = [&config](const std::string& key, const std::string& value) {
-        if (key == "metadata_prefix") {
-            config.m_metadataprefix = value;
-        }
-        else if (key == "host") {
-            config.m_default_host = value;
-        }
-    };
-    config_data.for_each_item(on_item);
-    do_initialize(config);
+    config.deserialize(config_data);
+    do_initialize(cache_path, config);
 }
 
-void S3Client::do_initialize(const S3Config& config)
+void S3Client::do_initialize(const std::string&, const S3Config& config)
 {
     m_impl->initialize(config);
 
-    m_container_adapter = S3ContainerAdapter::create(config.m_metadataprefix);
-    m_object_adapter    = S3ObjectAdapter::create(config.m_metadataprefix);
+    m_container_adapter =
+        S3ContainerAdapter::create(config.m_metadataprefix.get_value());
+    m_object_adapter =
+        S3ObjectAdapter::create(config.m_metadataprefix.get_value());
 }
 
 void S3Client::put(
@@ -93,7 +88,7 @@ void S3Client::remove(const StorageObject& object) const
 }
 
 void S3Client::list(
-    const Metadata::Query& query, std::vector<StorageObject>& found) const
+    const KeyValuePair& query, std::vector<StorageObject>& found) const
 {
     (void)query;
     (void)found;

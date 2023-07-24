@@ -1,91 +1,95 @@
 #pragma once
 
+#include "CrudService.h"
+
 #include "EventFeed.h"
 
+#include "HsmActionResponse.h"
 #include "HsmObject.h"
-#include "HsmServiceRequest.h"
-#include "HsmServiceResponse.h"
+#include "HsmServicesFactory.h"
 
 #include "Stream.h"
 
 namespace hestia {
 class HsmObjectStoreClient;
-class DataPlacementEngine;
-
-class ObjectService;
-using ObjectServiceRequest = CrudRequest<HsmObject>;
-
-class TierService;
-class DatasetService;
-
-class HsmStoreInterface;
-class HsmActionAdapter;
 class KeyValueStoreClient;
 
-class HsmService {
+class DataPlacementEngine;
+class UserService;
+
+class HsmService : public CrudService {
   public:
     using Ptr = std::unique_ptr<HsmService>;
 
     HsmService(
-        std::unique_ptr<ObjectService> object_service,
-        std::unique_ptr<TierService> tier_service,
-        std::unique_ptr<DatasetService> dataset_service,
+        const ServiceConfig& config,
+        HsmServiceCollection::Ptr service_collection,
         HsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine,
         std::unique_ptr<EventFeed> event_feed = nullptr);
 
     static Ptr create(
-        std::unique_ptr<ObjectService> object_service,
-        std::unique_ptr<TierService> tier_service,
-        std::unique_ptr<DatasetService> dataset_service,
+        const ServiceConfig& config,
+        KeyValueStoreClient* client,
         HsmObjectStoreClient* object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine,
-        std::unique_ptr<EventFeed> event_feed = nullptr);
-
-    static Ptr create(
-        KeyValueStoreClient* client, HsmObjectStoreClient* object_store);
+        UserService* user_service);
 
     virtual ~HsmService();
 
-    TierService* get_tier_service();
+    CrudService* get_service(HsmItem::Type type);
 
-    ObjectService* get_object_service();
+    [[nodiscard]] CrudResponse::Ptr make_request(
+        const CrudRequest& request,
+        const std::string& type = {}) const noexcept override;
 
-    DatasetService* get_dataset_service();
+    [[nodiscard]] HsmActionResponse::Ptr make_request(
+        const HsmActionRequest& request) const noexcept;
 
-    [[nodiscard]] HsmServiceResponse::Ptr make_request(
-        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
+    using dataIoCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
+    void do_data_io_action(
+        const HsmActionRequest& request,
+        Stream* stream,
+        dataIoCompletionFunc completion_func) const;
 
   private:
-    HsmServiceResponse::Ptr create(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr get(
-        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
-    HsmServiceResponse::Ptr put(
-        const HsmServiceRequest& request, Stream* stream = nullptr) noexcept;
-    HsmServiceResponse::Ptr exists(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr copy(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr move(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr remove(const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr remove_all(
-        const HsmServiceRequest& request) noexcept;
+    CrudResponse::Ptr crud_create(
+        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
+    CrudResponse::Ptr crud_read(
+        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
+    CrudResponse::Ptr crud_update(
+        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
+    CrudResponse::Ptr crud_remove(
+        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
+    CrudResponse::Ptr crud_identify(
+        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
 
-    HsmServiceResponse::Ptr list_objects(
-        const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr list_tiers(
-        const HsmServiceRequest& request) noexcept;
-    HsmServiceResponse::Ptr list_attributes(
-        const HsmServiceRequest& request) noexcept;
+    void get_data(
+        const HsmActionRequest& request,
+        Stream* stream,
+        dataIoCompletionFunc completion_func) const noexcept;
+    void put_data(
+        const HsmActionRequest& request,
+        Stream* stream,
+        dataIoCompletionFunc completion_func) const noexcept;
+    HsmActionResponse::Ptr copy_data(
+        const HsmActionRequest& request) const noexcept;
+    HsmActionResponse::Ptr move_data(
+        const HsmActionRequest& request) const noexcept;
+    HsmActionResponse::Ptr release_data(
+        const HsmActionRequest& request) const noexcept;
 
-    void add_put_event(const HsmObject& obj, uint8_t tier);
+    void on_put_data_complete(
+        const BaseRequest& req,
+        const HsmObject& working_object,
+        uint8_t tier,
+        const Extent& extent,
+        dataIoCompletionFunc completion_func) const;
+    void on_get_data_complete(
+        const BaseRequest& req, dataIoCompletionFunc completion_func) const;
 
-    std::unique_ptr<ObjectService> m_object_service;
-    std::unique_ptr<TierService> m_tier_service;
-    std::unique_ptr<DatasetService> m_dataset_service;
-
+    HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;
-    std::unique_ptr<HsmActionAdapter> m_action_adapter;
-
     std::unique_ptr<EventFeed> m_event_feed;
 };
 }  // namespace hestia

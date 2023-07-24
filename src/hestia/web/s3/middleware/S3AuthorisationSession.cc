@@ -31,10 +31,12 @@ const S3AuthorisationObject& S3AuthorisationSession::authorise(
 {
     if (!m_object.is_initialized()) {
         if (!parse_authorisation_info(request)) {
+            LOG_ERROR("Failed to parse auth info");
             return m_object;
         }
 
         if (!search_for_user(request)) {
+            LOG_ERROR("Failed to find user");
             return m_object;
         }
 
@@ -146,9 +148,13 @@ std::string S3AuthorisationSession::extract_string_part(
 
 bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
 {
-    User user(m_object.m_user_identifier);
+    User user;
+    user.set_name(m_object.m_user_identifier);
 
-    auto response = m_user_service->make_request({user, CrudMethod::GET});
+    CrudQuery query(
+        KeyValuePair{"name", m_object.m_user_identifier},
+        CrudQuery::OutputFormat::ITEM);
+    auto response = m_user_service->make_request(CrudRequest{query});
 
     if (!response->ok()) {
         m_object.on_error(
@@ -156,7 +162,15 @@ bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
         LOG_ERROR(m_object.to_string())
         return false;
     }
-    m_object.m_user_key = response->item().m_api_token.m_value;
+
+    if (!response->found()) {
+        m_object.on_error(
+            {S3Error::Code::_403_INVALID_KEY_ID, request.get_path()});
+        LOG_ERROR(m_object.to_string())
+        return false;
+    }
+
+    m_object.m_user_key = response->get_item_as<User>()->token().value();
     return true;
 }
 

@@ -1,7 +1,7 @@
 #include "EventFeed.h"
 
 #include "Logger.h"
-#include "Metadata.h"
+#include "Map.h"
 #include "RbhEvent.h"
 
 #include <filesystem>
@@ -27,16 +27,66 @@ void convert_move(
 void event_to_string(
     const EventFeed::Event& event, std::string& str, const bool sorted = false);
 
+EventFeedConfig::EventFeedConfig() : SerializeableWithFields(s_type)
+{
+    init();
+}
+
+EventFeedConfig::EventFeedConfig(const EventFeedConfig& other) :
+    SerializeableWithFields(other)
+{
+    *this = other;
+}
+
+std::string EventFeedConfig::get_type()
+{
+    return s_type;
+}
+
+EventFeedConfig& EventFeedConfig::operator=(const EventFeedConfig& other)
+{
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_output_path = other.m_output_path;
+        m_active      = other.m_active;
+        m_sorted_keys = other.m_sorted_keys;
+        init();
+    }
+    return *this;
+}
+
+void EventFeedConfig::init()
+{
+    register_scalar_field(&m_output_path);
+    register_scalar_field(&m_active);
+    register_scalar_field(&m_sorted_keys);
+}
+
+bool EventFeedConfig::is_active() const
+{
+    return m_active.get_value();
+}
+
+const std::string& EventFeedConfig::get_output_path() const
+{
+    return m_output_path.get_value();
+}
+
+bool EventFeedConfig::should_sort_keys() const
+{
+    return m_sorted_keys.get_value();
+}
+
 void EventFeed::initialize(
     const std::string& cache_path, const EventFeedConfig& config)
 {
     m_config = config;
 
-    if (m_config.m_active == false) {
+    if (m_config.is_active() == false) {
         return;
     }
 
-    m_output_file_path = m_config.m_event_feed_file_path;
+    m_output_file_path = m_config.get_output_path();
     if (m_output_file_path.is_relative()) {
         m_output_file_path =
             std::filesystem::path(cache_path) / m_output_file_path;
@@ -50,14 +100,14 @@ void EventFeed::initialize(
 
 void EventFeed::log_event(const EventFeed::Event& event)
 {
-    if (!m_config.m_active) {
+    if (!m_config.is_active()) {
         return;
     }
 
     std::string str;
-    event_to_string(event, str, m_config.m_sorted_keys);
+    event_to_string(event, str, m_config.should_sort_keys());
 
-    if (m_config.m_sorted_keys) {
+    if (m_config.should_sort_keys()) {
         LOG_INFO("Serializing event in sorted order : Testing only")
     }
     LOG_INFO("Logging event to event feed");
@@ -86,7 +136,7 @@ void event_to_string(
 void convert_put(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
-    Metadata meta;  // TODO: Handle overwrite put as remove then put
+    Map meta;  // TODO: Handle overwrite put as remove then put
     meta.set_item("id", event.m_id + std::to_string(event.m_target_tier));
     meta.set_item("size", std::to_string(event.m_length));
     meta.set_item("tier", std::to_string(event.m_target_tier));
@@ -97,7 +147,7 @@ void convert_put(
 void convert_remove(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
-    Metadata meta;  // TODO: Request better way of specifying delete tier
+    Map meta;  // TODO: Request better way of specifying delete tier
     meta.set_item("id", event.m_id + std::to_string(event.m_target_tier));
 
     RbhEvent(RbhEvent::RbhTypes::DELETE, meta).to_string(str, sorted);
@@ -106,7 +156,7 @@ void convert_remove(
 void convert_remove_all(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
-    Metadata meta;  // TODO: Implement when updated in HsmObject
+    Map meta;  // TODO: Implement when updated in HsmObject
     meta.set_item("id", event.m_id);
 
     RbhEvent(RbhEvent::RbhTypes::DELETE, meta).to_string(str, sorted);
@@ -115,7 +165,7 @@ void convert_remove_all(
 void convert_copy(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
-    Metadata meta;
+    Map meta;
     meta.set_item("id", event.m_id + std::to_string(event.m_target_tier));
     meta.set_item("size", std::to_string(event.m_length));
     meta.set_item("source_tier", std::to_string(event.m_source_tier));
@@ -127,7 +177,7 @@ void convert_copy(
 void convert_move(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
-    Metadata del_meta;
+    Map del_meta;
     std::string del_yaml, put_yaml;
 
     del_meta.set_item("id", event.m_id + std::to_string(event.m_source_tier));

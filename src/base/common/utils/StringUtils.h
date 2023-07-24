@@ -51,6 +51,12 @@ class StringUtils {
         const std::string& delimiter,
         std::vector<std::string>& elements);
 
+    static void ltrim(std::string& str);
+
+    static void rtrim(std::string& str);
+
+    static void trim(std::string& str);
+
     /**
      * Convert the string to lower case
      *
@@ -68,5 +74,8 @@ class StringUtils {
 
     static std::string replace(
         const std::string& input, char to_replace, char replacement);
+
+    static void to_lines(
+        const std::string& input, std::vector<std::string>& lines);
 };
 }  // namespace hestia

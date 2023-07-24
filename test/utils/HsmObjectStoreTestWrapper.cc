@@ -85,7 +85,7 @@ void HsmObjectStoreTestWrapper::move(
 }
 
 void HsmObjectStoreTestWrapper::list(
-    const hestia::Metadata::Query& query,
+    const hestia::KeyValuePair& query,
     std::vector<hestia::StorageObject>& result)
 {
     hestia::HsmObjectStoreRequest request(query);

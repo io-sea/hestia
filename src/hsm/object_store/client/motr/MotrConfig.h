@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Metadata.h"
+#include "SerializeableWithFields.h"
 
 #include <sstream>
 #include <string>
@@ -8,27 +8,37 @@
 
 namespace hestia {
 
-struct MotrHsmTierInfo {
-    std::string m_name;
-    std::string m_identifier;
-    std::string m_description;
+class MotrHsmTierInfo : public SerializeableWithFields {
+
+  public:
+    MotrHsmTierInfo() : SerializeableWithFields("motr_hsm_tier_info")
+    {
+        register_scalar_field(&m_name);
+        register_scalar_field(&m_identifier);
+        register_scalar_field(&m_description);
+    }
+
+    StringField m_name{"name"};
+    StringField m_identifier{"identifier"};
+    StringField m_description{"description"};
 };
 
-struct MotrConfig {
+class MotrConfig : public SerializeableWithFields {
+  public:
+    MotrConfig();
 
     std::string to_string() const;
 
     static std::string get_tier_info_for_m0hsm(
         const std::vector<MotrHsmTierInfo>& tier_info);
 
-    void from_config(const Metadata& data);
+    StringField m_local_address{"local_address"};
+    StringField m_ha_address{"ha_address"};
+    StringField m_profile{"profile"};
+    StringField m_proc_fid{"proc_fid"};
+    StringField m_hsm_config_path{"hsm_config_path"};
 
-    std::string m_local_address;
-    std::string m_ha_address;
-    std::string m_profile;
-    std::string m_proc_fid;
-    std::string m_hsm_config_path;
-    std::vector<MotrHsmTierInfo> m_tier_info;
+    SequenceField<std::vector<MotrHsmTierInfo>> m_tier_info{"tier_info"};
 };
 
 }  // namespace hestia

@@ -1,0 +1,29 @@
+include(AddModule)
+
+add_module(
+    MODULE_NAME models 
+    HEADERS
+        AccessControlList.h
+        User.h 
+        UserToken.h
+        UserGroup.h
+        base/Model.h
+        base/OwnableModel.h
+        base/LockableModel.h
+        base/LockableOwnableModel.h
+        base/StringAdapter.h
+    SOURCES  
+        AccessControlList.cc
+        User.cc
+        UserToken.cc
+        UserGroup.cc
+        base/Model.cc
+        base/LockableOwnableModel.cc
+        base/LockableModel.cc
+        base/OwnableModel.cc
+        base/StringAdapter.cc
+    INTERNAL_INCLUDE_DIRS 
+        base
+    INTERNAL_DEPENDENCIES
+        common
+)

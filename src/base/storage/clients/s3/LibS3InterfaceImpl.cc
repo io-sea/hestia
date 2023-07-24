@@ -16,7 +16,7 @@ void LibS3InterfaceImpl::initialize(const S3Config& config)
 {
     auto status = S3_initialize(
         "config.m_user_agent.c_str()", S3_INIT_ALL,
-        config.m_default_host.c_str());
+        config.m_default_host.get_value().c_str());
     if (status != S3Status::S3StatusOK) {
         throw std::runtime_error("Failed to initialize libs3");
     }

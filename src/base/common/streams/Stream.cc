@@ -35,7 +35,17 @@ StreamState Stream::reset()
         }
         m_source.reset();
     }
+
+    if (m_completion_func) {
+        m_completion_func(stream_state);
+        m_completion_func = nullptr;
+    }
     return stream_state;
+}
+
+void Stream::set_completion_func(completionFunc func)
+{
+    m_completion_func = func;
 }
 
 std::size_t Stream::get_sink_size() const

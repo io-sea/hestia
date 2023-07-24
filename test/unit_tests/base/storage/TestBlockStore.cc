@@ -167,5 +167,5 @@ TEST_CASE("Test Block Store IO", "[block_store]")
     store.write(
         "1111", {0, content.length()}, hestia::ReadableBufferView(content));
 
-    store.dump(work_dir / "TestBlockStoreIO");
+    // store.dump(work_dir / "TestBlockStoreIO");
 }

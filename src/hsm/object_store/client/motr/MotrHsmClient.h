@@ -12,9 +12,10 @@ class MotrHsmClient : public HsmObjectStoreClient {
   public:
     MotrHsmClient(std::unique_ptr<MotrInterface> interface = nullptr);
 
-    void do_intialize(const MotrConfig& config);
+    void do_intialize(const std::string& cache_path, const MotrConfig& config);
 
-    void initialize(const Metadata& config) override;
+    void initialize(
+        const std::string& cache_path, const Dictionary& config) override;
 
     virtual ~MotrHsmClient(){};
 

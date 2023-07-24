@@ -11,23 +11,23 @@ add_module(
     HEADERS
         File.h
         Logger.h
-        base_types/Extent.h 
-        base_types/Metadata.h 
+        LoggerConfig.h
+        base_types/Map.h 
         base_types/Dictionary.h 
         base_types/Uuid.h
         buffer/BufferView.h
         buffer/ReadableBufferView.h
         buffer/WriteableBufferView.h
-        models/AccessControlList.h
-        models/Model.h
-        models/OwnableModel.h
-        models/StorageObject.h
-        models/StringAdapter.h
-        models/User.h 
-        models/UserGroup.h
+        concurrency/ThreadCollection.h 
+        concurrency/TimedLock.h 
         plugins/PluginHandle.h 
         plugins/PluginLoader.h
         random/IdGenerator.h
+        serialization/BaseField.h
+        serialization/DictField.h
+        serialization/ScalarField.h
+        serialization/Serializeable.h
+        serialization/SerializeableWithFields.h
         streams/Stream.h
         streams/StreamIO.h
         streams/StreamSource.h
@@ -39,8 +39,6 @@ add_module(
         streams/impls/FileStreamSource.h
         streams/impls/InMemoryStreamSink.h 
         streams/impls/InMemoryStreamSource.h
-        concurrency/ThreadCollection.h 
-        concurrency/TimedLock.h 
         utils/StringUtils.h
         utils/FileUtils.h
         utils/XmlUtils.h
@@ -54,21 +52,22 @@ add_module(
     SOURCES  
         File.cc
         Logger.cc
-        base_types/Extent.cc
-        base_types/Metadata.cc
+        LoggerConfig.cc
+        base_types/Map.cc
         base_types/Dictionary.cc
         base_types/Uuid.cc
         buffer/ReadableBufferView.cc
         buffer/WriteableBufferView.cc
-        models/AccessControlList.cc
-        models/Model.cc
-        models/OwnableModel.cc
-        models/StorageObject.cc
-        models/User.cc
-        models/UserGroup.cc
+        concurrency/ThreadCollection.cc
+        concurrency/TimedLock.cc
         plugins/PluginHandle.cc
         plugins/PluginLoader.cc
         random/IdGenerator.cc
+        serialization/BaseField.cc
+        serialization/DictField.cc
+        serialization/ScalarField.cc
+        serialization/Serializeable.h
+        serialization/SerializeableWithFields.cc
         streams/Stream.cc
         streams/StreamIO.cc
         streams/StreamState.cc
@@ -78,8 +77,6 @@ add_module(
         streams/impls/FileStreamSource.cc
         streams/impls/InMemoryStreamSink.cc 
         streams/impls/InMemoryStreamSource.cc 
-        concurrency/ThreadCollection.cc
-        concurrency/TimedLock.cc
         utils/ErrorUtils.cc
         utils/FileUtils.cc
         utils/HashUtils.cc
@@ -93,9 +90,9 @@ add_module(
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
-        models
         plugins
         random
+        serialization
         streams
         streams/impls
         concurrency

@@ -8,6 +8,8 @@ if (NOT ${OpenSSL_FOUND} AND APPLE)
 endif()
 find_package(hestia REQUIRED)
 
-add_executable(hestia_sample_app main.cc)
+add_executable(hestia_sample_app_cpp main.cc)
+target_link_libraries(hestia_sample_app_cpp PRIVATE hestia::hestia_lib)
 
-target_link_libraries(hestia_sample_app PRIVATE hestia::hestia_lib)
+add_executable(hestia_sample_app_c main.c)
+target_link_libraries(hestia_sample_app_c PRIVATE hestia::hestia_lib)

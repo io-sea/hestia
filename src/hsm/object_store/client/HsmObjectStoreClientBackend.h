@@ -1,54 +1,67 @@
 #pragma once
 
-#include "Dictionary.h"
-
-#include <string>
+#include "EnumUtils.h"
+#include "SerializeableWithFields.h"
 
 namespace hestia {
-class HsmObjectStoreClientBackend {
+class HsmObjectStoreClientBackend : public SerializeableWithFields {
   public:
-    enum class Type { HSM, BASIC };
+    STRINGABLE_ENUM(
+        Type,
+        FILE,
+        MEMORY,
+        PHOBOS,
+        MOTR,
+        S3,
+        FILE_HSM,
+        MEMORY_HSM,
+        MOCK_PHOBOS,
+        MOCK_MOTR,
+        MOCK_S3)
 
-    enum class Source { BUILT_IN, PLUGIN, MOCK };
-
-    HsmObjectStoreClientBackend() = default;
+    HsmObjectStoreClientBackend();
 
     HsmObjectStoreClientBackend(
-        Type client_type, Source source, const std::string& identifier);
-
-    HsmObjectStoreClientBackend(
-        const Dictionary& config, const std::string& cache_path = "");
+        Type client_type, const std::string& identifier);
 
     HsmObjectStoreClientBackend(const HsmObjectStoreClientBackend& other);
 
-    void set_source(const std::string& source);
+    const Dictionary& get_config() const;
 
-    void set_type(const std::string& type);
+    const std::string& get_identifier() const;
 
-    Dictionary::Ptr serialize() const;
-
-    void deserialize(const Dictionary& dict);
+    static std::string get_type();
 
     bool is_hsm() const;
 
-    std::string to_string() const;
+    bool is_plugin() const;
 
-    HsmObjectStoreClientBackend& operator=(
-        const HsmObjectStoreClientBackend& other)
+    bool is_mock() const;
+
+    bool is_built_in() const;
+
+    void set_identifier(const std::string& identifier)
     {
-        if (this != &other) {
-            m_type         = other.m_type;
-            m_source       = other.m_source;
-            m_identifier   = other.m_identifier;
-            m_extra_config = other.m_extra_config;
-        }
-        return *this;
+        m_identifier.update_value(identifier);
     }
 
-    Type m_type{Type::BASIC};
-    Source m_source{Source::BUILT_IN};
-    std::string m_identifier;
-    Metadata m_extra_config;
+    std::string get_plugin_path() const { return m_plugin_path.get_value(); }
+
+    std::string to_string() const;
+
+    void set_config(const Dictionary& dict) { m_config.update_value(dict); }
+
+    HsmObjectStoreClientBackend& operator=(
+        const HsmObjectStoreClientBackend& other);
+
+  private:
+    void init();
+
+    static constexpr const char s_type[]{"object_store_client"};
+    EnumField<Type, Type_enum_string_converter> m_backend_type{"backend_type"};
+    StringField m_identifier{"identifier"};
+    StringField m_plugin_path{"plugin_path"};
+    RawDictField m_config{"config"};
 };
 
 }  // namespace hestia

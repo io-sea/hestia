@@ -51,7 +51,9 @@ key_value_store:
 
 key_value_store_clients:
   - identifier: hestia::FileKeyValueStoreClient
-    root: key_value_store
+    type: file
+    config:
+      root: key_value_store
 
 tier_registry:
   - identifier: 0

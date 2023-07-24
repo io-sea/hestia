@@ -21,7 +21,7 @@ class HsmObjectStoreClientManager {
 
     HsmObjectStoreClient* get_hsm_client(uint8_t tier_id) const;
 
-    std::string get_client_backend(uint8_t tier_id) const;
+    std::string get_backend(uint8_t tier_id) const;
 
     bool has_client(uint8_t tier_id) const;
 
@@ -30,14 +30,17 @@ class HsmObjectStoreClientManager {
     bool is_hsm_client(uint8_t tier_id) const;
 
     void setup_clients(
-        const std::unordered_map<std::string, HsmObjectStoreClientBackend>&
-            backends,
-        const std::unordered_map<uint8_t, StorageTier>& tiers);
+        const std::string& cache_path,
+        const std::vector<HsmObjectStoreClientBackend>& backends,
+        const std::vector<StorageTier>& tiers);
 
   private:
+    bool has_backend(const std::string& backend) const;
+
     HsmObjectStoreClientFactory::Ptr m_client_factory;
-    std::unordered_map<std::string, HsmObjectStoreClientBackend> m_backends;
-    std::unordered_map<uint8_t, StorageTier> m_tiers;
+
+    std::unordered_map<uint8_t, std::string> m_tier_backends;
+    std::vector<std::string> m_backends;
 
     std::unordered_map<std::string, ObjectStoreClient::Ptr> m_clients;
     std::unordered_map<std::string, ObjectStoreClientPlugin::Ptr>

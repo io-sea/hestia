@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 namespace hestia {
-Uuid DefaultIdGenerator::get_uuid(const std::string& key)
+std::string DefaultIdGenerator::get_id(const std::string& key)
 {
     std::string address_key;
     const auto& [status, mac_address] = SystemUtils::get_mac_address();
@@ -22,6 +22,6 @@ Uuid DefaultIdGenerator::get_uuid(const std::string& key)
 
     const auto hash = HashUtils::do_md5(
         key + std::to_string(TimeUtils::get_current_time()) + address_key);
-    return UuidUtils::from_string(hash, Uuid::Format::Bytes16);
+    return UuidUtils::from_string(hash, Uuid::Format::Bytes16).to_string();
 }
 }  // namespace hestia

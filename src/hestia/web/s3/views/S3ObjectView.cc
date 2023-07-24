@@ -22,11 +22,16 @@ S3ObjectView::S3ObjectView(S3Service* service) :
 
 HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request, const User&)
 {
+    (void)request;
+
+    /*
     auto hsm_service = m_service->get_hsm_service();
 
     const auto s3_path = S3Path(request.get_path());
 
-    const auto container = Dataset(s3_path.m_container_name);
+    Dataset container;
+    container.set_name(s3_path.m_container_name);
+
     auto container_get_response =
         hsm_service->make_request({container, HsmServiceRequestMethod::GET});
     if (!container_get_response->ok()) {
@@ -34,48 +39,56 @@ HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request, const User&)
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    const auto hsm_object = HsmObject(s3_path.m_object_id);
+    HsmObject hsm_object;
+    hsm_object.set_name(s3_path.m_object_id);
 
-    auto exists_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::EXISTS});
-    if (!exists_response->ok()) {
-        LOG_ERROR(exists_response->get_error().to_string());
+    auto obj_get_response =
+        hsm_service->make_request({hsm_object, HsmServiceRequestMethod::GET});
+    if (!obj_get_response->ok()) {
+        LOG_ERROR(obj_get_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    if (!exists_response->object_found()) {
+    if (!obj_get_response->object_found()) {
         return HttpResponse::create(404, "Not Found");
     }
 
-    auto get_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::GET},
+    auto data_get_response = hsm_service->make_request(
+        {hsm_object, HsmServiceRequestMethod::GET_DATA},
         request.get_context()->get_stream());
-    if (!get_response->ok()) {
-        LOG_ERROR(get_response->get_error().to_string());
+    if (!data_get_response->ok()) {
+        LOG_ERROR(data_get_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
 
     auto response = HttpResponse::create();
 
-    Metadata metadata;
+    Map metadata;
     m_object_adatper->get_headers(
-        container_get_response->dataset(), get_response->object(), metadata);
+        container_get_response->dataset(), obj_get_response->object(),
+        metadata);
 
     auto on_item =
         [&response](const std::string& key, const std::string& value) {
             response->header().set_item(S3Path::meta_prefix + key, value);
         };
     metadata.for_each_item(on_item);
+    */
+    auto response = HttpResponse::create();
     return response;
 }
 
 HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request, const User&)
 {
+    (void)request;
+
+    /*
     auto hsm_service = m_service->get_hsm_service();
 
     const auto s3_path = S3Path(request.get_path());
 
-    const auto container = Dataset(s3_path.m_container_name);
+    Dataset container;
+    container.set_name(s3_path.m_container_name);
     auto container_get_response =
         hsm_service->make_request({container, HsmServiceRequestMethod::GET});
     if (!container_get_response->ok()) {
@@ -83,47 +96,49 @@ HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request, const User&)
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    const auto hsm_object = HsmObject(s3_path.m_object_id);
+    HsmObject hsm_object;
+    hsm_object.set_name(s3_path.m_object_id);
 
-    auto exists_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::EXISTS});
-    if (!exists_response->ok()) {
-        LOG_ERROR(exists_response->get_error().to_string());
-        return HttpResponse::create(500, "Internal Server Error");
-    }
-
-    if (!exists_response->object_found()) {
-        return HttpResponse::create(404, "Not Found");
-    }
-
-    auto get_response =
+    auto obj_get_response =
         hsm_service->make_request({hsm_object, HsmServiceRequestMethod::GET});
-    if (!get_response->ok()) {
-        LOG_ERROR(get_response->get_error().to_string());
+    if (!obj_get_response->ok()) {
+        LOG_ERROR(obj_get_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
+    }
+
+    if (!obj_get_response->object_found()) {
+        return HttpResponse::create(404, "Not Found");
     }
 
     auto response = HttpResponse::create();
 
-    Metadata metadata;
+    Map metadata;
     m_object_adatper->get_headers(
-        container_get_response->dataset(), get_response->object(), metadata);
+        container_get_response->dataset(), obj_get_response->object(),
+        metadata);
 
     auto on_item =
         [&response](const std::string& key, const std::string& value) {
             response->header().set_item(S3Path::meta_prefix + key, value);
         };
     metadata.for_each_item(on_item);
+    */
+    auto response = HttpResponse::create();
     return response;
 }
 
 HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
 {
+    (void)request;
+
+    /*
     auto hsm_service = m_service->get_hsm_service();
 
     const auto s3_path = S3Path(request.get_path());
 
-    const auto container = Dataset(s3_path.m_container_name);
+    Dataset container;
+    container.set_name(s3_path.m_container_name);
+
     auto container_get_response =
         hsm_service->make_request({container, HsmServiceRequestMethod::GET});
     if (!container_get_response->ok()) {
@@ -131,7 +146,8 @@ HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    auto hsm_object = HsmObject(s3_path.m_object_id);
+    HsmObject hsm_object;
+    hsm_object.set_name(s3_path.m_object_id);
 
     // object.m_user_metadata =
     //     request.get_header().get_items_with_prefix(S3Path::meta_prefix);
@@ -142,23 +158,28 @@ HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
     hsm_object.set_dataset_id(container_get_response->dataset().id());
 
     auto object_put_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::PUT},
+        {hsm_object, HsmServiceRequestMethod::CREATE},
         request.get_context()->get_stream());
     if (!object_put_response->ok()) {
         LOG_ERROR(object_put_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
+    */
     return HttpResponse::create(201, "Created");
 }
 
 HttpResponse::Ptr S3ObjectView::on_delete(
     const HttpRequest& request, const User&)
 {
+    (void)request;
+    /*
     const auto s3_path = S3Path(request.get_path());
 
     auto hsm_service = m_service->get_hsm_service();
 
-    const auto container = Dataset(s3_path.m_container_name);
+    Dataset container;
+    container.set_name(s3_path.m_container_name);
+
     auto container_get_response =
         hsm_service->make_request({container, HsmServiceRequestMethod::GET});
     if (!container_get_response->ok()) {
@@ -166,25 +187,28 @@ HttpResponse::Ptr S3ObjectView::on_delete(
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    const auto hsm_object = HsmObject(s3_path.m_object_id);
+    HsmObject hsm_object;
+    hsm_object.set_name(s3_path.m_object_id);
 
-    auto exists_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::EXISTS});
-    if (!exists_response->ok()) {
-        LOG_ERROR(exists_response->get_error().to_string());
+    auto obj_get_reponse =
+        hsm_service->make_request({hsm_object, HsmServiceRequestMethod::GET});
+    if (!obj_get_reponse->ok()) {
+        LOG_ERROR(obj_get_reponse->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    if (!exists_response->object_found()) {
+    if (!obj_get_reponse->object_found()) {
         return HttpResponse::create(404, "Not Found");
     }
 
     auto remove_response = hsm_service->make_request(
-        {hsm_object, HsmServiceRequestMethod::REMOVE});
+        {hsm_object, HsmServiceRequestMethod::RELEASE});
     if (!remove_response->ok()) {
         LOG_ERROR(remove_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
+
+    */
     return HttpResponse::create();
 }
 }  // namespace hestia

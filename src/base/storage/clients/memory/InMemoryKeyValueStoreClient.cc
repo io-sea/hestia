@@ -1,8 +1,6 @@
 #include "InMemoryKeyValueStoreClient.h"
 
-#include "JsonUtils.h"
 #include "StringUtils.h"
-#include "UuidUtils.h"
 
 #include <iterator>
 #include <set>
@@ -13,9 +11,9 @@
 namespace hestia {
 InMemoryKeyValueStoreClient::InMemoryKeyValueStoreClient() {}
 
-void InMemoryKeyValueStoreClient::initialize(const Metadata& config_data)
+void InMemoryKeyValueStoreClient::initialize(
+    const std::string&, const Dictionary&)
 {
-    (void)config_data;
 }
 
 std::string InMemoryKeyValueStoreClient::dump() const
@@ -30,7 +28,7 @@ std::string InMemoryKeyValueStoreClient::dump() const
     for (const auto& [key, value] : m_set_db) {
         std::stringstream set_sstr;
         for (const auto& set_item : value) {
-            set_sstr << UuidUtils::to_string(set_item) << ";";
+            set_sstr << set_item << ";";
         }
         sstr << key << " : " << set_sstr.str() << "\n";
     }
@@ -38,61 +36,70 @@ std::string InMemoryKeyValueStoreClient::dump() const
 }
 
 void InMemoryKeyValueStoreClient::string_get(
-    const std::string& key, std::string& value) const
-{
-    if (auto iter = m_string_db.find(key); iter != m_string_db.end()) {
-        value = iter->second;
-    }
-}
-
-void InMemoryKeyValueStoreClient::string_multi_get(
     const std::vector<std::string>& keys,
     std::vector<std::string>& values) const
 {
     for (const auto& key : keys) {
         std::string value;
-        string_get(key, value);
+        if (auto iter = m_string_db.find(key); iter != m_string_db.end()) {
+            value = iter->second;
+        }
         values.push_back(value);
     }
 }
 
 void InMemoryKeyValueStoreClient::string_set(
-    const std::string& key, const std::string& value) const
+    const std::vector<KeyValuePair>& kv_pairs) const
 {
-    LOG_INFO("Setting value: " << key << " | " << value);
-    m_string_db[key] = value;
+    for (const auto& kv_pair : kv_pairs) {
+        m_string_db[kv_pair.first] = kv_pair.second;
+    }
 }
 
-void InMemoryKeyValueStoreClient::string_remove(const std::string& key) const
+void InMemoryKeyValueStoreClient::string_remove(
+    const std::vector<std::string>& keys) const
 {
-    m_string_db.erase(key);
+    for (const auto& key : keys) {
+        m_string_db.erase(key);
+    }
 }
 
-bool InMemoryKeyValueStoreClient::string_exists(const std::string& key) const
+void InMemoryKeyValueStoreClient::string_exists(
+    const std::vector<std::string>& keys, std::vector<bool>& found) const
 {
-    return m_string_db.find(key) != m_string_db.end();
+    for (const auto& key : keys) {
+        found.push_back(m_string_db.find(key) != m_string_db.end());
+    }
 }
 
-void InMemoryKeyValueStoreClient::set_add(
-    const std::string& key, const Uuid& value) const
+void InMemoryKeyValueStoreClient::set_add(const VecKeyValuePair& entries) const
 {
-    m_set_db[key].insert(value);
+    for (const auto& entry : entries) {
+        m_set_db[entry.first].insert(entry.second);
+    }
 }
 
 void InMemoryKeyValueStoreClient::set_list(
-    const std::string& key, std::vector<Uuid>& values) const
+    const std::vector<std::string>& keys,
+    std::vector<std::vector<std::string>>& total_values) const
 {
-    if (auto iter = m_set_db.find(key); iter != m_set_db.end()) {
-        std::copy(
-            iter->second.begin(), iter->second.end(),
-            std::back_inserter(values));
+    for (const auto& key : keys) {
+        std::vector<std::string> values;
+        if (auto iter = m_set_db.find(key); iter != m_set_db.end()) {
+            std::copy(
+                iter->second.begin(), iter->second.end(),
+                std::back_inserter(values));
+        }
+        total_values.push_back(values);
     }
 }
 
 void InMemoryKeyValueStoreClient::set_remove(
-    const std::string& key, const Uuid& value) const
+    const VecKeyValuePair& entries) const
 {
-    m_set_db[key].erase(value);
+    for (const auto& entry : entries) {
+        m_set_db[entry.first].erase(entry.second);
+    }
 }
 
 }  // namespace hestia

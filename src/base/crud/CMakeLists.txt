@@ -1,0 +1,49 @@
+include(AddModule)
+
+add_module(
+    MODULE_NAME crud 
+    HEADERS
+        TimeProvider.h
+        UserService.h
+        UserTokenGenerator.h 
+        client/CrudClient.h
+        client/HttpCrudClient.h 
+        client/HttpCrudPath.h 
+        client/KeyValueCrudClient.h 
+        requests/BaseCrudRequest.h
+        requests/CrudRequest.h 
+        requests/CrudResponse.h 
+        requests/CrudQuery.h
+        requests/CrudAttributes.h
+        requests/CrudIdentifier.h
+        requests/TypedCrudRequest.h 
+        service/CrudServiceBackend.h 
+        service/CrudService.h
+        service/CrudServiceWithUser.h
+        service/CrudServiceFactory.h
+    SOURCES
+        TimeProvider.cc
+        UserService.cc
+        UserTokenGenerator.cc
+        client/CrudClient.cc
+        client/HttpCrudClient.cc 
+        client/HttpCrudPath.cc
+        client/KeyValueCrudClient.cc
+        requests/BaseCrudRequest.cc
+        requests/CrudQuery.cc
+        requests/CrudIdentifier.cc
+        requests/CrudAttributes.cc
+        requests/CrudRequest.cc 
+        requests/CrudResponse.cc 
+        requests/TypedCrudRequest.h 
+        service/CrudService.cc
+        service/CrudServiceWithUser.cc
+    INTERNAL_INCLUDE_DIRS 
+        client
+        requests
+        service
+    INTERNAL_DEPENDENCIES 
+        storage
+        http_client
+        models
+)

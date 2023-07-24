@@ -1,15 +1,17 @@
 #include "HestiaWebApp.h"
 
-#include "HestiaDatasetView.h"
-#include "HestiaNodeView.h"
-#include "HestiaObjectView.h"
-#include "HestiaTierView.h"
-#include "HestiaUserAuthView.h"
-#include "HestiaUserView.h"
-
+#include "CrudWebView.h"
 #include "StaticContentView.h"
 #include "TokenAuthenticationMiddleware.h"
 #include "UrlRouter.h"
+
+#include "DistributedHsmService.h"
+#include "HestiaHsmActionView.h"
+#include "HestiaUserAuthView.h"
+#include "HsmItem.h"
+#include "HsmNode.h"
+#include "HsmService.h"
+#include "User.h"
 
 #include "Logger.h"
 
@@ -25,20 +27,42 @@ HestiaWebApp::HestiaWebApp(
 
     m_url_router = std::make_unique<hestia::UrlRouter>();
     m_url_router->add_pattern(
-        {api_prefix + "hsm/objects"},
-        std::make_unique<HestiaObjectView>(hestia_service));
+        {api_prefix + HsmItem::hsm_object_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::hsm_object_name));
     m_url_router->add_pattern(
-        {api_prefix + "hsm/tiers"},
-        std::make_unique<HestiaTierView>(hestia_service));
+        {api_prefix + HsmItem::dataset_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::dataset_name));
     m_url_router->add_pattern(
-        {api_prefix + "hsm/datasets"},
-        std::make_unique<HestiaDatasetView>(hestia_service));
+        {api_prefix + HsmItem::tier_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::tier_name));
     m_url_router->add_pattern(
-        {api_prefix + "nodes"},
-        std::make_unique<HestiaNodeView>(hestia_service));
+        {api_prefix + HsmItem::tier_extents_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::tier_extents_name));
     m_url_router->add_pattern(
-        {api_prefix + "users"},
-        std::make_unique<HestiaUserView>(m_user_service));
+        {api_prefix + HsmItem::user_metadata_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::user_metadata_name));
+    m_url_router->add_pattern(
+        {api_prefix + HsmItem::namespace_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(), HsmItem::namespace_name));
+    m_url_router->add_pattern(
+        {api_prefix + HsmNode::get_type() + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_node_service(), HsmNode::get_type()));
+    m_url_router->add_pattern(
+        {api_prefix + User::get_type() + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_node_service(), User::get_type()));
+
+    m_url_router->add_pattern(
+        {api_prefix + HsmItem::hsm_action_name + "s"},
+        std::make_unique<HestiaHsmActionView>(hestia_service));
+
     m_url_router->add_pattern(
         {api_prefix + "register", api_prefix + "login"},
         std::make_unique<HestiaUserAuthView>(m_user_service));

@@ -3,7 +3,6 @@
 #include "Dictionary.h"
 #include "HashUtils.h"
 #include "Logger.h"
-#include "Metadata.h"
 #include "YamlUtils.h"
 
 #include <string>
@@ -29,7 +28,7 @@ std::string RbhEvent::type_to_string(const RbhTypes& event_type)
     return {};
 }
 
-RbhEvent::RbhEvent(const RbhTypes& event_type, const Metadata& meta)
+RbhEvent::RbhEvent(const RbhTypes& event_type, const Map& meta)
 {
     m_type = event_type;
     m_meta = meta;
@@ -101,7 +100,7 @@ void set_id(
     add_scalar(dict, key, encoded_id, "binary", "!!");
 }
 
-void set_xattrs(Dictionary& dict, const Metadata& meta)
+void set_xattrs(Dictionary& dict, const Map& meta)
 {
     dict.set_map_item("xattrs", Dictionary::create(Dictionary::Type::MAP));
     auto xattrs = dict.get_map_item("xattrs");
@@ -120,8 +119,7 @@ void set_xattrs(Dictionary& dict, const Metadata& meta)
     // TODO: Add other HSM specific metadata
 }
 
-void set_xtime(
-    Dictionary& dict, const Metadata& meta, const std::string& prefix)
+void set_xtime(Dictionary& dict, const Map& meta, const std::string& prefix)
 {
     auto sec  = meta.get_item(prefix + "sec");
     auto nsec = meta.get_item(prefix + "nsec");
@@ -138,8 +136,7 @@ void set_xtime(
     add_scalar(*xtime, "nsec", nsec, "uint32");
 }
 
-void set_xdev(
-    Dictionary& dict, const Metadata& meta, const std::string prefix = "")
+void set_xdev(Dictionary& dict, const Map& meta, const std::string prefix = "")
 {
     auto major = meta.get_item(prefix + "major");
     auto minor = meta.get_item(prefix + "minor");
