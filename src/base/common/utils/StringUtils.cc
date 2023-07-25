@@ -14,6 +14,11 @@ std::pair<std::string, std::string> StringUtils::split_on_first(
     return {str.substr(0, loc), str.substr(loc + 1, str.size() - loc)};
 }
 
+bool StringUtils::has_character(const std::string& input, char check)
+{
+    return input.find(check) != std::string::npos;
+}
+
 std::pair<std::string, std::string> StringUtils::split_on_first(
     const std::string& str, const std::string& substr)
 {

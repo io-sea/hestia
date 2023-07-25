@@ -14,9 +14,9 @@ BaseCrudRequest::BaseCrudRequest(
     CrudAttributes::Format attributes_format) :
     BaseRequest(), m_ids(ids)
 {
-    m_query.m_attributes = attributes;
+    m_query.attributes() = attributes;
     m_query.set_output_format(output_format);
-    m_query.m_attributes_output_format = attributes_format;
+    m_query.set_attributes_output_format(attributes_format);
 }
 
 BaseCrudRequest::BaseCrudRequest(const CrudQuery& query) :
@@ -31,7 +31,7 @@ BaseCrudRequest::BaseCrudRequest(CrudLockType lock_type) :
 
 const CrudAttributes& BaseCrudRequest::get_attributes() const
 {
-    return m_query.m_attributes;
+    return m_query.get_attributes();
 }
 
 const VecCrudIdentifier& BaseCrudRequest::get_ids() const

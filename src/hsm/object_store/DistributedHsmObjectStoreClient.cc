@@ -82,7 +82,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 KeyValuePair{
                     "backend",
                     m_client_manager->get_backend(request.source_tier())},
-                CrudQuery::OutputFormat::ITEM);
+                CrudQuery::Format::LIST, CrudQuery::OutputFormat::ITEM);
             auto list_response =
                 m_hsm_service->get_node_service()->make_request(
                     CrudRequest{query});

@@ -31,7 +31,7 @@ class CrudServiceFactory {
             CrudAttributes::to_string(CrudAttributes::Format::JSON),
             std::make_unique<JsonAdapter>(item_factory_raw));
         adapter_collection->add_adapter(
-            CrudAttributes::to_string(CrudAttributes::Format::KV_PAIR),
+            CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
             std::make_unique<KeyValueAdapter>(item_factory_raw));
 
         CrudClientConfig crud_client_config;

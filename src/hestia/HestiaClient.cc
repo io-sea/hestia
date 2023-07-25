@@ -225,7 +225,7 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
         response = service->make_request(
             CrudRequest{query}, HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "READ");
-        query.m_attributes = response->attributes();
+        query.attributes() = response->attributes();
     }
     return {};
 }

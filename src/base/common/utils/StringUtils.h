@@ -77,5 +77,7 @@ class StringUtils {
 
     static void to_lines(
         const std::string& input, std::vector<std::string>& lines);
+
+    static bool has_character(const std::string& input, char check);
 };
 }  // namespace hestia

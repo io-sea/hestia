@@ -153,7 +153,7 @@ bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
 
     CrudQuery query(
         KeyValuePair{"name", m_object.m_user_identifier},
-        CrudQuery::OutputFormat::ITEM);
+        CrudQuery::Format::GET, CrudQuery::OutputFormat::ITEM);
     auto response = m_user_service->make_request(CrudRequest{query});
 
     if (!response->ok()) {

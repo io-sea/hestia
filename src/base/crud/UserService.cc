@@ -49,7 +49,7 @@ UserService::Ptr UserService::create(
         CrudAttributes::to_string(CrudAttributes::Format::JSON),
         std::make_unique<JsonAdapter>(user_model_factory_raw));
     user_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KV_PAIR),
+        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
         std::make_unique<KeyValueAdapter>(user_model_factory_raw));
 
     auto token_model_factory = std::make_unique<TypedModelFactory<UserToken>>();
@@ -61,7 +61,7 @@ UserService::Ptr UserService::create(
         CrudAttributes::to_string(CrudAttributes::Format::JSON),
         std::make_unique<JsonAdapter>(token_model_factory_raw));
     token_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KV_PAIR),
+        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
         std::make_unique<KeyValueAdapter>(token_model_factory_raw));
 
     CrudClientConfig client_config;
@@ -148,8 +148,9 @@ CrudResponse::Ptr UserService::authenticate_user(
 CrudResponse::Ptr UserService::authenticate_with_token(
     const std::string& token) const
 {
-    CrudRequest req(
-        CrudQuery{KeyValuePair{"value", token}, CrudQuery::OutputFormat::ITEM});
+    CrudRequest req(CrudQuery{
+        KeyValuePair{"value", token}, CrudQuery::Format::GET,
+        CrudQuery::OutputFormat::ITEM});
 
     auto token_get_response = m_token_service->make_request(req);
     if (!token_get_response->ok()) {

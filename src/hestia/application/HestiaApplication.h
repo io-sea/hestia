@@ -18,6 +18,8 @@ class CrudServiceBackend;
 
 class IHestiaApplication {
   public:
+    virtual ~IHestiaApplication() = default;
+
     virtual OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
@@ -44,7 +46,7 @@ class HestiaApplication : public IHestiaApplication {
         const std::string& user_token  = {},
         const Dictionary& extra_config = {}) override;
 
-    virtual OpStatus run() override { return {}; }
+    OpStatus run() override { return {}; }
 
   protected:
     virtual bool uses_local_storage() const;

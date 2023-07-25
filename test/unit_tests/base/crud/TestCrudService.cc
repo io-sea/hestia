@@ -54,111 +54,147 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
     REQUIRE(created_model1->name() == "model_name");
     REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
-    WHEN("Getting items")
+    WHEN("Getting using id")
     {
-        WHEN("using id")
+        WHEN("the item exists")
         {
-            WHEN("the item exists")
-            {
-                hestia::CrudQuery query(
-                    hestia::CrudIdentifier("1"),
-                    hestia::CrudQuery::OutputFormat::ITEM);
-                const auto get_response =
-                    m_service->make_request(hestia::CrudRequest{query});
-                THEN("It is found ok")
-                {
-                    REQUIRE(get_response->ok());
-                    REQUIRE(get_response->found());
-                }
-
-                hestia::CrudQuery query1(
-                    create_response1->get_item()->id(),
-                    hestia::CrudQuery::OutputFormat::ITEM);
-
-                const auto get_response1 =
-                    m_service->make_request(hestia::CrudRequest{query1});
-                REQUIRE(get_response1->ok());
-                REQUIRE(get_response1->found());
-
-                REQUIRE(get_response1->get_item()->get_creation_time() == 1);
-                REQUIRE(get_response1->get_item()->name() == "model_name");
-            }
-
-            WHEN("the item doesn't exist")
-            {
-                hestia::CrudQuery query(
-                    hestia::CrudIdentifier("3"),
-                    hestia::CrudQuery::OutputFormat::ITEM);
-                const auto get_response =
-                    m_service->make_request(hestia::CrudRequest{query});
-                THEN("It is not found ok")
-                {
-                    REQUIRE(get_response->ok());
-                    REQUIRE_FALSE(get_response->found());
-                }
-            }
-        }
-
-        WHEN("using multiple ids")
-        {
-            hestia::VecCrudIdentifier ids;
-            ids.push_back(create_response->get_item()->id());
-            ids.push_back(create_response1->get_item()->id());
-
-            hestia::CrudQuery query(ids, hestia::CrudQuery::OutputFormat::ITEM);
-
+            hestia::CrudQuery query(
+                hestia::CrudIdentifier("1"),
+                hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
                 m_service->make_request(hestia::CrudRequest{query});
-            THEN("The correct number are found")
+            THEN("It is found ok")
             {
                 REQUIRE(get_response->ok());
-                REQUIRE(get_response->items().size() == 2);
+                REQUIRE(get_response->found());
             }
+
+            hestia::CrudQuery query1(
+                create_response1->get_item()->id(),
+                hestia::CrudQuery::OutputFormat::ITEM);
+
+            const auto get_response1 =
+                m_service->make_request(hestia::CrudRequest{query1});
+            REQUIRE(get_response1->ok());
+            REQUIRE(get_response1->found());
+
+            REQUIRE(get_response1->get_item()->get_creation_time() == 1);
+            REQUIRE(get_response1->get_item()->name() == "model_name");
         }
 
-        WHEN("using an index field")
+        WHEN("the item doesn't exist")
         {
-            WHEN("the field is valid")
-            {
-                hestia::CrudQuery query(
-                    hestia::KeyValuePair{"name", "model_name"},
-                    hestia::CrudQuery::OutputFormat::ITEM);
-                const auto get_response =
-                    m_service->make_request(hestia::CrudRequest{query});
-                THEN("It is found ok")
-                {
-                    REQUIRE(get_response->ok());
-                    REQUIRE(get_response->found());
-                }
-            }
-
-            WHEN("the field is not valid")
-            {
-                hestia::CrudQuery query(
-                    hestia::KeyValuePair{"name", "no_model_has_this_name"},
-                    hestia::CrudQuery::OutputFormat::ITEM);
-                const auto get_response =
-                    m_service->make_request(hestia::CrudRequest{query});
-                THEN("It is not found ok")
-                {
-                    REQUIRE(get_response->ok());
-                    REQUIRE_FALSE(get_response->found());
-                }
-            }
-        }
-
-        WHEN("without a query")
-        {
-            hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
+            hestia::CrudQuery query(
+                hestia::CrudIdentifier("3"),
+                hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
                 m_service->make_request(hestia::CrudRequest{query});
-            THEN("All items are found")
+            THEN("It is not found ok")
             {
                 REQUIRE(get_response->ok());
-                REQUIRE(get_response->items().size() == 2);
+                REQUIRE_FALSE(get_response->found());
             }
         }
     }
+
+    WHEN("Getting using multiple ids")
+    {
+        hestia::VecCrudIdentifier ids;
+        ids.push_back(create_response->get_item()->id());
+        ids.push_back(create_response1->get_item()->id());
+
+        hestia::CrudQuery query(ids, hestia::CrudQuery::OutputFormat::ITEM);
+
+        const auto get_response =
+            m_service->make_request(hestia::CrudRequest{query});
+        THEN("The correct number are found")
+        {
+            REQUIRE(get_response->ok());
+            REQUIRE(get_response->items().size() == 2);
+        }
+    }
+
+    WHEN("Getting using an index field")
+    {
+        WHEN("the field is valid")
+        {
+            hestia::CrudQuery query(
+                hestia::KeyValuePair{"name", "model_name"},
+                hestia::CrudQuery::Format::GET,
+                hestia::CrudQuery::OutputFormat::ITEM);
+            const auto get_response =
+                m_service->make_request(hestia::CrudRequest{query});
+            THEN("It is found ok")
+            {
+                REQUIRE(get_response->ok());
+                REQUIRE(get_response->found());
+            }
+        }
+
+        WHEN("the field is not valid")
+        {
+            hestia::CrudQuery query(
+                hestia::KeyValuePair{"name", "no_model_has_this_name"},
+                hestia::CrudQuery::Format::GET,
+                hestia::CrudQuery::OutputFormat::ITEM);
+            const auto get_response =
+                m_service->make_request(hestia::CrudRequest{query});
+            THEN("It is not found ok")
+            {
+                REQUIRE(get_response->ok());
+                REQUIRE_FALSE(get_response->found());
+            }
+        }
+    }
+
+    WHEN("Getting without a query")
+    {
+        hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
+        const auto get_response =
+            m_service->make_request(hestia::CrudRequest{query});
+        THEN("All items are found")
+        {
+            REQUIRE(get_response->ok());
+            REQUIRE(get_response->items().size() == 2);
+        }
+    }
+}
+
+TEST_CASE_METHOD(
+    TestCrudServiceFixture, "Test Crud Service - Update", "[crud-service]")
+{
+    const auto create_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::CREATE,
+        {},
+        {},
+        hestia::CrudQuery::OutputFormat::ITEM});
+    REQUIRE(create_response->ok());
+
+    REQUIRE(create_response->items().size() == 1);
+
+    auto created_model =
+        create_response->get_item_as<hestia::mock::MockModel>();
+    REQUIRE(created_model->m_my_field.get_value() == "default_field");
+
+    m_service->m_mock_time_provider->increment();
+
+    hestia::mock::MockModel named_model;
+    named_model.set_name("model_name");
+    named_model.m_my_field.update_value("field_value");
+
+    const auto create_response1 = m_service->make_request(
+        hestia::TypedCrudRequest<hestia::mock::MockModel>{
+            hestia::CrudMethod::CREATE, named_model,
+            hestia::CrudQuery::OutputFormat::ITEM});
+    REQUIRE(create_response1->ok());
+
+    // std::cout << m_kv_store_client.dump() << std::endl;
+
+    auto created_model1 =
+        create_response1->get_item_as<hestia::mock::MockModel>();
+    REQUIRE(created_model1->get_creation_time() == 1);
+    REQUIRE(created_model1->name() == "model_name");
+    REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
     WHEN("Updating an item")
     {
@@ -188,6 +224,43 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 == "updated_field_value");
         }
     }
+}
+
+TEST_CASE_METHOD(
+    TestCrudServiceFixture, "Test Crud Service - Read", "[crud-service]")
+{
+    const auto create_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::CREATE,
+        {},
+        {},
+        hestia::CrudQuery::OutputFormat::ITEM});
+    REQUIRE(create_response->ok());
+
+    REQUIRE(create_response->items().size() == 1);
+
+    auto created_model =
+        create_response->get_item_as<hestia::mock::MockModel>();
+    REQUIRE(created_model->m_my_field.get_value() == "default_field");
+
+    m_service->m_mock_time_provider->increment();
+
+    hestia::mock::MockModel named_model;
+    named_model.set_name("model_name");
+    named_model.m_my_field.update_value("field_value");
+
+    const auto create_response1 = m_service->make_request(
+        hestia::TypedCrudRequest<hestia::mock::MockModel>{
+            hestia::CrudMethod::CREATE, named_model,
+            hestia::CrudQuery::OutputFormat::ITEM});
+    REQUIRE(create_response1->ok());
+
+    // std::cout << m_kv_store_client.dump() << std::endl;
+
+    auto created_model1 =
+        create_response1->get_item_as<hestia::mock::MockModel>();
+    REQUIRE(created_model1->get_creation_time() == 1);
+    REQUIRE(created_model1->name() == "model_name");
+    REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
     WHEN("Listing items")
     {
@@ -207,6 +280,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         {
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "model_name"},
+                hestia::CrudQuery::Format::GET,
                 hestia::CrudQuery::OutputFormat::ID);
 
             const auto list_response =

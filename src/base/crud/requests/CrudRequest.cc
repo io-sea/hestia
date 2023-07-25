@@ -11,7 +11,7 @@ CrudRequest::CrudRequest(
     m_items(std::move(items))
 {
     m_query.set_output_format(output_format);
-    m_query.m_attributes_output_format = attributes_format;
+    m_query.set_attributes_output_format(attributes_format);
 }
 
 CrudRequest::CrudRequest(

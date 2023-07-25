@@ -44,8 +44,5 @@ void HttpCrudPath::from_query(const CrudQuery& query, std::string& path)
             from_identifier(query.get_id(), path);
         }
     }
-    else if (query.is_index()) {
-        path += "?" + query.get_index().first + "=" + query.get_index().second;
-    }
 }
 }  // namespace hestia

@@ -10,8 +10,10 @@
 
 namespace hestia {
 
-class IHestiaClient {
+class IHestiaClient : public IHestiaApplication {
   public:
+    virtual ~IHestiaClient() = default;
+
     virtual OpStatus create(
         const HestiaType& subject,
         VecCrudIdentifier& ids,
@@ -85,6 +87,8 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
     void get_last_error(std::string& error) override;
 
     void set_last_error(const std::string& msg) override;
+
+    OpStatus run() override { return {}; }
 
   private:
     void clear_last_error();

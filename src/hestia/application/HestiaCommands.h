@@ -14,15 +14,7 @@ class IConsoleInterface;
 class HestiaClientCommand {
 
   public:
-    STRINGABLE_ENUM(
-        IoFormat,
-        NONE,
-        ID,
-        IDs,
-        IDS_ATTRS_JSON,
-        IDS_ATTRS_KV_PAIR,
-        ATTRS_JSON,
-        ATTRS_KV_PAIR)
+    STRINGABLE_ENUM(OutputFormat, NONE, ID, JSON, KEY_VALUE, ID_KEY_VALUE)
 
     std::vector<std::string> get_crud_methods() const;
 
@@ -53,14 +45,22 @@ class HestiaClientCommand {
 
     bool is_data_put_action() const;
 
-    static bool expects_id(IoFormat format);
+    static bool expects_id(OutputFormat format);
 
-    static IoFormat io_format_from_string(const std::string& format);
+    static bool expects_attributes(OutputFormat format);
 
-    std::pair<IoFormat, CrudAttributes::Format> parse_create_update_inputs(
+    static OutputFormat output_format_from_string(const std::string& format);
+
+    std::pair<OutputFormat, CrudAttributes::Format> parse_create_update_inputs(
         VecCrudIdentifier& ids,
         CrudAttributes& attributes,
         IConsoleInterface* console) const;
+
+    std::pair<OutputFormat, CrudAttributes::Format> parse_read_inputs(
+        CrudQuery& query, IConsoleInterface* console) const;
+
+    void parse_remove_inputs(
+        VecCrudIdentifier& ids, IConsoleInterface* console) const;
 
     void set_crud_method(const std::string& method);
 
@@ -78,12 +78,11 @@ class HestiaClientCommand {
 
     HestiaType m_subject;
 
-    std::string m_id;
+    std::vector<std::string> m_id;
+    std::vector<std::string> m_body;
     std::string m_id_format;
     std::string m_input_format;
     std::string m_output_format;
-    std::string m_query_format;
-    std::string m_body;
 
     std::string m_offset;
     std::string m_count;
