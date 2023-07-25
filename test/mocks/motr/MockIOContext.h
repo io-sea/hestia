@@ -5,6 +5,8 @@
 
 namespace hestia{
 
+class MockMotrObject;
+
 class MockIoContext: public IoContext {
   public:
   
@@ -24,11 +26,13 @@ class MockIoContext: public IoContext {
      void indexvec_free();
      void attrvec_free();
      void buffvec_free();
-     void buffvec_free2(){m_data.clear();}
+     void buffvec_free2();
      int alloc_data(int num_blocks, std::size_t block_size);
      int empty_alloc_data(int num_blocks);
      int alloc_attr(int num_blocks, std::size_t block_size);
      int index_alloc(int num_blocks);
+
+     int read_blocks(MockMotrObject* Obj);
 
     struct mock::motr::IndexVec m_ext;
     struct mock::motr::BufferVec m_data;
