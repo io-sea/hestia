@@ -2,6 +2,8 @@
 
 #include "StringUtils.h"
 
+#include <iostream>
+
 TEST_CASE("Test StringUtils - int conversion", "[common]")
 {
     REQUIRE(hestia::StringUtils::to_int("12") == 12);
@@ -14,6 +16,20 @@ TEST_CASE("Test StringUtils - int conversion", "[common]")
     REQUIRE(second == "brown_fox");
 
     REQUIRE(hestia::StringUtils::to_lower("QuickBrownFox") == "quickbrownfox");
+
+    std::string content = "quick\nbrown\nfox";
+    std::vector<std::string> lines, expected_lines;
+    hestia::StringUtils::to_lines(content, lines);
+    expected_lines={"quick", "brown", "fox"};
+    REQUIRE(lines == expected_lines);
+}
+TEST_CASE("Test StringUtils - Start/End with prefix", "[common]")
+{
+    std::string test_string = "hestia::tiers";
+    std::string start_prefix      = "hestia::";
+    std::string end_prefix      = "tiers";
+    REQUIRE(hestia::StringUtils::starts_with(test_string, start_prefix) == 1);
+    REQUIRE(hestia::StringUtils::ends_with(test_string, end_prefix) == 1);
 }
 
 TEST_CASE("Test StringUtils - Remove prefix", "[common]")
@@ -44,3 +60,4 @@ TEST_CASE("Test StringUtils - Split on delimiter string", "[common]")
     REQUIRE(split_string[1] == "token");
     REQUIRE(split_string[2] == "value");
 }
+
