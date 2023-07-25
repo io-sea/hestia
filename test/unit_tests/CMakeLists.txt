@@ -45,7 +45,7 @@ set(UNIT_TEST_SOURCES
     hestia/TestS3WebApp.cc
 )
 
-add_executable(${UNIT_TEST_MODULE} 
+add_executable(${UNIT_TEST_MODULE}
     main.cc
     ${UNIT_TEST_SOURCES})
 
@@ -54,10 +54,10 @@ if(NOT APPLE)
     list(APPEND PLATFORM_LIBS stdc++fs)
 endif()
 
-target_link_libraries(${UNIT_TEST_MODULE} PRIVATE 
+target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     hestia_app
-    hestia_lib 
-    hestia_server 
+    hestia_lib
+    hestia_server
     hestia_storage
     hestia_event_feed
     hestia_mock_motr

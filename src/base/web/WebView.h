@@ -19,6 +19,8 @@ class WebView {
 
     void set_path(const std::string& path);
 
+    bool can_stream() const { return m_can_stream; }
+
   protected:
     virtual HttpResponse::Ptr on_get(
         const HttpRequest& request, const User& user);
@@ -38,5 +40,6 @@ class WebView {
     virtual HttpResponse::Ptr on_not_supported(const HttpRequest& request);
 
     std::string m_path;
+    bool m_can_stream = false;
 };
 }  // namespace hestia

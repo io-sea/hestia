@@ -1,9 +1,15 @@
 #include "ProxygenHandlerFactory.h"
 
 #ifdef HAVE_PROXYGEN
-#include "ProxygenRequestHandler.h"
+
+#include "ProxygenGetRequestHandler.h"
+#include "ProxygenPutRequestHandler.h"
+#include "ProxygenUnsupportedRequestHandler.h"
 
 #include "Logger.h"
+
+#include <proxygen/httpserver/RequestHandler.h>
+#include <proxygen/lib/http/HTTPMethod.h>
 
 namespace hestia {
 
@@ -21,7 +27,16 @@ proxygen::RequestHandler* ProxygenHandlerFactory::onRequest(
 {
     LOG_INFO("Request received: " << message->getMethodString());
 
-    auto handler = new ProxygenRequestHandler(m_web_app);
+    proxygen::RequestHandler* handler;
+    if (message->getMethod() == proxygen::HTTPMethod::PUT) {
+        handler = new ProxygenPutRequestHandler(m_web_app);
+    }
+    else if (message->getMethod() == proxygen::HTTPMethod::GET) {
+        handler = new ProxygenGetRequestHandler(m_web_app);
+    }
+    else {
+        handler = new ProxygenUnsupportedRequestHandler();
+    }
     return handler;
 }
 

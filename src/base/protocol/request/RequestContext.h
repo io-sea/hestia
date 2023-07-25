@@ -14,6 +14,8 @@ class RequestContext {
   public:
     RequestContext(const HttpRequest& request);
 
+    void set_request(const HttpRequest& request);
+
     [[nodiscard]] StreamState clear_stream();
 
     void flush_stream();
@@ -28,11 +30,11 @@ class RequestContext {
 
     const HttpRequest& get_request() const;
 
-    void set_body(const ReadableBufferView& buffer);
-
     void on_input_complete();
 
     void on_output_complete();
+
+    std::size_t get_chunk_size() const { return m_chunk_size; }
 
     using onChunkFunc = std::function<std::size_t(
         const ReadableBufferView& buffer, bool finished)>;

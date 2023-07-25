@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ReadableBufferView.h"
+#include "RequestContext.h"
 #include "WebApp.h"
 
 #ifdef HAVE_PROXYGEN
@@ -28,12 +29,7 @@ class ProxygenRequestHandler : public proxygen::RequestHandler {
 
     void onEgressResumed() noexcept override;
 
-  private:
-    void on_output_chunk(
-        const ReadableBufferView& buffer, bool finished, folly::EventBase* evb);
-
-    void on_output_finished(const HttpResponse* response);
-
+  protected:
     std::unique_ptr<RequestContext> m_request_context;
     WebApp* m_web_app{nullptr};
 };

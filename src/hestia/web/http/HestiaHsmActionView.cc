@@ -21,6 +21,7 @@ HestiaHsmActionView::HestiaHsmActionView(
     CrudWebView(hestia_service->get_hsm_service(), HsmItem::hsm_action_name),
     m_hestia_service(hestia_service)
 {
+    m_can_stream = false;  // TODO: Full streaming support in View
 }
 
 HestiaHsmActionView::~HestiaHsmActionView() {}
@@ -46,7 +47,7 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
     if (path.empty()) {
         Map action_map;
         request.get_header().get_data().copy_with_prefix(
-            "hestia::hsm_action::", action_map);
+            "hestia.hsm_action.", action_map);
 
         if (!action_map.empty()) {
             LOG_INFO("Processing HSM Action");
@@ -58,8 +59,8 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
             action.deserialize(action_dict);
 
             if (action.is_data_io_action()) {
-                Stream stream;
                 auto response = HttpResponse::create();
+                Stream stream;
                 std::vector<char> content;
                 std::unique_ptr<WriteableBufferView> buffer_view;
 

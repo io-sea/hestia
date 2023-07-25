@@ -1,5 +1,4 @@
 #include "CrudQuery.h"
-
 #include <stdexcept>
 
 namespace hestia {

@@ -41,10 +41,8 @@ class Map {
     using onItem =
         std::function<void(const std::string& key, const std::string& value)>;
     /**
-     * Call func for each value in the container - if a key_prefix is specified
-     * only operate on values corresponding to keys with this prefix.
-     * @param func the funciton to call with each value
-     * @param key_prefix optional prefix for keys - if a key starts with it then call func for its value
+     * Call func for each value in the container.
+     * @param func the function to call with each value
      */
     void for_each_item(onItem func) const;
 
@@ -89,7 +87,7 @@ class Map {
      * A string representation of the container - intended for debugging
      * @return A string representation of the container
      */
-    std::string to_string() const;
+    std::string to_string(bool sort_keys = false) const;
 
     bool operator==(const Map& other) const { return m_data == other.m_data; }
 

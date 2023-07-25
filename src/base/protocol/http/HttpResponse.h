@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HttpError.h"
 #include "HttpHeader.h"
 
 #include <memory>
@@ -13,10 +14,12 @@ class HttpResponse {
     HttpResponse() = default;
     HttpResponse(
         int code, const std::string& message, const std::string& body = {});
+    HttpResponse(const HttpError& err);
 
     static Ptr create();
     static Ptr create(
         int code, const std::string& message, const std::string& body = {});
+    static Ptr create(const HttpError& err);
 
     bool error() const { return m_code >= 400; }
 

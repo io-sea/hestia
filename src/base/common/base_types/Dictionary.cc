@@ -80,9 +80,12 @@ void Dictionary::merge(const Dictionary& dict)
 }
 
 void flatten_layer(
-    const Dictionary& dict, Map& flat_representation, const std::string& prefix)
+    const Dictionary& dict,
+    Map& flat_representation,
+    const std::string& prefix,
+    const std::string& delim)
 {
-    std::string spacer = "::";
+    std::string spacer = delim;
     if (prefix.empty()) {
         spacer = "";
     }
@@ -96,13 +99,14 @@ void flatten_layer(
         for (const auto& item : dict.get_sequence()) {
             flatten_layer(
                 *item, flat_representation,
-                prefix + spacer + "seq_" + std::to_string(count));
+                prefix + spacer + "seq_" + std::to_string(count), delim);
             count++;
         }
     }
     else {
         for (const auto& [key, value] : dict.get_map()) {
-            flatten_layer(*value, flat_representation, prefix + spacer + key);
+            flatten_layer(
+                *value, flat_representation, prefix + spacer + key, delim);
         }
     }
 }
@@ -113,14 +117,14 @@ void Dictionary::flatten(Map& flat_representation) const
         return;
     }
 
-    flatten_layer(*this, flat_representation, "");
+    flatten_layer(*this, flat_representation, "", m_delim);
 }
 
-std::string Dictionary::to_string() const
+std::string Dictionary::to_string(bool sort_keys) const
 {
     Map flat;
     flatten(flat);
-    return flat.to_string();
+    return flat.to_string(sort_keys);
 }
 
 void Dictionary::expand(const Map& flat_representation)
@@ -138,7 +142,7 @@ void Dictionary::expand(const Map& flat_representation)
 
     std::size_t count{0};
     for (const auto& key : keys) {
-        StringUtils::split(key, "::", parsed_keys[count]);
+        StringUtils::split(key, m_delim, parsed_keys[count]);
         count++;
     }
 
@@ -149,7 +153,7 @@ void Dictionary::expand(const Map& flat_representation)
 
     for (const auto& parsed_keyset : parsed_keys) {
         Dictionary* working_dict = this;
-        std::size_t count        = 0;
+        std::size_t count        = 1;
         std::string full_path;
         for (const auto& entry : parsed_keyset) {
             const bool is_last = count == parsed_keyset.size();
@@ -157,7 +161,7 @@ void Dictionary::expand(const Map& flat_representation)
                 full_path += entry;
             }
             else {
-                full_path += entry + "::";
+                full_path += entry + m_delim;
             }
             if (StringUtils::starts_with(entry, "seq_")) {
                 if (working_dict->get_type() != Dictionary::Type::SEQUENCE) {

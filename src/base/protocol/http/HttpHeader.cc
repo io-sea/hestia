@@ -13,8 +13,10 @@ HttpHeader::HttpHeader(const std::vector<std::string>& lines)
             continue;
         }
 
-        const auto tag   = line.substr(0, loc);
-        const auto value = line.substr(loc + 1, line.size() - loc);
+        auto tag = line.substr(0, loc);
+        StringUtils::trim(tag);
+        auto value = line.substr(loc + 1, line.size() - loc);
+        StringUtils::trim(value);
 
         if (tag.empty() || value.empty()) {
             continue;

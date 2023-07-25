@@ -193,7 +193,7 @@ HttpResponse::Ptr CurlClient::make_request(
     long http_code = 0;
     curl_easy_getinfo(handle->m_handle, CURLINFO_RESPONSE_CODE, &http_code);
     if (http_code != 200 || rc == CURLE_ABORTED_BY_CALLBACK) {
-        LOG_INFO("Error in http response");
+        LOG_INFO("Error in http response: " << http_code);
         response = HttpResponse::create(http_code, "Curl Error");
     }
 

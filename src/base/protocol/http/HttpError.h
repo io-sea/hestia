@@ -7,6 +7,7 @@ namespace hestia {
 class HttpError {
   public:
     enum class Code {
+        _100_CONTINUE,
         _200_OK,
         _201_CREATED,
         _400_BAD_REQUEST,
@@ -24,6 +25,8 @@ class HttpError {
 
     using CodeAndId = std::pair<unsigned short, std::string>;
     CodeAndId get_code_and_id() const;
+
+    const std::string& get_message() const;
 
     virtual std::string to_string() const;
 

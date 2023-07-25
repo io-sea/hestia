@@ -15,7 +15,7 @@ TEST_CASE("Test HttpRequest", "[protocol]")
 
     hestia::HttpRequest request(msg);
     REQUIRE(request.get_method_as_string() == "PUT");
-    REQUIRE(request.get_header().get_content_length() == " 9");
+    REQUIRE(request.get_header().get_content_length() == "9");
     REQUIRE(request.body() == "key=value");
     REQUIRE(request.get_path() == "/my_path");
     REQUIRE(request.get_queries().get_item("list-type") == "2");

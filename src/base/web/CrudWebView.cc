@@ -37,9 +37,10 @@ HttpResponse::Ptr CrudWebView::on_put(const HttpRequest& request, const User&)
 {
     const auto path = get_path(request);
 
-    auto response = hestia::HttpResponse::create();
+    auto response = HttpResponse::create();
 
     CrudAttributes attributes;
+
     attributes.set_buffer(request.body());
 
     CrudResponse::Ptr crud_response;

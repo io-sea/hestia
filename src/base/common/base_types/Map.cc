@@ -1,6 +1,8 @@
 #include "Map.h"
 
 #include "StringUtils.h"
+#include <algorithm>
+#include <vector>
 
 namespace hestia {
 
@@ -19,13 +21,15 @@ bool Map::has_key_and_value(const KeyValuePair& query) const
 
 void Map::add_key_prefix(const std::string& prefix)
 {
-    std::vector<std::string> replace_keys;
-    for (const auto& [key, value] : m_data) {
-        m_data[prefix + key] = value;
-        replace_keys.push_back(key);
+    std::vector<std::string> keys;
+    keys.reserve(m_data.size());
+    for (const auto& [key, _] : m_data) {
+        keys.push_back(key);
     }
-    for (const auto& key : replace_keys) {
-        m_data.erase(key);
+    for (const auto& key : keys) {
+        auto node  = m_data.extract(key);
+        node.key() = prefix + node.key();
+        m_data.insert(std::move(node));
     }
 }
 
@@ -72,11 +76,24 @@ void Map::for_each_item(onItem func) const
     }
 }
 
-std::string Map::to_string() const
+std::string Map::to_string(bool sort_keys) const
 {
     std::string ret;
-    for (const auto& [key, value] : m_data) {
-        ret += key + " : " + value + ", ";
+    if (sort_keys) {
+        std::vector<std::string> keys(m_data.size());
+        for (const auto& [key, _] : m_data) {
+            keys.push_back(key);
+        }
+        std::sort(keys.begin(), keys.end());
+
+        for (const auto& key : keys) {
+            ret += key + " : " + get_item(key) + ", ";
+        }
+    }
+    else {
+        for (const auto& [key, value] : m_data) {
+            ret += key + " : " + value + ", ";
+        }
     }
     return ret;
 }

@@ -95,7 +95,7 @@ class Dictionary {
 
     void set_type(Type type);
 
-    std::string to_string() const;  // For debugging
+    std::string to_string(bool sort_keys = false) const;  // For debugging
 
     bool operator==(const Dictionary& rhs) const;  // Deep Comparision
 
@@ -104,6 +104,7 @@ class Dictionary {
   private:
     void copy_from(const Dictionary& other);
 
+    const std::string m_delim = ".";
     Type m_type{Type::MAP};
     std::pair<std::string, std::string> m_tag;
     std::string m_scalar;

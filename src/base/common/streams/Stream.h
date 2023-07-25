@@ -68,8 +68,8 @@ class Stream {
     std::size_t get_source_size() const;
 
     /**
-     * True if the source size is bigger than zero. Not all source types may be
-     * able to give a size in advance.
+     * True if a source is attached, has non-finished state, and has size bigger
+     * than zero. Not all source types may be able to give a size in advance.
      *
      * @return True if the source size is bigger than zero.
      */
@@ -119,7 +119,8 @@ class Stream {
     void set_sink(StreamSink::Ptr sink);
 
     /**
-     * True if a Sink is attached and of non-zero size
+     * True if a Sink is attached, has non-finished state, and is of non-zero
+     * size
      *
      * @return True if a Sink is attached and of non-zero size
      */

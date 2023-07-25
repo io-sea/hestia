@@ -1,11 +1,19 @@
 #include "BasicHttpServer.h"
 
+#include "BufferView.h"
+#include "ReadableBufferView.h"
+#include "WriteableBufferView.h"
+
+#include "HttpRequest.h"
+#include "HttpResponse.h"
 #include "RequestContext.h"
 
 #include "Socket.h"
 #include "TcpServer.h"
 
 #include "Logger.h"
+
+#include <string>
 
 namespace hestia {
 BasicHttpServer::BasicHttpServer(const Config& config, WebApp* web_app) :
@@ -54,47 +62,105 @@ BasicHttpServer::Status BasicHttpServer::start()
 void BasicHttpServer::on_connection(Socket* socket)
 {
     auto message = socket->recieve();
-    LOG_INFO("Got message: " + message);
-
     if (socket->connected()) {
+        while (message.rfind("\r\n\r\n") == message.npos) {
+            socket->respond(
+                HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE))
+                    ->to_string());
+            message.append(socket->recieve());
+        }
+        LOG_INFO("Got message: " + message);
+
         HttpRequest request(message);
-        std::string extra_bytes;
-        while (request.is_content_outstanding()) {
-            std::size_t content_length =
-                std::stoul(request.get_header().get_content_length());
-
-            std::size_t remainder = content_length - request.body().length();
-
-            LOG_INFO("Waiting for more content: " << remainder);
-            extra_bytes = socket->recieve();
-
-            if (extra_bytes.size() > remainder) {
-                request.body() += extra_bytes.substr(0, remainder);
-            }
-            else {
-                request.body() += extra_bytes;
-            }
-        }
-
         RequestContext request_context(request);
-        m_web_app->on_request(&request_context);
 
-        if (!request.body().empty()
-            && request_context.get_stream()->waiting_for_content()) {
-            auto status = request_context.write_to_stream(
-                ReadableBufferView(request.body()));
-            if (!status.ok()) {
-                LOG_ERROR(
-                    "Error writing body to stream: "
-                    << status.m_state.message());
+        auto content_length_string = request.get_header().get_content_length();
+        std::size_t content_length = 0;
+        if (!content_length_string.empty()) {
+            content_length = std::stoul(content_length_string);
+        }
+        // Set up stream if the requested view supports this
+        if (m_web_app->get_streamable(
+                request_context.get_request().get_path())) {
+            m_web_app->on_request(&request_context);
+
+            LOG_INFO(
+                "Sending response: "
+                << request_context.get_response()->to_string());
+            socket->respond(request_context.get_response()->to_string());
+
+            //  Handle input (outstanding request body)
+            // Not supported: streamed body and streamed response
+            if (request_context.get_stream()->waiting_for_content()) {
+                std::size_t total_received = request.body().size();
+
+                while (total_received < content_length) {
+                    // Get further data
+                    request.body().assign(socket->recieve());
+                    LOG_INFO("Got " << request.body().size() << " extra bytes.")
+                    total_received += request.body().size();
+
+                    // Ask for more data
+                    socket->respond(
+                        request_context.get_response()->to_string());
+
+                    // Push body chunk to stream
+                    auto status = request_context.get_stream()->write(
+                        ReadableBufferView(request.body()));
+                    LOG_INFO(
+                        "Wrote " << status.m_num_transferred
+                                 << " bytes to internal buffer");
+                    if (!status.ok()) {
+                        LOG_ERROR(
+                            "Error writing body to stream: "
+                            << status.m_state.message());
+                        break;
+                    }
+                }
+
+                // Reset response & respond based on stream status
+                request_context.set_response(nullptr);
+                request_context.on_input_complete();
+
+                LOG_INFO(
+                    "Sending response: "
+                    << request_context.get_response()->to_string());
+                socket->respond(request_context.get_response()->to_string());
             }
         }
+        // Non-streamed input
+        else {
+            while (request.body().size() < content_length) {
+                socket->respond(HttpResponse::create(
+                                    HttpError(HttpError::Code::_100_CONTINUE))
+                                    ->to_string());
+                request.body().append(socket->recieve());
+                LOG_INFO("Got " << request.body().size() << " total bytes.")
+            }
+            request_context.set_request(request);
+            // Process with full body
+            m_web_app->on_request(&request_context);
 
-        LOG_INFO(
-            "Sending response: "
-            << request_context.get_response()->to_string());
+            LOG_INFO(
+                "Sending response: "
+                << request_context.get_response()->to_string());
+            socket->respond(request_context.get_response()->to_string());
+        }
 
-        socket->respond(request_context.get_response()->to_string());
+        // Handle streamed response
+        if (request_context.get_stream()->has_content()) {
+            request_context.set_output_chunk_handler(
+                [&socket](
+                    const hestia::ReadableBufferView& buffer, bool finished) {
+                    (void)finished;
+                    socket->respond(
+                        std::string(buffer.data(), buffer.length()));
+                    return buffer.length();
+                });
+            LOG_INFO("Responding with provided stream");
+            request_context.flush_stream();
+        }
+
         socket->close();
     }
     else if (socket->closed()) {

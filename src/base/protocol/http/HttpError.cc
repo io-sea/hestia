@@ -4,6 +4,7 @@
 
 namespace hestia {
 static std::unordered_map<HttpError::Code, HttpError::CodeAndId> errors = {
+    {HttpError::Code::_100_CONTINUE, {100, "Continue"}},
     {HttpError::Code::_200_OK, {200, "OK"}},
     {HttpError::Code::_201_CREATED, {201, "Created"}},
     {HttpError::Code::_400_BAD_REQUEST, {400, "Bad Request"}},
@@ -35,6 +36,11 @@ HttpError::CodeAndId HttpError::get_code_and_id() const
         identifier = iter->second.second;
     }
     return {code, identifier};
+}
+
+const std::string& HttpError::get_message() const
+{
+    return m_message;
 }
 
 std::string HttpError::to_string() const

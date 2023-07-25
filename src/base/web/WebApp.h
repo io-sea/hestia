@@ -30,6 +30,8 @@ class WebApp {
 
     void set_url_router(std::unique_ptr<UrlRouter> router);
 
+    bool get_streamable(const std::string& request_path) const;
+
   protected:
     virtual HttpResponse::Ptr on_view_not_found(
         const HttpRequest& request) const;

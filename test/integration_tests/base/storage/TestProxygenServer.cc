@@ -46,6 +46,7 @@ class TestProxygenServerFixture {
     std::unique_ptr<hestia::UserService> m_user_service;
 };
 
+
 TEST_CASE_METHOD(
     TestProxygenServerFixture, "Test Proxygen Server", "[proxygen]")
 {
