@@ -1,6 +1,9 @@
 #include "MockIOContext.h"
 
 namespace hestia {
+
+    MockIoContext::MockIoContext(int num_blocks, size_t block_size, bool alloc_io_buff): IoContext(num_blocks, block_size, alloc_io_buff){}
+
      std::size_t MockIOContext::get_extent_index(int i){ return m_ext.m_indices[i]; }
      std::size_t MockIOContext::get_extent_count(int i){ return m_ext.m_counts[i]; }
      std::size_t MockIOContext::get_attr_count(int i){ return m_attr.m_counts[i]; }
@@ -41,8 +44,9 @@ namespace hestia {
         return 0;
         }
 
-    int MockIOContext::read_blocks(char * stored)
+    int MockIOContext::read_blocks(MockMotrObject* Obj)
     {   
+        auto stored = Obj->m_stored;
         for(std::size_t i=0; i<m_data.m_counts.size(); i++){
             int idx=m_ext.m_indices[i];
             for(std::size_t j=0; j<m_data.m_counts[i];j++){

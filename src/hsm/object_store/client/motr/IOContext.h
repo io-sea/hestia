@@ -1,7 +1,12 @@
+#pragma once
+
 #include "UuidUtils.h"
 #include "WriteableBufferView.h"
 
 namespace hestia{
+
+class BaseMotrObject;
+
 class IoContext {
   public:
     IoContext(int num_blocks, size_t block_size, bool alloc_io_buff);
@@ -20,7 +25,7 @@ class IoContext {
 
     void to_buffer(WriteableBufferView& buffer, std::size_t block_size);
 
-    virtual int read_blocks();
+    virtual int read_blocks(BaseMotrObject* Obj);
 
     virtual std::size_t get_extent_index(int i);
     virtual std::size_t get_extent_count(int i);

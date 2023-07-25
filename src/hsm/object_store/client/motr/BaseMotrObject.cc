@@ -3,7 +3,7 @@
 #define MAX_BLOCK_COUNT (200)
 
 namespace hestia{
-    BaseMotrObject::BaseMotrObject(const Uuid& id, bool close_on_delete = true) :
+    BaseMotrObject::BaseMotrObject(const Uuid& id, bool close_on_delete) :
         m_uuid(id), m_close_on_delete(close_on_delete)
     {
         set_handle_size();

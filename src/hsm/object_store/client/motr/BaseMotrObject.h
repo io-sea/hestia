@@ -1,3 +1,5 @@
+#pragma once
+
 /* A base class that the MotrObject and MockMotrObject classes can both derive from*/
 #include <filesystem>
 #include "BlockStore.h"
@@ -28,6 +30,7 @@ class BaseMotrObject {
 
     void load_size();
 
+  
     virtual void set_handle_size();
     virtual void set_motr_id();
     virtual void close_entity();

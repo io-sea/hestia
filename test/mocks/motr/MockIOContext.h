@@ -1,10 +1,15 @@
+#pragma once
+
 #include "IOContext.h"
 #include "MockMotrTypes.h"
 
 namespace hestia{
+
 class MockIoContext: public IoContext {
   public:
   
+    MockIoContext(int num_blocks, size_t block_size, bool alloc_io_buff);
+
     std::size_t get_extent_index(int i);
      std::size_t get_extent_count(int i);
      std::size_t get_attr_count(int i);
@@ -25,12 +30,12 @@ class MockIoContext: public IoContext {
      int alloc_attr(int num_blocks, std::size_t block_size);
      int index_alloc(int num_blocks);
 
-    int read_blocks(char * stored);
-
     struct mock::motr::IndexVec m_ext;
     struct mock::motr::BufferVec m_data;
     struct mock::motr::BufferVec m_attr;
     bool m_memory_allocated = false;
+
+
 };
 
 } //namespace hestia

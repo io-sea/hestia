@@ -57,7 +57,7 @@ void MockMotrInterfaceImpl::put(
     auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
 
     auto rc = m_hsm.m0hsm_create(
-        motr_obj->motr_id, motr_obj.get_motr_obj(), request.target_tier(),
+        motr_obj->m_motr_id, &(motr_obj->m_handle), request.target_tier(),
         false);
     if (rc < 0) {
         const std::string msg =
@@ -67,7 +67,7 @@ void MockMotrInterfaceImpl::put(
     }
 
     rc = m_hsm.m0hsm_set_write_tier(
-        motr_obj.get_motr_id(), request.target_tier());
+        motr_obj->m_motr_id, request.target_tier());
     if (rc < 0) {
         const std::string msg =
             "Failed to set write tier: " + std::to_string(rc);
@@ -84,7 +84,7 @@ void MockMotrInterfaceImpl::put(
 
         auto working_obj = motr_obj;
         auto rc          = m_hsm.m0hsm_pwrite(
-            working_obj.get_motr_obj(), const_cast<void*>(buffer.as_void()),
+            &(working_obj->m_handle), const_cast<void*>(buffer.as_void()),
             buffer.length(), offset);
         if (rc < 0) {
             std::string msg =
@@ -106,11 +106,11 @@ void MockMotrInterfaceImpl::get(
 {
     (void)object;
 
-    MotrObject motr_obj(request.object().id());
-    motr_obj.m_size = request.object().m_size;
+    auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
+    motr_obj->m_total_size = request.object().m_size;
 
     auto rc = m_hsm.m0hsm_set_read_tier(
-        motr_obj.get_motr_id(), request.source_tier());
+        motr_obj->m_motr_id, request.source_tier());
     if (rc < 0) {
         const std::string msg =
             "Failed to set read tier: " + std::to_string(rc);
@@ -121,17 +121,17 @@ void MockMotrInterfaceImpl::get(
     auto source_func = [this, motr_obj](
                            WriteableBufferView& buffer,
                            std::size_t offset) -> InMemoryStreamSource::Status {
-        if (offset >= motr_obj.m_size) {
+        if (offset >= motr_obj->m_total_size) {
             return {true, 0};
         }
 
         auto read_size = buffer.length();
-        if (offset + buffer.length() > motr_obj.m_size) {
-            read_size = motr_obj.m_size - offset;
+        if (offset + buffer.length() > motr_obj->m_total_size) {
+            read_size = motr_obj->m_total_size - offset;
         }
 
         auto rc = m_hsm.m0hsm_read(
-            motr_obj.get_motr_id(), buffer.as_void(), read_size, offset);
+            motr_obj->m_motr_id, buffer.as_void(), read_size, offset);
         if (rc < 0) {
             std::string msg =
                 "Error writing buffer at offset " + std::to_string(offset);
@@ -147,14 +147,14 @@ void MockMotrInterfaceImpl::get(
 
 void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 {
-    MotrObject motr_obj(request.object().id());
+    auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
 
     std::size_t offset{0};
     std::size_t length{IMotrInterfaceImpl::max_obj_length};
     mock::motr::hsm_rls_flags flags =
         mock::motr::hsm_rls_flags::HSM_KEEP_LATEST;
     auto rc = m_hsm.m0hsm_release(
-        motr_obj.get_motr_id(), request.source_tier(), offset, length, flags);
+        motr_obj->m_motr_id, request.source_tier(), offset, length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_release" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -164,7 +164,7 @@ void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 {
-    MotrObject motr_obj(request.object().id());
+    auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
     std::size_t length = request.extent().m_length;
     if (length == 0) {
         length = IMotrInterfaceImpl::max_obj_length;
@@ -173,7 +173,7 @@ void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
     mock::motr::Hsm::hsm_cp_flags flags =
         mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
     auto rc = m_hsm.m0hsm_copy(
-        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        motr_obj->m_motr_id, request.source_tier(), request.target_tier(),
         request.extent().m_offset, length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
@@ -184,7 +184,7 @@ void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
 
 void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
 {
-    MotrObject motr_obj(request.object().id());
+    auto motr_obj = std::make_shared<MockMotrObject>(request.object().id());
     std::size_t length = request.extent().m_length;
     if (length == 0) {
         length = IMotrInterfaceImpl::max_obj_length;
@@ -193,7 +193,7 @@ void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
     mock::motr::Hsm::hsm_cp_flags flags =
         mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     auto rc = m_hsm.m0hsm_copy(
-        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
+        motr_obj->m_motr_id, request.source_tier(), request.target_tier(),
         request.extent().m_offset, length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
