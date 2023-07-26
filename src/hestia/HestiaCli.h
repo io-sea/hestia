@@ -57,6 +57,9 @@ class HestiaCli {
     OpStatus start_daemon(IHestiaApplication* app);
     OpStatus stop_daemon();
 
+    OpStatus print_info(IHestiaApplication* app);
+    void print_version();
+
     std::string m_user_token;
     std::string m_config_path;
     std::string m_server_host;

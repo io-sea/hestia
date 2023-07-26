@@ -47,8 +47,7 @@ int main(int argc, char** argv)
                       << e.what() << std::endl;
             rc = -1;
         }
+        LOG_INFO("Hestia Finished");
     }
-
-    LOG_INFO("Hestia Finished");
     return rc;
 }

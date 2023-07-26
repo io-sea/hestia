@@ -76,6 +76,9 @@ class HestiaClientCommand {
     uint8_t m_source_tier{0};
     uint8_t m_target_tier{0};
 
+    bool m_is_verbose{false};
+    bool m_is_version{false};
+
     HestiaType m_subject;
 
     std::vector<std::string> m_id;

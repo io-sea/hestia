@@ -87,6 +87,11 @@ OpStatus MockHestiaClient::remove(
     return {};
 }
 
+std::string MockHestiaClient::get_runtime_info() const
+{
+    return {};
+}
+
 OpStatus MockHestiaClient::do_data_movement_action(HsmAction& action)
 {
     (void)action;

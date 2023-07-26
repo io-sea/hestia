@@ -10,6 +10,8 @@
 #include "Logger.h"
 #include "UuidUtils.h"
 
+#include "ProjectConfig.h"
+
 #include <CLI/CLI11.hpp>
 #include <iostream>
 
@@ -74,34 +76,39 @@ void HestiaCli::add_hsm_actions(
 void HestiaCli::add_get_data_options(CLI::App* command)
 {
     command
-        ->add_option("file", m_client_command.m_path, "Path to write data to")
+        ->add_option("--file", m_client_command.m_path, "Path to write data to")
         ->required();
     command->add_option(
-        "tier", m_client_command.m_source_tier, "Tier to get data from");
+        "--tier", m_client_command.m_source_tier, "Tier to get data from");
 }
 
 void HestiaCli::add_put_data_options(CLI::App* command)
 {
     command
-        ->add_option("file", m_client_command.m_path, "Path to read data from")
+        ->add_option(
+            "--file", m_client_command.m_path, "Path to read data from")
         ->required();
     command->add_option(
-        "tier", m_client_command.m_target_tier, "Tier to put data to");
+        "--tier", m_client_command.m_target_tier, "Tier to put data to");
 }
 
 void HestiaCli::add_copy_data_options(CLI::App* command)
 {
-    command->add_option("source", m_client_command.m_source_tier, "Source Tier")
+    command
+        ->add_option("--source", m_client_command.m_source_tier, "Source Tier")
         ->required();
-    command->add_option("target", m_client_command.m_target_tier, "Target Tier")
+    command
+        ->add_option("--target", m_client_command.m_target_tier, "Target Tier")
         ->required();
 }
 
 void HestiaCli::add_move_data_options(CLI::App* command)
 {
-    command->add_option("source", m_client_command.m_source_tier, "Source Tier")
+    command
+        ->add_option("--source", m_client_command.m_source_tier, "Source Tier")
         ->required();
-    command->add_option("target", m_client_command.m_target_tier, "Target Tier")
+    command
+        ->add_option("--target", m_client_command.m_target_tier, "Target Tier")
         ->required();
 }
 
@@ -109,7 +116,7 @@ void HestiaCli::add_release_data_options(CLI::App* command)
 {
     command
         ->add_option(
-            "tier", m_client_command.m_source_tier, "Tier to remove from")
+            "--tier", m_client_command.m_source_tier, "Tier to remove from")
         ->required();
 }
 
@@ -205,12 +212,15 @@ void HestiaCli::parse_args(int argc, char* argv[])
     commands["start"] = app.add_subcommand("start", "Start the Hestia Daemon");
     commands["stop"]  = app.add_subcommand("stop", "Stop the Hestia Daemon");
 
-    for (auto& kv_pair : commands) {
-        kv_pair.second->add_option(
-            "-c, --config", m_config_path, "Path to a Hestia config file.");
-        kv_pair.second->add_option(
-            "-t, --token", m_config_path, "User authentication token.");
-    }
+    app.add_flag(
+        "--verbose", m_client_command.m_is_verbose,
+        "Print extra diagnostics to Stderr");
+    app.add_flag(
+        "--version", m_client_command.m_is_version,
+        "Print application version");
+    app.add_option(
+        "-c, --config", m_config_path, "Path to a Hestia config file.");
+    app.add_option("-t, --token", m_user_token, "User authentication token.");
 
     try {
         app.parse(argc, argv);
@@ -264,7 +274,11 @@ void HestiaCli::parse_args(int argc, char* argv[])
         return;
     }
 
-    if (commands["start"]->parsed()) {
+    if (m_client_command.m_is_version) {
+        print_version();
+        return;
+    }
+    else if (commands["start"]->parsed()) {
         m_app_command = AppCommand::DAEMON_START;
     }
     else if (commands["stop"]->parsed()) {
@@ -295,6 +309,10 @@ bool HestiaCli::is_server() const
 
 OpStatus HestiaCli::run(IHestiaApplication* app)
 {
+    if (m_client_command.m_is_version) {
+        return {};
+    }
+
     if (app == nullptr || m_app_command == AppCommand::DAEMON_STOP) {
         return stop_daemon();
     }
@@ -314,6 +332,19 @@ OpStatus HestiaCli::run(IHestiaApplication* app)
     }
 }
 
+OpStatus HestiaCli::print_info(IHestiaApplication* app)
+{
+    m_console_interface->console_write_error(app->get_runtime_info());
+    return {};
+}
+
+void HestiaCli::print_version()
+{
+    m_console_interface->console_write(
+        hestia::project_config::get_project_name()
+        + " version: " + hestia::project_config::get_project_version());
+}
+
 OpStatus HestiaCli::run_client(IHestiaApplication* app)
 {
     OpStatus status;
@@ -331,6 +362,10 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
 
     if (!status.ok()) {
         return status;
+    }
+
+    if (m_client_command.m_is_verbose) {
+        print_info(app);
     }
 
     auto client = dynamic_cast<IHestiaClient*>(app);

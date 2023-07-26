@@ -20,6 +20,7 @@
 #include "TimeUtils.h"
 
 #include <iostream>
+#include <sstream>
 
 namespace hestia {
 
@@ -74,6 +75,16 @@ OpStatus HestiaApplication::initialize(
 
     LOG_INFO("Finished Initializing Hestia");
     return {};
+}
+
+std::string HestiaApplication::get_runtime_info() const
+{
+    std::stringstream sstr;
+    sstr << "Cache Location: " << m_config.get_cache_path() << '\n';
+    sstr << "App Mode: "
+         << ApplicationMode_enum_string_converter().init().to_string(m_app_mode)
+         << '\n';
+    return sstr.str();
 }
 
 void HestiaApplication::initialize_logger() const

@@ -47,6 +47,8 @@ class MockHestiaClient : public IHestiaClient {
 
     void set_last_error(const std::string& msg) override;
 
+    std::string get_runtime_info() const override;
+
     OpStatus run() override;
 
     std::size_t m_created_id_count{0};

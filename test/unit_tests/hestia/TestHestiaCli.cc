@@ -13,6 +13,11 @@ class TestConsoleInterface : public hestia::IConsoleInterface {
         m_output += output;
     }
 
+    void console_write_error(const std::string& output) const override
+    {
+        m_err_output += output;
+    }
+
     bool console_read(std::string& line) const override
     {
         if (m_input_line_count == m_input_lines.size()) {
@@ -23,6 +28,7 @@ class TestConsoleInterface : public hestia::IConsoleInterface {
         return true;
     }
     mutable std::string m_output;
+    mutable std::string m_err_output;
     std::vector<std::string> m_input_lines;
     mutable std::size_t m_input_line_count{0};
 };

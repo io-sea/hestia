@@ -90,6 +90,8 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
 
     OpStatus run() override { return {}; }
 
+    std::string get_runtime_info() const override;
+
   private:
     void clear_last_error();
 

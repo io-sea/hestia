@@ -230,6 +230,11 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
     return {};
 }
 
+std::string HestiaClient::get_runtime_info() const
+{
+    return HestiaApplication::get_runtime_info();
+}
+
 void HestiaClient::do_data_io_action(
     HsmAction& action, Stream* stream, dataIoCompletionFunc completion_func)
 {
