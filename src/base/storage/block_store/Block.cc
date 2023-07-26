@@ -39,7 +39,7 @@ void Block::set_data(const ReadableBufferView& buffer, std::size_t offset)
 {
     if (m_data.empty()) {
         if (offset == 0) {
-            m_data = std::vector<char>(buffer.length());
+            m_data = std::vector<char>(buffer.length(), 0);
             for (std::size_t idx = 0; idx < buffer.length(); idx++) {
                 m_data[idx] = buffer.data()[idx];
             }

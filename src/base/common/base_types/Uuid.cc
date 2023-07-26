@@ -18,7 +18,7 @@ bool Uuid::is_unset() const
 
 std::string Uuid::to_string(char delimiter) const
 {
-    std::vector<unsigned char> bytes(16);
+    std::vector<unsigned char> bytes(16, 0);
     for (std::size_t idx = 0; idx < 8; idx++) {
         bytes[idx] = m_lo >> (idx * 8);
     }

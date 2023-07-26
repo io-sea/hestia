@@ -92,7 +92,7 @@ StreamState Stream::flush(std::size_t block_size) noexcept
         return {StreamState::State::ERROR, msg};
     }
 
-    std::vector<char> buffer(block_size);
+    std::vector<char> buffer(block_size, 0);
 
     StreamState state;
     WriteableBufferView writeable_buffer(buffer);

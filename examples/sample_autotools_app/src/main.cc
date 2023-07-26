@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
     hestia::move({0000, 0001}, 0, 1);
 
-    std::vector<char> buffer(content.length());
+    std::vector<char> buffer(content.length(), 0);
     hestia::get({0000, 0001}, buffer.data(), 0, content.length(), 1, 1);
 
     std::string returned_content(buffer.begin(), buffer.end());

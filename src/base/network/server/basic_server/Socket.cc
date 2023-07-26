@@ -255,7 +255,7 @@ void Socket::on_socker_error(const std::string& message)
 std::string Socket::recieve()
 {
     const int buffer_size = 512;
-    std::vector<char> buffer(buffer_size);
+    std::vector<char> buffer(buffer_size, 0);
 
     std::size_t result{0};
     {

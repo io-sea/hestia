@@ -61,7 +61,7 @@ add_module(
         protocol
         http_client
     PRIVATE_DEPENDENCIES
-        hiredis::hiredis_static
+        hiredis::hiredis
     WITH_FILESYSTEM
 )
 

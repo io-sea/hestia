@@ -56,7 +56,7 @@ size_t CurlClient::on_write(void* buffer, size_t nmemb)
     }
     else {
         auto char_buf = reinterpret_cast<char*>(buffer);
-        std::vector<char> body(nmemb);
+        std::vector<char> body(nmemb, 0);
         for (std::size_t idx = 0; idx < nmemb; idx++) {
             body[idx] = char_buf[idx];
         }

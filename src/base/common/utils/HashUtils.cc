@@ -16,7 +16,7 @@ namespace hestia {
 
 std::string HashUtils::do_rand_32()
 {
-    std::vector<unsigned char> buffer(32);
+    std::vector<unsigned char> buffer(32, 0);
     int rc = RAND_bytes(buffer.data(), buffer.size());
     if (rc != 1) {
         throw std::runtime_error(
@@ -28,7 +28,7 @@ std::string HashUtils::do_rand_32()
 std::string HashUtils::do_md5(const std::string& input)
 {
     auto context = EVP_MD_CTX_new();
-    std::vector<unsigned char> md_value(EVP_MAX_MD_SIZE);
+    std::vector<unsigned char> md_value(EVP_MAX_MD_SIZE, 0);
     unsigned int md_len{0};
 
     EVP_DigestInit_ex(context, EVP_md5(), nullptr);
@@ -36,12 +36,17 @@ std::string HashUtils::do_md5(const std::string& input)
     EVP_DigestFinal_ex(context, md_value.data(), &md_len);
     EVP_MD_CTX_free(context);
 
-    return std::string(md_value.begin(), md_value.begin() + md_len);
+    if (md_len < EVP_MAX_MD_SIZE) {
+        return std::string(md_value.begin(), md_value.begin() + md_len);
+    }
+    else {
+        return std::string(md_value.begin(), md_value.end());
+    }
 }
 
 std::string HashUtils::base64_encode(const std::string& input)
 {
-    std::vector<unsigned char> buffer(EVP_ENCODE_LENGTH(input.length()));
+    std::vector<unsigned char> buffer(EVP_ENCODE_LENGTH(input.length()), 0);
     auto i = EVP_EncodeBlock(
         buffer.data(), reinterpret_cast<const unsigned char*>(input.c_str()),
         input.length());

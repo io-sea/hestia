@@ -77,7 +77,7 @@ void RequestContext::flush_stream()
         return;
     }
 
-    std::vector<char> buffer(m_chunk_size);
+    std::vector<char> buffer(m_chunk_size, 0);
     WriteableBufferView writeable_buffer(&buffer[0], m_chunk_size);
     while (true) {
         const auto result = m_stream->read(writeable_buffer);

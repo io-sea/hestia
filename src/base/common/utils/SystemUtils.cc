@@ -94,7 +94,7 @@ std::pair<OpStatus, std::string> get_mac_address_linux()
         }
     }
 
-    std::vector<unsigned char> mac_address(6);
+    std::vector<unsigned char> mac_address(6, 0);
     if (success != 0) {
         ::memcpy(mac_address.data(), ifr.ifr_hwaddr.sa_data, 6);
         return {status, std::string(mac_address.begin(), mac_address.end())};
@@ -170,7 +170,7 @@ std::pair<OpStatus, std::string> SystemUtils::get_mac_address()
 std::pair<OpStatus, std::string> SystemUtils::get_hostname()
 {
     OpStatus status;
-    std::vector<char> buffer(1024);
+    std::vector<char> buffer(1024, 0);
     errno = 0;
     if (::gethostname(buffer.data(), 1024) != 0) {
         status.m_status        = OpStatus::Status::ERROR;
