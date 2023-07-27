@@ -87,6 +87,11 @@ std::string HestiaApplication::get_runtime_info() const
     return sstr.str();
 }
 
+const std::string& HestiaApplication::get_cache_path() const
+{
+    return m_config.get_cache_path();
+}
+
 void HestiaApplication::initialize_logger() const
 {
     Logger::get_instance().do_initialize(

@@ -24,7 +24,7 @@ DaemonManager::Status DaemonManager::start()
         return m_status;
     }
     if (pid > 0) {
-        LOG_INFO("Exiting parent on pid: " << pid);
+        LOG_INFO("Exiting parent. Child is on pid: " << pid);
         m_status = Status::EXIT_OK;
         return m_status;
     }
@@ -68,6 +68,9 @@ DaemonManager::Status DaemonManager::stop()
     if (auto rc = ::kill(pid, SIGTERM); rc < 0) {
         std::cerr
             << "Error stopping the server daemon. terminate signal unsuccessful";
+        return DaemonManager::Status::EXIT_FAILED;
     }
-    return {};
+    LOG_INFO("Stopped pid: " << pid);
+
+    return DaemonManager::Status::EXIT_OK;
 }

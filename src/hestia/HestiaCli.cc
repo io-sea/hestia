@@ -307,6 +307,12 @@ bool HestiaCli::is_server() const
            || m_app_command == AppCommand::SERVER;
 }
 
+bool HestiaCli::is_daemon() const
+{
+    return m_app_command == AppCommand::DAEMON_START
+           || m_app_command == AppCommand::DAEMON_STOP;
+}
+
 OpStatus HestiaCli::run(IHestiaApplication* app)
 {
     if (m_client_command.m_is_version) {

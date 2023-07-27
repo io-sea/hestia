@@ -53,6 +53,8 @@ class HestiaApplication : public IHestiaApplication {
 
     OpStatus run() override { return {}; }
 
+    const std::string& get_cache_path() const;
+
   protected:
     virtual bool uses_local_storage() const;
     virtual bool uses_http_client() const;

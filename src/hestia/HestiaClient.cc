@@ -272,6 +272,7 @@ OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
 
 void HestiaClient::load_object_store_defaults()
 {
+    LOG_INFO("Loading fallback file based object store and tiers");
     HsmObjectStoreClientBackend backend(
         HsmObjectStoreClientBackend::Type::FILE_HSM,
         FileHsmObjectStoreClient::get_registry_identifier());

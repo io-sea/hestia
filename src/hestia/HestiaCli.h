@@ -29,6 +29,8 @@ class HestiaCli {
 
     bool is_server() const;
 
+    bool is_daemon() const;
+
     void parse_args(int argc, char* argv[]);
 
     OpStatus run(IHestiaApplication* app);
