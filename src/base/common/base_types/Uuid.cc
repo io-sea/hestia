@@ -54,6 +54,11 @@ std::string Uuid::to_string(char delimiter) const
     return sstr.str();
 }
 
+void Uuid::bump_lower(uint64_t minimum_value)
+{
+    m_lo |= minimum_value;
+}
+
 Uuid Uuid::from_string(const std::string& input, char delimiter)
 {
     if (input.length() != 36) {

@@ -379,6 +379,16 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
         return on_crud_method(client);
     }
     else if (m_client_command.is_data_management_action()) {
+        m_client_command.m_action.set_subject(
+            m_client_command.m_subject.m_hsm_type);
+        m_client_command.m_action.set_target_tier(
+            m_client_command.m_target_tier);
+        m_client_command.m_action.set_source_tier(
+            m_client_command.m_source_tier);
+        if (!m_client_command.m_id.empty()) {
+            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
+        }
+
         const auto status =
             client->do_data_movement_action(m_client_command.m_action);
         return status;
@@ -386,6 +396,15 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
     else if (m_client_command.is_data_io_action()) {
         Stream stream;
         OpStatus status;
+        m_client_command.m_action.set_subject(
+            m_client_command.m_subject.m_hsm_type);
+        m_client_command.m_action.set_target_tier(
+            m_client_command.m_target_tier);
+        m_client_command.m_action.set_source_tier(
+            m_client_command.m_source_tier);
+        if (!m_client_command.m_id.empty()) {
+            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
+        }
         if (m_client_command.is_data_put_action()) {
             stream.set_source(
                 FileStreamSource::create(m_client_command.m_path));

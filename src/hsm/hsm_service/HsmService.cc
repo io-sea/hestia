@@ -237,7 +237,7 @@ void HsmService::put_data(
 
     auto get_response = object_service->make_request(CrudRequest{CrudQuery(
         req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
-    // ERROR_CHECK(get_response);
+    CRUD_ERROR_CHECK(get_response);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -256,7 +256,7 @@ void HsmService::put_data(
 
     auto data_put_response =
         m_object_store->make_request(data_put_request, stream);
-    // ERROR_CHECK(data_put_response);
+    CRUD_ERROR_CHECK(data_put_response);
 
     if (stream->waiting_for_content()) {
         auto stream_complete_func =

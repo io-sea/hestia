@@ -66,6 +66,8 @@ class HestiaClientCommand {
 
     void set_hsm_action(HsmAction::Action action);
 
+    void set_subject(HestiaType subject) { m_subject = subject; }
+
     void set_hsm_subject(const std::string& subject);
 
     void set_system_subject(const std::string& subject);

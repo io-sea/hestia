@@ -24,4 +24,4 @@ class ConsoleInterface : public IConsoleInterface {
 
     bool console_read(std::string& line) const override;
 };
-};  // namespace hestia
+}  // namespace hestia

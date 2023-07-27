@@ -68,6 +68,8 @@ class HsmAction : public HsmItem, public OwnableModel {
         m_subject_key.update_value(key);
     }
 
+    void set_subject(HsmItem::Type subject) { m_subject.update_value(subject); }
+
     void set_size(const std::size_t& size) { m_to_transfer.update_value(size); }
 
     HsmAction& operator=(const HsmAction& other);

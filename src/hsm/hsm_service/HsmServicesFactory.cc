@@ -32,10 +32,14 @@ CrudService::Ptr HsmServicesFactory::create_service(
     ServiceConfig config = config_in;
     config.m_item_prefix = HsmItem::to_name(type);
 
+    // Cortx Motr restriction;
+    uint64_t object_minimum_id = 0x100000ULL;
+
     switch (type) {
         case HsmItem::Type::OBJECT:
             return CrudServiceFactory<HsmObject>::create(
-                config, backend, user_service);
+                config, backend, user_service,
+                std::make_unique<DefaultIdGenerator>(object_minimum_id));
         case HsmItem::Type::DATASET:
             return CrudServiceFactory<Dataset>::create(
                 config, backend, user_service);

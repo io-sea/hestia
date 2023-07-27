@@ -72,7 +72,7 @@ hestia object copy_data 550e8400-e29b-41d4-a716-446655440000 --source 0 --target
 Retrieve the content of the object on tier `1` and write it to `my_file_out.dat`:
 
 ```bash
-hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --file my_file_out.dat --source 1
+hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --tier 1 --file my_file_out.dat 
 ```
 
 Hestia provides several interfaces including:

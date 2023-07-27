@@ -28,30 +28,32 @@ Uuid UuidUtils::from_string(
                 StringUtils::to_int(hi_st, as_hex)};
         }
     }
-    else if (format == Uuid::Format::Bytes16) {
-        if (input.length() != 16) {
-            throw std::runtime_error(
-                "Can't convert string format Bytes16 of length: "
-                + std::to_string(input.size()) + " to uuid");
-        }
-
-        uint64_t lo = 0;
-        for (std::size_t idx = 8; idx < 16; idx++) {
-            uint64_t c = input[idx];
-            lo |= (c << ((idx - 8) * 8));
-        }
-
-        uint64_t hi = 0;
-        for (std::size_t idx = 0; idx < 8; idx++) {
-            uint64_t c = input[idx];
-            hi |= (c << (idx * 8));
-        }
-        return {lo, hi};
-    }
     else if (format == Uuid::Format::Hex8_4_4_4_12) {
         return Uuid::from_string(input, delimiter);
     }
     return {};
+}
+
+Uuid UuidUtils::from_bytes(const std::vector<unsigned char>& bytes)
+{
+    if (bytes.size() != 16) {
+        throw std::runtime_error(
+            "Can't convert format Bytes16 of length: "
+            + std::to_string(bytes.size()) + " to uuid");
+    }
+
+    uint64_t lo = 0;
+    for (std::size_t idx = 8; idx < 16; idx++) {
+        uint64_t c = bytes[idx];
+        lo |= (c << ((idx - 8) * 8));
+    }
+
+    uint64_t hi = 0;
+    for (std::size_t idx = 0; idx < 8; idx++) {
+        uint64_t c = bytes[idx];
+        hi |= (c << (idx * 8));
+    }
+    return {lo, hi};
 }
 
 std::string UuidUtils::to_string(

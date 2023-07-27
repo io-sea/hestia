@@ -18,7 +18,8 @@ class CrudServiceFactory {
     static std::unique_ptr<CrudService> create(
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        UserService* user_service = nullptr)
+        UserService* user_service                    = nullptr,
+        std::unique_ptr<IdGenerator> id_generator_in = {})
     {
         assert(backend != nullptr);
 
@@ -51,8 +52,13 @@ class CrudServiceFactory {
 
             assert(kv_backend->m_client != nullptr);
 
-            id_generator = std::make_unique<DefaultIdGenerator>();
-            crud_client  = std::make_unique<KeyValueCrudClient>(
+            if (id_generator_in) {
+                id_generator = std::move(id_generator_in);
+            }
+            else {
+                id_generator = std::make_unique<DefaultIdGenerator>();
+            }
+            crud_client = std::make_unique<KeyValueCrudClient>(
                 crud_client_config, std::move(adapter_collection),
                 kv_backend->m_client, id_generator.get());
         }
