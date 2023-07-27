@@ -29,6 +29,8 @@ class HestiaHsmActionView : public CrudWebView {
         const HttpRequest& request, const User& user) override;
 
   private:
+    HttpResponse::Ptr do_hsm_action(const HttpRequest& request);
+
     DistributedHsmService* m_hestia_service{nullptr};
 };
 }  // namespace hestia

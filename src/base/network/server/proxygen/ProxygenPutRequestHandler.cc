@@ -28,6 +28,12 @@ void ProxygenPutRequestHandler::onRequest(
     if (m_web_app->get_streamable(
             m_request_context->get_request().get_path())) {
         m_web_app->on_request(m_request_context.get());
+
+        if (!m_request_context->get_response()->error()) {
+            m_request_context->set_response(HttpResponse::create(
+                HttpError(HttpError::Code::_100_CONTINUE)));
+        }
+
         LOG_INFO(
             "Sending response: "
             << m_request_context->get_response()->to_string());

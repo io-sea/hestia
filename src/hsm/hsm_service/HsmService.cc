@@ -275,6 +275,7 @@ void HsmService::put_data(
                     completion_func(std::move(response));
                 }
             };
+        stream->set_completion_func(stream_complete_func);
     }
     else {
         on_put_data_complete(

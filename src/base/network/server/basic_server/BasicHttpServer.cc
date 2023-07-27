@@ -59,6 +59,22 @@ BasicHttpServer::Status BasicHttpServer::start()
     return {};
 }
 
+HttpResponse::Ptr write_to_stream(HttpRequest& req, Stream* stream)
+{
+    auto response = HttpResponse::create();
+    if (!req.body().empty()) {
+        auto status = stream->write(ReadableBufferView(req.body()));
+        LOG_INFO("Wrote " << status.m_num_transferred << " bytes to stream");
+        if (!status.ok()) {
+            LOG_ERROR(
+                "Error writing body to stream: " << status.m_state.message());
+            response = HttpResponse::create(
+                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR));
+        }
+    }
+    return response;
+}
+
 void BasicHttpServer::on_connection(Socket* socket)
 {
     auto message = socket->recieve();
@@ -84,49 +100,46 @@ void BasicHttpServer::on_connection(Socket* socket)
                 request_context.get_request().get_path())) {
             m_web_app->on_request(&request_context);
 
-            LOG_INFO(
-                "Sending response: "
-                << request_context.get_response()->to_string());
-            socket->respond(request_context.get_response()->to_string());
-
             //  Handle input (outstanding request body)
             // Not supported: streamed body and streamed response
             if (request_context.get_stream()->waiting_for_content()) {
                 std::size_t total_received = request.body().size();
 
+                // Handle initial body if parsed
+                auto status =
+                    write_to_stream(request, request_context.get_stream());
+                if (status->error()) {
+                    socket->respond(status->to_string());
+                }
                 while (total_received < content_length) {
+                    // Ask for more data
+                    socket->respond(
+                        HttpResponse::create(
+                            HttpError(HttpError::Code::_100_CONTINUE))
+                            ->to_string());
+
                     // Get further data
                     request.body().assign(socket->recieve());
                     LOG_INFO("Got " << request.body().size() << " extra bytes.")
                     total_received += request.body().size();
 
-                    // Ask for more data
-                    socket->respond(
-                        request_context.get_response()->to_string());
-
                     // Push body chunk to stream
-                    auto status = request_context.get_stream()->write(
-                        ReadableBufferView(request.body()));
-                    LOG_INFO(
-                        "Wrote " << status.m_num_transferred
-                                 << " bytes to internal buffer");
-                    if (!status.ok()) {
-                        LOG_ERROR(
-                            "Error writing body to stream: "
-                            << status.m_state.message());
+                    auto status =
+                        write_to_stream(request, request_context.get_stream());
+                    if (status->error()) {
+                        socket->respond(status->to_string());
                         break;
                     }
                 }
-
                 // Reset response & respond based on stream status
                 request_context.set_response(nullptr);
                 request_context.on_input_complete();
-
-                LOG_INFO(
-                    "Sending response: "
-                    << request_context.get_response()->to_string());
-                socket->respond(request_context.get_response()->to_string());
             }
+
+            LOG_INFO(
+                "Sending response: "
+                << request_context.get_response()->to_string());
+            socket->respond(request_context.get_response()->to_string());
         }
         // Non-streamed input
         else {

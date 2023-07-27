@@ -28,23 +28,6 @@ class MockWebView : public WebView {
             response->set_body("No data set!");
             return response;
         }
-        if (buffer_size > request.get_context()->get_chunk_size()) {
-            return response;
-        }
-
-        std::vector<char> body(buffer_size);
-        WriteableBufferView buf(body);
-
-        auto status = request.get_context()->get_stream()->read(buf);
-        if (!status.ok()) {
-            LOG_ERROR(
-                "Error writing stream to body: " << status.m_state.message());
-            return HttpResponse::create(
-                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR));
-        }
-        LOG_INFO(status.m_num_transferred << " bytes transferred");
-        response->set_body(std::string(body.data(), buffer_size));
-        LOG_INFO(std::string(body.data(), buffer_size));
         return response;
     }
 
