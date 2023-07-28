@@ -235,8 +235,10 @@ void HsmService::put_data(
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
-    auto get_response = object_service->make_request(CrudRequest{CrudQuery(
-        req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
+    auto get_response = object_service->make_request(CrudRequest{
+        CrudQuery(
+            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        req.get_user_id()});
     CRUD_ERROR_CHECK(get_response);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
@@ -262,11 +264,12 @@ void HsmService::put_data(
         auto stream_complete_func =
             [this, base_req = BaseRequest(req),
              working_obj_copy = *working_object, chosen_tier, working_extent,
+             user_id          = req.get_user_id(),
              completion_func](StreamState stream_state) {
                 if (stream_state.ok()) {
                     this->on_put_data_complete(
-                        base_req, working_obj_copy, chosen_tier, working_extent,
-                        completion_func);
+                        base_req, user_id, working_obj_copy, chosen_tier,
+                        working_extent, completion_func);
                 }
                 else {
                     auto response = HsmActionResponse::create(base_req);
@@ -279,12 +282,14 @@ void HsmService::put_data(
     }
     else {
         on_put_data_complete(
-            req, *working_object, chosen_tier, working_extent, completion_func);
+            req, req.get_user_id(), *working_object, chosen_tier,
+            working_extent, completion_func);
     }
 }
 
 void HsmService::on_put_data_complete(
     const BaseRequest& req,
+    const std::string& user_id,
     const HsmObject& working_object,
     uint8_t tier,
     const Extent& working_extent,
@@ -309,11 +314,11 @@ void HsmService::on_put_data_complete(
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent_needs_creation) {
         extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::CREATE, extent));
+            TypedCrudRequest<TierExtents>(CrudMethod::CREATE, extent, user_id));
     }
     else {
         extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, extent));
+            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, extent, user_id));
     }
 
     if (!extent_put_response->ok()) {
@@ -325,9 +330,10 @@ void HsmService::on_put_data_complete(
         completion_func(std::move(response));
     }
 
-    auto object_service      = m_services->get_service(HsmItem::Type::OBJECT);
-    auto object_put_response = object_service->make_request(
-        TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, working_object});
+    auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
+    auto object_put_response =
+        object_service->make_request(TypedCrudRequest<HsmObject>{
+            CrudMethod::UPDATE, working_object, user_id});
     auto response = HsmActionResponse::create(req);
 
     LOG_INFO("Finished HSMService PUT");
@@ -348,8 +354,10 @@ void HsmService::get_data(
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
-    auto get_response = object_service->make_request(CrudRequest{CrudQuery(
-        req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
+    auto get_response = object_service->make_request(CrudRequest{
+        CrudQuery(
+            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        req.get_user_id()});
 
     // ERROR_CHECK(object_response);
 
@@ -404,9 +412,11 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
-    auto get_response = object_service->make_request(CrudRequest{CrudQuery(
-        req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
-    // ERROR_CHECK(get_response);
+    auto get_response = object_service->make_request(CrudRequest{
+        CrudQuery(
+            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        req.get_user_id()});
+    CRUD_ERROR_CHECK(get_response);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -446,21 +456,25 @@ HsmActionResponse::Ptr HsmService::move_data(
     CrudResponsePtr extent_put_response;
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent_needs_creation) {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::CREATE, target_extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::CREATE, target_extent, req.get_user_id()));
     }
     else {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, target_extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::UPDATE, target_extent, req.get_user_id()));
     }
 
     CRUD_ERROR_CHECK(extent_put_response);
-    extent_put_response = extent_service->make_request(
-        TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, source_extent));
+    extent_put_response =
+        extent_service->make_request(TypedCrudRequest<TierExtents>(
+            CrudMethod::UPDATE, source_extent, req.get_user_id()));
     CRUD_ERROR_CHECK(extent_put_response);
 
-    auto object_put_response = object_service->make_request(
-        TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, *working_object});
+    auto object_put_response =
+        object_service->make_request(TypedCrudRequest<HsmObject>{
+            CrudMethod::UPDATE, *working_object, req.get_user_id()});
     CRUD_ERROR_CHECK(object_put_response);
     auto response = HsmActionResponse::create(req);
 
@@ -487,8 +501,10 @@ HsmActionResponse::Ptr HsmService::copy_data(
         + req.get_action().get_subject_key());
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
-    auto get_response   = object_service->make_request(CrudRequest{CrudQuery(
-        req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
+    auto get_response   = object_service->make_request(CrudRequest{
+        CrudQuery(
+            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        req.get_user_id()});
     CRUD_ERROR_CHECK(get_response);
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -527,17 +543,20 @@ HsmActionResponse::Ptr HsmService::copy_data(
     CrudResponsePtr extent_put_response;
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent_needs_creation) {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::CREATE, target_extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::CREATE, target_extent, req.get_user_id()));
     }
     else {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, target_extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::UPDATE, target_extent, req.get_user_id()));
     }
     CRUD_ERROR_CHECK(extent_put_response);
 
-    auto object_put_response = object_service->make_request(
-        TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, *working_object});
+    auto object_put_response =
+        object_service->make_request(TypedCrudRequest<HsmObject>{
+            CrudMethod::UPDATE, *working_object, req.get_user_id()});
     CRUD_ERROR_CHECK(object_put_response);
 
     auto response = HsmActionResponse::create(req);
@@ -563,8 +582,10 @@ HsmActionResponse::Ptr HsmService::release_data(
     LOG_INFO("Starting HSMService RELEASE_DATA: " + req.to_string());
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
-    auto get_response   = object_service->make_request(CrudRequest{CrudQuery(
-        req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM)});
+    auto get_response   = object_service->make_request(CrudRequest{
+        CrudQuery(
+            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        req.get_user_id()});
     CRUD_ERROR_CHECK(get_response);
     auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -594,17 +615,20 @@ HsmActionResponse::Ptr HsmService::release_data(
     CrudResponsePtr extent_put_response;
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent.empty()) {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::REMOVE, extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::REMOVE, extent, req.get_user_id()));
     }
     else {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, extent));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::UPDATE, extent, req.get_user_id()));
     }
     CRUD_ERROR_CHECK(extent_put_response);
 
-    auto object_put_response = object_service->make_request(
-        TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, *working_object});
+    auto object_put_response =
+        object_service->make_request(TypedCrudRequest<HsmObject>{
+            CrudMethod::UPDATE, *working_object, req.get_user_id()});
     auto response = HsmActionResponse::create(req);
 
     LOG_INFO("Finished HSMService REMOVE");

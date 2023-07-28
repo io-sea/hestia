@@ -213,14 +213,22 @@ void HestiaCli::parse_args(int argc, char* argv[])
     commands["stop"]  = app.add_subcommand("stop", "Stop the Hestia Daemon");
 
     app.add_flag(
-        "--verbose", m_client_command.m_is_verbose,
-        "Print extra diagnostics to Stderr");
-    app.add_flag(
         "--version", m_client_command.m_is_version,
         "Print application version");
-    app.add_option(
-        "-c, --config", m_config_path, "Path to a Hestia config file.");
-    app.add_option("-t, --token", m_user_token, "User authentication token.");
+
+    for (const auto& [key, command] : commands) {
+        if (!command->get_subcommands().empty()) {
+            continue;
+        }
+
+        command->add_flag(
+            "--verbose", m_client_command.m_is_verbose,
+            "Print extra diagnostics to Stderr");
+        command->add_option(
+            "-c, --config", m_config_path, "Path to a Hestia config file.");
+        command->add_option(
+            "-t, --token", m_user_token, "User authentication token.");
+    }
 
     try {
         app.parse(argc, argv);
@@ -466,10 +474,10 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
             && !attributes.buffer().empty();
         if (HestiaClientCommand::expects_id(output_format)) {
             for (const auto& id : ids) {
-                m_console_interface->console_write(id.get_primary_key() + '\n');
+                m_console_interface->console_write(id.get_primary_key());
             }
             if (should_write_attributes) {
-                m_console_interface->console_write("\n");
+                m_console_interface->console_write("");
             }
         }
         if (should_write_attributes) {
@@ -489,12 +497,13 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
         const bool should_write_attributes =
             HestiaClientCommand::expects_attributes(output_format)
             && !query.get_attributes().get_buffer().empty();
+
         if (HestiaClientCommand::expects_id(output_format)) {
             for (const auto& id : query.get_ids()) {
-                m_console_interface->console_write(id.get_primary_key() + '\n');
+                m_console_interface->console_write(id.get_primary_key());
             }
             if (should_write_attributes) {
-                m_console_interface->console_write("\n");
+                m_console_interface->console_write("");
             }
         }
         if (should_write_attributes) {

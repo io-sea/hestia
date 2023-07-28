@@ -41,10 +41,14 @@ void DistributedHsmObjectStoreClient::do_initialize(
 {
     m_hsm_service = hsm_service;
 
-    auto response = m_hsm_service->get_hsm_service()
-                        ->get_service(HsmItem::Type::TIER)
-                        ->make_request(CrudRequest{
-                            CrudQuery{CrudQuery::OutputFormat::ITEM}});
+    const auto current_user_id =
+        m_hsm_service->get_user_service()->get_current_user().get_primary_key();
+
+    auto response =
+        m_hsm_service->get_hsm_service()
+            ->get_service(HsmItem::Type::TIER)
+            ->make_request(CrudRequest{
+                CrudQuery{CrudQuery::OutputFormat::ITEM}, current_user_id});
 
     std::vector<StorageTier> tiers;
     for (const auto& item : response->items()) {
@@ -60,6 +64,9 @@ void DistributedHsmObjectStoreClient::do_initialize(
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {
+    const auto current_user_id =
+        m_hsm_service->get_user_service()->get_current_user().get_primary_key();
+
     if (request.method() == HsmObjectStoreRequestMethod::GET
         || request.method() == HsmObjectStoreRequestMethod::EXISTS) {
         if (m_client_manager->has_client(request.source_tier())) {
@@ -85,7 +92,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 CrudQuery::Format::LIST, CrudQuery::OutputFormat::ITEM);
             auto list_response =
                 m_hsm_service->get_node_service()->make_request(
-                    CrudRequest{query});
+                    CrudRequest{query, current_user_id});
             if (!list_response->ok()) {
                 auto response = HsmObjectStoreResponse::create(request);
                 response->on_error(

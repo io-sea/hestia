@@ -30,9 +30,10 @@ std::string HestiaCache::get_default_cache_dir()
             cache_path = home_cache_path;
         }
         else {
-            cwd / m_cache_loc;
+            cache_path = cwd / m_cache_loc;
         }
     }
+
     return cache_path;
 }
 

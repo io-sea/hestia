@@ -10,7 +10,7 @@ class TestConsoleInterface : public hestia::IConsoleInterface {
   public:
     void console_write(const std::string& output) const override
     {
-        m_output += output;
+        m_output += output + "\n";
     }
 
     void console_write_error(const std::string& output) const override
@@ -194,7 +194,7 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
         {
             std::vector<std::string> output_lines;
             hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 7);
+            REQUIRE(output_lines.size() == 8);
             REQUIRE(output_lines[0] == "id0");
             REQUIRE(output_lines[1] == "id1");
             REQUIRE(output_lines[4] == "mkey0, myval0");

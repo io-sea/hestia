@@ -27,15 +27,15 @@ HestiaHsmActionView::HestiaHsmActionView(
 HestiaHsmActionView::~HestiaHsmActionView() {}
 
 HttpResponse::Ptr HestiaHsmActionView::on_get(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, const User& user)
 {
-    return do_hsm_action(request);
+    return do_hsm_action(request, user);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_put(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, const User& user)
 {
-    return do_hsm_action(request);
+    return do_hsm_action(request, user);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_delete(
@@ -58,7 +58,8 @@ HttpResponse::Ptr HestiaHsmActionView::on_head(
 }
 
 
-HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(const HttpRequest& request)
+HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
+    const HttpRequest& request, const User& user)
 {
     auto path = StringUtils::split_on_first(
                     request.get_path(),
@@ -94,14 +95,15 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(const HttpRequest& request)
                     }
                 };
                 m_hestia_service->get_hsm_service()->do_data_io_action(
-                    action, request.get_context()->get_stream(), completion_cb);
+                    HsmActionRequest(action, user.get_primary_key()),
+                    request.get_context()->get_stream(), completion_cb);
 
                 return response;
             }
             else {
                 auto action_response =
                     m_hestia_service->get_hsm_service()->make_request(
-                        HsmActionRequest(action));
+                        HsmActionRequest(action, user.get_primary_key()));
                 if (!action_response->ok()) {
                     return HttpResponse::create(500, "Internal Server Error.");
                 }

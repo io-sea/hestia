@@ -14,11 +14,13 @@ class HsmActionRequest :
   public:
     using Ptr = std::unique_ptr<HsmActionRequest>;
 
-    HsmActionRequest(const HsmAction& action);
+    HsmActionRequest(const HsmAction& action, const std::string& user_id);
 
     Extent extent() const;
 
     const HsmAction& get_action() const;
+
+    const std::string& get_user_id() const;
 
     std::string method_as_string() const override;
 
@@ -35,6 +37,7 @@ class HsmActionRequest :
     HsmItem::Type get_subject() const { return m_action.get_subject(); }
 
   private:
+    std::string m_user_id;
     HsmAction m_action;
 };
 }  // namespace hestia

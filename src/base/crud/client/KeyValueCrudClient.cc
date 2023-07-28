@@ -334,9 +334,17 @@ void KeyValueCrudClient::update(
          m_config.m_endpoint});
     error_check("STRING_SET", set_response.get());
 
-    if (crud_request.get_query().is_item_output_format()) {
-        adapter->from_dict(updated_content, crud_response.items());
+    if (crud_request.get_query().is_attribute_output_format()) {
+        std::cout << "Returning attr from update" << std::endl;
+        get_adapter(CrudAttributes::Format::JSON)
+            ->dict_to_string(
+                updated_content, crud_response.attributes().buffer());
     }
+    else {
+        get_adapter(CrudAttributes::Format::JSON)
+            ->from_dict(updated_content, crud_response.items());
+    }
+    crud_response.ids() = ids;
 }
 
 void KeyValueCrudClient::update_foreign_proxy_keys(

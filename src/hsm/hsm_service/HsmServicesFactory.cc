@@ -38,7 +38,7 @@ CrudService::Ptr HsmServicesFactory::create_service(
     switch (type) {
         case HsmItem::Type::OBJECT:
             return CrudServiceFactory<HsmObject>::create(
-                config, backend, user_service,
+                config, backend, nullptr,
                 std::make_unique<DefaultIdGenerator>(object_minimum_id));
         case HsmItem::Type::DATASET:
             return CrudServiceFactory<Dataset>::create(
@@ -51,13 +51,11 @@ CrudService::Ptr HsmServicesFactory::create_service(
         case HsmItem::Type::NAMESPACE:
             return CrudServiceFactory<Namespace>::create(config, backend);
         case HsmItem::Type::TIER:
-            return CrudServiceFactory<StorageTier>::create(
-                config, backend, user_service);
+            return CrudServiceFactory<StorageTier>::create(config, backend);
         case HsmItem::Type::EXTENT:
             return CrudServiceFactory<TierExtents>::create(config, backend);
         case HsmItem::Type::METADATA:
-            return CrudServiceFactory<UserMetadata>::create(
-                config, backend, user_service);
+            return CrudServiceFactory<UserMetadata>::create(config, backend);
         case HsmItem::Type::UNKNOWN:
         default:
             return nullptr;

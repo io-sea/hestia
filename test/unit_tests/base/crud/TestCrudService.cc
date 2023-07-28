@@ -25,6 +25,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         hestia::CrudMethod::CREATE,
         {},
         {},
+        {},
         hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response->ok());
 
@@ -42,7 +43,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 
     const auto create_response1 = m_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
-            hestia::CrudMethod::CREATE, named_model,
+            hestia::CrudMethod::CREATE,
+            named_model,
+            {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response1->ok());
 
@@ -62,7 +65,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 hestia::CrudIdentifier("1"),
                 hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("It is found ok")
             {
                 REQUIRE(get_response->ok());
@@ -74,7 +77,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 hestia::CrudQuery::OutputFormat::ITEM);
 
             const auto get_response1 =
-                m_service->make_request(hestia::CrudRequest{query1});
+                m_service->make_request(hestia::CrudRequest{query1, {}});
             REQUIRE(get_response1->ok());
             REQUIRE(get_response1->found());
 
@@ -88,7 +91,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 hestia::CrudIdentifier("3"),
                 hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("It is not found ok")
             {
                 REQUIRE(get_response->ok());
@@ -106,7 +109,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         hestia::CrudQuery query(ids, hestia::CrudQuery::OutputFormat::ITEM);
 
         const auto get_response =
-            m_service->make_request(hestia::CrudRequest{query});
+            m_service->make_request(hestia::CrudRequest{query, {}});
         THEN("The correct number are found")
         {
             REQUIRE(get_response->ok());
@@ -123,7 +126,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 hestia::CrudQuery::Format::GET,
                 hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("It is found ok")
             {
                 REQUIRE(get_response->ok());
@@ -138,7 +141,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
                 hestia::CrudQuery::Format::GET,
                 hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("It is not found ok")
             {
                 REQUIRE(get_response->ok());
@@ -151,7 +154,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
     {
         hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
         const auto get_response =
-            m_service->make_request(hestia::CrudRequest{query});
+            m_service->make_request(hestia::CrudRequest{query, {}});
         THEN("All items are found")
         {
             REQUIRE(get_response->ok());
@@ -184,7 +187,9 @@ TEST_CASE_METHOD(
 
     const auto create_response1 = m_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
-            hestia::CrudMethod::CREATE, named_model,
+            hestia::CrudMethod::CREATE,
+            named_model,
+            {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response1->ok());
 
@@ -206,7 +211,9 @@ TEST_CASE_METHOD(
 
         const auto update_response = m_service->make_request(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
-                hestia::CrudMethod::UPDATE, model_to_update,
+                hestia::CrudMethod::UPDATE,
+                model_to_update,
+                {},
                 hestia::CrudQuery::OutputFormat::ITEM});
         REQUIRE(update_response->ok());
 
@@ -233,6 +240,7 @@ TEST_CASE_METHOD(
         hestia::CrudMethod::CREATE,
         {},
         {},
+        {},
         hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response->ok());
 
@@ -250,7 +258,9 @@ TEST_CASE_METHOD(
 
     const auto create_response1 = m_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
-            hestia::CrudMethod::CREATE, named_model,
+            hestia::CrudMethod::CREATE,
+            named_model,
+            {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response1->ok());
 
@@ -268,7 +278,7 @@ TEST_CASE_METHOD(
         {
             hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ID);
             const auto list_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("all items are returned")
             {
                 REQUIRE(list_response->ok());
@@ -284,7 +294,7 @@ TEST_CASE_METHOD(
                 hestia::CrudQuery::OutputFormat::ID);
 
             const auto list_response =
-                m_service->make_request(hestia::CrudRequest{query});
+                m_service->make_request(hestia::CrudRequest{query, {}});
             THEN("a matching item is returned")
             {
                 REQUIRE(list_response->ok());
@@ -301,6 +311,7 @@ TEST_CASE_METHOD(
     {
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
+            {},
             {},
             {},
             hestia::CrudQuery::OutputFormat::ITEM});
@@ -325,7 +336,9 @@ TEST_CASE_METHOD(
 
         const auto response = m_service->make_request(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
-                hestia::CrudMethod::CREATE, named_model,
+                hestia::CrudMethod::CREATE,
+                named_model,
+                {},
                 hestia::CrudQuery::OutputFormat::ITEM});
 
         THEN("It is created ok and returns an item")
@@ -360,6 +373,7 @@ TEST_CASE_METHOD(
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
             {},
+            {},
             attributes,
             hestia::CrudQuery::OutputFormat::ITEM});
 
@@ -384,7 +398,9 @@ TEST_CASE_METHOD(
     hestia::mock::MockParentModel parent_model;
     const auto response = m_parent_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockParentModel>{
-            hestia::CrudMethod::CREATE, parent_model,
+            hestia::CrudMethod::CREATE,
+            parent_model,
+            {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(response->ok());
 
@@ -393,7 +409,9 @@ TEST_CASE_METHOD(
 
     auto child_response = m_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
-            hestia::CrudMethod::CREATE, model,
+            hestia::CrudMethod::CREATE,
+            model,
+            {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(child_response->ok());
     std::cout << m_service->m_kv_store_client->dump() << std::endl;
@@ -402,7 +420,7 @@ TEST_CASE_METHOD(
         hestia::CrudIdentifier(response->get_item()->id()),
         hestia::CrudQuery::OutputFormat::ITEM);
     auto updated_parent_response =
-        m_parent_service->make_request(hestia::CrudRequest(query));
+        m_parent_service->make_request(hestia::CrudRequest(query, {}));
     REQUIRE(updated_parent_response->ok());
     auto updated_parent =
         updated_parent_response->get_item_as<hestia::mock::MockParentModel>();

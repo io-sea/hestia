@@ -3,9 +3,11 @@
 #include <sstream>
 
 namespace hestia {
-HsmActionRequest::HsmActionRequest(const HsmAction& action) :
+HsmActionRequest::HsmActionRequest(
+    const HsmAction& action, const std::string& user_id) :
     BaseRequest(),
     MethodRequest<HsmAction::Action>(action.get_action()),
+    m_user_id(user_id),
     m_action(action)
 {
 }
@@ -34,6 +36,11 @@ std::string HsmActionRequest::method_as_string() const
 std::string HsmActionRequest::subject_as_string() const
 {
     return HsmItem::to_name(get_subject());
+}
+
+const std::string& HsmActionRequest::get_user_id() const
+{
+    return m_user_id;
 }
 
 const HsmAction& HsmActionRequest::get_action() const

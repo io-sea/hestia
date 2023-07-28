@@ -10,6 +10,7 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
     explicit CrudRequest(
         CrudMethod method,
         VecModelPtr items,
+        const std::string& user_id,
         CrudQuery::OutputFormat output_format =
             CrudQuery::OutputFormat::ATTRIBUTES,
         CrudAttributes::Format attributes_format =
@@ -17,6 +18,7 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
 
     explicit CrudRequest(
         CrudMethod method,
+        const std::string& user_id,
         const VecCrudIdentifier& ids     = {},
         const CrudAttributes& attributes = {},
         CrudQuery::OutputFormat output_format =
@@ -24,9 +26,10 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
         CrudAttributes::Format attributes_format =
             CrudAttributes::Format::JSON);
 
-    explicit CrudRequest(const CrudQuery& query);
+    explicit CrudRequest(const CrudQuery& query, const std::string& user_id);
 
-    explicit CrudRequest(CrudMethod method, CrudLockType lock_type);
+    explicit CrudRequest(
+        CrudMethod method, CrudLockType lock_type, const std::string& user_id);
 
     virtual ~CrudRequest();
 

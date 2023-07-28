@@ -136,9 +136,11 @@ OpStatus HestiaClient::create(
         service = m_hsm_service;
     }
     if (service != nullptr) {
+        const auto current_user_id =
+            m_user_service->get_current_user().get_primary_key();
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::CREATE, ids, attributes,
+                CrudMethod::CREATE, current_user_id, ids, attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES, output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "CREATE");
@@ -169,9 +171,11 @@ OpStatus HestiaClient::update(
         service = m_hsm_service;
     }
     if (service != nullptr) {
+        const auto current_user_id =
+            m_user_service->get_current_user().get_primary_key();
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::UPDATE, ids, attributes,
+                CrudMethod::UPDATE, current_user_id, ids, attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES, output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "UPDATE");
@@ -194,8 +198,10 @@ OpStatus HestiaClient::remove(
         service = m_hsm_service;
     }
     if (service != nullptr) {
+        const auto current_user_id =
+            m_user_service->get_current_user().get_primary_key();
         const auto response = service->make_request(
-            CrudRequest{CrudMethod::REMOVE, ids},
+            CrudRequest{CrudMethod::REMOVE, current_user_id, ids},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "REMOVE");
     }
@@ -216,16 +222,25 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
             service = m_distributed_hsm_service->get_node_service();
         }
     }
-    else if (subject.m_system_type == HestiaType::SystemType::HSM_NODE) {
+    else {
         service = m_hsm_service;
     }
 
     if (service != nullptr) {
+        const auto current_user_id =
+            m_user_service->get_current_user().get_primary_key();
         CrudResponsePtr response;
         response = service->make_request(
-            CrudRequest{query}, HsmItem::to_name(subject.m_hsm_type));
+            CrudRequest{query, current_user_id},
+            HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "READ");
         query.attributes() = response->attributes();
+
+        VecCrudIdentifier ids;
+        for (const auto& id : response->ids()) {
+            ids.push_back(id);
+        }
+        query.set_ids(ids);
     }
     return {};
 }
@@ -252,15 +267,21 @@ void HestiaClient::do_data_io_action(
                 completion_func({}, {});
             }
         };
+    const auto current_user_id =
+        m_user_service->get_current_user().get_primary_key();
     m_hsm_service->do_data_io_action(
-        HsmActionRequest{action}, stream, hsm_completion_func);
+        HsmActionRequest{action, current_user_id}, stream, hsm_completion_func);
 }
 
 OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
 {
     clear_last_error();
 
-    if (const auto response = m_hsm_service->make_request({action});
+    const auto current_user_id =
+        m_user_service->get_current_user().get_primary_key();
+
+    if (const auto response =
+            m_hsm_service->make_request({action, current_user_id});
         !response->ok()) {
         set_last_error(
             "Error in data movement operation: "
