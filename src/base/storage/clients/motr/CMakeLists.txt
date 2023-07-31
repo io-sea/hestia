@@ -12,7 +12,7 @@ add_module(
         MotrInterface.cc 
         MotrConfig.cc
     INTERNAL_DEPENDENCIES 
-        hsm_object_store_client
+        storage
 )
 
 if(HESTIA_WITH_MOTR)
@@ -45,5 +45,7 @@ if(HESTIA_WITH_MOTR)
         -Wno-error=missing-field-initializers
     )
     target_compile_definitions(${PROJECT_NAME}_motr_plugin PUBLIC HAS_MOTR)
+
+    add_dependencies(${PROJECT_NAME}_storage_and_plugins ${PROJECT_NAME}_motr_plugin )
 
 endif()
