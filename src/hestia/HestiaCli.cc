@@ -10,6 +10,8 @@
 #include "Logger.h"
 #include "UuidUtils.h"
 
+#include "ProjectConfig.h"
+
 #include <CLI/CLI11.hpp>
 #include <iostream>
 
@@ -74,34 +76,39 @@ void HestiaCli::add_hsm_actions(
 void HestiaCli::add_get_data_options(CLI::App* command)
 {
     command
-        ->add_option("file", m_client_command.m_path, "Path to write data to")
+        ->add_option("--file", m_client_command.m_path, "Path to write data to")
         ->required();
     command->add_option(
-        "tier", m_client_command.m_source_tier, "Tier to get data from");
+        "--tier", m_client_command.m_source_tier, "Tier to get data from");
 }
 
 void HestiaCli::add_put_data_options(CLI::App* command)
 {
     command
-        ->add_option("file", m_client_command.m_path, "Path to read data from")
+        ->add_option(
+            "--file", m_client_command.m_path, "Path to read data from")
         ->required();
     command->add_option(
-        "tier", m_client_command.m_target_tier, "Tier to put data to");
+        "--tier", m_client_command.m_target_tier, "Tier to put data to");
 }
 
 void HestiaCli::add_copy_data_options(CLI::App* command)
 {
-    command->add_option("source", m_client_command.m_source_tier, "Source Tier")
+    command
+        ->add_option("--source", m_client_command.m_source_tier, "Source Tier")
         ->required();
-    command->add_option("target", m_client_command.m_target_tier, "Target Tier")
+    command
+        ->add_option("--target", m_client_command.m_target_tier, "Target Tier")
         ->required();
 }
 
 void HestiaCli::add_move_data_options(CLI::App* command)
 {
-    command->add_option("source", m_client_command.m_source_tier, "Source Tier")
+    command
+        ->add_option("--source", m_client_command.m_source_tier, "Source Tier")
         ->required();
-    command->add_option("target", m_client_command.m_target_tier, "Target Tier")
+    command
+        ->add_option("--target", m_client_command.m_target_tier, "Target Tier")
         ->required();
 }
 
@@ -109,7 +116,7 @@ void HestiaCli::add_release_data_options(CLI::App* command)
 {
     command
         ->add_option(
-            "tier", m_client_command.m_source_tier, "Tier to remove from")
+            "--tier", m_client_command.m_source_tier, "Tier to remove from")
         ->required();
 }
 
@@ -123,51 +130,55 @@ void HestiaCli::add_crud_commands(
     auto create_cmd =
         commands[subject]->add_subcommand("create", "Create a " + subject);
     create_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
     create_cmd->add_option(
-        "input_fmt", m_client_command.m_input_format, "Input Format Specifier");
+        "--input_fmt", m_client_command.m_input_format,
+        "Input Format Specifier");
     create_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format,
+        "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
+    create_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_create"] = create_cmd;
 
     auto update_cmd =
         commands[subject]->add_subcommand("update", "Update a " + subject);
     update_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
     update_cmd->add_option(
-        "attribute_fmt", m_client_command.m_input_format,
-        "Attribute Format Specifier");
+        "--input_fmt", m_client_command.m_input_format,
+        "Input Format Specifier");
     update_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format,
+        "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
     commands[subject + "_update"] = update_cmd;
 
     auto read_cmd =
         commands[subject]->add_subcommand("read", "Read " + subject + "s");
     read_cmd->add_option(
-        "query_fmt", m_client_command.m_query_format, "Query Format Specifier");
+        "--query_fmt", m_client_command.m_input_format,
+        "Query Format Specifier");
     read_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format,
+        "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
     read_cmd->add_option(
-        "offset", m_client_command.m_offset, "Page start offset");
+        "--offset", m_client_command.m_offset, "Page start offset");
     read_cmd->add_option(
-        "count", m_client_command.m_count, "Max number of items per page");
+        "--count", m_client_command.m_count, "Max number of items per page");
+    read_cmd->add_option("query", m_client_command.m_body, "Query body");
     commands[subject + "_read"] = read_cmd;
 
     auto remove_cmd =
         commands[subject]->add_subcommand("remove", "Remove a " + subject);
     remove_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
     commands[subject + "_remove"] = remove_cmd;
 
     auto identify_cmd =
         commands[subject]->add_subcommand("identify", "Identify a " + subject);
     identify_cmd->add_option(
-        "id_fmt", m_client_command.m_id_format, "Id Format Spec");
+        "--id_fmt", m_client_command.m_id_format, "Id Format Spec");
     identify_cmd->add_option(
-        "output_fmt", m_client_command.m_output_format,
+        "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
     commands[subject + "_identify"] = identify_cmd;
 }
@@ -201,11 +212,22 @@ void HestiaCli::parse_args(int argc, char* argv[])
     commands["start"] = app.add_subcommand("start", "Start the Hestia Daemon");
     commands["stop"]  = app.add_subcommand("stop", "Stop the Hestia Daemon");
 
-    for (auto& kv_pair : commands) {
-        kv_pair.second->add_option(
+    app.add_flag(
+        "--version", m_client_command.m_is_version,
+        "Print application version");
+
+    for (const auto& [key, command] : commands) {
+        if (!command->get_subcommands().empty()) {
+            continue;
+        }
+
+        command->add_flag(
+            "--verbose", m_client_command.m_is_verbose,
+            "Print extra diagnostics to Stderr");
+        command->add_option(
             "-c, --config", m_config_path, "Path to a Hestia config file.");
-        kv_pair.second->add_option(
-            "-t, --token", m_config_path, "User authentication token.");
+        command->add_option(
+            "-t, --token", m_user_token, "User authentication token.");
     }
 
     try {
@@ -260,7 +282,11 @@ void HestiaCli::parse_args(int argc, char* argv[])
         return;
     }
 
-    if (commands["start"]->parsed()) {
+    if (m_client_command.m_is_version) {
+        print_version();
+        return;
+    }
+    else if (commands["start"]->parsed()) {
         m_app_command = AppCommand::DAEMON_START;
     }
     else if (commands["stop"]->parsed()) {
@@ -289,8 +315,18 @@ bool HestiaCli::is_server() const
            || m_app_command == AppCommand::SERVER;
 }
 
+bool HestiaCli::is_daemon() const
+{
+    return m_app_command == AppCommand::DAEMON_START
+           || m_app_command == AppCommand::DAEMON_STOP;
+}
+
 OpStatus HestiaCli::run(IHestiaApplication* app)
 {
+    if (m_client_command.m_is_version) {
+        return {};
+    }
+
     if (app == nullptr || m_app_command == AppCommand::DAEMON_STOP) {
         return stop_daemon();
     }
@@ -308,6 +344,19 @@ OpStatus HestiaCli::run(IHestiaApplication* app)
             OpStatus::Status::ERROR, -1,
             "CLI command not supported. Use --help for options."};
     }
+}
+
+OpStatus HestiaCli::print_info(IHestiaApplication* app)
+{
+    m_console_interface->console_write_error(app->get_runtime_info());
+    return {};
+}
+
+void HestiaCli::print_version()
+{
+    m_console_interface->console_write(
+        hestia::project_config::get_project_name()
+        + " version: " + hestia::project_config::get_project_version());
 }
 
 OpStatus HestiaCli::run_client(IHestiaApplication* app)
@@ -329,6 +378,10 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
         return status;
     }
 
+    if (m_client_command.m_is_verbose) {
+        print_info(app);
+    }
+
     auto client = dynamic_cast<IHestiaClient*>(app);
     if (client == nullptr) {
         return {
@@ -340,6 +393,16 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
         return on_crud_method(client);
     }
     else if (m_client_command.is_data_management_action()) {
+        m_client_command.m_action.set_subject(
+            m_client_command.m_subject.m_hsm_type);
+        m_client_command.m_action.set_target_tier(
+            m_client_command.m_target_tier);
+        m_client_command.m_action.set_source_tier(
+            m_client_command.m_source_tier);
+        if (!m_client_command.m_id.empty()) {
+            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
+        }
+
         const auto status =
             client->do_data_movement_action(m_client_command.m_action);
         return status;
@@ -347,10 +410,18 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
     else if (m_client_command.is_data_io_action()) {
         Stream stream;
         OpStatus status;
+        m_client_command.m_action.set_subject(
+            m_client_command.m_subject.m_hsm_type);
+        m_client_command.m_action.set_target_tier(
+            m_client_command.m_target_tier);
+        m_client_command.m_action.set_source_tier(
+            m_client_command.m_source_tier);
+        if (!m_client_command.m_id.empty()) {
+            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
+        }
         if (m_client_command.is_data_put_action()) {
             stream.set_source(
                 FileStreamSource::create(m_client_command.m_path));
-            ;
         }
         else {
             stream.set_sink(FileStreamSink::create(m_client_command.m_path));
@@ -373,54 +444,77 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
 
 OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
 {
-    if (m_client_command.is_create_method()) {
+    if (m_client_command.is_create_method()
+        || m_client_command.is_update_method()) {
+        const bool is_create = m_client_command.is_create_method();
+
         VecCrudIdentifier ids;
         CrudAttributes attributes;
         const auto& [output_format, output_attr_format] =
             m_client_command.parse_create_update_inputs(
                 ids, attributes, m_console_interface.get());
-
-        if (const auto status = client->create(
-                m_client_command.m_subject, ids, attributes,
-                output_attr_format);
-            !status.ok()) {
-            return status;
+        if (is_create) {
+            if (const auto status = client->create(
+                    m_client_command.m_subject, ids, attributes,
+                    output_attr_format);
+                !status.ok()) {
+                return status;
+            }
         }
-
+        else {
+            if (const auto status = client->update(
+                    m_client_command.m_subject, ids, attributes,
+                    output_attr_format);
+                !status.ok()) {
+                return status;
+            }
+        }
+        const bool should_write_attributes =
+            HestiaClientCommand::expects_attributes(output_format)
+            && !attributes.buffer().empty();
         if (HestiaClientCommand::expects_id(output_format)) {
             for (const auto& id : ids) {
-                m_console_interface->console_write(id.get_primary_key() + "/n");
+                m_console_interface->console_write(id.get_primary_key());
             }
-            if (!attributes.buffer().empty()) {
-                m_console_interface->console_write("/n");
+            if (should_write_attributes) {
+                m_console_interface->console_write("");
             }
         }
-        if (!attributes.buffer().empty()) {
+        if (should_write_attributes) {
             m_console_interface->console_write(attributes.buffer());
         }
     }
-    else if (m_client_command.is_update_method()) {
-        VecCrudIdentifier ids;
-        CrudAttributes attributes;
-        CrudAttributes::Format output_format{CrudAttributes::Format::JSON};
-        if (const auto status = client->update(
-                m_client_command.m_subject, ids, attributes, output_format);
+    else if (m_client_command.is_read_method()) {
+        LOG_INFO("CLI Read request");
+        CrudQuery query;
+        const auto& [output_format, output_attr_format] =
+            m_client_command.parse_read_inputs(
+                query, m_console_interface.get());
+        if (const auto status = client->read(m_client_command.m_subject, query);
             !status.ok()) {
             return status;
         }
-        m_console_interface->console_write(attributes.buffer());
-    }
-    else if (m_client_command.is_read_method()) {
+        const bool should_write_attributes =
+            HestiaClientCommand::expects_attributes(output_format)
+            && !query.get_attributes().get_buffer().empty();
 
-        CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
-        if (const auto status = client->read(m_client_command.m_subject, query);
-            status.ok()) {
-            return status;
+        if (HestiaClientCommand::expects_id(output_format)) {
+            for (const auto& id : query.get_ids()) {
+                m_console_interface->console_write(id.get_primary_key());
+            }
+            if (should_write_attributes) {
+                m_console_interface->console_write("");
+            }
         }
-        m_console_interface->console_write(query.m_attributes.buffer());
+        if (should_write_attributes) {
+            m_console_interface->console_write(
+                query.get_attributes().get_buffer());
+        }
     }
     else if (m_client_command.is_remove_method()) {
+        LOG_INFO("CLI Remove request");
         VecCrudIdentifier ids;
+        m_client_command.parse_remove_inputs(ids, m_console_interface.get());
         return client->remove(m_client_command.m_subject, ids);
     }
     return {};

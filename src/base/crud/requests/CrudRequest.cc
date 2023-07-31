@@ -4,34 +4,37 @@ namespace hestia {
 CrudRequest::CrudRequest(
     CrudMethod method,
     VecModelPtr items,
+    const std::string& user_id,
     CrudQuery::OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    BaseCrudRequest(),
+    BaseCrudRequest(user_id),
     MethodRequest<CrudMethod>(method),
     m_items(std::move(items))
 {
     m_query.set_output_format(output_format);
-    m_query.m_attributes_output_format = attributes_format;
+    m_query.set_attributes_output_format(attributes_format);
 }
 
 CrudRequest::CrudRequest(
     CrudMethod method,
+    const std::string& user_id,
     const VecCrudIdentifier& ids,
     const CrudAttributes& attributes,
     CrudQuery::OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    BaseCrudRequest(ids, attributes, output_format, attributes_format),
+    BaseCrudRequest(user_id, ids, attributes, output_format, attributes_format),
     MethodRequest<CrudMethod>(method)
 {
 }
 
-CrudRequest::CrudRequest(const CrudQuery& query) :
-    BaseCrudRequest(query), MethodRequest<CrudMethod>(CrudMethod::READ)
+CrudRequest::CrudRequest(const CrudQuery& query, const std::string& user_id) :
+    BaseCrudRequest(user_id, query), MethodRequest<CrudMethod>(CrudMethod::READ)
 {
 }
 
-CrudRequest::CrudRequest(CrudMethod method, CrudLockType lock_type) :
-    BaseCrudRequest(lock_type), MethodRequest<CrudMethod>(method)
+CrudRequest::CrudRequest(
+    CrudMethod method, CrudLockType lock_type, const std::string& user_id) :
+    BaseCrudRequest(user_id, lock_type), MethodRequest<CrudMethod>(method)
 {
 }
 

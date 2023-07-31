@@ -7,6 +7,7 @@
 #include <openssl/rand.h>
 
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -16,7 +17,7 @@ namespace hestia {
 
 std::string HashUtils::do_rand_32()
 {
-    std::vector<unsigned char> buffer(32);
+    std::vector<unsigned char> buffer(32, 0);
     int rc = RAND_bytes(buffer.data(), buffer.size());
     if (rc != 1) {
         throw std::runtime_error(
@@ -25,23 +26,24 @@ std::string HashUtils::do_rand_32()
     return {buffer.begin(), buffer.end()};
 }
 
-std::string HashUtils::do_md5(const std::string& input)
+void HashUtils::do_md5(
+    const std::string& input, std::vector<unsigned char>& buffer)
 {
     auto context = EVP_MD_CTX_new();
-    std::vector<unsigned char> md_value(EVP_MAX_MD_SIZE);
-    unsigned int md_len{0};
 
+    buffer.resize(EVP_MAX_MD_SIZE);
+    unsigned int md_len{0};
     EVP_DigestInit_ex(context, EVP_md5(), nullptr);
     EVP_DigestUpdate(context, input.c_str(), input.length());
-    EVP_DigestFinal_ex(context, md_value.data(), &md_len);
+    EVP_DigestFinal_ex(context, buffer.data(), &md_len);
     EVP_MD_CTX_free(context);
 
-    return std::string(md_value.begin(), md_value.begin() + md_len);
+    buffer.resize(md_len);
 }
 
 std::string HashUtils::base64_encode(const std::string& input)
 {
-    std::vector<unsigned char> buffer(EVP_ENCODE_LENGTH(input.length()));
+    std::vector<unsigned char> buffer(EVP_ENCODE_LENGTH(input.length()), 0);
     auto i = EVP_EncodeBlock(
         buffer.data(), reinterpret_cast<const unsigned char*>(input.c_str()),
         input.length());

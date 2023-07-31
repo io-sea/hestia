@@ -29,6 +29,8 @@ class HestiaCli {
 
     bool is_server() const;
 
+    bool is_daemon() const;
+
     void parse_args(int argc, char* argv[]);
 
     OpStatus run(IHestiaApplication* app);
@@ -56,6 +58,9 @@ class HestiaCli {
     OpStatus run_server(IHestiaApplication* app);
     OpStatus start_daemon(IHestiaApplication* app);
     OpStatus stop_daemon();
+
+    OpStatus print_info(IHestiaApplication* app);
+    void print_version();
 
     std::string m_user_token;
     std::string m_config_path;

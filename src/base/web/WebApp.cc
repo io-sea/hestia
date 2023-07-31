@@ -23,6 +23,19 @@ void WebApp::add_middleware(ApplicationMiddleware::Ptr middleware)
     m_middleware.push_back(std::move(middleware));
 }
 
+bool WebApp::get_streamable(const std::string& request_path) const
+{
+    if (!m_url_router) {
+        return false;
+    }
+    auto view = m_url_router->get_view(request_path);
+    if (view == nullptr) {
+        return false;
+    }
+    return view->can_stream();
+}
+
+
 void WebApp::on_request(RequestContext* request_context) const noexcept
 {
     if (!m_url_router) {
@@ -84,26 +97,13 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     std::size_t content_length = response->body().size();
     if (request_context->get_stream()->has_content()) {
         content_length += request_context->get_stream()->get_source_size();
-
-        if (content_length <= m_body_chunk_size) {
-            request_context->set_output_chunk_handler(
-                [response = response.get()](
-                    const hestia::ReadableBufferView& buffer, bool finished) {
-                    (void)finished;
-                    response->append_to_body(buffer.data());
-                    return buffer.length();
-                });
-            request_context->flush_stream();
-        }
     }
-    response->header().set_item(
-        "Content-Length", std::to_string(content_length));
+    if (content_length > 0) {
+        response->header().set_item(
+            "Content-Length", std::to_string(content_length));
+    }
 
     request_context->set_response(std::move(response));
-
-    if (!request_context->get_stream()->has_content()) {
-        request_context->on_output_complete();
-    }
 }
 
 HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& request) const

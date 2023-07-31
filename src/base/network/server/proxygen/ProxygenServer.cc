@@ -53,7 +53,7 @@ ProxygenServer::Status ProxygenServer::initialize()
     options.h2cEnabled = true;
 
     auto io_thread_pool = std::make_shared<folly::CPUThreadPoolExecutor>(
-        m_config.m_num_threads, 0,
+        m_config.m_num_threads, 1,
         std::make_shared<folly::NamedThreadFactory>("FIFOIOThread"));
     // TODO: It would be better to use getGlobalCPUExecutor
     folly::setUnsafeMutableGlobalCPUExecutor(io_thread_pool);

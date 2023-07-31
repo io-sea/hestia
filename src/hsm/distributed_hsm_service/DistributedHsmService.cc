@@ -17,10 +17,12 @@ namespace hestia {
 DistributedHsmService::DistributedHsmService(
     DistributedHsmServiceConfig config,
     std::unique_ptr<HsmService> hsm_service,
-    CrudService::Ptr node_service) :
+    CrudService::Ptr node_service,
+    UserService* user_service) :
     m_config(config),
     m_hsm_service(std::move(hsm_service)),
-    m_node_service(std::move(node_service))
+    m_node_service(std::move(node_service)),
+    m_user_service(user_service)
 {
 }
 
@@ -37,7 +39,7 @@ DistributedHsmService::Ptr DistributedHsmService::create(
         service_config, backend, user_service);
 
     auto service = std::make_unique<DistributedHsmService>(
-        config, std::move(hsm_service), std::move(node_service));
+        config, std::move(hsm_service), std::move(node_service), user_service);
     return service;
 }
 
@@ -49,6 +51,11 @@ const DistributedHsmServiceConfig& DistributedHsmService::get_self_config()
     return m_config;
 }
 
+UserService* DistributedHsmService::get_user_service()
+{
+    return m_user_service;
+}
+
 void DistributedHsmService::register_self()
 {
     LOG_INFO(
@@ -56,8 +63,9 @@ void DistributedHsmService::register_self()
         << m_config.m_self.name());
 
     CrudIdentifier id(m_config.m_self.name(), CrudIdentifier::Type::NAME);
-    auto get_response = m_node_service->make_request(
-        CrudRequest{CrudQuery(id, CrudQuery::OutputFormat::ITEM)});
+    auto get_response = m_node_service->make_request(CrudRequest{
+        CrudQuery(id, CrudQuery::OutputFormat::ITEM),
+        m_user_service->get_current_user().get_primary_key()});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to check for pre-existing tag: "
@@ -68,7 +76,11 @@ void DistributedHsmService::register_self()
         LOG_INFO("Pre-existing endpoint not found - will request new one.");
 
         auto create_response = m_node_service->make_request(CrudRequest{
-            CrudMethod::CREATE, {id}, {}, CrudQuery::OutputFormat::ITEM});
+            CrudMethod::CREATE,
+            m_user_service->get_current_user().get_primary_key(),
+            {id},
+            {},
+            CrudQuery::OutputFormat::ITEM});
         if (!create_response->ok()) {
             LOG_ERROR(
                 "Failed to register node: "

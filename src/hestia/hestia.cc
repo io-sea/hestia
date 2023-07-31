@@ -1,5 +1,7 @@
 #include "hestia.h"
 
+#include "hestia_private.h"
+
 #include "HestiaClient.h"
 #include "HsmItem.h"
 #include "JsonUtils.h"
@@ -18,7 +20,12 @@
 
 namespace hestia {
 
-static std::unique_ptr<HestiaClient> g_client;
+static std::unique_ptr<IHestiaClient> g_client;
+
+void HestiaPrivate::override_client(std::unique_ptr<IHestiaClient> client)
+{
+    g_client = std::move(client);
+}
 
 #define ID_AND_STATE_CHECK(oid)                                                \
     if (oid == nullptr) {                                                      \
@@ -92,7 +99,7 @@ CrudAttributes::Format to_crud_attr_format(hestia_io_format_t io_format)
         return CrudAttributes::Format::JSON;
     }
     else if ((io_format & hestia_io_format_t::HESTIA_IO_KEY_VALUE) != 0) {
-        return CrudAttributes::Format::KV_PAIR;
+        return CrudAttributes::Format::KEY_VALUE;
     }
     else {
         return CrudAttributes::Format::NONE;
@@ -211,7 +218,7 @@ int process_results(
 
     if (!response_body.empty()) {
         str_to_char(response_body, response);
-        *len_response = response_body.size() + 1;
+        *len_response = response_body.size();
     }
     else {
         *len_response = 0;
@@ -240,7 +247,7 @@ int create_or_update(
     const auto crud_id_format     = to_crud_id_format(id_format);
     const auto crud_attr_format   = to_crud_attr_format(input_format);
     const auto crud_output_format = output_format == HESTIA_IO_KEY_VALUE ?
-                                        CrudAttributes::Format::KV_PAIR :
+                                        CrudAttributes::Format::KEY_VALUE :
                                         CrudAttributes::Format::JSON;
 
     if (input_format != HESTIA_IO_NONE) {
@@ -365,11 +372,13 @@ int hestia_read(
         CrudIdentifier::parse(query_body, crud_id_format, ids);
         crud_query.set_ids(ids);
     }
-    else if (query_format == HESTIA_QUERY_INDEX) {
+    else if (query_format == HESTIA_QUERY_FILTER) {
+        Map filter;
         auto [key, value] = StringUtils::split_on_first(query_body, ',');
         StringUtils::trim(key);
         StringUtils::trim(value);
-        crud_query.set_index({key, value});
+        filter.set_item(key, value);
+        crud_query.set_filter(filter);
     }
 
     crud_query.set_offset(offset);
@@ -377,22 +386,15 @@ int hestia_read(
 
     const auto crud_attrs_output_format =
         (output_format & HESTIA_IO_KEY_VALUE) != 0 ?
-            CrudAttributes::Format::KV_PAIR :
+            CrudAttributes::Format::KEY_VALUE :
             CrudAttributes::Format::JSON;
     crud_query.set_attributes_output_format(crud_attrs_output_format);
 
-    CrudQuery::OutputFormat crud_output_format{CrudQuery::OutputFormat::NONE};
-    if (output_format == HESTIA_IO_IDS) {
-        crud_output_format = CrudQuery::OutputFormat::ID;
-    }
-    else if (
-        output_format == HESTIA_IO_KEY_VALUE
-        || output_format == HESTIA_IO_JSON) {
+    CrudQuery::OutputFormat crud_output_format{CrudQuery::OutputFormat::ID};
+    if (output_format != HESTIA_IO_IDS) {
         crud_output_format = CrudQuery::OutputFormat::ATTRIBUTES;
     }
-    else {
-        crud_output_format = CrudQuery::OutputFormat::ATTRIBUTES_AND_ID;
-    }
+
     crud_query.set_output_format(crud_output_format);
 
     const auto status = g_client->read(to_subject(subject), crud_query);

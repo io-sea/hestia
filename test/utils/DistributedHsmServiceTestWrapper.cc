@@ -34,7 +34,7 @@ void DistributedHsmServiceTestWrapper::add_tiers(std::size_t num_tiers)
     for (std::size_t idx = 0; idx < num_tiers; idx++) {
         auto response = tier_service->make_request(
             hestia::TypedCrudRequest<hestia::StorageTier>{
-                hestia::CrudMethod::CREATE, hestia::StorageTier(idx)});
+                hestia::CrudMethod::CREATE, hestia::StorageTier(idx), {}});
         REQUIRE(response->ok());
     }
 }

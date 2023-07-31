@@ -4,6 +4,7 @@
 #include "InMemoryStreamSource.h"
 
 #include "Logger.h"
+#include "StreamState.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -67,11 +68,17 @@ void Stream::set_source_size(std::size_t size)
 
 bool Stream::waiting_for_content() const
 {
+    if (bool(m_sink) && m_sink->get_state().finished()) {
+        return false;
+    }
     return get_sink_size() > 0;
 }
 
 bool Stream::has_content() const
 {
+    if (bool(m_source) && m_source->get_state().finished()) {
+        return false;
+    }
     return get_source_size() > 0;
 }
 
@@ -85,7 +92,7 @@ StreamState Stream::flush(std::size_t block_size) noexcept
         return {StreamState::State::ERROR, msg};
     }
 
-    std::vector<char> buffer(block_size);
+    std::vector<char> buffer(block_size, 0);
 
     StreamState state;
     WriteableBufferView writeable_buffer(buffer);

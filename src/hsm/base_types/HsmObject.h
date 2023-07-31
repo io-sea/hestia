@@ -1,12 +1,12 @@
 #pragma once
 
 #include "HsmItem.h"
-#include "LockableOwnableModel.h"
+#include "LockableModel.h"
 #include "TierExtents.h"
 #include "UserMetadata.h"
 
 namespace hestia {
-class HsmObject : public HsmItem, public LockableOwnableModel {
+class HsmObject : public HsmItem, public LockableModel {
   public:
     HsmObject();
 

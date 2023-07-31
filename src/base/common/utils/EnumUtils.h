@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #define STRINGABLE_ENUM(TYPE, ...)                                             \
     enum class TYPE { __VA_ARGS__ };                                           \

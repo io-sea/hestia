@@ -72,6 +72,7 @@ void InMemoryObjectStoreClient::get(
             return {status.is_ok(), status.m_bytes_read};
         };
         auto source = InMemoryStreamSource::create(source_func);
+        source->set_size(extent.m_length);
         stream->set_source(std::move(source));
     }
 }
@@ -98,6 +99,7 @@ void InMemoryObjectStoreClient::put(
             return {status.is_ok(), buffer.length()};
         };
         auto sink = InMemoryStreamSink::create(sink_func);
+        sink->set_size(extent.m_length);
         stream->set_sink(std::move(sink));
     }
 }

@@ -7,6 +7,13 @@ HttpResponse::HttpResponse(
 {
 }
 
+HttpResponse::HttpResponse(const HttpError& err) : m_body(err.get_message())
+{
+    auto code_and_id = err.get_code_and_id();
+    m_code           = code_and_id.first;
+    m_message        = code_and_id.second;
+}
+
 HttpResponse::Ptr HttpResponse::create()
 {
     return std::make_unique<HttpResponse>();
@@ -16,6 +23,11 @@ HttpResponse::Ptr HttpResponse::create(
     int code, const std::string& message, const std::string& body)
 {
     return std::make_unique<HttpResponse>(code, message, body);
+}
+
+HttpResponse::Ptr HttpResponse::create(const HttpError& err)
+{
+    return std::make_unique<HttpResponse>(err);
 }
 
 HttpHeader& HttpResponse::header()

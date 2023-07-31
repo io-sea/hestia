@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EnumUtils.h"
 #include "ErrorUtils.h"
 #include "HestiaConfig.h"
 
@@ -18,22 +19,26 @@ class CrudServiceBackend;
 
 class IHestiaApplication {
   public:
+    virtual ~IHestiaApplication() = default;
+
     virtual OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
         const Dictionary& extra_config = {}) = 0;
+
+    virtual std::string get_runtime_info() const = 0;
 
     virtual OpStatus run() = 0;
 };
 
 class HestiaApplication : public IHestiaApplication {
   public:
-    enum class ApplicationMode {
+    STRINGABLE_ENUM(
+        ApplicationMode,
         CLIENT_STANDALONE,
         CLIENT_FULL,
         SERVER_CONTROLLER,
-        SERVER_WORKER
-    };
+        SERVER_WORKER)
 
     HestiaApplication() = default;
 
@@ -44,7 +49,11 @@ class HestiaApplication : public IHestiaApplication {
         const std::string& user_token  = {},
         const Dictionary& extra_config = {}) override;
 
-    virtual OpStatus run() override { return {}; }
+    std::string get_runtime_info() const override;
+
+    OpStatus run() override { return {}; }
+
+    const std::string& get_cache_path() const;
 
   protected:
     virtual bool uses_local_storage() const;

@@ -12,34 +12,37 @@ std::string CrudWebView::get_path(const HttpRequest& request) const
     return hestia::StringUtils::remove_prefix(path, "/");
 }
 
-HttpResponse::Ptr CrudWebView::on_get(const HttpRequest& request, const User&)
+HttpResponse::Ptr CrudWebView::on_get(
+    const HttpRequest& request, const User& user)
 {
     const auto path = get_path(request);
     auto response   = hestia::HttpResponse::create();
     if (path.empty()) {
         CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response =
-            m_service->make_request(CrudRequest(query), m_type_name);
+        auto crud_response = m_service->make_request(
+            CrudRequest(query, user.get_primary_key()), m_type_name);
         response->set_body(crud_response->attributes().get_buffer());
     }
     else {
         const auto id = path;
         CrudQuery query(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response =
-            m_service->make_request(CrudRequest{query}, m_type_name);
+        auto crud_response = m_service->make_request(
+            CrudRequest{query, user.get_primary_key()}, m_type_name);
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;
 }
 
-HttpResponse::Ptr CrudWebView::on_put(const HttpRequest& request, const User&)
+HttpResponse::Ptr CrudWebView::on_put(
+    const HttpRequest& request, const User& user)
 {
     const auto path = get_path(request);
 
-    auto response = hestia::HttpResponse::create();
+    auto response = HttpResponse::create();
 
     CrudAttributes attributes;
+
     attributes.set_buffer(request.body());
 
     CrudResponse::Ptr crud_response;
@@ -47,6 +50,7 @@ HttpResponse::Ptr CrudWebView::on_put(const HttpRequest& request, const User&)
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::CREATE,
+                user.get_primary_key(),
                 {},
                 attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES},
@@ -57,6 +61,7 @@ HttpResponse::Ptr CrudWebView::on_put(const HttpRequest& request, const User&)
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE,
+                user.get_primary_key(),
                 {id},
                 attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES},

@@ -10,15 +10,12 @@
 #include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
 
-#include <iostream>
+#include "File.h"
+#include "ProxygenTestUtils.h"
+#include "TestUtils.h"
 
-#ifdef HAVE_PROXYGEN
-#include "ProxygenServer.h"
-using TestServer = hestia::ProxygenServer;
-#else
-#include "BasicHttpServer.h"
-using TestServer = hestia::BasicHttpServer;
-#endif
+#include <iostream>
+#include <memory>
 
 class TestWebApp : public hestia::WebApp {
   public:
@@ -40,8 +37,24 @@ class TestCurlClientFixture {
         hestia::KeyValueStoreCrudServiceBackend backend(&m_kv_store_client);
         m_user_service = hestia::UserService::create({}, &backend);
         m_web_app      = std::make_unique<TestWebApp>(m_user_service.get());
+
+        hestia::Server::Config test_config;
+        m_server = std::make_unique<TestServer>(test_config, m_web_app.get());
+
+        m_server->initialize();
+        m_server->start();
+        m_server->wait_until_bound();
+
+        hestia::CurlClientConfig config;
+        m_client = std::make_unique<hestia::CurlClient>(config);
     }
 
+    ~TestCurlClientFixture() { m_server->stop(); }
+
+    const std::string m_url = "127.0.0.1:8000/";
+
+    std::unique_ptr<hestia::CurlClient> m_client;
+    std::unique_ptr<TestServer> m_server;
     std::unique_ptr<TestWebApp> m_web_app;
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;
     std::unique_ptr<hestia::UserService> m_user_service;
@@ -50,59 +63,34 @@ class TestCurlClientFixture {
 
 TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Default", "[curl]")
 {
-    hestia::Server::Config test_config;
-    TestServer server(test_config, m_web_app.get());
+    hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
 
-    server.initialize();
-    server.start();
-    server.wait_until_bound();
-
-    hestia::CurlClientConfig config;
-
-    hestia::CurlClient client(config);
-
-    const auto url = "127.0.0.1:8000/";
-    hestia::HttpRequest get_request(url, hestia::HttpRequest::Method::GET);
-
-    auto get_response = client.make_request(get_request);
+    auto get_response = m_client->make_request(get_request);
     REQUIRE(get_response->body() == "No data set!");
 
-    hestia::HttpRequest put_request(url, hestia::HttpRequest::Method::PUT);
+    hestia::HttpRequest put_request(m_url, hestia::HttpRequest::Method::PUT);
     put_request.body() = "The quick brown fox jumps over the lazy dog.";
 
-    auto put_response = client.make_request(put_request);
+    auto put_response = m_client->make_request(put_request);
 
-    auto get_response1 = client.make_request(get_request);
+    auto get_response1 = m_client->make_request(get_request);
     REQUIRE(
         get_response1->body()
         == "The quick brown fox jumps over the lazy dog.");
-    server.stop();
 }
 
 TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
 {
-    hestia::Server::Config test_config;
-    TestServer server(test_config, m_web_app.get());
-
-    server.initialize();
-    server.start();
-    server.wait_until_bound();
-
-    hestia::CurlClientConfig config;
-
-    hestia::CurlClient client(config);
-
     std::string content = "The quick brown fox jumps over the lazy dog.";
 
-    const auto url = "127.0.0.1:8000/";
-    hestia::HttpRequest put_request(url, hestia::HttpRequest::Method::PUT);
+    hestia::HttpRequest put_request(m_url, hestia::HttpRequest::Method::PUT);
 
     hestia::Stream stream;
     auto source = std::make_unique<hestia::InMemoryStreamSource>(
         hestia::ReadableBufferView(content));
     stream.set_source(std::move(source));
 
-    auto put_response = client.make_request(put_request, &stream);
+    auto put_response = m_client->make_request(put_request, &stream);
     REQUIRE(!put_response->error());
 
     REQUIRE(stream.reset().ok());
@@ -113,12 +101,46 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
     auto sink = std::make_unique<hestia::InMemoryStreamSink>(writeable_buffer);
     stream.set_sink(std::move(sink));
 
-    hestia::HttpRequest get_request(url, hestia::HttpRequest::Method::GET);
-    auto get_response = client.make_request(get_request, &stream);
+    hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
+    auto get_response = m_client->make_request(get_request, &stream);
     REQUIRE(!get_response->error());
 
     std::string reconstructed_response(
         returned_content.begin(), returned_content.end());
     REQUIRE(reconstructed_response == content);
-    server.stop();
+}
+
+
+TEST_CASE_METHOD(
+    TestCurlClientFixture, "Test Curl client - Large Body", "[curl]")
+{
+    hestia::File file(TestUtils::get_test_data_dir() / "EmperorWu.txt");
+    std::string content;
+    file.read(content);
+
+    hestia::HttpRequest put_request(m_url, hestia::HttpRequest::Method::PUT);
+
+    hestia::Stream stream;
+    auto source = std::make_unique<hestia::InMemoryStreamSource>(
+        hestia::ReadableBufferView(content));
+    stream.set_source(std::move(source));
+
+    auto put_response = m_client->make_request(put_request, &stream);
+    REQUIRE(!put_response->error());
+
+    REQUIRE(stream.reset().ok());
+
+    std::vector<char> returned_content(content.size());
+    hestia::WriteableBufferView writeable_buffer(returned_content);
+
+    auto sink = std::make_unique<hestia::InMemoryStreamSink>(writeable_buffer);
+    stream.set_sink(std::move(sink));
+
+    hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
+    auto get_response = m_client->make_request(get_request, &stream);
+    REQUIRE(!get_response->error());
+
+    std::string reconstructed_response(
+        returned_content.begin(), returned_content.end());
+    REQUIRE(reconstructed_response == content);
 }

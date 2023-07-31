@@ -12,6 +12,7 @@ add_module(
         MockCrudService.h
         MockCrudWebApp.h
         MockCrudView.h
+        MockHestiaClient.h
     SOURCES
         MockS3Server.cc
         MockCrudView.cc
@@ -19,9 +20,11 @@ add_module(
         MockCrudView.cc
         MockCrudService.cc
         MockCrudWebApp.cc
+        MockHestiaClient.cc
     INTERNAL_DEPENDENCIES 
         protocol
         web
+        app
 )
 
 add_dependencies(hestia_mocks hestia_mock_phobos_plugin hestia_mock_s3_plugin hestia_mock_motr_plugin)

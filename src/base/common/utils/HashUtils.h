@@ -1,13 +1,15 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace hestia {
 class HashUtils {
   public:
     static std::string do_sha256(const std::string& input);
 
-    static std::string do_md5(const std::string& input);
+    static void do_md5(
+        const std::string& input, std::vector<unsigned char>& buffer);
 
     static std::string do_rand_32();
 

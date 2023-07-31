@@ -28,13 +28,19 @@ int main(int argc, char** argv)
         if (!cli_status.ok()) {
             rc = -1;
             std::cerr << cli_status.str() << "\n";
-            // std::cerr << "See " << logger_config.m_log_file_path
-            //<< " for details." << std::endl;
+            if (hestia_app) {
+                std::cerr << "See Logs in " << hestia_app->get_cache_path()
+                          << " for details." << std::endl;
+            }
         }
     }
     catch (const std::exception& e) {
         std::cerr << "Uncaught exception running Hestia: " << e.what()
                   << std::endl;
+        if (hestia_app) {
+            std::cerr << "See Logs in " << hestia_app->get_cache_path()
+                      << " for details." << std::endl;
+        }
         rc = -1;
     }
 
@@ -45,10 +51,13 @@ int main(int argc, char** argv)
         catch (const std::exception& e) {
             std::cerr << "Uncaught exception clearing Hestia Context: "
                       << e.what() << std::endl;
+            std::cerr << "See Logs in " << hestia_app->get_cache_path()
+                      << " for details." << std::endl;
             rc = -1;
         }
+        if (!hestia_cli.is_daemon()) {
+            LOG_INFO("Hestia Finished");
+        }
     }
-
-    LOG_INFO("Hestia Finished");
     return rc;
 }

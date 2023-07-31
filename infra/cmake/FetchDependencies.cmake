@@ -11,7 +11,7 @@ macro(fetch_catch2)
     FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        3f0283de7a9c43200033da996ff9093be3ac84dc # v3.3.2
+    GIT_TAG        6e79e682b726f524310d55dec8ddac4e9c52fb5f # v3.4.0
     SYSTEM
     FIND_PACKAGE_ARGS
     )
@@ -37,7 +37,7 @@ macro(fetch_spdlog)
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        ad0e89cbfb4d0c1ce4d097e134eb7be67baebb36 # v1.11.0
+        GIT_TAG        7e635fca68d014934b4af8a1cf874f63989352b7 # v1.12.0
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -66,7 +66,7 @@ macro(fetch_libxml2)
     FetchContent_Declare(
         LibXml2
         GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
-        GIT_TAG        223cb03a5d27b1b2393b266a8657443d046139d6 # v2.10.4
+        GIT_TAG        2e9f7860a9cb8be29eca90b7409ef0278d30ef10 # v2.11.4
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -78,7 +78,7 @@ macro(fetch_hiredis)
     FetchContent_Declare(
         hiredis
         GIT_REPOSITORY https://github.com/redis/hiredis
-        GIT_TAG        c14775b4e48334e0262c9f168887578f4a368b5d # v1.1.0
+        GIT_TAG        60e5075d4ac77424809f855ba3e398df7aacefe8 # v1.2.0
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -113,8 +113,8 @@ endmacro()
 
 macro(build_openssl)
     ExternalProject_Add(openssl
-    URL https://www.openssl.org/source/openssl-1.1.1t.tar.gz
-    URL_HASH          SHA256=8dee9b24bdb1dcbf0c3d1e9b02fb8f6bf22165e807f45adeb7c9677536859d3b
+    URL https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+    URL_HASH          SHA256=e2f8d84b523eecd06c7be7626830370300fbcc15386bf5142d72758f6963ebc6
     CONFIGURE_COMMAND <SOURCE_DIR>/config --prefix=<INSTALL_DIR> --libdir=lib
     INSTALL_COMMAND make install_sw
     )

@@ -14,26 +14,30 @@ std::string MockCrudView::get_path(const HttpRequest& request) const
     return hestia::StringUtils::remove_prefix(path, "/");
 }
 
-HttpResponse::Ptr MockCrudView::on_get(const HttpRequest& request, const User&)
+HttpResponse::Ptr MockCrudView::on_get(
+    const HttpRequest& request, const User& user)
 {
     const auto path = get_path(request);
     auto response   = hestia::HttpResponse::create();
     if (path.empty()) {
         CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response = m_service->make_request(CrudRequest(query));
+        auto crud_response =
+            m_service->make_request(CrudRequest(query, user.get_primary_key()));
         response->set_body(crud_response->attributes().get_buffer());
     }
     else {
         const auto id = path;
         CrudQuery query(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response = m_service->make_request(CrudRequest{query});
+        auto crud_response =
+            m_service->make_request(CrudRequest{query, user.get_primary_key()});
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;
 }
 
-HttpResponse::Ptr MockCrudView::on_put(const HttpRequest& request, const User&)
+HttpResponse::Ptr MockCrudView::on_put(
+    const HttpRequest& request, const User& user)
 {
     const auto path = get_path(request);
 
@@ -46,6 +50,7 @@ HttpResponse::Ptr MockCrudView::on_put(const HttpRequest& request, const User&)
     if (path.empty()) {
         crud_response = m_service->make_request(CrudRequest{
             CrudMethod::CREATE,
+            user.get_primary_key(),
             {},
             attributes,
             CrudQuery::OutputFormat::ATTRIBUTES});
@@ -54,6 +59,7 @@ HttpResponse::Ptr MockCrudView::on_put(const HttpRequest& request, const User&)
         const CrudIdentifier id(path);
         crud_response = m_service->make_request(CrudRequest{
             CrudMethod::UPDATE,
+            user.get_primary_key(),
             {id},
             attributes,
             CrudQuery::OutputFormat::ATTRIBUTES});

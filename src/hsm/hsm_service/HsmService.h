@@ -80,6 +80,7 @@ class HsmService : public CrudService {
 
     void on_put_data_complete(
         const BaseRequest& req,
+        const std::string& user_id,
         const HsmObject& working_object,
         uint8_t tier,
         const Extent& extent,

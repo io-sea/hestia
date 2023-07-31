@@ -3,11 +3,9 @@
 #include "EventFeed.h"
 #include "Logger.h"
 
-#include <filesystem>
+#include "ProxygenTestUtils.h"
 
-#ifdef HAVE_PROXYGEN
-#include <folly/init/Init.h>
-#endif
+#include <filesystem>
 
 int main(int argc, char* argv[])
 {
@@ -24,13 +22,8 @@ int main(int argc, char* argv[])
             std::filesystem::current_path() / "test_output");
     }
 
-#ifdef HAVE_PROXYGEN
-    int folly_argc = 0;
-    folly::InitOptions init_options;
-    init_options.remove_flags = false;
-    init_options.use_gflags   = false;
-    folly::Init folly_instance(&folly_argc, nullptr, init_options);
-#endif
+    ProxygenTestContext proxygen_context;
+    proxygen_context.do_initialize();
 
     int result = Catch::Session().run(argc, argv);
 

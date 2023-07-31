@@ -41,6 +41,10 @@ class HestiaConfig : public SerializeableWithFields {
 
     const std::string& get_user_token() const;
 
+    bool user_management_enabled() const;
+
+    bool default_dataset_enabled() const;
+
     bool has_object_store_backends() const;
 
     void load(
@@ -63,6 +67,9 @@ class HestiaConfig : public SerializeableWithFields {
     std::string m_path;
     std::string m_user_token;
     StringField m_cache_path{"cache_path"};
+    BooleanField m_enable_user_management{"enable_user_management", false};
+    BooleanField m_enable_default_dataset{"enable_default_dataset", true};
+
     TypedDictField<ServerConfig> m_server_config{ServerConfig::get_type()};
 
     TypedDictField<LoggerConfig> m_logger{LoggerConfig::get_type()};

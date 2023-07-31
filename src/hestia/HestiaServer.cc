@@ -71,10 +71,12 @@ OpStatus HestiaServer::run()
 
 void HestiaServer::set_app_mode()
 {
-    if (m_config.get_server_config().is_controller()) {
+    if (!m_config.get_server_config().has_controller_address()) {
+        LOG_INFO("Running Server in Controller mode");
         m_app_mode = ApplicationMode::SERVER_CONTROLLER;
     }
     else {
+        LOG_INFO("Running Server in Worker mode");
         m_app_mode = ApplicationMode::SERVER_WORKER;
     }
 }

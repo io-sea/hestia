@@ -23,7 +23,7 @@ macro(fetch_proxygen)
     FetchContent_Declare(
         double-conversion
         GIT_REPOSITORY https://github.com/google/double-conversion.git
-        GIT_TAG af09fd65fcf24eee95dc62813ba9123414635428 # v3.2.1
+        GIT_TAG 4f7a25d8ced8c7cf6eee6fd09d6788eaa23c9afe # v3.3.0
         SYSTEM
     )
 
@@ -41,7 +41,7 @@ macro(fetch_proxygen)
     folly
     OVERRIDE_FIND_PACKAGE
     GIT_REPOSITORY https://github.com/facebook/folly.git
-    GIT_TAG 1c74accaed8e224a7867404822ab58acb70b5c8a # v2023.02.13.00
+    GIT_TAG 017e42662179411f83eb24c7100b3af7f8a61518 # v2023.07.24.00
     SYSTEM
     CMAKE_ARGS -DCMAKE_MODULE_PATH=CMake -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF
     )
@@ -65,7 +65,7 @@ macro(fetch_proxygen)
     fizz
     OVERRIDE_FIND_PACKAGE
     GIT_REPOSITORY https://github.com/facebookincubator/fizz.git
-    GIT_TAG e80100d2ab584a59555ed15fd78fdebb241db560 # v2023.02.13.00
+    GIT_TAG 555161037025db59658ae5d0277c4c3e1e49817e # v2023.07.24.00
     SYSTEM
     SOURCE_SUBDIR fizz
     )
@@ -85,7 +85,7 @@ macro(fetch_proxygen)
     FetchContent_Declare(
     wangle
     GIT_REPOSITORY https://github.com/facebook/wangle.git
-    GIT_TAG 16bd05495c407a1e07934f9cff60517e3047512d # v2023.02.13.00
+    GIT_TAG 68b1ec08f23196e0ad1dd2dfbb2308c095caf440 # v2023.07.24.00
     SYSTEM
     SOURCE_SUBDIR wangle
     OVERRIDE_FIND_PACKAGE
@@ -108,7 +108,7 @@ macro(fetch_proxygen)
     FetchContent_Declare(
     proxygen
     GIT_REPOSITORY https://github.com/facebook/proxygen.git
-    GIT_TAG 54b8c0dceb6fed4e794192667ccaef257ba8005b # v2023.02.13.00
+    GIT_TAG 4fbbc029ee3404e6ad94817fda8c022760354194 # v2023.07.24.00
     SYSTEM
     )
     FetchContent_MakeAvailable(proxygen)
@@ -117,7 +117,7 @@ macro(fetch_proxygen)
         zstd
         OVERRIDE_FIND_PACKAGE
         GIT_REPOSITORY https://github.com/facebook/zstd.git
-        GIT_TAG 945f27758c0fd67b636103a38dbf050266c6b90a # v1.5.4
+        GIT_TAG 63779c798237346c2b245c546c40b72a5a5913fe # v1.5.5
         SOURCE_SUBDIR build/cmake
         )
     

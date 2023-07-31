@@ -10,6 +10,12 @@ RequestContext::RequestContext(const HttpRequest& request) :
     m_request.set_context(this);
 }
 
+void RequestContext::set_request(const HttpRequest& request)
+{
+    m_request = request;
+    m_request.set_context(this);
+}
+
 Stream* RequestContext::get_stream() const
 {
     return m_stream.get();
@@ -29,12 +35,6 @@ const HttpRequest& RequestContext::get_request() const
 {
     return m_request;
 }
-
-void RequestContext::set_body(const ReadableBufferView& buffer)
-{
-    m_request.body().assign(buffer.data(), buffer.length());
-}
-
 
 void RequestContext::set_output_chunk_handler(onChunkFunc func)
 {
@@ -77,7 +77,7 @@ void RequestContext::flush_stream()
         return;
     }
 
-    std::vector<char> buffer(m_chunk_size);
+    std::vector<char> buffer(m_chunk_size, 0);
     WriteableBufferView writeable_buffer(&buffer[0], m_chunk_size);
     while (true) {
         const auto result = m_stream->read(writeable_buffer);
@@ -101,6 +101,8 @@ void RequestContext::flush_stream()
     if (m_on_output_complete) {
         m_on_output_complete(m_response.get());
     }
+
+    on_output_complete();
 }
 
 IOResult RequestContext::write_to_stream(const ReadableBufferView& buffer)
@@ -121,6 +123,7 @@ void RequestContext::on_input_complete()
         else if (!m_response) {
             m_response = HttpResponse::create();
         }
+        m_finished = true;
     }
 }
 }  // namespace hestia

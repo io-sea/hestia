@@ -5,9 +5,18 @@
 #include "TimeUtils.h"
 #include "UuidUtils.h"
 
+#include <cassert>
 #include <stdexcept>
 
+#include <iostream>
+
 namespace hestia {
+
+DefaultIdGenerator::DefaultIdGenerator(uint64_t minimum_id) :
+    m_minimum_id(minimum_id)
+{
+}
+
 std::string DefaultIdGenerator::get_id(const std::string& key)
 {
     std::string address_key;
@@ -20,8 +29,15 @@ std::string DefaultIdGenerator::get_id(const std::string& key)
     }
     address_key = mac_address;
 
-    const auto hash = HashUtils::do_md5(
-        key + std::to_string(TimeUtils::get_current_time()) + address_key);
-    return UuidUtils::from_string(hash, Uuid::Format::Bytes16).to_string();
+    std::vector<unsigned char> buffer;
+    HashUtils::do_md5(
+        key + std::to_string(TimeUtils::get_current_time()) + address_key,
+        buffer);
+
+    auto uuid = UuidUtils::from_bytes(buffer);
+    if (m_minimum_id > 0) {
+        uuid.bump_lower(m_minimum_id);
+    }
+    return UuidUtils::from_bytes(buffer).to_string();
 }
 }  // namespace hestia

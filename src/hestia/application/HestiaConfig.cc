@@ -35,6 +35,9 @@ HestiaConfig& HestiaConfig::operator=(const HestiaConfig& other)
         m_backends               = other.m_backends;
         m_tiers                  = other.m_tiers;
         m_event_feed_config      = other.m_event_feed_config;
+
+        m_enable_user_management = other.m_enable_user_management;
+        m_enable_default_dataset = other.m_enable_default_dataset;
         init();
     }
     return *this;
@@ -48,6 +51,8 @@ void HestiaConfig::init()
     register_sequence_field(&m_backends);
     register_sequence_field(&m_tiers);
     register_map_field(&m_event_feed_config);
+    register_scalar_field(&m_enable_user_management);
+    register_scalar_field(&m_enable_default_dataset);
 }
 
 void HestiaConfig::add_object_store_backend(
@@ -91,6 +96,16 @@ HestiaConfig::get_object_store_backends() const
 const std::vector<StorageTier>& HestiaConfig::get_storage_tiers() const
 {
     return m_tiers.container();
+}
+
+bool HestiaConfig::default_dataset_enabled() const
+{
+    return m_enable_default_dataset.get_value();
+}
+
+bool HestiaConfig::user_management_enabled() const
+{
+    return m_enable_user_management.get_value();
 }
 
 void HestiaConfig::find_config_file(const std::string& config_path)

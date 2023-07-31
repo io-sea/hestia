@@ -45,7 +45,7 @@ AdapterCollection::Ptr MockModel::create_adapters()
         CrudAttributes::to_string(CrudAttributes::Format::JSON),
         std::make_unique<JsonAdapter>(model_factory_raw));
     adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KV_PAIR),
+        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
         std::make_unique<KeyValueAdapter>(model_factory_raw));
 
     return adapters;
@@ -112,7 +112,7 @@ AdapterCollection::Ptr MockParentModel::create_adapters()
         CrudAttributes::to_string(CrudAttributes::Format::JSON),
         std::make_unique<JsonAdapter>(model_factory_raw));
     adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KV_PAIR),
+        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
         std::make_unique<KeyValueAdapter>(model_factory_raw));
 
     return adapters;

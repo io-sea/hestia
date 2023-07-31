@@ -2,6 +2,7 @@
 
 #include "CurlClient.h"
 #include "MockWebView.h"
+#include "Stream.h"
 #include "UrlRouter.h"
 
 #include "InMemoryStreamSink.h"
@@ -19,39 +20,48 @@
 #include "UserService.h"
 #include "UuidUtils.h"
 
+#include "ProxygenTestUtils.h"
 #include "TestUtils.h"
 
 #include <filesystem>
 #include <iostream>
 
-#ifdef HAVE_PROXYGEN
-#include "ProxygenServer.h"
-using TestServer = hestia::ProxygenServer;
-#else
-#include "BasicHttpServer.h"
-using TestServer = hestia::BasicHttpServer;
-#endif
-
 class TestHestiaWebAppFixture {
   public:
     TestHestiaWebAppFixture()
     {
-        hestia::KeyValueStoreCrudServiceBackend backend(&m_kv_store_client);
+        m_kv_store_client =
+            std::make_unique<hestia::InMemoryKeyValueStoreClient>();
+        m_obj_store_client =
+            std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
+
+        // The crud service will not create a backend tier
+        hestia::InMemoryObjectStoreClientConfig obj_store_config;
+        obj_store_config.set_tiers({"0", "1"});
+        m_obj_store_client->do_initialize({}, obj_store_config);
+
+        hestia::KeyValueStoreCrudServiceBackend backend(
+            m_kv_store_client.get());
         m_user_service = hestia::UserService::create({}, &backend);
 
-        auto hsm_service = hestia::HsmService::create(
-            hestia::ServiceConfig{}, &m_kv_store_client, &m_obj_store_client,
-            m_user_service.get());
-
         hestia::HsmObjectStoreClientBackend object_store_backend(
-            hestia::HsmObjectStoreClientBackend::Type::MEMORY,
+            hestia::HsmObjectStoreClientBackend::Type::MEMORY_HSM,
             hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
+
+
+        auto hsm_service = hestia::HsmService::create(
+            hestia::ServiceConfig{}, m_kv_store_client.get(),
+            m_obj_store_client.get(), m_user_service.get());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.add_backend(object_store_backend);
+
         m_dist_hsm_service = hestia::DistributedHsmService::create(
             dist_hsm_config, std::move(hsm_service), &backend,
             m_user_service.get());
+
+        m_dist_hsm_service->register_self();
+
 
         m_object_factory =
             std::make_unique<hestia::TypedModelFactory<hestia::HsmObject>>();
@@ -132,7 +142,7 @@ class TestHestiaWebAppFixture {
 
         hestia::Map action_map;
         action_dict.flatten(action_map);
-        action_map.add_key_prefix("hestia::hsm_action::");
+        action_map.add_key_prefix("hestia.hsm_action.");
 
         req.get_header().set_items(action_map);
         req.body()    = content;
@@ -143,14 +153,33 @@ class TestHestiaWebAppFixture {
     void get_data(
         const hestia::HsmObject& object, std::string& content, uint8_t tier)
     {
-        const auto path =
-            m_base_url + "objects/" + object.id() + "/" + std::to_string(tier);
+        hestia::WriteableBufferView writeable_buffer(
+            content.data(), content.size());
+        hestia::Stream stream;
+        auto sink =
+            std::make_unique<hestia::InMemoryStreamSink>(writeable_buffer);
+        stream.set_sink(std::move(sink));
 
+        const auto path = m_base_url + hestia::HsmItem::hsm_action_name + "s";
         hestia::HttpRequest req(path, hestia::HttpRequest::Method::GET);
-        auto response = m_http_client->make_request(req);
-        REQUIRE(!response->error());
 
-        content = response->body();
+        hestia::HsmAction action(
+            hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
+        action.set_source_tier(tier);
+        action.set_subject_key(object.get_primary_key());
+        action.set_size(content.size());
+
+        hestia::Dictionary action_dict;
+        action.serialize(action_dict);
+
+        hestia::Map action_map;
+        action_dict.flatten(action_map);
+        action_map.add_key_prefix("hestia.hsm_action.");
+
+        req.get_header().set_items(action_map);
+
+        auto response = m_http_client->make_request(req, &stream);
+        REQUIRE(!response->error());
     }
 
     void get_tiers(std::vector<hestia::Model::Ptr>& tiers)
@@ -175,8 +204,8 @@ class TestHestiaWebAppFixture {
         REQUIRE(!response->error());
     }
 
-    hestia::InMemoryKeyValueStoreClient m_kv_store_client;
-    hestia::InMemoryHsmObjectStoreClient m_obj_store_client;
+    std::unique_ptr<hestia::InMemoryKeyValueStoreClient> m_kv_store_client;
+    std::unique_ptr<hestia::InMemoryHsmObjectStoreClient> m_obj_store_client;
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
     std::unique_ptr<hestia::UserService> m_user_service;
 
@@ -218,10 +247,10 @@ TEST_CASE_METHOD(
     REQUIRE(tiers.empty());
 
     hestia::StorageTier tier0(0);
-    tier0.set_backend("hestia::FileHsmObjectStoreClient");
+    tier0.set_backend("hestia::InMemoryHsmObjectStoreClient");
 
     hestia::StorageTier tier1(1);
-    tier1.set_backend("hestia::FileHsmObjectStoreClient");
+    tier1.set_backend("hestia::InMemoryHsmObjectStoreClient");
     put_tier(tier0);
     put_tier(tier1);
 
@@ -232,12 +261,10 @@ TEST_CASE_METHOD(
 
     REQUIRE(tiers_0->get_backend() == tier0.get_backend());
 
-    /*
-    // TODO Basic server doesn't handle large headers coming in chunks - need to
-    fix that. std::string content{"The quick brown fox jumps over the lazy
-    dog."}; put_data(obj, content, 0);
+    std::string content = "The quick brown fox jumps over the lazy dog.";
+    put_data(obj, content, 0);
 
-    std::string returned_content;
+    std::string returned_content(content.size(), 0);
     get_data(obj, returned_content, 0);
-    */
+    REQUIRE(returned_content == content);
 }

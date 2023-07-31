@@ -66,7 +66,7 @@ TEST_CASE_METHOD(
     hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
 
     auto get_response = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::CrudRequest{query});
+        hestia::CrudRequest{query, {}});
     REQUIRE(get_response->ok());
     REQUIRE(get_response->items().size() == 1);
 
@@ -79,11 +79,11 @@ TEST_CASE_METHOD(
     node.add_backend(backend);
 
     auto put_response = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::TypedCrudRequest{hestia::CrudMethod::CREATE, node});
+        hestia::TypedCrudRequest{hestia::CrudMethod::CREATE, node, {}});
     REQUIRE(put_response->ok());
 
     auto get_response2 = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::CrudRequest{query});
+        hestia::CrudRequest{query, {}});
 
     REQUIRE(get_response2->ok());
     REQUIRE(get_response2->items().size() == 2);

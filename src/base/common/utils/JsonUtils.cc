@@ -277,7 +277,13 @@ void JsonUtils::get_values(
 
     for (const auto& key : keys) {
         if (file_content.contains(key)) {
-            values.push_back(file_content[key].dump());
+            const auto content = file_content[key];
+            if (content.is_string()) {
+                values.push_back(content);
+            }
+            else {
+                values.push_back(content.dump());
+            }
         }
     }
 }

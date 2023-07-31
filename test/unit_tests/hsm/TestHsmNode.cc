@@ -24,8 +24,9 @@ TEST_CASE("Test HsmNode", "[hsm]")
     hestia::Dictionary copy_constructed_dict;
     copy_constructed_node.serialize(copy_constructed_dict);
 
-    REQUIRE(node_dict.to_string() == copied_dict.to_string());
-    REQUIRE(copy_constructed_dict.to_string() == copied_dict.to_string());
+    REQUIRE(node_dict.to_string(true) == copied_dict.to_string(true));
+    REQUIRE(
+        copy_constructed_dict.to_string(true) == copied_dict.to_string(true));
 
     hestia::HsmNode deserialized_node;
     deserialized_node.deserialize(copied_dict);

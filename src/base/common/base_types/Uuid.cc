@@ -18,7 +18,7 @@ bool Uuid::is_unset() const
 
 std::string Uuid::to_string(char delimiter) const
 {
-    std::vector<unsigned char> bytes(16);
+    std::vector<unsigned char> bytes(16, 0);
     for (std::size_t idx = 0; idx < 8; idx++) {
         bytes[idx] = m_lo >> (idx * 8);
     }
@@ -52,6 +52,11 @@ std::string Uuid::to_string(char delimiter) const
              << static_cast<int>(bytes[5 - idx]);
     }
     return sstr.str();
+}
+
+void Uuid::bump_lower(uint64_t minimum_value)
+{
+    m_lo |= minimum_value;
 }
 
 Uuid Uuid::from_string(const std::string& input, char delimiter)

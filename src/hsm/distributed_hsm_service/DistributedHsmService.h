@@ -28,7 +28,8 @@ class DistributedHsmService {
     DistributedHsmService(
         DistributedHsmServiceConfig config,
         HsmServicePtr hsm_service,
-        CrudService::Ptr node_service);
+        CrudService::Ptr node_service,
+        UserService* user_service);
 
     static Ptr create(
         DistributedHsmServiceConfig config,
@@ -42,6 +43,8 @@ class DistributedHsmService {
 
     CrudService* get_node_service();
 
+    UserService* get_user_service();
+
     const DistributedHsmServiceConfig& get_self_config() const;
 
     void register_self();
@@ -50,6 +53,7 @@ class DistributedHsmService {
     DistributedHsmServiceConfig m_config;
     HsmServicePtr m_hsm_service;
     CrudService::Ptr m_node_service;
+    UserService* m_user_service;
 };
 
 }  // namespace hestia

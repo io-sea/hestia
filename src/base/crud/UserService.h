@@ -32,10 +32,16 @@ class UserService : public CrudService {
         TimeProvider* time_provider                         = nullptr,
         std::unique_ptr<UserTokenGenerator> token_generator = nullptr);
 
-    CrudResponse::Ptr authenticate_user(
-        const std::string& username, const std::string& password) const;
+    bool is_authenticated() const;
 
-    CrudResponse::Ptr authenticate_with_token(const std::string& token) const;
+    const User& get_current_user() const;
+
+    BaseResponse::Ptr load_or_create_default_user();
+
+    CrudResponse::Ptr authenticate_user(
+        const std::string& username, const std::string& password);
+
+    CrudResponse::Ptr authenticate_with_token(const std::string& token);
 
     CrudResponse::Ptr register_user(
         const std::string& username, const std::string& password) const;
@@ -44,6 +50,7 @@ class UserService : public CrudService {
     std::string get_hashed_password(
         const std::string& username, const std::string& password) const;
 
+    User m_current_user;
     CrudService::Ptr m_token_service;
     std::unique_ptr<UserTokenGenerator> m_token_generator;
 };

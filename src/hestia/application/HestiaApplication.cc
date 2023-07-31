@@ -20,6 +20,7 @@
 #include "TimeUtils.h"
 
 #include <iostream>
+#include <sstream>
 
 namespace hestia {
 
@@ -76,6 +77,21 @@ OpStatus HestiaApplication::initialize(
     return {};
 }
 
+std::string HestiaApplication::get_runtime_info() const
+{
+    std::stringstream sstr;
+    sstr << "Cache Location: " << m_config.get_cache_path() << '\n';
+    sstr << "App Mode: "
+         << ApplicationMode_enum_string_converter().init().to_string(m_app_mode)
+         << '\n';
+    return sstr.str();
+}
+
+const std::string& HestiaApplication::get_cache_path() const
+{
+    return m_config.get_cache_path();
+}
+
 void HestiaApplication::initialize_logger() const
 {
     Logger::get_instance().do_initialize(
@@ -94,7 +110,9 @@ bool HestiaApplication::uses_http_client() const
 }
 
 void setup_tiers(
-    CrudService* tier_service, const std::vector<StorageTier>& tiers)
+    CrudService* tier_service,
+    const std::vector<StorageTier>& tiers,
+    const std::string& current_user_id)
 {
     if (tiers.empty()) {
         return;
@@ -103,7 +121,8 @@ void setup_tiers(
     LOG_INFO("Check for new Tiers to add.");
     CrudQuery query(CrudQuery::OutputFormat::ITEM);
 
-    auto tiers_list_response = tier_service->make_request(CrudRequest{query});
+    auto tiers_list_response =
+        tier_service->make_request(CrudRequest{query, current_user_id});
 
     for (const auto& config_tier : tiers) {
         bool found{false};
@@ -118,7 +137,7 @@ void setup_tiers(
                 "Adding tier: " << config_tier.name() << " to Tier service");
             if (auto response =
                     tier_service->make_request(TypedCrudRequest<StorageTier>{
-                        CrudMethod::CREATE, config_tier});
+                        CrudMethod::CREATE, config_tier, current_user_id});
                 !response->ok()) {
                 LOG_ERROR("Failed to PUT tier in initialization.");
                 return;
@@ -167,9 +186,11 @@ void HestiaApplication::setup_hsm_service(
         config, backend, m_user_service.get());
 
     if (uses_local_storage()) {
+        const auto current_user_id =
+            m_user_service->get_current_user().get_primary_key();
         setup_tiers(
             hsm_services->get_service(HsmItem::Type::TIER),
-            m_config.get_storage_tiers());
+            m_config.get_storage_tiers(), current_user_id);
     }
 
     auto dpe = DataPlacementEngineFactory::get_engine(
@@ -201,9 +222,24 @@ void HestiaApplication::setup_user_service(
     const ServiceConfig& config, CrudServiceBackend* backend)
 {
     m_user_service = UserService::create(config, backend);
+
+    LOG_INFO("Starting user log in");
     if (!m_config.get_user_token().empty()) {
         m_user_service->authenticate_with_token(m_config.get_user_token());
     }
+    else {
+        if (!m_config.user_management_enabled()) {
+            m_user_service->load_or_create_default_user();
+        }
+        else {
+            throw std::runtime_error(
+                "Failed to authenticate user - user token not provided");
+        }
+    }
+
+    LOG_INFO(
+        "Logged in with user: "
+        << m_user_service->get_current_user().get_primary_key());
 }
 
 void HestiaApplication::setup_http_client()

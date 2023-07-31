@@ -1,6 +1,10 @@
 #include "HestiaCommands.h"
 
 #include "ConsoleInterface.h"
+#include "StringUtils.h"
+
+#include <iostream>
+#include <stdexcept>
 
 namespace hestia {
 
@@ -33,17 +37,22 @@ void HestiaClientCommand::set_hsm_action(HsmAction::Action action)
     m_action.set_target_tier(m_target_tier);
 }
 
-HestiaClientCommand::IoFormat HestiaClientCommand::io_format_from_string(
-    const std::string& format)
+HestiaClientCommand::OutputFormat
+HestiaClientCommand::output_format_from_string(const std::string& format)
 {
-    return IoFormat_enum_string_converter().init().from_string(format);
+    return OutputFormat_enum_string_converter().init().from_string(format);
 }
 
-bool HestiaClientCommand::expects_id(IoFormat format)
+bool HestiaClientCommand::expects_id(OutputFormat format)
 {
-    return format == IoFormat::ID || format == IoFormat::IDs
-           || format == IoFormat::IDS_ATTRS_JSON
-           || format == IoFormat::IDS_ATTRS_KV_PAIR;
+    return format == OutputFormat::ID || format == OutputFormat::ID_KEY_VALUE;
+}
+
+bool HestiaClientCommand::expects_attributes(OutputFormat format)
+{
+    return format == OutputFormat::KEY_VALUE
+           || format == OutputFormat::ID_KEY_VALUE
+           || format == OutputFormat::JSON;
 }
 
 bool HestiaClientCommand::is_crud_method() const
@@ -138,75 +147,169 @@ std::vector<std::string> HestiaClientCommand::get_system_subjects() const
     return {"user", "hsm_node"};
 }
 
-std::pair<HestiaClientCommand::IoFormat, CrudAttributes::Format>
+std::pair<HestiaClientCommand::OutputFormat, CrudAttributes::Format>
 HestiaClientCommand::parse_create_update_inputs(
     VecCrudIdentifier& ids,
     CrudAttributes& attributes,
     IConsoleInterface* console) const
 {
-    IoFormat input_format{IoFormat::NONE};
+    CrudAttributes::Format input_format{CrudAttributes::Format::NONE};
     if (!m_input_format.empty()) {
-        input_format = io_format_from_string(m_input_format);
+        input_format = CrudAttributes::format_from_string(m_input_format);
     }
 
-    IoFormat output_format{IoFormat::IDs};
+    OutputFormat output_format{OutputFormat::ID};
     if (!m_output_format.empty()) {
-        output_format = io_format_from_string(m_output_format);
+        output_format = output_format_from_string(m_output_format);
     }
 
     CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
-    if (expects_id(input_format) && !m_id_format.empty()) {
+    if (!m_id_format.empty()) {
         id_format = CrudIdentifier::input_format_from_string(m_id_format);
     }
 
-    std::string attribute_buffer;
-    if (input_format == IoFormat::ID && !m_body.empty()) {
-        CrudIdentifier::parse(m_body, id_format, ids);
+    if (!m_id.empty()) {
+        std::string ids_combined;
+        for (const auto& entry : m_id) {
+            ids_combined += entry;
+        }
+        CrudIdentifier::parse(ids_combined, id_format, ids);
     }
-    else if (input_format != IoFormat::NONE) {
+    else if (input_format != CrudAttributes::Format::NONE) {
+        std::string attribute_buffer;
+        attributes.set_format(input_format);
         std::string line;
-        bool in_ids = expects_id(input_format);
-        while (console->console_read(line)) {
-            if (line.empty()) {
-                in_ids = false;
-            }
-            else if (in_ids) {
-                CrudIdentifier id;
-                id.from_buffer(line, id_format);
-                ids.push_back(id);
-            }
-            else {
+        if (input_format == CrudAttributes::Format::JSON) {
+            while (console->console_read(line)) {
                 attribute_buffer += line;
             }
         }
+        else {
+            while (console->console_read(line)) {
+                if (line.empty()) {
+                    attribute_buffer += '\n';
+                }
+                if (StringUtils::has_character(line, ',')) {
+                    attribute_buffer += line + '\n';
+                }
+                else {
+                    attribute_buffer += '\n';
+                    CrudIdentifier id;
+                    id.from_buffer(line, id_format);
+                    ids.push_back(id);
+                }
+            }
+        }
+        attributes.set_buffer(attribute_buffer);
     }
-
-    attributes.set_buffer(attribute_buffer);
-
-    CrudAttributes::Format attribute_input_format{CrudAttributes::Format::NONE};
-    if (input_format == IoFormat::ATTRS_JSON
-        || input_format == IoFormat::IDS_ATTRS_JSON) {
-        attribute_input_format = CrudAttributes::Format::JSON;
-    }
-    else if (
-        input_format == IoFormat::ATTRS_KV_PAIR
-        || input_format == IoFormat::IDS_ATTRS_KV_PAIR) {
-        attribute_input_format = CrudAttributes::Format::KV_PAIR;
-    }
-    attributes.set_format(attribute_input_format);
 
     CrudAttributes::Format attribute_output_format{
         CrudAttributes::Format::NONE};
-    if (output_format == IoFormat::ATTRS_JSON
-        || output_format == IoFormat::IDS_ATTRS_JSON) {
+    if (output_format == OutputFormat::JSON) {
         attribute_output_format = CrudAttributes::Format::JSON;
     }
     else if (
-        output_format == IoFormat::ATTRS_KV_PAIR
-        || output_format == IoFormat::IDS_ATTRS_KV_PAIR) {
-        attribute_output_format = CrudAttributes::Format::KV_PAIR;
+        output_format == OutputFormat::KEY_VALUE
+        || output_format == OutputFormat::ID_KEY_VALUE) {
+        attribute_output_format = CrudAttributes::Format::KEY_VALUE;
     }
     return {output_format, attribute_output_format};
+}
+
+std::pair<HestiaClientCommand::OutputFormat, CrudAttributes::Format>
+HestiaClientCommand::parse_read_inputs(
+    CrudQuery& query, IConsoleInterface* console) const
+{
+    OutputFormat output_format{OutputFormat::ID};
+    if (!m_output_format.empty()) {
+        output_format = output_format_from_string(m_output_format);
+    }
+
+    CrudQuery::OutputFormat query_output_format{
+        CrudQuery::OutputFormat::ATTRIBUTES};
+    if (output_format == HestiaClientCommand::OutputFormat::ID) {
+        query_output_format = CrudQuery::OutputFormat::ID;
+    }
+    query.set_output_format(query_output_format);
+
+    CrudAttributes::Format attribute_output_format{
+        CrudAttributes::Format::JSON};
+    if (output_format == HestiaClientCommand::OutputFormat::KEY_VALUE
+        || output_format == HestiaClientCommand::OutputFormat::ID_KEY_VALUE) {
+        query.set_attributes_output_format(attribute_output_format);
+    }
+
+    CrudQuery::Format input_format{CrudQuery::Format::LIST};
+    if (!m_input_format.empty()) {
+        input_format = CrudQuery::format_from_string(m_input_format);
+    }
+
+    CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
+    if (!m_id_format.empty()) {
+        id_format = CrudIdentifier::input_format_from_string(m_id_format);
+    }
+    query.set_format(input_format);
+
+    if (input_format == CrudQuery::Format::ID) {
+        VecCrudIdentifier ids;
+        if (!m_body.empty()) {
+            std::string ids_combined;
+            for (const auto& entry : m_id) {
+                ids_combined += entry;
+            }
+            CrudIdentifier::parse(ids_combined, id_format, ids);
+            ;
+        }
+        else {
+            std::string id_buffer;
+            std::string line;
+            while (console->console_read(line)) {
+                id_buffer += line + '\n';
+            }
+            CrudIdentifier::parse(id_buffer, id_format, ids);
+        }
+        query.set_ids(ids);
+    }
+    else {
+        Map filter;
+        if (!m_body.empty()) {
+            for (const auto& entry : m_body) {
+                auto [key, value] = StringUtils::split_on_first(entry, ',');
+                StringUtils::trim(key);
+                StringUtils::trim(value);
+                filter.set_item(key, value);
+            }
+        }
+        query.set_filter(filter);
+    }
+
+    return {output_format, attribute_output_format};
+}
+
+void HestiaClientCommand::parse_remove_inputs(
+    VecCrudIdentifier& ids, IConsoleInterface* console) const
+{
+    CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
+    if (!m_id_format.empty()) {
+        id_format = CrudIdentifier::input_format_from_string(m_id_format);
+    }
+
+    if (!m_id.empty()) {
+        std::string ids_combined;
+        for (const auto& entry : m_id) {
+            ids_combined += entry;
+        }
+        CrudIdentifier::parse(ids_combined, id_format, ids);
+        ;
+    }
+    else {
+        std::string id_buffer;
+        std::string line;
+        while (console->console_read(line)) {
+            id_buffer += line + '\n';
+        }
+        CrudIdentifier::parse(id_buffer, id_format, ids);
+    }
 }
 
 }  // namespace hestia

@@ -7,7 +7,7 @@ namespace hestia {
 class CrudAttributes {
 
   public:
-    STRINGABLE_ENUM(Format, NONE, JSON, KV_PAIR)
+    STRINGABLE_ENUM(Format, NONE, JSON, KEY_VALUE)
 
     CrudAttributes() = default;
 
@@ -35,7 +35,7 @@ class CrudAttributes {
 
     static std::string to_string(Format format)
     {
-        return format == Format::JSON ? "json" : "kv_pair";
+        return format == Format::JSON ? "json" : "key_value";
     }
 
   private:

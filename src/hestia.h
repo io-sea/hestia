@@ -49,7 +49,7 @@ typedef enum hestia_io_format_e {
 typedef enum hestia_query_format_e {
     HESTIA_QUERY_NONE = 0,
     HESTIA_QUERY_IDS,
-    HESTIA_QUERY_INDEX,
+    HESTIA_QUERY_FILTER,
     HESTIA_QUERY_TYPE_COUNT,
 } hestia_query_format_t;
 

@@ -35,6 +35,8 @@ class Uuid {
 
     uint64_t hi() const { return m_hi; }
 
+    void bump_lower(uint64_t minimum_value);
+
     bool operator==(const Uuid& other) const
     {
         return other.m_lo == m_lo && other.m_hi == m_hi;

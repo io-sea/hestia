@@ -26,6 +26,160 @@ KeyValueCrudClient::KeyValueCrudClient(
 
 KeyValueCrudClient::~KeyValueCrudClient() {}
 
+void KeyValueCrudClient::process_items(
+    const CrudRequest& request,
+    std::vector<std::string>& ids,
+    std::vector<VecKeyValuePair>& index_fields,
+    std::vector<VecKeyValuePair>& foregin_key_fields,
+    Dictionary& content) const
+{
+    std::size_t count{0};
+    for (const auto& item : request.items()) {
+        auto id = item->get_primary_key();
+        if (id.empty()) {
+            id = generate_id(item->name());
+        }
+        ids.push_back(id);
+
+        VecKeyValuePair index;
+        item->get_index_fields(index);
+        index_fields.push_back(index);
+
+        VecKeyValuePair foregin_keys;
+        item->get_foreign_key_fields(foregin_keys);
+        foregin_key_fields.push_back(foregin_keys);
+
+        auto item_dict = std::make_unique<Dictionary>();
+        get_adapter(CrudAttributes::Format::JSON)
+            ->to_dict(request.items(), *item_dict, {}, count);
+        content.add_sequence_item(std::move(item_dict));
+        count++;
+    }
+}
+
+void KeyValueCrudClient::process_ids(
+    const CrudRequest& request,
+    std::vector<std::string>& ids,
+    std::vector<VecKeyValuePair>& index_fields,
+    std::vector<VecKeyValuePair>& foregin_key_fields,
+    const Dictionary& attributes,
+    Dictionary& content) const
+{
+    std::size_t count{0};
+    for (const auto& crud_id : request.get_ids()) {
+        std::string id = request.get_ids()[0].get_primary_key();
+        if (id.empty()) {
+            id = generate_id(crud_id.get_name());
+        }
+        ids.push_back(id);
+
+        auto base_item = m_adapters->get_model_factory()->create();
+
+        VecKeyValuePair index;
+        base_item->get_index_fields(index);
+        index_fields.push_back(index);
+
+        if (!attributes.is_empty()) {
+            if (attributes.get_type() == Dictionary::Type::MAP) {
+                base_item->deserialize(attributes);
+            }
+            else if (
+                attributes.get_type() == Dictionary::Type::SEQUENCE
+                && attributes.get_sequence().size()
+                       == request.get_ids().size()) {
+                base_item->deserialize(*attributes.get_sequence()[count]);
+            }
+        }
+
+        VecKeyValuePair foregin_keys;
+        base_item->get_foreign_key_fields(foregin_keys);
+        foregin_key_fields.push_back(foregin_keys);
+
+        VecModelPtr base_items;
+        base_items.push_back(std::move(base_item));
+
+        auto item_dict = std::make_unique<Dictionary>();
+        get_adapter(CrudAttributes::Format::JSON)
+            ->to_dict(base_items, *item_dict, {});
+        content.add_sequence_item(std::move(item_dict));
+        count++;
+    }
+}
+
+void KeyValueCrudClient::process_empty(
+    std::vector<std::string>& ids,
+    std::vector<VecKeyValuePair>& index_fields,
+    std::vector<VecKeyValuePair>& foregin_key_fields,
+    const Dictionary& attributes,
+    Dictionary& content) const
+{
+    ids.push_back(generate_id(""));
+
+    auto base_item = m_adapters->get_model_factory()->create();
+
+    VecKeyValuePair index;
+    base_item->get_index_fields(index);
+    index_fields.push_back(index);
+
+    if (!attributes.is_empty()
+        && attributes.get_type() == Dictionary::Type::MAP) {
+        base_item->deserialize(attributes);
+    }
+
+    VecKeyValuePair foregin_keys;
+    base_item->get_foreign_key_fields(foregin_keys);
+    foregin_key_fields.push_back(foregin_keys);
+
+    VecModelPtr base_items;
+    base_items.push_back(std::move(base_item));
+
+    auto item_dict = std::make_unique<Dictionary>();
+    get_adapter(CrudAttributes::Format::JSON)
+        ->to_dict(base_items, *item_dict, {});
+    content.add_sequence_item(std::move(item_dict));
+}
+
+void KeyValueCrudClient::prepare_create_keys(
+    std::vector<KeyValuePair>& string_set_kv_pairs,
+    std::vector<KeyValuePair>& set_add_kv_pairs,
+    std::vector<std::string>& ids,
+    const std::vector<VecKeyValuePair>& index_fields,
+    const std::vector<VecKeyValuePair>& foregin_key_fields,
+    const Dictionary& content,
+    const Dictionary& create_context_dict,
+    const std::string& primary_key_name) const
+{
+    std::size_t count{0};
+    for (const auto& id : ids) {
+        auto item_dict = content.get_sequence()[count].get();
+        item_dict->merge(create_context_dict);
+
+        auto primary_key_dict =
+            std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
+        primary_key_dict->set_scalar(id);
+        item_dict->set_map_item(primary_key_name, std::move(primary_key_dict));
+
+        std::string content_body;
+        get_adapter(CrudAttributes::Format::JSON)
+            ->dict_to_string(*item_dict, content_body);
+
+        string_set_kv_pairs.emplace_back(get_item_key(id), content_body);
+
+        for (const auto& [name, value] : index_fields[count]) {
+            string_set_kv_pairs.emplace_back(get_field_key(name, value), id);
+        }
+
+        for (const auto& [type, field_id] : foregin_key_fields[count]) {
+            const auto foreign_key = m_config.m_prefix + ":" + type + ":"
+                                     + field_id + ":" + m_adapters->get_type()
+                                     + "s";
+            set_add_kv_pairs.emplace_back(foreign_key, id);
+        }
+        set_add_kv_pairs.emplace_back(get_set_key(), id);
+        count++;
+    }
+}
+
 void KeyValueCrudClient::create(
     const CrudRequest& crud_request, CrudResponse& crud_response) const
 {
@@ -44,97 +198,17 @@ void KeyValueCrudClient::create(
     auto item_template = m_adapters->get_model_factory()->create();
 
     if (crud_request.has_items()) {
-        std::size_t count{0};
-        for (const auto& item : crud_request.items()) {
-            auto id = item->get_primary_key();
-            if (id.empty()) {
-                id = generate_id(item->name());
-            }
-            ids.push_back(id);
-
-            VecKeyValuePair index;
-            item->get_index_fields(index);
-            index_fields.push_back(index);
-
-            VecKeyValuePair foregin_keys;
-            item->get_foreign_key_fields(foregin_keys);
-            foregin_key_fields.push_back(foregin_keys);
-
-            auto item_dict = std::make_unique<Dictionary>();
-            get_adapter(CrudAttributes::Format::JSON)
-                ->to_dict(crud_request.items(), *item_dict, {}, count);
-            content.add_sequence_item(std::move(item_dict));
-            count++;
-        }
+        process_items(
+            crud_request, ids, index_fields, foregin_key_fields, content);
     }
     else if (!crud_request.get_ids().empty()) {
-
-        std::size_t count{0};
-        for (const auto& crud_id : crud_request.get_ids()) {
-            std::string id = crud_request.get_ids()[0].get_primary_key();
-            if (id.empty()) {
-                id = generate_id(crud_id.get_name());
-            }
-            ids.push_back(id);
-
-            auto base_item = m_adapters->get_model_factory()->create();
-
-            VecKeyValuePair index;
-            base_item->get_index_fields(index);
-            index_fields.push_back(index);
-
-            if (!attributes_dict.is_empty()) {
-                if (attributes_dict.get_type() == Dictionary::Type::MAP) {
-                    base_item->deserialize(attributes_dict);
-                }
-                else if (
-                    attributes_dict.get_type() == Dictionary::Type::SEQUENCE
-                    && attributes_dict.get_sequence().size()
-                           == crud_request.get_ids().size()) {
-                    base_item->deserialize(
-                        *attributes_dict.get_sequence()[count]);
-                }
-            }
-
-            VecKeyValuePair foregin_keys;
-            base_item->get_foreign_key_fields(foregin_keys);
-            foregin_key_fields.push_back(foregin_keys);
-
-            VecModelPtr base_items;
-            base_items.push_back(std::move(base_item));
-
-            auto item_dict = std::make_unique<Dictionary>();
-            get_adapter(CrudAttributes::Format::JSON)
-                ->to_dict(base_items, *item_dict, {});
-            content.add_sequence_item(std::move(item_dict));
-            count++;
-        }
+        process_ids(
+            crud_request, ids, index_fields, foregin_key_fields,
+            attributes_dict, content);
     }
     else {
-        auto base_item = m_adapters->get_model_factory()->create();
-
-        VecKeyValuePair index;
-        base_item->get_index_fields(index);
-        index_fields.push_back(index);
-
-        if (!attributes_dict.is_empty()
-            && attributes_dict.get_type() == Dictionary::Type::MAP) {
-            base_item->deserialize(attributes_dict);
-        }
-
-        VecKeyValuePair foregin_keys;
-        base_item->get_foreign_key_fields(foregin_keys);
-        foregin_key_fields.push_back(foregin_keys);
-
-        VecModelPtr base_items;
-        base_items.push_back(std::move(base_item));
-
-        ids.push_back(generate_id(""));
-        auto item_dict = std::make_unique<Dictionary>();
-        get_adapter(CrudAttributes::Format::JSON)
-            ->to_dict(base_items, *item_dict, {});
-
-        content.add_sequence_item(std::move(item_dict));
+        process_empty(
+            ids, index_fields, foregin_key_fields, attributes_dict, content);
     }
 
     const auto current_time = m_time_provider->get_current_time();
@@ -148,40 +222,12 @@ void KeyValueCrudClient::create(
 
     assert(ids.size() == content.get_sequence().size());
 
-    std::size_t count{0};
     std::vector<KeyValuePair> string_set_kv_pairs;
     std::vector<KeyValuePair> set_add_kv_pairs;
-
-    for (const auto& id : ids) {
-        auto item_dict = content.get_sequence()[count].get();
-        item_dict->merge(create_context_dict);
-
-        auto primary_key_dict =
-            std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
-        primary_key_dict->set_scalar(id);
-        item_dict->set_map_item(
-            item_template->get_primary_key_name(), std::move(primary_key_dict));
-
-        std::string content_body;
-        get_adapter(CrudAttributes::Format::JSON)
-            ->dict_to_string(*item_dict, content_body);
-
-        string_set_kv_pairs.emplace_back(get_item_key(id), content_body);
-
-        for (const auto& [name, value] : index_fields[count]) {
-            string_set_kv_pairs.emplace_back(get_field_key(name, value), id);
-        }
-
-        for (const auto& [type, field_id] : foregin_key_fields[count]) {
-            const auto foreign_key = m_config.m_prefix + ":" + type + ":"
-                                     + field_id + ":" + m_adapters->get_type()
-                                     + "s";
-            set_add_kv_pairs.emplace_back(foreign_key, id);
-        }
-
-        set_add_kv_pairs.emplace_back(get_set_key(), id);
-        count++;
-    }
+    prepare_create_keys(
+        string_set_kv_pairs, set_add_kv_pairs, ids, index_fields,
+        foregin_key_fields, content, create_context_dict,
+        item_template->get_primary_key_name());
 
     const auto response = m_client->make_request(
         {KeyValueStoreRequestMethod::STRING_SET, string_set_kv_pairs,
@@ -288,8 +334,163 @@ void KeyValueCrudClient::update(
          m_config.m_endpoint});
     error_check("STRING_SET", set_response.get());
 
-    if (crud_request.get_query().is_item_output_format()) {
-        adapter->from_dict(updated_content, crud_response.items());
+    if (crud_request.get_query().is_attribute_output_format()) {
+        std::cout << "Returning attr from update" << std::endl;
+        get_adapter(CrudAttributes::Format::JSON)
+            ->dict_to_string(
+                updated_content, crud_response.attributes().buffer());
+    }
+    else {
+        get_adapter(CrudAttributes::Format::JSON)
+            ->from_dict(updated_content, crud_response.items());
+    }
+    crud_response.ids() = ids;
+}
+
+void KeyValueCrudClient::update_foreign_proxy_keys(
+    const std::string& id,
+    const VecKeyValuePair& fields,
+    std::vector<std::string>& foreign_key_proxy_keys) const
+{
+    for (const auto& [type, name] : fields) {
+        const auto key = m_config.m_prefix + ":" + m_adapters->get_type() + ":"
+                         + id + ":" + type + "s";
+        foreign_key_proxy_keys.push_back(key);
+    }
+}
+
+bool KeyValueCrudClient::prepare_query_keys_with_id(
+    std::vector<std::string>& string_get_keys,
+    std::vector<std::string>& foreign_key_proxy_keys,
+    const VecKeyValuePair& fields,
+    const CrudQuery& query) const
+{
+    for (const auto& id : query.ids()) {
+        std::string working_id = id.get_primary_key();
+        if (id.has_primary_key()) {
+            string_get_keys.push_back(get_item_key(working_id));
+        }
+        else if (id.has_name()) {
+            const auto id_request_key = get_field_key("name", id.get_name());
+            const auto response       = m_client->make_request(
+                {KeyValueStoreRequestMethod::STRING_GET,
+                       {id_request_key},
+                       m_config.m_endpoint});
+            error_check("STRING_GET", response.get());
+            if (response->items().empty() || response->items()[0].empty()) {
+                return false;
+            }
+            working_id = response->items()[0];
+            string_get_keys.push_back(get_item_key(working_id));
+        }
+        update_foreign_proxy_keys(working_id, fields, foreign_key_proxy_keys);
+    }
+    return true;
+}
+
+bool KeyValueCrudClient::prepare_query_keys_with_filter(
+    std::vector<std::string>& string_get_keys,
+    std::vector<std::string>& foreign_key_proxy_keys,
+    const VecKeyValuePair& fields,
+    const CrudQuery& query) const
+{
+    const auto id_request_key = get_field_key(
+        query.get_filter().data().begin()->first,
+        query.get_filter().data().begin()->second);
+
+    const auto response = m_client->make_request(
+        {KeyValueStoreRequestMethod::STRING_GET,
+         {id_request_key},
+         m_config.m_endpoint});
+    error_check("STRING_GET", response.get());
+    const std::string working_id = response->items()[0];
+    if (response->items().empty() || working_id.empty()) {
+        return false;
+    }
+    string_get_keys.push_back(get_item_key(working_id));
+    update_foreign_proxy_keys(working_id, fields, foreign_key_proxy_keys);
+    return true;
+}
+
+void KeyValueCrudClient::prepare_query_keys_empty(
+    std::vector<std::string>& string_get_keys,
+    std::vector<std::string>& foreign_key_proxy_keys,
+    const VecKeyValuePair& fields) const
+{
+    const auto response = m_client->make_request(
+        {KeyValueStoreRequestMethod::SET_LIST,
+         {get_set_key()},
+         m_config.m_endpoint});
+    error_check("SET_LIST", response.get());
+
+    if (!response->ids().empty()) {
+        for (const auto& id : response->ids()[0]) {
+            string_get_keys.push_back(get_item_key(id));
+            update_foreign_proxy_keys(id, fields, foreign_key_proxy_keys);
+        }
+    }
+}
+
+void KeyValueCrudClient::update_proxy_dicts(
+    Dictionary& foreign_key_dict,
+    const VecKeyValuePair& fields,
+    const std::vector<std::string>& string_get_keys,
+    const std::vector<std::string>& foreign_key_proxy_keys) const
+{
+    const auto proxy_response = m_client->make_request(
+        {KeyValueStoreRequestMethod::SET_LIST, foreign_key_proxy_keys,
+         m_config.m_endpoint});
+    error_check("SET LIST", proxy_response.get());
+
+    std::vector<std::string> proxy_value_keys;
+    std::vector<std::size_t> proxy_value_offsets;
+    for (std::size_t idx = 0; idx < string_get_keys.size(); idx++) {
+        for (std::size_t jdx = 0; jdx < fields.size(); jdx++) {
+            if (proxy_response->ids().empty()) {
+                proxy_value_offsets.push_back(0);
+            }
+            else {
+                const auto offset = idx * fields.size() + jdx;
+                const auto type   = fields[jdx].first;
+                std::size_t count{0};
+                for (const auto& id : proxy_response->ids()[offset]) {
+                    const auto key = m_config.m_prefix + ":" + type + ":" + id;
+                    proxy_value_keys.push_back(key);
+                    count++;
+                }
+                proxy_value_offsets.push_back(count);
+            }
+        }
+    }
+
+    const auto proxy_data_response = m_client->make_request(
+        {KeyValueStoreRequestMethod::STRING_GET, proxy_value_keys,
+         m_config.m_endpoint});
+    error_check("GET", proxy_data_response.get());
+
+    std::size_t count = 0;
+    auto adapter      = get_adapter(CrudAttributes::Format::JSON);
+    for (std::size_t idx = 0; idx < string_get_keys.size(); idx++) {
+        auto item_dict = std::make_unique<Dictionary>();
+        for (std::size_t jdx = 0; jdx < fields.size(); jdx++) {
+            const auto offset = idx * fields.size() + jdx;
+            const auto name   = fields[jdx].second;
+
+            auto item_field_seq_dict =
+                std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+            for (std::size_t kdx = 0; kdx < proxy_value_offsets[offset];
+                 kdx++) {
+                const auto db_value   = proxy_data_response->items()[count];
+                auto field_entry_dict = std::make_unique<Dictionary>();
+                adapter->dict_from_string(db_value, *field_entry_dict);
+                item_field_seq_dict->add_sequence_item(
+                    std::move(field_entry_dict));
+                count++;
+            }
+
+            item_dict->set_map_item(name, std::move(item_field_seq_dict));
+        }
+        foreign_key_dict.add_sequence_item(std::move(item_dict));
     }
 }
 
@@ -304,68 +505,22 @@ void KeyValueCrudClient::read(
     template_item->get_foreign_key_proxy_fields(foreign_key_proxies);
 
     if (query.is_id()) {
-        for (const auto& id : query.ids()) {
-            std::string working_id = id.get_primary_key();
-            if (id.has_primary_key()) {
-                string_get_keys.push_back(get_item_key(working_id));
-            }
-            else if (id.has_name()) {
-                const auto id_request_key =
-                    get_field_key("name", id.get_name());
-                const auto response = m_client->make_request(
-                    {KeyValueStoreRequestMethod::STRING_GET,
-                     {id_request_key},
-                     m_config.m_endpoint});
-                error_check("STRING_GET", response.get());
-                if (response->items().empty() || response->items()[0].empty()) {
-                    return;
-                }
-                working_id = response->items()[0];
-                string_get_keys.push_back(get_item_key(working_id));
-            }
-            for (const auto& [type, name] : foreign_key_proxies) {
-                const auto key = m_config.m_prefix + ":"
-                                 + m_adapters->get_type() + ":" + working_id
-                                 + ":" + type + "s";
-                foreign_key_proxy_keys.push_back(key);
-            }
-        }
-    }
-    else if (query.is_index()) {
-        const auto id_request_key =
-            get_field_key(query.get_index().first, query.get_index().second);
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_GET,
-             {id_request_key},
-             m_config.m_endpoint});
-        error_check("STRING_GET", response.get());
-        const std::string working_id = response->items()[0];
-        if (response->items().empty() || working_id.empty()) {
+        if (!prepare_query_keys_with_id(
+                string_get_keys, foreign_key_proxy_keys, foreign_key_proxies,
+                query)) {
             return;
-        }
-        string_get_keys.push_back(get_item_key(working_id));
-        for (const auto& [type, name] : foreign_key_proxies) {
-            const auto key = m_config.m_prefix + ":" + m_adapters->get_type()
-                             + ":" + working_id + ":" + type + "s";
-            foreign_key_proxy_keys.push_back(key);
         }
     }
     else {
-        const auto response = m_client->make_request(
-            {KeyValueStoreRequestMethod::SET_LIST,
-             {get_set_key()},
-             m_config.m_endpoint});
-        error_check("SET_LIST", response.get());
-
-        if (!response->ids().empty()) {
-            for (const auto& id : response->ids()[0]) {
-                string_get_keys.push_back(get_item_key(id));
-                for (const auto& [type, name] : foreign_key_proxies) {
-                    const auto key = m_config.m_prefix + ":"
-                                     + m_adapters->get_type() + ":" + id + ":"
-                                     + type + "s";
-                    foreign_key_proxy_keys.push_back(key);
-                }
+        if (query.get_filter().empty()) {
+            prepare_query_keys_empty(
+                string_get_keys, foreign_key_proxy_keys, foreign_key_proxies);
+        }
+        else {
+            if (!prepare_query_keys_with_filter(
+                    string_get_keys, foreign_key_proxy_keys,
+                    foreign_key_proxies, query)) {
+                return;
             }
         }
     }
@@ -389,61 +544,9 @@ void KeyValueCrudClient::read(
 
     Dictionary foreign_key_dict(Dictionary::Type::SEQUENCE);
     if (!foreign_key_proxy_keys.empty()) {
-        const auto proxy_response = m_client->make_request(
-            {KeyValueStoreRequestMethod::SET_LIST, foreign_key_proxy_keys,
-             m_config.m_endpoint});
-        error_check("GET", proxy_response.get());
-
-        std::vector<std::string> proxy_value_keys;
-        std::vector<std::size_t> proxy_value_offsets;
-        for (std::size_t idx = 0; idx < string_get_keys.size(); idx++) {
-            for (std::size_t jdx = 0; jdx < foreign_key_proxies.size(); jdx++) {
-                if (proxy_response->ids().empty()) {
-                    proxy_value_offsets.push_back(0);
-                }
-                else {
-                    const auto offset = idx * foreign_key_proxies.size() + jdx;
-                    const auto type   = foreign_key_proxies[jdx].first;
-                    std::size_t count{0};
-                    for (const auto& id : proxy_response->ids()[offset]) {
-                        const auto key =
-                            m_config.m_prefix + ":" + type + ":" + id;
-                        proxy_value_keys.push_back(key);
-                        count++;
-                    }
-                    proxy_value_offsets.push_back(count);
-                }
-            }
-        }
-
-        const auto proxy_data_response = m_client->make_request(
-            {KeyValueStoreRequestMethod::STRING_GET, proxy_value_keys,
-             m_config.m_endpoint});
-        error_check("GET", proxy_data_response.get());
-
-        std::size_t count = 0;
-        for (std::size_t idx = 0; idx < string_get_keys.size(); idx++) {
-            auto item_dict = std::make_unique<Dictionary>();
-            for (std::size_t jdx = 0; jdx < foreign_key_proxies.size(); jdx++) {
-                const auto offset = idx * foreign_key_proxies.size() + jdx;
-                const auto name   = foreign_key_proxies[jdx].second;
-
-                auto item_field_seq_dict =
-                    std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-                for (std::size_t kdx = 0; kdx < proxy_value_offsets[offset];
-                     kdx++) {
-                    const auto db_value   = proxy_data_response->items()[count];
-                    auto field_entry_dict = std::make_unique<Dictionary>();
-                    adapter->dict_from_string(db_value, *field_entry_dict);
-                    item_field_seq_dict->add_sequence_item(
-                        std::move(field_entry_dict));
-                    count++;
-                }
-
-                item_dict->set_map_item(name, std::move(item_field_seq_dict));
-            }
-            foreign_key_dict.add_sequence_item(std::move(item_dict));
-        }
+        update_proxy_dicts(
+            foreign_key_dict, foreign_key_proxies, string_get_keys,
+            foreign_key_proxy_keys);
     }
 
     Dictionary response_dict;
