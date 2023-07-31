@@ -40,7 +40,7 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
     virtual void create(
         const CrudRequest& request, CrudResponse& response) const;
 
-    virtual void read(const CrudQuery& query, CrudResponse& response) const;
+    virtual void read(const CrudRequest& request, CrudResponse& response) const;
 
     virtual void update(
         const CrudRequest& request, CrudResponse& response) const;

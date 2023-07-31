@@ -20,7 +20,6 @@ add_module(
         clients/file/FileObjectStoreClient.h
         clients/file/FileHsmObjectStoreClient.h
         clients/file/FileKeyValueStoreClient.h
-        clients/http/HttpObjectStoreClient.h
         clients/memory/InMemoryObjectStoreClient.h
         clients/memory/InMemoryHsmObjectStoreClient.h
         clients/memory/InMemoryKeyValueStoreClient.h
@@ -47,7 +46,6 @@ add_module(
         clients/file/FileObjectStoreClient.cc
         clients/file/FileHsmObjectStoreClient.cc
         clients/file/FileKeyValueStoreClient.cc
-        clients/http/HttpObjectStoreClient.cc
         clients/memory/InMemoryObjectStoreClient.cc
         clients/memory/InMemoryHsmObjectStoreClient.cc
         clients/memory/InMemoryKeyValueStoreClient.cc
@@ -66,7 +64,6 @@ add_module(
         base_types
         block_store
         clients/file
-        clients/http
         clients/memory
         clients/redis
         hsm

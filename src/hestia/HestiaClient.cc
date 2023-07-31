@@ -143,10 +143,17 @@ OpStatus HestiaClient::create(
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
+        const auto current_user_token =
+            m_user_service->get_current_user().token().value();
+
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::CREATE, current_user_id, ids, attributes,
-                CrudQuery::OutputFormat::ATTRIBUTES, output_format},
+                CrudMethod::CREATE,
+                {current_user_id, current_user_token},
+                ids,
+                attributes,
+                CrudQuery::OutputFormat::ATTRIBUTES,
+                output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "CREATE");
         ids.clear();
@@ -178,10 +185,14 @@ OpStatus HestiaClient::update(
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
+        const auto current_user_token =
+            m_user_service->get_current_user().token().value();
+
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::UPDATE, current_user_id, ids, attributes,
-                CrudQuery::OutputFormat::ATTRIBUTES, output_format},
+                CrudMethod::UPDATE,
+                CrudUserContext{current_user_id, current_user_token}, ids,
+                attributes, CrudQuery::OutputFormat::ATTRIBUTES, output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "UPDATE");
         attributes = response->attributes();
@@ -234,9 +245,12 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
+        const auto current_user_token =
+            m_user_service->get_current_user().token().value();
+
         CrudResponsePtr response;
         response = service->make_request(
-            CrudRequest{query, current_user_id},
+            CrudRequest{query, {current_user_id, current_user_token}},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "READ");
         query.attributes() = response->attributes();

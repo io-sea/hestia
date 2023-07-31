@@ -58,7 +58,7 @@ CrudService::~CrudService() {}
             break;
         case CrudMethod::READ:
             try {
-                read(request.get_query(), *response);
+                read(request, *response);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -123,9 +123,9 @@ void CrudService::create(
     m_client->create(request, response);
 }
 
-void CrudService::read(const CrudQuery& query, CrudResponse& response) const
+void CrudService::read(const CrudRequest& request, CrudResponse& response) const
 {
-    return m_client->read(query, response);
+    return m_client->read(request, response);
 }
 
 void CrudService::set_default_name(const std::string& name)

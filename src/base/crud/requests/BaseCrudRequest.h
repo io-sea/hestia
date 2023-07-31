@@ -11,20 +11,32 @@ STRINGABLE_ENUM(
 
 enum class CrudLockType { READ, WRITE };
 
+struct CrudUserContext {
+    CrudUserContext(const std::string& id = {}, const std::string& token = {}) :
+        m_id(id), m_token(token)
+    {
+    }
+
+    std::string m_id;
+    std::string m_token;
+};
+
 class BaseCrudRequest : public BaseRequest {
   public:
     BaseCrudRequest(
-        const std::string& user_id       = {},
-        const VecCrudIdentifier& ids     = {},
-        const CrudAttributes& attributes = {},
+        const CrudUserContext& user_context = {},
+        const VecCrudIdentifier& ids        = {},
+        const CrudAttributes& attributes    = {},
         CrudQuery::OutputFormat output_format =
             CrudQuery::OutputFormat::ATTRIBUTES,
         CrudAttributes::Format attributes_format =
             CrudAttributes::Format::JSON);
 
-    BaseCrudRequest(const std::string& user_id, const CrudQuery& query);
+    BaseCrudRequest(
+        const CrudUserContext& user_context, const CrudQuery& query);
 
-    BaseCrudRequest(const std::string& user_id, CrudLockType lock_type);
+    BaseCrudRequest(
+        const CrudUserContext& user_context, CrudLockType lock_type);
 
     virtual ~BaseCrudRequest() = default;
 
@@ -32,7 +44,7 @@ class BaseCrudRequest : public BaseRequest {
 
     const VecCrudIdentifier& get_ids() const;
 
-    const std::string& get_user_id() const;
+    const CrudUserContext& get_user_context() const;
 
     const CrudQuery& get_query() const;
 
@@ -41,7 +53,7 @@ class BaseCrudRequest : public BaseRequest {
     static const std::vector<CrudMethod> s_all_methods;
 
   protected:
-    const std::string& m_user_id;
+    const CrudUserContext& m_user_context;
     CrudQuery m_query;
     VecCrudIdentifier m_ids;
     CrudLockType m_lock_type{CrudLockType::READ};

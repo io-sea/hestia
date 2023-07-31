@@ -30,7 +30,8 @@ class CrudClient {
 
     virtual void create(const CrudRequest& request, CrudResponse& response) = 0;
 
-    virtual void read(const CrudQuery& query, CrudResponse& response) const = 0;
+    virtual void read(
+        const CrudRequest& request, CrudResponse& response) const = 0;
 
     virtual void update(
         const CrudRequest& request, CrudResponse& response) const = 0;

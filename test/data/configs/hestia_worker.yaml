@@ -18,11 +18,4 @@ object_store_clients:
   - identifier: hestia::FileHsmObjectStoreClient
     source: built_in
     type: hsm
-    root: hsm_object_store
-
-key_value_store:
-  client_identifier: hestia::FileKeyValueStoreClient
-
-key_value_store_clients:
-  - identifier: hestia::FileKeyValueStoreClient
-    root: key_value_store
+    root: hsm_object_store_worker0

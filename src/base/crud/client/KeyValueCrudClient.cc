@@ -235,7 +235,7 @@ void KeyValueCrudClient::create(
                 auto default_parent_id = get_default_parent_id(parent_type);
                 if (default_parent_id.empty()) {
                     get_or_create_default_parent(
-                        parent_type, crud_request.get_user_id());
+                        parent_type, crud_request.get_user_context().m_id);
                     default_parent_id = get_default_parent_id(parent_type);
                 }
                 item_foreign_keys[key_count] =
@@ -253,7 +253,7 @@ void KeyValueCrudClient::create(
     create_context.m_last_modified_time.update_value(current_time);
 
     if (item_template->has_owner()) {
-        create_context.add_user(crud_request.get_user_id());
+        create_context.add_user(crud_request.get_user_context().m_id);
     }
 
     Dictionary create_context_dict;
@@ -552,37 +552,39 @@ void on_empty_read(
 }
 
 void KeyValueCrudClient::read(
-    const CrudQuery& query, CrudResponse& crud_response) const
+    const CrudRequest& request, CrudResponse& crud_response) const
 {
     std::vector<std::string> string_get_keys;
     std::vector<std::string> foreign_key_proxy_keys;
 
     const auto expect_single =
-        (query.is_id() && query.ids().size() == 1)
-        || (query.is_filter() && query.get_format() == CrudQuery::Format::GET);
+        (request.get_query().is_id() && request.get_query().ids().size() == 1)
+        || (request.get_query().is_filter()
+            && request.get_query().get_format() == CrudQuery::Format::GET);
 
     auto template_item = m_adapters->get_model_factory()->create();
     VecKeyValuePair foreign_key_proxies;
     template_item->get_foreign_key_proxy_fields(foreign_key_proxies);
 
-    if (query.is_id()) {
+    if (request.get_query().is_id()) {
         if (!prepare_query_keys_with_id(
                 string_get_keys, foreign_key_proxy_keys, foreign_key_proxies,
-                query)) {
-            on_empty_read(query, crud_response, expect_single);
+                request.get_query())) {
+            on_empty_read(request.get_query(), crud_response, expect_single);
             return;
         }
     }
     else {
-        if (query.get_filter().empty()) {
+        if (request.get_query().get_filter().empty()) {
             prepare_query_keys_empty(
                 string_get_keys, foreign_key_proxy_keys, foreign_key_proxies);
         }
         else {
             if (!prepare_query_keys_with_filter(
                     string_get_keys, foreign_key_proxy_keys,
-                    foreign_key_proxies, query)) {
-                on_empty_read(query, crud_response, expect_single);
+                    foreign_key_proxies, request.get_query())) {
+                on_empty_read(
+                    request.get_query(), crud_response, expect_single);
                 return;
             }
         }
@@ -593,7 +595,7 @@ void KeyValueCrudClient::read(
          m_config.m_endpoint});
     error_check("GET", response.get());
     if (string_get_keys.empty()) {
-        on_empty_read(query, crud_response, expect_single);
+        on_empty_read(request.get_query(), crud_response, expect_single);
         return;
     }
 
@@ -601,7 +603,7 @@ void KeyValueCrudClient::read(
         response->items().begin(), response->items().end(),
         [](const std::string& entry) { return entry.empty(); });
     if (any_empty) {
-        on_empty_read(query, crud_response, expect_single);
+        on_empty_read(request.get_query(), crud_response, expect_single);
         return;
     }
 
@@ -632,19 +634,19 @@ void KeyValueCrudClient::read(
         }
     }
 
-    if (query.is_id_output_format()) {
+    if (request.get_query().is_id_output_format()) {
         auto item_template = m_adapters->get_model_factory()->create();
         response_dict->get_scalars(
             item_template->get_primary_key_name(), crud_response.ids());
     }
-    else if (query.is_attribute_output_format()) {
+    else if (request.get_query().is_attribute_output_format()) {
         adapter->dict_to_string(
             *response_dict, crud_response.attributes().buffer());
     }
-    else if (query.is_item_output_format()) {
+    else if (request.get_query().is_item_output_format()) {
         adapter->from_dict(*response_dict, crud_response.items());
     }
-    else if (query.is_dict_output_format()) {
+    else if (request.get_query().is_dict_output_format()) {
         crud_response.set_dict(std::move(response_dict));
     }
 }

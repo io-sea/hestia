@@ -8,7 +8,7 @@ ServerConfig::ServerConfig() : SerializeableWithFields(s_type)
 }
 
 ServerConfig::ServerConfig(const ServerConfig& other) :
-    SerializeableWithFields(s_type)
+    SerializeableWithFields(other)
 {
     *this = other;
 }

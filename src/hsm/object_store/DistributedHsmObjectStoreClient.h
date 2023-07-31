@@ -7,7 +7,7 @@
 
 namespace hestia {
 
-class HttpObjectStoreClient;
+class HttpClient;
 class HsmObjectStoreClientManager;
 class DistributedHsmService;
 
@@ -17,10 +17,10 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
 
     DistributedHsmObjectStoreClient(
         std::unique_ptr<HsmObjectStoreClientManager> client_manager,
-        std::unique_ptr<HttpObjectStoreClient> http_client = nullptr);
+        HttpClient* http_client = nullptr);
 
     static Ptr create(
-        std::unique_ptr<HttpObjectStoreClient> http_client     = nullptr,
+        HttpClient* http_client                                = nullptr,
         const std::vector<std::filesystem::path>& plugin_paths = {});
 
     virtual ~DistributedHsmObjectStoreClient();
@@ -65,7 +65,7 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     };
 
     DistributedHsmService* m_hsm_service{nullptr};
-    std::unique_ptr<HttpObjectStoreClient> m_http_client;
+    HttpClient* m_http_client{nullptr};
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
 };
 }  // namespace hestia

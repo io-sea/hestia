@@ -10,7 +10,6 @@
 #include "DistributedHsmObjectStoreClient.h"
 #include "HsmObjectStoreClient.h"
 #include "HttpClient.h"
-#include "HttpObjectStoreClient.h"
 #include "KeyValueStoreClient.h"
 #include "TypedCrudRequest.h"
 
@@ -45,6 +44,13 @@ OpStatus HestiaApplication::initialize(
 
     LOG_INFO(
         "Starting Hestia Version: " << project_config::get_project_version());
+
+    if (m_config.get_config_path().empty()) {
+        LOG_INFO("No config file found - using built-in defaults");
+    }
+    else {
+        LOG_INFO("Using config at: " + m_config.get_config_path());
+    }
     LOG_INFO("Using cache path: " + m_config.get_cache_path());
 
     set_app_mode(server_host, server_port);
@@ -284,14 +290,8 @@ void HestiaApplication::setup_http_client()
 void HestiaApplication::setup_object_store()
 {
     std::vector<std::filesystem::path> search_paths;
-    std::unique_ptr<HttpObjectStoreClient> http_object_store_client;
-    if (uses_http_client()) {
-        http_object_store_client =
-            std::make_unique<HttpObjectStoreClient>(m_http_client.get());
-    }
-
     m_object_store_client = DistributedHsmObjectStoreClient::create(
-        std::move(http_object_store_client), search_paths);
+        m_http_client.get(), search_paths);
 }
 
 void HestiaApplication::setup_key_value_store()

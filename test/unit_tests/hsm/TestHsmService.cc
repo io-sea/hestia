@@ -72,13 +72,14 @@ class HsmServiceTestFixture {
 
     void create(const hestia::HsmObject& obj)
     {
-        REQUIRE(m_hsm_service
-                    ->make_request(
-                        hestia::TypedCrudRequest<hestia::HsmObject>{
-                            hestia::CrudMethod::CREATE, obj,
-                            m_test_user.get_primary_key()},
-                        hestia::HsmItem::hsm_object_name)
-                    ->ok());
+        REQUIRE(
+            m_hsm_service
+                ->make_request(
+                    hestia::TypedCrudRequest<hestia::HsmObject>{
+                        hestia::CrudMethod::CREATE, obj,
+                        hestia::CrudUserContext(m_test_user.get_primary_key())},
+                    hestia::HsmItem::hsm_object_name)
+                ->ok());
     }
 
     bool exists(const hestia::HsmObject& obj)

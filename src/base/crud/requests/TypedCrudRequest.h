@@ -10,7 +10,7 @@ class TypedCrudRequest : public CrudRequest {
     TypedCrudRequest(
         CrudMethod method,
         const ItemT& item,
-        const std::string& user_id,
+        const CrudUserContext& user_id,
         CrudQuery::OutputFormat output_format =
             CrudQuery::OutputFormat::ATTRIBUTES,
         CrudAttributes::Format attributes_format =

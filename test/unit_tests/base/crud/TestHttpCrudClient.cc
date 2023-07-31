@@ -91,7 +91,7 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
     hestia::CrudRequest read_request(query, {});
     hestia::CrudResponse read_response(read_request);
 
-    m_client->read(query, read_response);
+    m_client->read(read_request, read_response);
     REQUIRE(read_response.ok());
 
     auto read_model = read_response.get_item_as<hestia::mock::MockModel>();
@@ -114,7 +114,7 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
     hestia::CrudRequest read_request2(query2, {});
     hestia::CrudResponse read_response2(read_request2);
 
-    m_client->read(query2, read_response2);
+    m_client->read(read_request2, read_response2);
     REQUIRE(read_response2.ok());
     REQUIRE(read_response2.items().size() == 2);
 }

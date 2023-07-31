@@ -4,7 +4,7 @@ namespace hestia {
 CrudRequest::CrudRequest(
     CrudMethod method,
     VecModelPtr items,
-    const std::string& user_id,
+    const CrudUserContext& user_id,
     CrudQuery::OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
     BaseCrudRequest(user_id),
@@ -17,7 +17,7 @@ CrudRequest::CrudRequest(
 
 CrudRequest::CrudRequest(
     CrudMethod method,
-    const std::string& user_id,
+    const CrudUserContext& user_id,
     const VecCrudIdentifier& ids,
     const CrudAttributes& attributes,
     CrudQuery::OutputFormat output_format,
@@ -27,13 +27,14 @@ CrudRequest::CrudRequest(
 {
 }
 
-CrudRequest::CrudRequest(const CrudQuery& query, const std::string& user_id) :
+CrudRequest::CrudRequest(
+    const CrudQuery& query, const CrudUserContext& user_id) :
     BaseCrudRequest(user_id, query), MethodRequest<CrudMethod>(CrudMethod::READ)
 {
 }
 
 CrudRequest::CrudRequest(
-    CrudMethod method, CrudLockType lock_type, const std::string& user_id) :
+    CrudMethod method, CrudLockType lock_type, const CrudUserContext& user_id) :
     BaseCrudRequest(user_id, lock_type), MethodRequest<CrudMethod>(method)
 {
 }

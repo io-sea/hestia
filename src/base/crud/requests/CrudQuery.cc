@@ -151,7 +151,8 @@ void CrudQuery::set_attributes_output_format(CrudAttributes::Format format)
 
 void CrudQuery::set_ids(const VecCrudIdentifier& ids)
 {
-    m_ids = ids;
+    m_ids    = ids;
+    m_format = Format::ID;
 }
 
 void CrudQuery::set_filter(const Map& filter)

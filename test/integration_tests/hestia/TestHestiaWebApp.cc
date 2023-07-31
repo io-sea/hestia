@@ -19,6 +19,7 @@
 #include "HsmServicesFactory.h"
 #include "StorageTier.h"
 #include "StringAdapter.h"
+#include "TypedCrudRequest.h"
 #include "UserService.h"
 #include "UuidUtils.h"
 
@@ -37,7 +38,6 @@ class TestHestiaWebAppFixture {
         m_obj_store_client =
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
 
-        // The crud service will not create a backend tier
         hestia::InMemoryObjectStoreClientConfig obj_store_config;
         obj_store_config.set_tiers({"0", "1"});
         m_obj_store_client->do_initialize({}, obj_store_config);
@@ -65,10 +65,24 @@ class TestHestiaWebAppFixture {
         hsm_child_services->get_service(hestia::HsmItem::Type::DATASET)
             ->set_default_name("test_default_dataset");
 
+        auto tier_service =
+            hsm_child_services->get_service(hestia::HsmItem::Type::TIER);
+        for (uint8_t idx = 0; idx < 2; idx++) {
+            hestia::StorageTier tier(idx);
+            tier.set_backend("hestia::InMemoryHsmObjectStoreClient");
+            auto create_response = tier_service->make_request(
+                hestia::TypedCrudRequest<hestia::StorageTier>{
+                    hestia::CrudMethod::CREATE, tier,
+                    m_user_service->get_current_user().get_primary_key()});
+            REQUIRE(create_response->ok());
+        }
+
         hestia::ServiceConfig hsm_service_config;
         auto hsm_service = std::make_unique<hestia::HsmService>(
             hsm_service_config, std::move(hsm_child_services),
             m_obj_store_client.get());
+        hsm_service->update_tiers(
+            m_user_service->get_current_user().get_primary_key());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_name("my_node");
@@ -258,8 +272,6 @@ TEST_CASE_METHOD(
     hestia::HsmObject obj;
     put_object(obj);
 
-    return;
-
     hestia::HsmObject returned_object;
     get_object(obj.id(), returned_object);
     REQUIRE(returned_object.id() == obj.id());
@@ -270,22 +282,7 @@ TEST_CASE_METHOD(
 
     std::vector<hestia::StorageTier::Ptr> tiers;
     get_tiers(tiers);
-    REQUIRE(tiers.empty());
-
-    hestia::StorageTier tier0(0);
-    tier0.set_backend("hestia::InMemoryHsmObjectStoreClient");
-
-    hestia::StorageTier tier1(1);
-    tier1.set_backend("hestia::InMemoryHsmObjectStoreClient");
-    put_tier(tier0);
-    put_tier(tier1);
-
-    get_tiers(tiers);
     REQUIRE(tiers.size() == 2);
-
-    auto tiers_0 = dynamic_cast<hestia::StorageTier*>(tiers[0].get());
-
-    REQUIRE(tiers_0->get_backend() == tier0.get_backend());
 
     std::string content = "The quick brown fox jumps over the lazy dog.";
     put_data(obj, content, 0);

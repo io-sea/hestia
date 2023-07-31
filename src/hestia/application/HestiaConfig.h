@@ -34,6 +34,8 @@ class HestiaConfig : public SerializeableWithFields {
 
     const std::string& get_cache_path() const;
 
+    const std::string& get_config_path() const;
+
     const std::vector<HsmObjectStoreClientBackend>& get_object_store_backends()
         const;
 

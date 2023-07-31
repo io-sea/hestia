@@ -6,7 +6,6 @@
 #include "InMemoryKeyValueStoreClient.h"
 
 #include "DistributedHsmService.h"
-#include "HttpObjectStoreClient.h"
 
 #include "HsmObjectStoreClientBackend.h"
 #include "HsmObjectStoreClientManager.h"
