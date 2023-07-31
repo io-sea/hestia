@@ -19,8 +19,11 @@ class MockWebView : public WebView {
         m_can_stream = true;
     }
 
-    HttpResponse::Ptr on_get(const HttpRequest& request, const User&) override
+    HttpResponse::Ptr on_get(
+        const HttpRequest& request, const User& user) override
     {
+        m_user = user;
+
         auto buffer_size =
             m_service->get_data(request.get_context()->get_stream());
         auto response = HttpResponse::create();
@@ -31,8 +34,11 @@ class MockWebView : public WebView {
         return response;
     }
 
-    HttpResponse::Ptr on_put(const HttpRequest& request, const User&) override
+    HttpResponse::Ptr on_put(
+        const HttpRequest& request, const User& user) override
     {
+        m_user = user;
+
         LOG_INFO("Have headers: " << request.get_header().to_string());
         const auto content_length = request.get_header().get_content_length();
 
@@ -62,6 +68,8 @@ class MockWebView : public WebView {
         }
         return HttpResponse::create();
     }
+
+    hestia::User m_user;
 
   private:
     MockWebService* m_service{nullptr};

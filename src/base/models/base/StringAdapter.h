@@ -28,10 +28,14 @@ class StringAdapter {
         Serializeable::Format format_in = Serializeable::Format::UNSET) const;
 
     virtual void from_string(
-        const std::vector<std::string>& input, VecModelPtr& items) const;
+        const std::vector<std::string>& input,
+        VecModelPtr& items,
+        bool as_list = false) const;
 
     virtual void from_string(
-        const std::vector<std::string>& input, Dictionary& dict) const;
+        const std::vector<std::string>& input,
+        Dictionary& dict,
+        bool as_list = false) const;
 
     virtual void from_dict(const Dictionary& input, VecModelPtr& items) const;
 

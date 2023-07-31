@@ -97,11 +97,18 @@ void to_json_internal(
 void JsonUtils::to_json(
     const Dictionary& dict,
     std::string& output,
-    const std::vector<std::string>& exclude_keys)
+    const std::vector<std::string>& exclude_keys,
+    unsigned indent)
 {
     nlohmann::json json;
     to_json_internal(json, dict, exclude_keys);
-    output = json.dump();
+
+    if (indent > 0) {
+        output = json.dump(indent);
+    }
+    else {
+        output = json.dump();
+    }
 }
 
 void from_json_internal(

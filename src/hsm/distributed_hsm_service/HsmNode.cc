@@ -37,6 +37,8 @@ HsmNode& HsmNode::operator=(const HsmNode& other)
 
 void HsmNode::init()
 {
+    m_name.set_index_on(true);
+
     register_scalar_field(&m_is_controller);
     register_scalar_field(&m_host_address);
     register_scalar_field(&m_port);

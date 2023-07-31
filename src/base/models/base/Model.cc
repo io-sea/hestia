@@ -3,6 +3,7 @@
 #include "RelationshipField.h"
 
 #include <iostream>
+#include <stdexcept>
 
 namespace hestia {
 
@@ -29,6 +30,7 @@ Model& Model::operator=(const Model& other)
         m_name               = other.m_name;
         m_creation_time      = other.m_creation_time;
         m_last_modified_time = other.m_last_modified_time;
+        m_has_owner          = other.m_has_owner;
         init();
     }
     return *this;
@@ -39,6 +41,11 @@ void Model::init()
     register_scalar_field(&m_name);
     register_scalar_field(&m_creation_time);
     register_scalar_field(&m_last_modified_time);
+}
+
+void Model::set_has_owner(bool has_owner)
+{
+    m_has_owner = has_owner;
 }
 
 void Model::register_named_foreign_key_field(NamedForeignKeyField* field)
@@ -68,6 +75,29 @@ std::string Model::get_runtime_type() const
 std::time_t Model::get_creation_time() const
 {
     return m_creation_time.get_value();
+}
+
+std::string Model::get_parent_type() const
+{
+    if (m_named_foreign_key_fields.empty()) {
+        return {};
+    }
+    if (m_named_foreign_key_fields.size() == 1) {
+        return m_named_foreign_key_fields.begin()->second->get_runtime_type();
+    }
+    for (const auto& [key, field] : m_named_foreign_key_fields) {
+        if (field->is_parent()) {
+            return field->get_runtime_type();
+        }
+    }
+    throw std::runtime_error(
+        "Ambigious request for parent type in model type: "
+        + get_runtime_type());
+}
+
+bool Model::has_owner() const
+{
+    return m_has_owner;
 }
 
 void Model::init_creation_time(std::time_t ctime)
@@ -103,9 +133,7 @@ bool Model::valid() const
 void Model::get_foreign_key_fields(VecKeyValuePair& fields) const
 {
     for (const auto& [name, dict] : m_named_foreign_key_fields) {
-        if (!dict->get_id().empty()) {
-            fields.push_back({dict->get_runtime_type(), dict->get_id()});
-        }
+        fields.push_back({dict->get_runtime_type(), dict->get_id()});
     }
 }
 

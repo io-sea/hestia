@@ -21,11 +21,33 @@ class MockModel : public Model {
 
     static AdapterCollection::Ptr create_adapters();
 
+    void init();
+
+    static constexpr char s_name[]{"mock_model"};
+    StringField m_my_field{"my_field", "default_field"};
+};
+
+class MockModelWithParent : public Model {
+  public:
+    MockModelWithParent();
+
+    MockModelWithParent(const std::string& id);
+
+    MockModelWithParent(const MockModelWithParent& other);
+
+    MockModelWithParent& operator=(const MockModelWithParent& other);
+
+    static std::string get_type();
+
+    static std::unique_ptr<ModelFactory> create_factory();
+
+    static AdapterCollection::Ptr create_adapters();
+
     void set_parent_id(const std::string& id) { m_parent.set_id(id); }
 
     void init();
 
-    static constexpr char s_name[]{"mock_model"};
+    static constexpr char s_mock_with_parent_name[]{"mock_model_with_parent"};
     StringField m_my_field{"my_field", "default_field"};
     NamedForeignKeyField m_parent{"parent", "mock_parent_model"};
 };
@@ -46,7 +68,7 @@ class MockParentModel : public Model {
 
     static AdapterCollection::Ptr create_adapters();
 
-    const std::vector<MockModel>& get_models() const
+    const std::vector<MockModelWithParent>& get_models() const
     {
         return m_models.models();
     }
@@ -55,6 +77,6 @@ class MockParentModel : public Model {
 
     static constexpr char s_name[]{"mock_parent_model"};
     StringField m_my_field{"my_field", "default_field"};
-    ForeignKeyProxyField<MockModel> m_models{"models"};
+    ForeignKeyProxyField<MockModelWithParent> m_models{"models"};
 };
 }  // namespace hestia::mock

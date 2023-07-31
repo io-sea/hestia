@@ -6,11 +6,14 @@
 #include "StringAdapter.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace hestia {
 
 class IdGenerator;
 class TimeProvider;
+class CrudService;
+
 using AdapterCollectionPtr = std::unique_ptr<AdapterCollection>;
 
 class CrudClient {
@@ -25,8 +28,7 @@ class CrudClient {
 
     virtual ~CrudClient();
 
-    virtual void create(
-        const CrudRequest& request, CrudResponse& response) const = 0;
+    virtual void create(const CrudRequest& request, CrudResponse& response) = 0;
 
     virtual void read(const CrudQuery& query, CrudResponse& response) const = 0;
 
@@ -51,10 +53,21 @@ class CrudClient {
 
     std::string get_type() const;
 
+    void register_parent_service(const std::string& type, CrudService* service);
+
+    void register_child_service(const std::string& type, CrudService* service);
+
   protected:
     bool matches_query(const Model& item, const Map& query) const;
 
     const StringAdapter* get_adapter(CrudAttributes::Format format) const;
+
+    void get_or_create_default_parent(
+        const std::string& type, const std::string& user_id);
+
+    std::string get_default_parent_id(const std::string& type) const;
+
+    void set_default_parent_id(const std::string& type, const std::string& id);
 
     IdGenerator* m_id_generator;
     TimeProvider* m_time_provider;
@@ -63,5 +76,9 @@ class CrudClient {
 
     CrudClientConfig m_config;
     AdapterCollectionPtr m_adapters;
+
+    std::unordered_map<std::string, std::string> m_parent_default_ids;
+    std::unordered_map<std::string, CrudService*> m_parent_services;
+    std::unordered_map<std::string, CrudService*> m_child_services;
 };
 }  // namespace hestia

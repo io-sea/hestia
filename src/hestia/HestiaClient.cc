@@ -8,6 +8,7 @@
 #include "HsmServicesFactory.h"
 #include "UserService.h"
 
+#include "ErrorUtils.h"
 #include "FileHsmObjectStoreClient.h"
 #include "HsmObjectStoreClient.h"
 #include "HttpClient.h"
@@ -84,16 +85,20 @@ HestiaClient::~HestiaClient() {}
 OpStatus HestiaClient::initialize(
     const std::string& config_path,
     const std::string& user_token,
-    const Dictionary& extra_config)
+    const Dictionary& extra_config,
+    const std::string& server_host,
+    unsigned server_port)
 {
     try {
-        HestiaApplication::initialize(config_path, user_token, extra_config);
+        HestiaApplication::initialize(
+            config_path, user_token, extra_config, server_host, server_port);
     }
     catch (const std::exception& e) {
         set_last_error(e.what());
         return {
             OpStatus::Status::ERROR, hestia_error_t::HESTIA_ERROR_CLIENT_STATE,
-            e.what()};
+            SOURCE_LOC() + " | Failed to initialize Hestia Application.\n"
+                + e.what()};
     }
     return {};
 }
@@ -306,8 +311,12 @@ void HestiaClient::load_object_store_defaults()
     }
 }
 
-void HestiaClient::set_app_mode()
+void HestiaClient::set_app_mode(const std::string& host, unsigned port)
 {
+    if (!host.empty()) {
+        m_config.override_controller_address(host, port);
+    }
+
     if (!m_config.get_server_config().has_controller_address()) {
         LOG_INFO("Running CLIENT STANDALONE mode");
         m_app_mode = ApplicationMode::CLIENT_STANDALONE;

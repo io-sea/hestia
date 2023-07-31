@@ -9,7 +9,7 @@ namespace hestia {
 
 class CrudQuery {
   public:
-    enum class OutputFormat { ATTRIBUTES, ID, ITEM };
+    enum class OutputFormat { ATTRIBUTES, ID, ITEM, DICT };
     STRINGABLE_ENUM(Format, ID, GET, LIST)
 
     CrudQuery(
@@ -63,6 +63,10 @@ class CrudQuery {
 
     OutputFormat get_output_format() const;
 
+    std::size_t get_max_items() const;
+
+    std::size_t get_offset() const;
+
     bool has_single_id() const;
 
     bool is_filter() const;
@@ -74,6 +78,8 @@ class CrudQuery {
     bool is_item_output_format() const;
 
     bool is_attribute_output_format() const;
+
+    bool is_dict_output_format() const;
 
     void set_output_format(OutputFormat output_format);
 

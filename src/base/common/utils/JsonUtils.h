@@ -33,7 +33,8 @@ class JsonUtils {
     static void to_json(
         const Dictionary& dict,
         std::string& output,
-        const std::vector<std::string>& exclude_keys = {});
+        const std::vector<std::string>& exclude_keys = {},
+        unsigned indent                              = 0);
 
     static void from_json(
         const std::string& str,

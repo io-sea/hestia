@@ -4,6 +4,7 @@
 #include "IdGenerator.h"
 #include "TimeProvider.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 
 namespace hestia {
@@ -42,7 +43,9 @@ CrudService::~CrudService() {}
 [[nodiscard]] CrudResponse::Ptr CrudService::make_request(
     const CrudRequest& request, const std::string&) const noexcept
 {
-    LOG_INFO("Request " << request.method_as_string());
+    LOG_INFO(
+        "Starting Subject: " << get_type()
+                             << ", Method: " << request.method_as_string());
 
     auto response = std::make_unique<CrudResponse>(request);
 
@@ -107,6 +110,10 @@ CrudService::~CrudService() {}
             return response;
     }
 
+    LOG_INFO(
+        "Finished Subject: " << get_type()
+                             << ", Method: " << request.method_as_string());
+
     return response;
 }
 
@@ -119,6 +126,11 @@ void CrudService::create(
 void CrudService::read(const CrudQuery& query, CrudResponse& response) const
 {
     return m_client->read(query, response);
+}
+
+void CrudService::set_default_name(const std::string& name)
+{
+    m_config.m_default_name = name;
 }
 
 void CrudService::update(
@@ -159,21 +171,39 @@ std::string CrudService::get_type() const
     return m_client->get_type();
 }
 
+const std::string& CrudService::get_default_name() const
+{
+    return m_config.m_default_name;
+}
+
+void CrudService::register_parent_service(
+    const std::string& type, CrudService* service)
+{
+    m_client->register_parent_service(type, service);
+}
+
+void CrudService::register_child_service(
+    const std::string& type, CrudService* service)
+{
+    m_client->register_child_service(type, service);
+}
+
 void CrudService::on_exception(
     const CrudRequest& request,
     CrudResponse* response,
     const std::string& message) const
 {
     if (!message.empty()) {
-        const std::string msg = "Exception in " + request.method_as_string()
-                                + " method: " + message;
+        const std::string msg = SOURCE_LOC() + " | Exception in "
+                                + request.method_as_string() + " method.\n"
+                                + message;
         const CrudRequestError error(CrudErrorCode::STL_EXCEPTION, msg);
         LOG_ERROR("Error: " << error << " " << msg);
         response->on_error(error);
     }
     else {
-        const std::string msg =
-            "Uknown Exception in " + request.method_as_string() + " method";
+        const std::string msg = SOURCE_LOC() + " | Uknown Exception in "
+                                + request.method_as_string() + " method.";
         const CrudRequestError error(CrudErrorCode::UNKNOWN_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
         response->on_error(error);

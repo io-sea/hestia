@@ -118,7 +118,7 @@ HttpResponse::Ptr WebApp::on_middleware_layer(
     std::size_t working_idx,
     const HttpRequest& request) const
 {
-    if (working_idx + 1 == m_middleware.size()) {
+    if (working_idx == m_middleware.size()) {
         return view->get_response(request, user);
     }
     else {

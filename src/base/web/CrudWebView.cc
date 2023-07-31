@@ -1,5 +1,8 @@
 #include "CrudWebView.h"
 
+#include "CrudWebPages.h"
+#include "JsonUtils.h"
+
 #include <iostream>
 
 namespace hestia {
@@ -18,10 +21,24 @@ HttpResponse::Ptr CrudWebView::on_get(
     const auto path = get_path(request);
     auto response   = hestia::HttpResponse::create();
     if (path.empty()) {
-        CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response = m_service->make_request(
-            CrudRequest(query, user.get_primary_key()), m_type_name);
-        response->set_body(crud_response->attributes().get_buffer());
+        if (request.get_header().has_html_accept_type()) {
+            CrudQuery query(CrudQuery::OutputFormat::DICT);
+            auto crud_response = m_service->make_request(
+                CrudRequest(query, user.get_primary_key()), m_type_name);
+
+            std::string json_body;
+            JsonUtils::to_json(*crud_response->dict(), json_body, {}, 4);
+            response->set_body(
+                CrudWebPages::get_item_view(m_type_name, json_body));
+            response->header().set_content_type("text/html");
+        }
+        else {
+            CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
+            auto crud_response = m_service->make_request(
+                CrudRequest(query, user.get_primary_key()), m_type_name);
+            response->set_body(crud_response->attributes().get_buffer());
+            response->header().set_content_type("application/json");
+        }
     }
     else {
         const auto id = path;

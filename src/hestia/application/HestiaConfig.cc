@@ -181,6 +181,12 @@ void HestiaConfig::load_from_dict(
     }
 }
 
+void HestiaConfig::override_controller_address(
+    const std::string& host, unsigned port)
+{
+    m_server_config.get_value_as_writeable().set_controller_address(host, port);
+}
+
 const std::string& HestiaConfig::get_cache_path() const
 {
     return m_cache_path.get_value();

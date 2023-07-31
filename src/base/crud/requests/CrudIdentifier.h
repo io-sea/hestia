@@ -18,6 +18,8 @@ class CrudIdentifier {
         NAME,
         ID_PARENT_ID,
         ID_PARENT_NAME,
+        PARENT_NAME,
+        PARENT_ID,
         NAME_PARENT_NAME,
         NAME_PARENT_ID)
 

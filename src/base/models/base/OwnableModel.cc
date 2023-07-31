@@ -6,6 +6,8 @@ OwnableModel::OwnableModel(
     const std::string& type, const std::string& created_by) :
     Model(type)
 {
+    set_has_owner(true);
+
     if (!created_by.empty()) {
         m_created_by.set_id(created_by);
     }
@@ -18,6 +20,8 @@ OwnableModel::OwnableModel(
     const std::string& created_by) :
     Model(id, type)
 {
+    set_has_owner(true);
+
     if (!created_by.empty()) {
         m_created_by.set_id(created_by);
     }

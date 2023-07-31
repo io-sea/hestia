@@ -9,11 +9,15 @@ MockHestiaClient::MockHestiaClient() {}
 OpStatus MockHestiaClient::initialize(
     const std::string& config_path,
     const std::string& user_token,
-    const Dictionary& extra_config)
+    const Dictionary& extra_config,
+    const std::string& server_host,
+    unsigned server_port)
 {
     (void)config_path;
     (void)user_token;
     (void)extra_config;
+    (void)server_host;
+    (void)server_port;
     return {};
 }
 

@@ -7,12 +7,28 @@ namespace hestia {
 StaticContentView::StaticContentView(const std::string& directory, bool cache) :
     WebView(), m_directory(directory), m_should_cache(cache)
 {
-    LOG_INFO("Serving static content from: " << directory);
+    if (!directory.empty()) {
+        LOG_INFO("Serving static content from: " << directory);
+    }
+}
+
+void StaticContentView::set_buffer(const std::string& buffer)
+{
+    m_buffer = buffer;
+    m_type   = Type::BUFFER;
 }
 
 HttpResponse::Ptr StaticContentView::on_get(
     const HttpRequest& request, const User&)
 {
+    if (m_type == Type::BUFFER) {
+        auto response = HttpResponse::create();
+        response->set_body(m_buffer);
+        response->header().set_content_type("text/html");
+        return response;
+    }
+
+
     auto path = request.get_path();
     if (path.empty() || path == "/") {
         path = "index.html";
@@ -57,6 +73,7 @@ HttpResponse::Ptr StaticContentView::on_get(
         m_cache[path] = body;
         auto response = HttpResponse::create();
         response->set_body(body);
+        response->header().set_content_type("text/html");
         return response;
     }
     else {
@@ -69,6 +86,7 @@ HttpResponse::Ptr StaticContentView::on_get(
 
         auto response = HttpResponse::create();
         response->set_body(body);
+        response->header().set_content_type("text/html");
         return response;
     }
 }

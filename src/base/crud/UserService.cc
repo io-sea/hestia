@@ -87,6 +87,8 @@ UserService::Ptr UserService::create(
             id_generator, time_provider);
     }
     else {
+        client_config.m_endpoint = config.m_endpoint;
+
         auto http_backend = dynamic_cast<HttpRestCrudServiceBackend*>(backend);
         if (http_backend == nullptr) {
             throw std::runtime_error(
@@ -132,6 +134,7 @@ BaseResponse::Ptr UserService::load_or_create_default_user()
 
     if (get_response->found()) {
         m_current_user = *get_response->get_item_as<User>();
+        LOG_INFO("Found existing user");
         return std::make_unique<BaseResponse>(get_request);
     }
 
@@ -148,6 +151,8 @@ BaseResponse::Ptr UserService::load_or_create_default_user()
             {CrudErrorCode::ERROR, "Bad cast of response item to user"});
         return response;
     }
+
+    LOG_INFO("Loaded default user");
 
     m_current_user = *created_user;
     return std::make_unique<BaseResponse>(get_request);
@@ -332,6 +337,10 @@ CrudResponse::Ptr UserService::register_user(
 
     auto update_response = make_request(TypedCrudRequest<User>{
         CrudMethod::UPDATE, updated_user, {}, CrudQuery::OutputFormat::ITEM});
+    if (!update_response->ok()) {
+        LOG_ERROR(update_response->get_error().to_string());
+    }
+
     return update_response;
 }
 

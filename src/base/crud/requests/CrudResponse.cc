@@ -5,7 +5,8 @@
 
 namespace hestia {
 CrudResponse::CrudResponse(const BaseRequest& request) :
-    Response<CrudErrorCode>(request)
+    Response<CrudErrorCode>(request),
+    m_items_dict(std::make_unique<Dictionary>())
 {
 }
 
@@ -42,10 +43,20 @@ VecModelPtr& CrudResponse::items()
 
 bool CrudResponse::found() const
 {
-    return !m_items.empty() || !m_ids.empty();
+    return !m_items.empty() || !m_ids.empty() || !m_items_dict->is_empty();
 }
 
-void CrudResponse::set_item(std::unique_ptr<Model>& item)
+void CrudResponse::set_dict(std::unique_ptr<Dictionary> dict)
+{
+    m_items_dict = std::move(dict);
+}
+
+const Dictionary* CrudResponse::dict() const
+{
+    return m_items_dict.get();
+}
+
+void CrudResponse::set_item(std::unique_ptr<Model> item)
 {
     assert(item != nullptr);
     m_items.push_back(std::move(item));

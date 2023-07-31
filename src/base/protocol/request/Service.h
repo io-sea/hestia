@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace hestia {
 
@@ -16,6 +17,7 @@ struct ServiceConfig {
     std::string m_endpoint;
     std::string m_global_prefix;
     std::string m_item_prefix;
+    std::string m_default_name;
 };
 
 template<typename RequestT, typename ResponseT, typename ErrorCodeT>

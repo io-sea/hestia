@@ -23,7 +23,6 @@ MockModel& MockModel::operator=(const MockModel& other)
     if (this != &other) {
         Model::operator=(other);
         m_my_field = other.m_my_field;
-        m_parent   = other.m_parent;
         init();
     }
     return *this;
@@ -57,6 +56,68 @@ std::string MockModel::get_type()
 }
 
 void MockModel::init()
+{
+    m_name.set_index_on(true);
+    register_scalar_field(&m_my_field);
+}
+
+MockModelWithParent::MockModelWithParent() : Model(s_mock_with_parent_name)
+{
+    init();
+}
+
+MockModelWithParent::MockModelWithParent(const std::string& id) :
+    Model(id, s_mock_with_parent_name)
+{
+    init();
+}
+
+MockModelWithParent::MockModelWithParent(const MockModelWithParent& other) :
+    Model(other)
+{
+    *this = other;
+}
+
+MockModelWithParent& MockModelWithParent::operator=(
+    const MockModelWithParent& other)
+{
+    if (this != &other) {
+        Model::operator=(other);
+        m_my_field = other.m_my_field;
+        m_parent   = other.m_parent;
+        init();
+    }
+    return *this;
+}
+
+std::unique_ptr<ModelFactory> MockModelWithParent::create_factory()
+{
+    return std::make_unique<TypedModelFactory<MockModelWithParent>>();
+}
+
+AdapterCollection::Ptr MockModelWithParent::create_adapters()
+{
+    auto model_factory     = create_factory();
+    auto model_factory_raw = model_factory.get();
+
+    auto adapters =
+        std::make_unique<AdapterCollection>(std::move(model_factory));
+    adapters->add_adapter(
+        CrudAttributes::to_string(CrudAttributes::Format::JSON),
+        std::make_unique<JsonAdapter>(model_factory_raw));
+    adapters->add_adapter(
+        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
+        std::make_unique<KeyValueAdapter>(model_factory_raw));
+
+    return adapters;
+}
+
+std::string MockModelWithParent::get_type()
+{
+    return s_mock_with_parent_name;
+}
+
+void MockModelWithParent::init()
 {
     m_name.set_index_on(true);
     register_scalar_field(&m_my_field);

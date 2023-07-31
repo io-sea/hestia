@@ -33,10 +33,13 @@ DistributedHsmService::Ptr DistributedHsmService::create(
     UserService* user_service)
 {
     ServiceConfig service_config;
-    service_config.m_endpoint = config.m_controller_address + "/api/v1";
+    service_config.m_endpoint      = config.m_controller_address + "/api/v1";
+    service_config.m_global_prefix = config.m_app_name;
 
     auto node_service = CrudServiceFactory<HsmNode>::create(
         service_config, backend, user_service);
+
+    node_service->register_parent_service(User::get_type(), user_service);
 
     auto service = std::make_unique<DistributedHsmService>(
         config, std::move(hsm_service), std::move(node_service), user_service);
@@ -75,11 +78,9 @@ void DistributedHsmService::register_self()
     if (!get_response->found()) {
         LOG_INFO("Pre-existing endpoint not found - will request new one.");
 
-        auto create_response = m_node_service->make_request(CrudRequest{
-            CrudMethod::CREATE,
+        auto create_response = m_node_service->make_request(TypedCrudRequest{
+            CrudMethod::CREATE, m_config.m_self,
             m_user_service->get_current_user().get_primary_key(),
-            {id},
-            {},
             CrudQuery::OutputFormat::ITEM});
         if (!create_response->ok()) {
             LOG_ERROR(

@@ -35,11 +35,15 @@ class CrudResponse : public Response<CrudErrorCode> {
 
     VecModelPtr& items();
 
+    const Dictionary* dict() const;
+
     std::vector<std::string>& ids() { return m_ids; }
 
     bool found() const;
 
-    void set_item(std::unique_ptr<Model>& item);
+    void set_item(std::unique_ptr<Model> item);
+
+    void set_dict(std::unique_ptr<Dictionary> dict);
 
     void set_locked(bool is_locked);
 
@@ -47,6 +51,7 @@ class CrudResponse : public Response<CrudErrorCode> {
 
   private:
     VecModelPtr m_items;
+    std::unique_ptr<Dictionary> m_items_dict;
     CrudAttributes m_attributes;
     std::vector<std::string> m_ids;
 

@@ -29,7 +29,7 @@ class EventFeedConfig : public SerializeableWithFields {
 
     static constexpr const char s_type[]{"event_feed"};
     StringField m_output_path{"output_path", "event_feed.yaml"};
-    BooleanField m_active{"active", true};
+    BooleanField m_active{"active", false};
     BooleanField m_sorted_keys{
         "sorted_keys", false};  // For debug purposes only
 };

@@ -12,6 +12,6 @@ class HestiaServer : public HestiaApplication {
     OpStatus run() override;
 
   private:
-    void set_app_mode() override;
+    void set_app_mode(const std::string& host, unsigned port) override;
 };
 }  // namespace hestia

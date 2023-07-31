@@ -9,11 +9,11 @@
 namespace hestia {
 class Model : public SerializeableWithFields {
   public:
-    Model(const std::string& type);
+    explicit Model(const std::string& type);
 
-    Model(const std::string& id, const std::string& type);
+    explicit Model(const std::string& id, const std::string& type);
 
-    Model(const Model& other);
+    explicit Model(const Model& other);
 
     using Ptr = std::unique_ptr<Model>;
 
@@ -25,15 +25,21 @@ class Model : public SerializeableWithFields {
 
     std::string get_runtime_type() const override;
 
+    std::string get_parent_type() const;
+
     void get_foreign_key_fields(VecKeyValuePair& fields) const;
 
     void get_foreign_key_proxy_fields(VecKeyValuePair& fields) const;
+
+    bool has_owner() const;
 
     void init_creation_time(std::time_t ctime);
 
     void init_modification_time(std::time_t mtime);
 
     const std::string& name() const;
+
+    void set_has_owner(bool has_owner);
 
     void set_name(const std::string& name);
 
@@ -51,6 +57,7 @@ class Model : public SerializeableWithFields {
         m_named_foreign_key_fields;
     std::unordered_map<std::string, DictField*> m_foreign_key_proxy_fields;
 
+    bool m_has_owner{false};
     StringField m_name{"name"};
     DateTimeField m_creation_time{"creation_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
@@ -68,6 +75,14 @@ class ModelCreationContext : public SerializeableWithFields {
         register_scalar_field(&m_creation_time);
         register_scalar_field(&m_last_modified_time);
     }
+
+    void add_user(const std::string& user_id)
+    {
+        register_map_field(&m_created_by);
+        m_created_by.set_id(user_id);
+    }
+
+    NamedForeignKeyField m_created_by{"created_by", "user"};
     DateTimeField m_creation_time{"creation_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
 };

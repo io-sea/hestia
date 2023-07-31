@@ -7,6 +7,8 @@
 #include "HttpCrudPath.h"
 #include "StringAdapter.h"
 
+#include "Logger.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -22,10 +24,11 @@ HttpCrudClient::HttpCrudClient(
 HttpCrudClient::~HttpCrudClient() {}
 
 void HttpCrudClient::create(
-    const CrudRequest& crud_request, CrudResponse& crud_response) const
+    const CrudRequest& crud_request, CrudResponse& crud_response)
 {
     auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
     HttpRequest request(path, HttpRequest::Method::PUT);
+    request.get_header().set_content_type("application/json");
 
     if (crud_request.has_items()) {
         get_adapter(CrudAttributes::Format::JSON)
@@ -54,6 +57,8 @@ void HttpCrudClient::read(
             std::string path_suffix;
             HttpCrudPath::from_identifier(id, path_suffix);
             HttpRequest request(path + path_suffix, HttpRequest::Method::GET);
+            request.get_header().set_content_type("application/json");
+
             const auto response = m_client->make_request(request);
 
             if (response->error()) {
@@ -77,6 +82,8 @@ void HttpCrudClient::read(
         HttpCrudPath::from_query(query, path);
 
         HttpRequest request(path, HttpRequest::Method::GET);
+        request.get_header().set_content_type("application/json");
+
         const auto response = m_client->make_request(request);
 
         if (response->error()) {
@@ -102,6 +109,8 @@ void HttpCrudClient::update(
             path += "/" + crud_request.items()[0]->get_primary_key();
 
             HttpRequest request(path, HttpRequest::Method::PUT);
+            request.get_header().set_content_type("application/json");
+
             get_adapter(CrudAttributes::Format::JSON)
                 ->to_string(crud_request.items(), request.body());
 

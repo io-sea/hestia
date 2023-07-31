@@ -55,6 +55,8 @@ class HestiaConfig : public SerializeableWithFields {
     void load_from_dict(
         const Dictionary& dict, const std::string& user_token = {});
 
+    void override_controller_address(const std::string& host, unsigned port);
+
     HestiaConfig& operator=(const HestiaConfig& other);
 
   private:

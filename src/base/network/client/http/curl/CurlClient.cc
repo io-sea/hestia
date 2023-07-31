@@ -1,5 +1,6 @@
 #include "CurlClient.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 
 #include <stdexcept>
@@ -186,15 +187,19 @@ HttpResponse::Ptr CurlClient::make_request(
     LOG_INFO(request.to_string());
     auto rc = curl_easy_perform(handle->m_handle);
     if (rc != CURLE_OK) {
-        throw std::runtime_error(
-            "Failed request with error: " + handle->m_error_buffer);
+        std::string msg = SOURCE_LOC() + " | Failed request: " + url;
+        if (!handle->m_error_buffer.empty()) {
+            msg += " with error: " + handle->m_error_buffer;
+        }
+        throw std::runtime_error(msg);
     }
 
     long http_code = 0;
     curl_easy_getinfo(handle->m_handle, CURLINFO_RESPONSE_CODE, &http_code);
     if (http_code != 200 || rc == CURLE_ABORTED_BY_CALLBACK) {
         LOG_INFO("Error in http response: " << http_code);
-        response = HttpResponse::create(http_code, "Curl Error");
+        response =
+            HttpResponse::create(http_code, SOURCE_LOC() + " | Curl Error");
     }
 
     m_handles.erase(std::this_thread::get_id());

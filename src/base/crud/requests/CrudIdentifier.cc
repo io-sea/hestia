@@ -77,6 +77,12 @@ void CrudIdentifier::from_buffer(const std::string& line, InputFormat format)
         case InputFormat::NAME:
             set_name(line);
             return;
+        case InputFormat::PARENT_NAME:
+            set_parent_name(line);
+            return;
+        case InputFormat::PARENT_ID:
+            set_parent_primary_key(line);
+            return;
         case InputFormat::NAME_PARENT_ID: {
             auto [name, parent_id] = StringUtils::split_on_first(line, ',');
             StringUtils::trim(name);

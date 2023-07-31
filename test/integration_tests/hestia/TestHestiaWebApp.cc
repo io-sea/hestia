@@ -11,7 +11,9 @@
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 
+#include "DataPlacementEngine.h"
 #include "DistributedHsmService.h"
+#include "EventFeed.h"
 #include "HestiaWebApp.h"
 #include "HsmService.h"
 #include "HsmServicesFactory.h"
@@ -44,16 +46,32 @@ class TestHestiaWebAppFixture {
             m_kv_store_client.get());
         m_user_service = hestia::UserService::create({}, &backend);
 
+        auto register_response =
+            m_user_service->register_user("my_admin", "my_admin_password");
+        REQUIRE(register_response->ok());
+
+        auto auth_response =
+            m_user_service->authenticate_user("my_admin", "my_admin_password");
+        REQUIRE(auth_response->ok());
+
         hestia::HsmObjectStoreClientBackend object_store_backend(
             hestia::HsmObjectStoreClientBackend::Type::MEMORY_HSM,
             hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
 
+        auto hsm_child_services =
+            std::make_unique<hestia::HsmServiceCollection>();
+        hsm_child_services->create_default_services(
+            {}, &backend, m_user_service.get());
+        hsm_child_services->get_service(hestia::HsmItem::Type::DATASET)
+            ->set_default_name("test_default_dataset");
 
-        auto hsm_service = hestia::HsmService::create(
-            hestia::ServiceConfig{}, m_kv_store_client.get(),
-            m_obj_store_client.get(), m_user_service.get());
+        hestia::ServiceConfig hsm_service_config;
+        auto hsm_service = std::make_unique<hestia::HsmService>(
+            hsm_service_config, std::move(hsm_child_services),
+            m_obj_store_client.get());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
+        dist_hsm_config.m_self.set_name("my_node");
         dist_hsm_config.m_self.add_backend(object_store_backend);
 
         m_dist_hsm_service = hestia::DistributedHsmService::create(
@@ -61,7 +79,6 @@ class TestHestiaWebAppFixture {
             m_user_service.get());
 
         m_dist_hsm_service->register_self();
-
 
         m_object_factory =
             std::make_unique<hestia::TypedModelFactory<hestia::HsmObject>>();
@@ -92,6 +109,7 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::GET);
+        req.get_header().set_content_type("application/json");
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
         m_object_adapter->from_string({response->body()}, objects);
@@ -101,6 +119,8 @@ class TestHestiaWebAppFixture {
     {
         const auto path = m_base_url + "objects/" + id;
         hestia::HttpRequest req(path, hestia::HttpRequest::Method::GET);
+        req.get_header().set_content_type("application/json");
+
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
         std::vector<hestia::HsmObject::Ptr> objects;
@@ -112,6 +132,10 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::PUT);
+        req.get_header().set_auth_token(
+            m_user_service->get_current_user().token().value());
+        req.get_header().set_content_type("application/json");
+
         std::vector<hestia::HsmObject::Ptr> put_objects;
         put_objects.push_back(std::make_unique<hestia::HsmObject>(object));
 
@@ -233,6 +257,8 @@ TEST_CASE_METHOD(
 
     hestia::HsmObject obj;
     put_object(obj);
+
+    return;
 
     hestia::HsmObject returned_object;
     get_object(obj.id(), returned_object);

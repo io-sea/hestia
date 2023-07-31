@@ -1,5 +1,7 @@
 #include "TokenAuthenticationMiddleware.h"
 
+#include "Logger.h"
+
 #include <cassert>
 #include <stdexcept>
 
@@ -8,6 +10,7 @@ namespace hestia {
 HttpResponse::Ptr TokenAuthenticationMiddleware::call(
     const HttpRequest& request, User& user, responseProviderFunc func)
 {
+    LOG_INFO("Into TokenAuthenticationMiddleware");
     if (auto auth_token = request.get_header().get_item("Authorization");
         !auth_token.empty()) {
         auto auth_response =
@@ -21,6 +24,7 @@ HttpResponse::Ptr TokenAuthenticationMiddleware::call(
                     "Failed to case auth response type to user");
             }
             user = *user_response;
+            LOG_INFO("Authenticated user: " + user.get_primary_key());
         }
     }
     return func(request);

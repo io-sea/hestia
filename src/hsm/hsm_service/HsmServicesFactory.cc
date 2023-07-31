@@ -70,10 +70,35 @@ void HsmServiceCollection::create_default_services(
     UserService* user_service)
 {
     for (const auto& item : HsmItem::get_all_items()) {
+
+        auto config_in = config;
         add_service(
             item, HsmServicesFactory::create_service(
-                      item, config, backend, user_service));
+                      item, config_in, backend, user_service));
     }
+
+    get_service(HsmItem::Type::DATASET)
+        ->register_parent_service(User::get_type(), user_service);
+    get_service(HsmItem::Type::ACTION)
+        ->register_parent_service(User::get_type(), user_service);
+
+    get_service(HsmItem::Type::OBJECT)
+        ->register_parent_service(
+            HsmItem::dataset_name, get_service(HsmItem::Type::DATASET));
+    get_service(HsmItem::Type::OBJECT)
+        ->register_child_service(
+            HsmItem::user_metadata_name, get_service(HsmItem::Type::METADATA));
+
+    get_service(HsmItem::Type::NAMESPACE)
+        ->register_parent_service(
+            HsmItem::dataset_name, get_service(HsmItem::Type::DATASET));
+
+    get_service(HsmItem::Type::METADATA)
+        ->register_parent_service(
+            HsmItem::hsm_object_name, get_service(HsmItem::Type::OBJECT));
+    get_service(HsmItem::Type::EXTENT)
+        ->register_parent_service(
+            HsmItem::hsm_object_name, get_service(HsmItem::Type::EXTENT));
 }
 
 void HsmServiceCollection::add_service(
