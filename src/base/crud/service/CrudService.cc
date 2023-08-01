@@ -47,7 +47,7 @@ CrudService::~CrudService() {}
         "Starting Subject: " << get_type()
                              << ", Method: " << request.method_as_string());
 
-    auto response = std::make_unique<CrudResponse>(request);
+    auto response = std::make_unique<CrudResponse>(request, get_type());
 
     switch (request.method()) {
         case CrudMethod::CREATE:

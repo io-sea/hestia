@@ -7,7 +7,7 @@
 
 #include "MotrConfig.h"
 
-#include "hestia.h"
+#include <iostream>
 
 class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
   public:
@@ -44,6 +44,7 @@ class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
 
         hestia::StorageObject obj(obj_id);
         obj.set_size(content.size());
+
         get(obj, &stream, tier);
         REQUIRE(stream.flush().ok());
 

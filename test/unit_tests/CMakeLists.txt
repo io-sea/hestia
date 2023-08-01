@@ -38,6 +38,7 @@ set(UNIT_TEST_SOURCES
     hsm/TestTierExtents.cc
     hsm/TestHsmService.cc
     hsm/TestDistributedHsmService.cc
+    hsm/TestDistributedHsmObjectStoreClient.cc
     hsm/TestS3HsmService.cc
     hestia/TestHestiaClient.cc
     hestia/TestHestiaCApi.cc

@@ -18,7 +18,7 @@ int MockPhobos::phobos_put(
 
     m_metadata_cache[id] = xfers[0].xd_attrs.attr_set;
 
-    std::vector<char> buffer(size);
+    std::vector<char> buffer(size, 0);
     if (size > 0) {
         auto rc = ::read(fd, &buffer[0], size);
         if (rc < 0) {

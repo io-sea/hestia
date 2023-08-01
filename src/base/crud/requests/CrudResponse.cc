@@ -4,10 +4,18 @@
 #include <stdexcept>
 
 namespace hestia {
-CrudResponse::CrudResponse(const BaseRequest& request) :
+CrudResponse::CrudResponse(
+    const BaseRequest& request, const std::string& type) :
     Response<CrudErrorCode>(request),
-    m_items_dict(std::make_unique<Dictionary>())
+    m_items_dict(std::make_unique<Dictionary>()),
+    m_type(type)
 {
+}
+
+CrudResponse::Ptr CrudResponse::create(
+    const BaseRequest& request, const std::string& type)
+{
+    return std::make_unique<CrudResponse>(request, type);
 }
 
 CrudResponse::~CrudResponse() {}
@@ -26,7 +34,8 @@ Model* CrudResponse::get_item() const
 {
     if (m_items.empty()) {
         throw std::runtime_error(
-            "Attempted to get item in CrudResponse but none set. Use found() to check first");
+            "Attempted to get item of type " + m_type
+            + " in CrudResponse but none set. Use found() to check first");
     }
     return m_items[0].get();
 }

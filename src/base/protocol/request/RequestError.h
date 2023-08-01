@@ -39,8 +39,10 @@ class RequestError : public BaseRequestError {
 
     std::string to_string() const override
     {
-        return "Code: " + std::to_string(number()) + " | " + code_as_string()
-               + " | " + m_message;
+        auto code_string = code_as_string();
+        code_string      = code_string.empty() ? "" : code_string + " | ";
+        return "Code: " + std::to_string(number()) + " | " + code_string
+               + m_message;
     }
 
     friend std::ostream& operator<<(
@@ -51,7 +53,6 @@ class RequestError : public BaseRequestError {
     }
 
   protected:
-    std::string m_message;
     ErrorCode m_code;
 };
 

@@ -11,11 +11,13 @@ namespace hestia {
 
 class CrudResponse : public Response<CrudErrorCode> {
   public:
-    CrudResponse(const BaseRequest& request);
+    using Ptr = std::unique_ptr<CrudResponse>;
+
+    CrudResponse(const BaseRequest& request, const std::string& type);
+
+    static Ptr create(const BaseRequest& request, const std::string& type);
 
     virtual ~CrudResponse();
-
-    using Ptr = std::unique_ptr<CrudResponse>;
 
     const CrudAttributes& attributes() const;
 
@@ -56,6 +58,7 @@ class CrudResponse : public Response<CrudErrorCode> {
     std::vector<std::string> m_ids;
 
     bool m_locked{false};
+    std::string m_type;
 
   protected:
     RequestError<CrudErrorCode> m_error;

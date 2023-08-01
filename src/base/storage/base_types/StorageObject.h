@@ -22,6 +22,8 @@ class StorageObject : public SerializeableWithFields {
      */
     StorageObject(const std::string& id = {});
 
+    StorageObject(const StorageObject& other);
+
     /**
      * Does the object have zero size
      * @return True if the object has zero size
@@ -32,11 +34,17 @@ class StorageObject : public SerializeableWithFields {
 
     const Map& metadata() const;
 
+    const std::string& get_location() const;
+
     void set_metadata(const std::string& key, const std::string& value);
 
     std::size_t size() const { return m_size.get_value(); }
 
     void set_size(std::size_t size) { m_size.update_value(size); }
+
+    void set_location(const std::string& address);
+
+    StorageObject& operator=(const StorageObject& other);
 
     /**
      * A string representation of the object - intended for debugging
@@ -56,6 +64,7 @@ class StorageObject : public SerializeableWithFields {
     static constexpr const char s_type[]{"storage_object"};
 
     ScalarMapField m_metadata{"metadata"};
+    StringField m_location{"location"};
     UIntegerField m_size{"size"};
 };
 }  // namespace hestia

@@ -33,6 +33,20 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
         Stream* stream = nullptr) const noexcept override;
 
   private:
+    HsmObjectStoreResponse::Ptr do_remote_get(
+        const HsmObjectStoreRequest& request, Stream* stream) const;
+
+    HsmObjectStoreResponse::Ptr do_remote_put(
+        const HsmObjectStoreRequest& request, Stream* stream) const;
+
+    HsmObjectStoreResponse::Ptr do_local_op(
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        uint8_t tier) const;
+
+    bool is_controller_node() const;
+
+
     void copy(const HsmObjectStoreRequest& request) const override
     {
         (void)request;
