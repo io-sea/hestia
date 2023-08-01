@@ -8,12 +8,9 @@ set(LINK_MODULES_FOR_EXPORT
         models
         crud
         web
-        hsm
         event_feed
+        hsm
         hsm_base_types
-        hsm_object_store_common
-        hsm_object_store_client
-        distributed_hsm_object_store
         app
         headers
 )
@@ -37,6 +34,10 @@ endif()
 
 if(HESTIA_WITH_S3_CLIENT)
         list(APPEND STANDALONE_MODULES_FOR_EXPORT s3_plugin)
+endif()
+
+if(HESTIA_WITH_MOTR)
+        list(APPEND STANDALONE_MODULES_FOR_EXPORT motr_plugin)
 endif()
 
 if(HESTIA_WITH_PHOBOS)

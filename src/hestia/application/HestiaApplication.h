@@ -24,7 +24,9 @@ class IHestiaApplication {
     virtual OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
-        const Dictionary& extra_config = {}) = 0;
+        const Dictionary& extra_config = {},
+        const std::string& server_host = {},
+        unsigned server_port           = 8080) = 0;
 
     virtual std::string get_runtime_info() const = 0;
 
@@ -47,7 +49,9 @@ class HestiaApplication : public IHestiaApplication {
     OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
-        const Dictionary& extra_config = {}) override;
+        const Dictionary& extra_config = {},
+        const std::string& server_host = {},
+        unsigned server_port           = 8080) override;
 
     std::string get_runtime_info() const override;
 
@@ -61,7 +65,7 @@ class HestiaApplication : public IHestiaApplication {
 
     virtual void initialize_logger() const;
 
-    virtual void set_app_mode() = 0;
+    virtual void set_app_mode(const std::string& host, unsigned port) = 0;
 
     virtual void setup_http_client();
     virtual void setup_key_value_store();

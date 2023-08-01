@@ -15,7 +15,9 @@ class MockHestiaClient : public IHestiaClient {
     OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
-        const Dictionary& extra_config = {}) override;
+        const Dictionary& extra_config = {},
+        const std::string& server_host = {},
+        unsigned server_port           = 8080) override;
 
     OpStatus create(
         const HestiaType& subject,

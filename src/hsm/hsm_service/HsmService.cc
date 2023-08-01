@@ -7,7 +7,9 @@
 #include "CrudClient.h"
 #include "CrudService.h"
 #include "CrudServiceBackend.h"
+#include "ErrorUtils.h"
 #include "IdGenerator.h"
+#include "StorageTier.h"
 #include "StringAdapter.h"
 #include "TimeProvider.h"
 #include "TypedCrudRequest.h"
@@ -152,6 +154,20 @@ void HsmService::do_data_io_action(
     }
 }
 
+void HsmService::update_tiers(const std::string& user_id)
+{
+    auto tier_service = m_services->get_service(HsmItem::Type::TIER);
+    auto get_response = tier_service->make_request(
+        CrudRequest(CrudQuery{CrudQuery::OutputFormat::ITEM}, user_id));
+    if (!get_response->ok()) {
+        THROW_WITH_SOURCE_LOC("Failed listing tiers in cache request");
+    }
+    for (const auto& item : get_response->items()) {
+        auto tier_item = dynamic_cast<StorageTier*>(item.get());
+        m_tier_cache[tier_item->id_uint()] = tier_item->get_primary_key();
+    }
+}
+
 CrudResponse::Ptr HsmService::crud_create(
     HsmItem::Type subject_type, const CrudRequest& req) const noexcept
 {
@@ -243,8 +259,11 @@ void HsmService::put_data(
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
-    const auto chosen_tier = m_placement_engine->choose_tier(
-        working_object->size(), req.target_tier());
+    auto chosen_tier = req.target_tier();
+    if (m_placement_engine != nullptr) {
+        chosen_tier = m_placement_engine->choose_tier(
+            working_object->size(), req.target_tier());
+    }
 
     HsmObjectStoreRequest data_put_request(
         working_object->id(), HsmObjectStoreRequestMethod::PUT);
@@ -307,6 +326,7 @@ void HsmService::on_put_data_complete(
 
     if (extent_needs_creation) {
         extent.set_object_id(working_object.get_primary_key());
+        extent.set_tier_id(get_tier_id(tier));
     }
     extent.add_extent(working_extent);
 
@@ -341,6 +361,16 @@ void HsmService::on_put_data_complete(
     add_put_event(m_event_feed.get(), working_object, tier);
 
     completion_func(std::move(response));
+}
+
+const std::string& HsmService::get_tier_id(uint8_t tier) const
+{
+    if (const auto& iter = m_tier_cache.find(tier);
+        iter != m_tier_cache.end()) {
+        return iter->second;
+    }
+    THROW_WITH_SOURCE_LOC(
+        "Failed to find tier: " + std::to_string(tier) + " in cache");
 }
 
 void HsmService::get_data(
@@ -449,6 +479,7 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     if (extent_needs_creation) {
         target_extent.set_object_id(working_object->get_primary_key());
+        target_extent.set_tier_id(get_tier_id(target_extent.tier()));
     }
     target_extent.add_extent(working_extent);
     source_extent.remove_extent(working_extent);
@@ -537,6 +568,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     if (extent_needs_creation) {
         target_extent.set_object_id(working_object->get_primary_key());
+        target_extent.set_tier_id(get_tier_id(target_extent.tier()));
     }
     target_extent.add_extent(working_extent);
 

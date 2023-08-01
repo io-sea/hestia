@@ -6,7 +6,6 @@
 #include "InMemoryKeyValueStoreClient.h"
 
 #include "DistributedHsmService.h"
-#include "HttpObjectStoreClient.h"
 
 #include "HsmObjectStoreClientBackend.h"
 #include "HsmObjectStoreClientManager.h"
@@ -32,6 +31,13 @@ class DistributedHsmServiceTestFixture {
             m_kv_store_client.get());
 
         m_user_service = hestia::UserService::create({}, &crud_backend);
+        auto register_response =
+            m_user_service->register_user("my_admin", "my_admin_password");
+        REQUIRE(register_response->ok());
+
+        auto auth_response =
+            m_user_service->authenticate_user("my_admin", "my_admin_password");
+        REQUIRE(auth_response->ok());
 
         auto hsm_service = hestia::HsmService::create(
             hestia::ServiceConfig{}, m_kv_store_client.get(),

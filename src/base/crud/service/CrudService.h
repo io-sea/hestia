@@ -24,15 +24,23 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
 
     std::string get_type() const;
 
+    const std::string& get_default_name() const;
+
     [[nodiscard]] CrudResponse::Ptr make_request(
         const CrudRequest& request,
         const std::string& type = {}) const noexcept override;
+
+    void register_parent_service(const std::string& type, CrudService* service);
+
+    void register_child_service(const std::string& type, CrudService* service);
+
+    void set_default_name(const std::string& name);
 
   protected:
     virtual void create(
         const CrudRequest& request, CrudResponse& response) const;
 
-    virtual void read(const CrudQuery& query, CrudResponse& response) const;
+    virtual void read(const CrudRequest& request, CrudResponse& response) const;
 
     virtual void update(
         const CrudRequest& request, CrudResponse& response) const;

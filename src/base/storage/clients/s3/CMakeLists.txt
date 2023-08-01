@@ -26,4 +26,6 @@ if(HESTIA_WITH_S3_CLIENT)
     target_link_libraries(${PROJECT_NAME}_s3_plugin PRIVATE 
         hestia_s3_backend
         libs3::s3)
+
+    add_dependencies(${PROJECT_NAME}_storage_and_plugins ${PROJECT_NAME}_s3_plugin)
 endif()

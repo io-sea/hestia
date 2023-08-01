@@ -13,10 +13,10 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
         "squash_on_merge": false
       }' \
     -o merge.json
-sleep 5
+sleep 60
 curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
     "$HESTIA_API_URL/merge_requests/$(jq .iid merge.json)/merge"
-sleep 5
+sleep 60
 
 # Tag MR with version number, update patch version
 curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \

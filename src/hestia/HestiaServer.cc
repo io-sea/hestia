@@ -69,7 +69,7 @@ OpStatus HestiaServer::run()
     return {};
 }
 
-void HestiaServer::set_app_mode()
+void HestiaServer::set_app_mode(const std::string&, unsigned)
 {
     if (!m_config.get_server_config().has_controller_address()) {
         LOG_INFO("Running Server in Controller mode");

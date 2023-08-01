@@ -1,9 +1,14 @@
 #include "CrudClient.h"
 
+#include "CrudService.h"
 #include "IdGenerator.h"
 #include "StringAdapter.h"
 #include "TimeProvider.h"
 
+#include "ErrorUtils.h"
+#include "User.h"
+
+#include <cassert>
 #include <stdexcept>
 
 namespace hestia {
@@ -54,6 +59,95 @@ const StringAdapter* CrudClient::get_adapter(
 std::string CrudClient::get_type() const
 {
     return m_adapters->get_type();
+}
+
+void CrudClient::get_or_create_default_parent(
+    const std::string& type, const std::string& user_id)
+{
+    CrudIdentifier id;
+
+    const auto parent_service_iter = m_parent_services.find(type);
+    if (parent_service_iter == m_parent_services.end()) {
+        THROW_WITH_SOURCE_LOC(
+            "Attempted to find default parent for type: " + type
+            + " but parent service not registered.");
+    }
+
+    if (type == User::get_type() && !user_id.empty()) {
+        id = CrudIdentifier(user_id);
+    }
+    else {
+        auto parent_default_name =
+            parent_service_iter->second->get_default_name();
+        if (parent_default_name.empty()) {
+            THROW_WITH_SOURCE_LOC(
+                "Attempted to find default parent for type: " + type
+                + " but no default name set");
+        }
+        id = CrudIdentifier(parent_default_name, CrudIdentifier::Type::NAME);
+    }
+
+    auto get_response = parent_service_iter->second->make_request(
+        CrudRequest{CrudQuery{id, CrudQuery::OutputFormat::ID}, user_id});
+    if (!get_response->ok()) {
+        throw std::runtime_error(
+            "Failed to get default parent: "
+            + get_response->get_error().to_string());
+    }
+
+    if (get_response->found()) {
+        assert(!get_response->ids().empty());
+        LOG_INFO(
+            "Found default parent of type: " + type
+            + " with id: " + get_response->ids()[0]);
+        set_default_parent_id(type, get_response->ids()[0]);
+    }
+    else {
+        auto create_response =
+            parent_service_iter->second->make_request(CrudRequest{
+                CrudMethod::CREATE,
+                user_id,
+                {id},
+                {},
+                CrudQuery::OutputFormat::ID});
+        if (!create_response->ok()) {
+            throw std::runtime_error(
+                "Failed to create default parent: "
+                + create_response->get_error().to_string());
+        }
+        assert(!create_response->ids().empty());
+        LOG_INFO(
+            "Created default parent of type: " + type
+            + " with id: " + create_response->ids()[0]);
+        set_default_parent_id(type, create_response->ids()[0]);
+    }
+}
+
+std::string CrudClient::get_default_parent_id(const std::string& type) const
+{
+    if (auto iter = m_parent_default_ids.find(type);
+        iter != m_parent_default_ids.end()) {
+        return iter->second;
+    }
+    return {};
+}
+
+void CrudClient::register_parent_service(
+    const std::string& type, CrudService* service)
+{
+    m_parent_services[type] = service;
+}
+
+void CrudClient::register_child_service(
+    const std::string& type, CrudService* service)
+{
+    m_child_services[type] = service;
+}
+
+void CrudClient::set_default_parent_id(
+    const std::string& type, const std::string& id)
+{
+    m_parent_default_ids[type] = id;
 }
 
 }  // namespace hestia

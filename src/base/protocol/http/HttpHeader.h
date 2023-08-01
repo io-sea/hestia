@@ -7,7 +7,7 @@
 namespace hestia {
 class HttpHeader {
   public:
-    HttpHeader() = default;
+    HttpHeader();
 
     HttpHeader(const std::vector<std::string>& lines);
 
@@ -27,9 +27,18 @@ class HttpHeader {
 
     std::string to_string() const;
 
+    bool has_html_accept_type() const;
+
+    void set_content_type(const std::string& content_type);
+
+    void set_auth_token(const std::string& token);
+
   private:
+    void parse_accept_types(const std::string& header_value);
+
     std::string m_http_version{"1.1"};
-    std::string m_content_type{"text / html"};
+    std::string m_content_type{"text/plain"};
+    std::vector<std::string> m_accept_types;
     Map m_data;
 };
 }  // namespace hestia

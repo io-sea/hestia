@@ -5,7 +5,6 @@
 
 #include "DistributedHsmService.h"
 #include "HsmService.h"
-#include "HttpObjectStoreClient.h"
 #include "Logger.h"
 
 #include "HttpClient.h"
@@ -13,7 +12,7 @@
 namespace hestia {
 DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager,
-    std::unique_ptr<HttpObjectStoreClient> http_client) :
+    HttpClient* http_client) :
     HsmObjectStoreClient(),
     m_http_client(std::move(http_client)),
     m_client_manager(std::move(client_manager))
@@ -23,7 +22,7 @@ DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
 DistributedHsmObjectStoreClient::~DistributedHsmObjectStoreClient() {}
 
 DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
-    std::unique_ptr<HttpObjectStoreClient> http_client,
+    HttpClient* http_client,
     const std::vector<std::filesystem::path>& plugin_paths)
 {
     auto plugin_handler =
@@ -85,57 +84,44 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
             }
         }
         else {
-            CrudQuery query(
-                KeyValuePair{
-                    "backend",
-                    m_client_manager->get_backend(request.source_tier())},
-                CrudQuery::Format::LIST, CrudQuery::OutputFormat::ITEM);
-            auto list_response =
-                m_hsm_service->get_node_service()->make_request(
-                    CrudRequest{query, current_user_id});
-            if (!list_response->ok()) {
-                auto response = HsmObjectStoreResponse::create(request);
-                response->on_error(
-                    {HsmObjectStoreErrorCode::ERROR,
-                     "Failed to list available backends"});
-                return response;
-            }
+            auto controller_endpoint =
+                m_hsm_service->get_self_config().m_controller_address;
 
-            if (!list_response->found()) {
-                auto response = HsmObjectStoreResponse::create(request);
-                response->on_error(
-                    {HsmObjectStoreErrorCode::ERROR,
-                     "No suitable backends found for this tier in system."});
-                return response;
-            }
+            HsmAction action(
+                HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
+            action.set_subject_key(request.object().get_primary_key());
+            action.set_size(request.object().size());
+            action.set_source_tier(request.source_tier());
 
-            const auto node = list_response->get_item_as<HsmNode>();
-            auto address    = node->host();
-            auto port       = node->port();
+            const auto path = controller_endpoint + "/api/v1/"
+                              + hestia::HsmItem::hsm_action_name + "s";
 
-            HttpObjectStoreClientConfig http_config;
-            http_config.m_endpoint.update_value(
-                address + ":" + std::to_string(port) + "/api/v1/hsm/object");
-            http_config.m_endpoint_suffix.update_value("data");
+            HttpRequest http_request(path, HttpRequest::Method::GET);
+            Dictionary dict;
+            action.serialize(dict);
 
-            ObjectStoreRequest get_request(
-                request.object(), ObjectStoreRequestMethod::GET);
+            Map flat_dict;
+            dict.flatten(flat_dict);
+            flat_dict.add_key_prefix("hestia.hsm_action.");
+
+            http_request.get_header().set_items(flat_dict);
             auto get_response =
-                m_http_client->make_request(get_request, stream);
+                m_http_client->make_request(http_request, stream);
 
-            if (!get_response->ok()) {
+            if (get_response->error()) {
                 LOG_ERROR(
                     "Failed in remote get request: "
-                    << get_response->get_error().to_string());
-                return HsmObjectStoreResponse::create(
-                    request, std::move(get_response));
-            }
+                    << get_response->message());
 
+                auto response = HsmObjectStoreResponse::create(request);
+                response->on_error(
+                    {HsmObjectStoreErrorCode::ERROR, get_response->message()});
+                return response;
+            }
             if (stream != nullptr && stream->has_content()) {
                 auto stream_state = stream->flush();
                 if (!stream_state.ok()) {
-                    auto response = HsmObjectStoreResponse::create(
-                        request, std::move(get_response));
+                    auto response = HsmObjectStoreResponse::create(request);
                     response->on_error(
                         {HsmObjectStoreErrorCode::ERROR,
                          "Failed in stream flush: "
@@ -143,8 +129,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                     return response;
                 }
             }
-            return HsmObjectStoreResponse::create(
-                request, std::move(get_response));
+            return HsmObjectStoreResponse::create(request);
         }
     }
     else if (
@@ -167,9 +152,55 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
             }
         }
         else {
-            LOG_INFO("Did not find client for target tier - checking remotes");
-            // push to remote
-            return nullptr;
+            LOG_INFO(
+                "Did not find client for target tier - creating remote action");
+
+            auto controller_endpoint =
+                m_hsm_service->get_self_config().m_controller_address;
+
+            HsmAction action(
+                HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
+            action.set_subject_key(request.object().get_primary_key());
+            action.set_size(request.object().size());
+            action.set_target_tier(request.target_tier());
+
+            const auto path = controller_endpoint + "/api/v1/"
+                              + hestia::HsmItem::hsm_action_name + "s";
+
+            HttpRequest http_request(path, HttpRequest::Method::PUT);
+            Dictionary dict;
+            action.serialize(dict);
+
+            Map flat_dict;
+            dict.flatten(flat_dict);
+            flat_dict.add_key_prefix("hestia.hsm_action.");
+
+            http_request.get_header().set_items(flat_dict);
+            auto put_response =
+                m_http_client->make_request(http_request, stream);
+
+            if (put_response->error()) {
+                LOG_ERROR(
+                    "Failed in remote put request: "
+                    << put_response->message());
+
+                auto response = HsmObjectStoreResponse::create(request);
+                response->on_error(
+                    {HsmObjectStoreErrorCode::ERROR, put_response->message()});
+                return response;
+            }
+            if (stream != nullptr && stream->has_content()) {
+                auto stream_state = stream->flush();
+                if (!stream_state.ok()) {
+                    auto response = HsmObjectStoreResponse::create(request);
+                    response->on_error(
+                        {HsmObjectStoreErrorCode::ERROR,
+                         "Failed in stream flush: "
+                             + stream_state.to_string()});
+                    return response;
+                }
+            }
+            return HsmObjectStoreResponse::create(request);
         }
     }
     else if (

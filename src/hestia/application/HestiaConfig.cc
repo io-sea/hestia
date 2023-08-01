@@ -6,7 +6,6 @@
 
 #include <cstdlib>
 #include <filesystem>
-#include <iostream>
 
 namespace hestia {
 
@@ -46,13 +45,15 @@ HestiaConfig& HestiaConfig::operator=(const HestiaConfig& other)
 void HestiaConfig::init()
 {
     register_scalar_field(&m_cache_path);
+    register_scalar_field(&m_enable_user_management);
+    register_scalar_field(&m_enable_default_dataset);
+    register_map_field(&m_server_config);
+
     register_map_field(&m_logger);
     register_map_field(&m_key_value_store_config);
     register_sequence_field(&m_backends);
     register_sequence_field(&m_tiers);
     register_map_field(&m_event_feed_config);
-    register_scalar_field(&m_enable_user_management);
-    register_scalar_field(&m_enable_default_dataset);
 }
 
 void HestiaConfig::add_object_store_backend(
@@ -106,6 +107,11 @@ bool HestiaConfig::default_dataset_enabled() const
 bool HestiaConfig::user_management_enabled() const
 {
     return m_enable_user_management.get_value();
+}
+
+const std::string& HestiaConfig::get_config_path() const
+{
+    return m_path;
 }
 
 void HestiaConfig::find_config_file(const std::string& config_path)
@@ -179,6 +185,12 @@ void HestiaConfig::load_from_dict(
     if (m_cache_path.get_value().empty()) {
         m_cache_path.update_value(HestiaCache::get_default_cache_dir());
     }
+}
+
+void HestiaConfig::override_controller_address(
+    const std::string& host, unsigned port)
+{
+    m_server_config.get_value_as_writeable().set_controller_address(host, port);
 }
 
 const std::string& HestiaConfig::get_cache_path() const

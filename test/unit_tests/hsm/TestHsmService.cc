@@ -26,10 +26,21 @@ class HsmServiceTestFixture {
             m_kv_store_client.get());
         m_user_service = hestia::UserService::create({}, &crud_backend);
 
+        m_test_user.set_name("test_user");
+        auto user_create_response =
+            m_user_service->make_request(hestia::TypedCrudRequest<hestia::User>(
+                hestia::CrudMethod::CREATE, m_test_user, {},
+                hestia::CrudQuery::OutputFormat::ITEM));
+        REQUIRE(user_create_response->ok());
+        m_test_user = *user_create_response->get_item_as<hestia::User>();
+
         auto hsm_child_services =
             std::make_unique<hestia::HsmServiceCollection>();
         hsm_child_services->create_default_services(
             {}, &crud_backend, m_user_service.get());
+
+        hsm_child_services->get_service(hestia::HsmItem::Type::DATASET)
+            ->set_default_name("test_default_dataset");
 
         auto tier_service =
             hsm_child_services->get_service(hestia::HsmItem::Type::TIER);
@@ -56,16 +67,19 @@ class HsmServiceTestFixture {
         m_hsm_service = std::make_unique<hestia::HsmService>(
             hestia::ServiceConfig{}, std::move(hsm_child_services),
             m_object_store_client.get(), std::move(placement_engine));
+        m_hsm_service->update_tiers(m_test_user.get_primary_key());
     }
 
     void create(const hestia::HsmObject& obj)
     {
-        REQUIRE(m_hsm_service
-                    ->make_request(
-                        hestia::TypedCrudRequest<hestia::HsmObject>{
-                            hestia::CrudMethod::CREATE, obj, {}},
-                        hestia::HsmItem::hsm_object_name)
-                    ->ok());
+        REQUIRE(
+            m_hsm_service
+                ->make_request(
+                    hestia::TypedCrudRequest<hestia::HsmObject>{
+                        hestia::CrudMethod::CREATE, obj,
+                        hestia::CrudUserContext(m_test_user.get_primary_key())},
+                    hestia::HsmItem::hsm_object_name)
+                ->ok());
     }
 
     bool exists(const hestia::HsmObject& obj)
@@ -209,12 +223,15 @@ class HsmServiceTestFixture {
     std::unique_ptr<hestia::InMemoryHsmObjectStoreClient> m_object_store_client;
     std::unique_ptr<hestia::UserService> m_user_service;
     std::unique_ptr<hestia::HsmService> m_hsm_service;
+    hestia::User m_test_user;
 };
 
 TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
 {
     std::string id_0 = "0000";
     hestia::HsmObject obj0(id_0);
+
+    create(obj0);
 
     hestia::Stream stream;
     uint8_t tier0_id = 0;
@@ -223,7 +240,6 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     stream.set_source(hestia::InMemoryStreamSource::create(
         hestia::ReadableBufferView{content}));
 
-    create(obj0);
     put_data(obj0, &stream, tier0_id);
 
     REQUIRE(exists(obj0));

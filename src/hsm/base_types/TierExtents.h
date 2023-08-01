@@ -42,7 +42,7 @@ class TierExtents : public HsmItem, public LockableModel {
     UIntegerField m_tier_id{"tier_name", 0};
     IntKeyedSequenceField<std::map<std::size_t, Extent>> m_extents{
         "extents", "offset"};
-    NamedForeignKeyField m_object{"object", HsmItem::hsm_object_name};
+    NamedForeignKeyField m_object{"object", HsmItem::hsm_object_name, true};
     NamedForeignKeyField m_tier{"tier", HsmItem::tier_name};
 };
 }  // namespace hestia

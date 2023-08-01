@@ -1,7 +1,6 @@
 include(AddModule)
 
 add_subdirectory(base_types)
-add_subdirectory(object_store)
 
 add_module(
     MODULE_NAME hsm
@@ -18,6 +17,10 @@ add_module(
         hsm_service/requests/HsmActionRequest.h
         hsm_service/requests/HsmActionError.h 
         key_value_store/KeyValueStoreClientFactory.h
+        object_store/DistributedHsmObjectStoreClient.h
+        object_store/HsmObjectStoreClientBackend.h
+        object_store/HsmObjectStoreClientFactory.h
+        object_store/HsmObjectStoreClientManager.h
         s3_service/S3Service.h
         s3_service/S3DatasetAdapter.h
         s3_service/S3ObjectAdapter.h
@@ -33,6 +36,10 @@ add_module(
         hsm_service/requests/HsmActionRequest.cc
         hsm_service/requests/HsmActionError.cc
         key_value_store/KeyValueStoreClientFactory.cc
+        object_store/DistributedHsmObjectStoreClient.cc
+        object_store/HsmObjectStoreClientBackend.cc
+        object_store/HsmObjectStoreClientFactory.cc
+        object_store/HsmObjectStoreClientManager.cc
         s3_service/S3Service.cc
         s3_service/S3DatasetAdapter.cc
         s3_service/S3ObjectAdapter.cc
@@ -43,12 +50,15 @@ add_module(
         hsm_service/model
         hsm_service/requests
         key_value_store
+        object_store
         namespace_service
         s3_service
     INTERNAL_DEPENDENCIES 
         storage
-        hsm_object_store_client
         http_client
         web
         event_feed
+        hsm_base_types
 )
+
+add_dependencies(${PROJECT_NAME}_hsm ${PROJECT_NAME}_storage_and_plugins)

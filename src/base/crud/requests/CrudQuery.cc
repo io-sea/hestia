@@ -89,6 +89,21 @@ CrudQuery::OutputFormat CrudQuery::get_output_format() const
     return m_output_format;
 }
 
+CrudQuery::Format CrudQuery::get_format() const
+{
+    return m_format;
+}
+
+std::size_t CrudQuery::get_max_items() const
+{
+    return m_max_items;
+}
+
+std::size_t CrudQuery::get_offset() const
+{
+    return m_offset;
+}
+
 bool CrudQuery::is_filter() const
 {
     return m_format == Format::GET || m_format == Format::LIST;
@@ -119,6 +134,11 @@ bool CrudQuery::is_attribute_output_format() const
     return m_output_format == OutputFormat::ATTRIBUTES;
 }
 
+bool CrudQuery::is_dict_output_format() const
+{
+    return m_output_format == OutputFormat::DICT;
+}
+
 void CrudQuery::set_output_format(OutputFormat output_format)
 {
     m_output_format = output_format;
@@ -131,7 +151,8 @@ void CrudQuery::set_attributes_output_format(CrudAttributes::Format format)
 
 void CrudQuery::set_ids(const VecCrudIdentifier& ids)
 {
-    m_ids = ids;
+    m_ids    = ids;
+    m_format = Format::ID;
 }
 
 void CrudQuery::set_filter(const Map& filter)

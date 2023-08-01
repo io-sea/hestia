@@ -77,21 +77,24 @@ void StringAdapter::to_dict(
 
 void StringAdapter::from_string(
     const std::vector<std::string>& inputs,
-    std::vector<Model::Ptr>& items) const
+    std::vector<Model::Ptr>& items,
+    bool as_list) const
 {
     Dictionary dict;
-    from_string(inputs, dict);
+    from_string(inputs, dict, as_list);
     from_dict(dict, items);
 }
 
 void StringAdapter::from_string(
-    const std::vector<std::string>& inputs, Dictionary& dict) const
+    const std::vector<std::string>& inputs,
+    Dictionary& dict,
+    bool as_list) const
 {
     if (inputs.empty()) {
         return;
     }
 
-    if (inputs.size() == 1) {
+    if (!as_list && inputs.size() == 1) {
         dict_from_string(inputs[0], dict);
     }
     else {

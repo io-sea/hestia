@@ -8,7 +8,7 @@ ServerConfig::ServerConfig() : SerializeableWithFields(s_type)
 }
 
 ServerConfig::ServerConfig(const ServerConfig& other) :
-    SerializeableWithFields(s_type)
+    SerializeableWithFields(other)
 {
     *this = other;
 }
@@ -28,6 +28,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
         m_controller_address = other.m_controller_address;
         m_controller         = other.m_controller;
         m_tag                = other.m_tag;
+        m_api_prefix         = other.m_api_prefix;
         init();
     }
     return *this;
@@ -45,12 +46,18 @@ void ServerConfig::init()
 
     register_scalar_field(&m_controller_address);
     register_scalar_field(&m_controller);
+    register_scalar_field(&m_api_prefix);
     register_scalar_field(&m_tag);
 }
 
 const std::string& ServerConfig::get_static_resource_path() const
 {
     return m_static_resource_path.get_value();
+}
+
+const std::string& ServerConfig::get_api_prefix() const
+{
+    return m_api_prefix.get_value();
 }
 
 const std::string& ServerConfig::get_host_address() const

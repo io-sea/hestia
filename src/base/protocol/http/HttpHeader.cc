@@ -5,6 +5,12 @@
 #include <sstream>
 
 namespace hestia {
+
+HttpHeader::HttpHeader()
+{
+    set_item("Content-Type", m_content_type);
+}
+
 HttpHeader::HttpHeader(const std::vector<std::string>& lines)
 {
     for (const auto& line : lines) {
@@ -48,6 +54,15 @@ void HttpHeader::for_each(Map::onItem func) const
 void HttpHeader::set_item(const std::string& key, const std::string& value)
 {
     m_data.set_item(StringUtils::to_lower(key), value);
+
+    if (StringUtils::to_lower(key) == "accept") {
+        parse_accept_types(value);
+    }
+}
+
+void HttpHeader::set_auth_token(const std::string& token)
+{
+    set_item("Authorization", token);
 }
 
 std::string HttpHeader::to_string() const
@@ -74,6 +89,33 @@ Map HttpHeader::get_items_with_prefix(const std::string& prefix) const
         };
     m_data.for_each_item(on_header_item);
     return metadata;
+}
+
+void HttpHeader::parse_accept_types(const std::string& header_value)
+{
+    std::vector<std::string> comma_splits;
+    StringUtils::split(header_value, ',', comma_splits);
+
+    for (auto entry : comma_splits) {
+        StringUtils::trim(entry);
+        m_accept_types.push_back(StringUtils::to_lower(entry));
+    }
+}
+
+bool HttpHeader::has_html_accept_type() const
+{
+    for (const auto& mime_type : m_accept_types) {
+        if (StringUtils::starts_with(mime_type, "text/html")) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void HttpHeader::set_content_type(const std::string& content_type)
+{
+    m_content_type = content_type;
+    set_item("Content-Type", m_content_type);
 }
 
 std::string HttpHeader::get_content_length() const

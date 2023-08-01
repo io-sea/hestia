@@ -25,4 +25,5 @@ add_module(
         protocol
     INTERNAL_INCLUDE_DIRS 
         authentication
+        templates
 )

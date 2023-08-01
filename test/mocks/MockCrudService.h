@@ -18,6 +18,8 @@ class MockCrudService : public CrudService {
 
     static Ptr create();
 
+    static Ptr create_mock_with_parent(KeyValueStoreClient* kv_store_client);
+
     static Ptr create_for_parent(KeyValueStoreClient* kv_store_client);
 
     std::unique_ptr<InMemoryKeyValueStoreClient> m_kv_store_client;

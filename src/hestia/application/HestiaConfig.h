@@ -34,6 +34,8 @@ class HestiaConfig : public SerializeableWithFields {
 
     const std::string& get_cache_path() const;
 
+    const std::string& get_config_path() const;
+
     const std::vector<HsmObjectStoreClientBackend>& get_object_store_backends()
         const;
 
@@ -54,6 +56,8 @@ class HestiaConfig : public SerializeableWithFields {
 
     void load_from_dict(
         const Dictionary& dict, const std::string& user_token = {});
+
+    void override_controller_address(const std::string& host, unsigned port);
 
     HestiaConfig& operator=(const HestiaConfig& other);
 

@@ -53,7 +53,6 @@ add_module(
     INTERNAL_DEPENDENCIES 
         headers
         hsm
-        distributed_hsm_object_store
         server     
         cli 
         http_client

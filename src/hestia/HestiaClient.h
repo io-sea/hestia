@@ -56,7 +56,9 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
     OpStatus initialize(
         const std::string& config_path = {},
         const std::string& user_token  = {},
-        const Dictionary& extra_config = {}) override;
+        const Dictionary& extra_config = {},
+        const std::string& server_host = {},
+        unsigned server_port           = 8080) override;
 
     OpStatus create(
         const HestiaType& subject,
@@ -95,7 +97,7 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
   private:
     void clear_last_error();
 
-    void set_app_mode() override;
+    void set_app_mode(const std::string& host, unsigned port) override;
 
     void load_object_store_defaults();
 

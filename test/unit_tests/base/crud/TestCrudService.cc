@@ -11,11 +11,15 @@ class TestCrudServiceFixture {
   public:
     TestCrudServiceFixture()
     {
-        m_service        = hestia::mock::MockCrudService::create();
+        m_service = hestia::mock::MockCrudService::create();
+        m_mock_with_parent_service =
+            hestia::mock::MockCrudService::create_mock_with_parent(
+                m_service->m_kv_store_client.get());
         m_parent_service = hestia::mock::MockCrudService::create_for_parent(
             m_service->m_kv_store_client.get());
     }
     hestia::mock::MockCrudService::Ptr m_service;
+    hestia::mock::MockCrudService::Ptr m_mock_with_parent_service;
     hestia::mock::MockCrudService::Ptr m_parent_service;
 };
 
@@ -404,11 +408,11 @@ TEST_CASE_METHOD(
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(response->ok());
 
-    hestia::mock::MockModel model;
+    hestia::mock::MockModelWithParent model;
     model.set_parent_id(response->get_item()->id());
 
-    auto child_response = m_service->make_request(
-        hestia::TypedCrudRequest<hestia::mock::MockModel>{
+    auto child_response = m_mock_with_parent_service->make_request(
+        hestia::TypedCrudRequest<hestia::mock::MockModelWithParent>{
             hestia::CrudMethod::CREATE,
             model,
             {},

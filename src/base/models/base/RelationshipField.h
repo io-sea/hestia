@@ -58,8 +58,11 @@ class OneToOneProxyField : public TypedDictField<T> {
 
 class NamedForeignKeyField : public DictField {
   public:
-    NamedForeignKeyField(const std::string& name, const std::string& type) :
-        DictField(name)
+    NamedForeignKeyField(
+        const std::string& name,
+        const std::string& type,
+        bool is_parent = false) :
+        DictField(name), m_is_parent(is_parent)
     {
         m_type = type;
     }
@@ -80,12 +83,14 @@ class NamedForeignKeyField : public DictField {
                 dict.get_map_item(m_uuid.get_name())->get_scalar());
         }
     }
+    bool is_parent() const { return m_is_parent; }
 
     const std::string& get_id() const { return m_uuid.get_value(); }
 
     void set_id(const std::string& id) { m_uuid.update_value(id); }
 
   private:
+    bool m_is_parent{false};
     StringField m_uuid{"id"};
 };
 

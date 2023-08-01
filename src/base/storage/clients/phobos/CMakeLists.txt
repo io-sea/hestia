@@ -43,5 +43,7 @@ if(HESTIA_WITH_PHOBOS)
             COMPILER_DEFINITIONS
                 HAS_PHOBOS
         )
+
+        add_dependencies(${PROJECT_NAME}_storage_and_plugins ${PROJECT_NAME}_phobos_plugin)
     endif()
 endif()

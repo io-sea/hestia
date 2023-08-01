@@ -13,6 +13,8 @@
 #include "HsmService.h"
 #include "User.h"
 
+#include "HestiaWebPages.h"
+
 #include "Logger.h"
 
 namespace hestia {
@@ -57,7 +59,7 @@ HestiaWebApp::HestiaWebApp(
     m_url_router->add_pattern(
         {api_prefix + User::get_type() + "s"},
         std::make_unique<CrudWebView>(
-            hestia_service->get_node_service(), User::get_type()));
+            hestia_service->get_user_service(), User::get_type()));
 
     m_url_router->add_pattern(
         {api_prefix + HsmItem::hsm_action_name + "s"},
@@ -72,6 +74,11 @@ HestiaWebApp::HestiaWebApp(
             {"/"},
             std::make_unique<StaticContentView>(
                 config.m_static_resource_dir, config.m_cache_static_resources));
+    }
+    else {
+        auto index_page = std::make_unique<StaticContentView>();
+        index_page->set_buffer(HestiaWebPages::get_default_index_view());
+        m_url_router->add_pattern({"/"}, std::move(index_page));
     }
 
     auto token_auth_middleware =

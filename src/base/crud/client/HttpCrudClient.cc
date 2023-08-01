@@ -7,6 +7,8 @@
 #include "HttpCrudPath.h"
 #include "StringAdapter.h"
 
+#include "Logger.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -22,10 +24,13 @@ HttpCrudClient::HttpCrudClient(
 HttpCrudClient::~HttpCrudClient() {}
 
 void HttpCrudClient::create(
-    const CrudRequest& crud_request, CrudResponse& crud_response) const
+    const CrudRequest& crud_request, CrudResponse& crud_response)
 {
     auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
     HttpRequest request(path, HttpRequest::Method::PUT);
+    request.get_header().set_content_type("application/json");
+    request.get_header().set_auth_token(
+        crud_request.get_user_context().m_token);
 
     if (crud_request.has_items()) {
         get_adapter(CrudAttributes::Format::JSON)
@@ -43,17 +48,22 @@ void HttpCrudClient::create(
 }
 
 void HttpCrudClient::read(
-    const CrudQuery& query, CrudResponse& crud_response) const
+    const CrudRequest& crud_request, CrudResponse& crud_response) const
 {
     std::string path =
         m_config.m_endpoint + "/" + m_adapters->get_type() + "s/";
 
-    if (query.is_id() && !query.has_single_id()) {
+    if (crud_request.get_query().is_id()
+        && !crud_request.get_query().has_single_id()) {
         Dictionary dict(Dictionary::Type::SEQUENCE);
-        for (const auto& id : query.ids()) {
+        for (const auto& id : crud_request.get_query().ids()) {
             std::string path_suffix;
             HttpCrudPath::from_identifier(id, path_suffix);
             HttpRequest request(path + path_suffix, HttpRequest::Method::GET);
+            request.get_header().set_content_type("application/json");
+            request.get_header().set_auth_token(
+                crud_request.get_user_context().m_token);
+
             const auto response = m_client->make_request(request);
 
             if (response->error()) {
@@ -74,9 +84,11 @@ void HttpCrudClient::read(
             ->from_dict(dict, crud_response.items());
     }
     else {
-        HttpCrudPath::from_query(query, path);
+        HttpCrudPath::from_query(crud_request.get_query(), path);
 
         HttpRequest request(path, HttpRequest::Method::GET);
+        request.get_header().set_content_type("application/json");
+
         const auto response = m_client->make_request(request);
 
         if (response->error()) {
@@ -102,6 +114,10 @@ void HttpCrudClient::update(
             path += "/" + crud_request.items()[0]->get_primary_key();
 
             HttpRequest request(path, HttpRequest::Method::PUT);
+            request.get_header().set_content_type("application/json");
+            request.get_header().set_auth_token(
+                crud_request.get_user_context().m_token);
+
             get_adapter(CrudAttributes::Format::JSON)
                 ->to_string(crud_request.items(), request.body());
 

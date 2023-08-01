@@ -22,7 +22,6 @@ add_module(
         TestClientConfigs.cc
     INTERNAL_DEPENDENCIES
         web
-        hsm_object_store_client
         hsm
         lib
         app

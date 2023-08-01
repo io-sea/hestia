@@ -204,10 +204,6 @@ void HestiaCli::parse_args(int argc, char* argv[])
     }
 
     commands["server"] = app.add_subcommand("server", "Run the Hestia Server");
-    commands["server"]->add_option(
-        "--host", m_server_host, "Hestia server host address");
-    commands["server"]->add_option(
-        "-p, --port", m_server_port, "Hestia server host port");
 
     commands["start"] = app.add_subcommand("start", "Start the Hestia Daemon");
     commands["stop"]  = app.add_subcommand("stop", "Stop the Hestia Daemon");
@@ -228,6 +224,10 @@ void HestiaCli::parse_args(int argc, char* argv[])
             "-c, --config", m_config_path, "Path to a Hestia config file.");
         command->add_option(
             "-t, --token", m_user_token, "User authentication token.");
+        command->add_option(
+            "--host", m_server_host, "Hestia server host address");
+        command->add_option(
+            "-p, --port", m_server_port, "Hestia server host port");
     }
 
     try {
@@ -363,7 +363,8 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
 {
     OpStatus status;
     try {
-        status = app->initialize(m_config_path, m_user_token);
+        status = app->initialize(
+            m_config_path, m_user_token, {}, m_server_host, m_server_port);
     }
     catch (const std::exception& e) {
         status = OpStatus(OpStatus::Status::ERROR, -1, e.what());

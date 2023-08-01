@@ -65,7 +65,7 @@ class HestiaCli {
     std::string m_user_token;
     std::string m_config_path;
     std::string m_server_host;
-    std::string m_server_port;
+    unsigned m_server_port{8080};
     AppCommand m_app_command{AppCommand::UNKNOWN};
     HestiaClientCommand m_client_command;
     std::unique_ptr<IConsoleInterface> m_console_interface;

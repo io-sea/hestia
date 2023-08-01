@@ -19,10 +19,10 @@ class KeyValueCrudClient : public CrudClient {
     virtual ~KeyValueCrudClient();
 
   private:
-    void create(
-        const CrudRequest& request, CrudResponse& response) const override;
+    void create(const CrudRequest& request, CrudResponse& response) override;
 
-    void read(const CrudQuery& query, CrudResponse& response) const override;
+    void read(
+        const CrudRequest& request, CrudResponse& response) const override;
 
     void update(
         const CrudRequest& request, CrudResponse& response) const override;

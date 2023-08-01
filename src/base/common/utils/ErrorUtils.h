@@ -1,8 +1,15 @@
 #pragma once
 
+#include <stdexcept>
 #include <string>
 
 namespace hestia {
+
+#define SOURCE_LOC()                                                           \
+    OpStatus::get_location_prefix(__FILE__, __FUNCTION__, __LINE__)
+
+#define THROW_WITH_SOURCE_LOC(msg)                                             \
+    throw std::runtime_error(SOURCE_LOC() + " | " + msg)
 
 /**
  * @brief Generic 'Operation Status' for return value error handling
@@ -26,6 +33,11 @@ struct OpStatus {
         Status status,
         int error_code                   = 0,
         const std::string& error_message = {});
+
+    static std::string get_location_prefix(
+        const std::string& file_name,
+        const std::string& function_name,
+        int line_number);
 
     /**
      * Return the error code as a string

@@ -22,12 +22,12 @@ void CacheTestFixture::do_init(
         TestUtils::get_test_data_dir() / "configs" / "defaults.yaml";
     REQUIRE(std::filesystem::is_regular_file(base_config_path));
 
-    const auto m_config_path = cache_path + "/defaults.yaml";
+    m_config_path = cache_path + "/defaults.yaml";
 
     std::filesystem::copy_file(base_config_path, m_config_path);
 
     std::stringstream sstr;
-    sstr << "\ncache_location: " << cache_path << "\n";
+    sstr << "\ncache_path: " << cache_path << "\n";
     {
         std::ofstream out_file(m_config_path, std::ios_base::app);
         out_file << sstr.str();

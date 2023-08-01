@@ -8,7 +8,11 @@
 namespace hestia {
 class StaticContentView : public WebView {
   public:
-    StaticContentView(const std::string& directory, bool cache = true);
+    enum class Type { DISK, BUFFER };
+
+    StaticContentView(const std::string& directory = {}, bool cache = true);
+
+    void set_buffer(const std::string& buffer);
 
   private:
     HttpResponse::Ptr on_get(
@@ -18,6 +22,8 @@ class StaticContentView : public WebView {
 
     std::filesystem::path m_directory;
     bool m_should_cache{true};
+    std::string m_buffer;
+    Type m_type{Type::DISK};
     std::unordered_map<std::string, std::string> m_cache;
 };
 }  // namespace hestia

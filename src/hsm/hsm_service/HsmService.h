@@ -10,12 +10,15 @@
 
 #include "Stream.h"
 
+#include <unordered_map>
+
 namespace hestia {
 class HsmObjectStoreClient;
 class KeyValueStoreClient;
 
 class DataPlacementEngine;
 class UserService;
+class EventFeed;
 
 class HsmService : public CrudService {
   public:
@@ -25,8 +28,8 @@ class HsmService : public CrudService {
         const ServiceConfig& config,
         HsmServiceCollection::Ptr service_collection,
         HsmObjectStoreClient* object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine,
-        std::unique_ptr<EventFeed> event_feed = nullptr);
+        std::unique_ptr<DataPlacementEngine> placement_engine = {},
+        std::unique_ptr<EventFeed> event_feed                 = {});
 
     static Ptr create(
         const ServiceConfig& config,
@@ -50,6 +53,8 @@ class HsmService : public CrudService {
         const HsmActionRequest& request,
         Stream* stream,
         dataIoCompletionFunc completion_func) const;
+
+    void update_tiers(const std::string& user_id);
 
   private:
     CrudResponse::Ptr crud_create(
@@ -88,9 +93,12 @@ class HsmService : public CrudService {
     void on_get_data_complete(
         const BaseRequest& req, dataIoCompletionFunc completion_func) const;
 
+    const std::string& get_tier_id(uint8_t tier) const;
+
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;
     std::unique_ptr<EventFeed> m_event_feed;
+    std::unordered_map<uint8_t, std::string> m_tier_cache;
 };
 }  // namespace hestia

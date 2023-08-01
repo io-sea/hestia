@@ -22,6 +22,15 @@
 
 #include "Logger.h"
 
+#ifndef HOST_NAME_MAX
+#ifdef _POSIX_HOST_NAME_MAX
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
+#else
+#define HOST_NAME_MAX 255
+#endif
+#endif
+
+
 namespace hestia {
 
 std::pair<OpStatus, void*> SystemUtils::load_symbol(
@@ -170,16 +179,18 @@ std::pair<OpStatus, std::string> SystemUtils::get_mac_address()
 std::pair<OpStatus, std::string> SystemUtils::get_hostname()
 {
     OpStatus status;
-    std::vector<char> buffer(1024, 0);
+    std::vector<char> buffer(HOST_NAME_MAX + 1, 0);
     errno = 0;
-    if (::gethostname(buffer.data(), 1024) != 0) {
+    if (::gethostname(buffer.data(), HOST_NAME_MAX) != 0) {
         status.m_status        = OpStatus::Status::ERROR;
         status.m_error_code    = errno;
         status.m_error_message = ::strerror(status.m_error_code);
         return {status, {}};
     }
     else {
-        return {status, std::string(buffer.begin(), buffer.end())};
+        auto ret = std::string(buffer.begin(), buffer.end());
+        ret.erase(std::find(ret.begin(), ret.end(), '\0'), ret.end());
+        return {status, ret};
     }
 }
 
