@@ -1,8 +1,10 @@
 add_subdirectory(mocks)
 
 if(HESTIA_BUILD_TESTS)
-    include(external/code-coverage)
-    add_code_coverage_all_targets()
+    if(CODE_COVERAGE)
+        include(external/code-coverage)
+        add_code_coverage_all_targets()
+    endif()
 
     include(FetchDependencies)
     fetch_catch2()

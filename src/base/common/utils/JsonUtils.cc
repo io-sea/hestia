@@ -385,21 +385,14 @@ void JsonUtils::set_value(
         read_file >> file_content;
         read_file.close();
     }
-    std::cout<<file_content<<std::endl;
-    std::cout<<file_content[key]<<std::endl;
-    std::cout<<value<<std::endl;
-    //std::string s="\""+value+"\"";
-    //std::cout<<nlohmann::json::parse(s)<<std::endl;
+
     try {
         file_content[key] = nlohmann::json::parse(value);
-        //file_content[key] = nlohmann::json::parse(s);
     }
     catch (...) {
         file_content[key] = value;
     }
-    //file_content[key] = nlohmann::json::parse(value);
-    //file_content[key] = value;
-    std::cout<<"key="<<key<<"value="<< value<<std::endl;
+
     std::ofstream out_file(path);
     out_file << file_content;
 }
@@ -417,16 +410,11 @@ void JsonUtils::set_values(
     }
     
     for (const auto& [key, value] : kv_pairs) {
-        std::cout<<key<<value<<std::endl;
-        //std::string s="\""+value+"\"";
         try {
-            //file_content[key] = nlohmann::json::parse(value);//value.begin(),value.end());
-            //file_content[key] = nlohmann::json::parse(s);
-            throw std::runtime_error("");
+            file_content[key] = nlohmann::json::parse(value);
         }
         catch (...) {
-            std::cout<<"Test!!!"<<std::endl;
-            //file_content[key] = value;
+            file_content[key] = value;
         }
     }
 
