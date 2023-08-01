@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 namespace hestia {
@@ -205,9 +205,17 @@ void JsonUtils::from_json(
     const std::string& json_str, std::vector<Map>& metadata)
 {
     const auto json = nlohmann::json::parse(json_str);
-    for (const auto& [key, value] : json.items()) {
+    std::cout<<"as_json_vector: "<<json<<std::endl;
+    std::cout<<"expected_metadata_vector: "<<std::endl;
+    for (const auto& md : metadata) {
+        std::cout<<md<<std::endl;
+    }
+    std::cout<<"----"<<std::endl;
+    for (const auto& [key, value] : json.items()){ 
+    std::cout<<"key["<<key<<"] "<<"value: "<<value<<std::endl;
         Map data;
         from_json(value, data);
+        //std::cout<<"data:"<<data<<std::endl;
         metadata.push_back(data);
     }
 }
@@ -370,14 +378,21 @@ void JsonUtils::set_value(
         read_file >> file_content;
         read_file.close();
     }
-
+    std::cout<<file_content<<std::endl;
+    std::cout<<file_content[key]<<std::endl;
+    std::cout<<value<<std::endl;
+    //std::string s="\""+value+"\"";
+    //std::cout<<nlohmann::json::parse(s)<<std::endl;
     try {
         file_content[key] = nlohmann::json::parse(value);
+        //file_content[key] = nlohmann::json::parse(s);
     }
     catch (...) {
         file_content[key] = value;
     }
-
+    //file_content[key] = nlohmann::json::parse(value);
+    //file_content[key] = value;
+    std::cout<<"key="<<key<<"value="<< value<<std::endl;
     std::ofstream out_file(path);
     out_file << file_content;
 }
@@ -393,13 +408,18 @@ void JsonUtils::set_values(
         read_file >> file_content;
         read_file.close();
     }
-
+    
     for (const auto& [key, value] : kv_pairs) {
+        std::cout<<key<<value<<std::endl;
+        //std::string s="\""+value+"\"";
         try {
-            file_content[key] = nlohmann::json::parse(value);
+            //file_content[key] = nlohmann::json::parse(value);//value.begin(),value.end());
+            //file_content[key] = nlohmann::json::parse(s);
+            throw std::runtime_error("");
         }
         catch (...) {
-            file_content[key] = value;
+            std::cout<<"Test!!!"<<std::endl;
+            //file_content[key] = value;
         }
     }
 
