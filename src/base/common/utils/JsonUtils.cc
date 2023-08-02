@@ -371,7 +371,7 @@ void JsonUtils::set_values(
         read_file >> file_content;
         read_file.close();
     }
-    
+
     for (const auto& [key, value] : kv_pairs) {
         try {
             file_content[key] = nlohmann::json::parse(value);

@@ -70,27 +70,25 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
 
 add_dependencies(${UNIT_TEST_MODULE} hestia_mocks)
 
-if(CODE_COVERAGE)
-    target_code_coverage(hestia_common ALL)
-    target_code_coverage(hestia_server ALL)
-    target_code_coverage(hestia_storage ALL)
-    target_code_coverage(hestia_mock_phobos_plugin ALL)
-    if(NOT APPLE AND ${HESTIA_WITH_PHOBOS})
-        target_code_coverage(hestia_phobos_plugin ALL)
-    endif()
-    target_code_coverage(hestia_mock_motr_plugin ALL)
-
-    if(${HESTIA_WITH_MOTR})
-        target_code_coverage(hestia_motr_plugin ALL)
-    endif()
-
-    target_code_coverage(hestia_mock_s3_plugin ALL)
-    target_code_coverage(hestia_s3_plugin ALL)
-    target_code_coverage(hestia_main)
-    target_code_coverage(hestia_lib ALL)
-    # target_code_coverage(hestia_event_feed)
-    target_code_coverage(${UNIT_TEST_MODULE} ALL)
+target_code_coverage(hestia_common ALL)
+target_code_coverage(hestia_server ALL)
+target_code_coverage(hestia_storage ALL)
+target_code_coverage(hestia_mock_phobos_plugin ALL)
+if(NOT APPLE AND ${HESTIA_WITH_PHOBOS})
+    target_code_coverage(hestia_phobos_plugin ALL)
 endif()
+target_code_coverage(hestia_mock_motr_plugin ALL)
+
+if(${HESTIA_WITH_MOTR})
+    target_code_coverage(hestia_motr_plugin ALL)
+endif()
+
+target_code_coverage(hestia_mock_s3_plugin ALL)
+target_code_coverage(hestia_s3_plugin ALL)
+target_code_coverage(hestia_main)
+target_code_coverage(hestia_lib ALL)
+# target_code_coverage(hestia_event_feed)
+target_code_coverage(${UNIT_TEST_MODULE} ALL)
 
 catch_discover_tests(${UNIT_TEST_MODULE})
 
