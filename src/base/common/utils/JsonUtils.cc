@@ -21,24 +21,6 @@ std::string JsonUtils::to_json(const Map& metadata)
     return json.dump();
 }
 
-std::string JsonUtils::to_json(
-    const std::vector<Map>& metadata, const std::string& key)
-{
-    std::vector<std::unordered_map<std::string, std::string>> data;
-    for (const auto& md : metadata) {
-        data.push_back(md.data());
-    }
-
-    nlohmann::json json;
-    if (key.empty()) {
-        json = data;
-    }
-    else {
-        json[key] = data;
-    }
-    return json.dump();
-}
-
 static bool is_excluded(
     const std::string& key, const std::vector<std::string>& exclude_keys)
 {
@@ -205,25 +187,6 @@ void JsonUtils::from_json(const std::string& json_str, Map& metadata)
     const auto json = nlohmann::json::parse(json_str);
     for (const auto& [key, value] : json.items()) {
         metadata.set_item(key, value);
-    }
-}
-
-void JsonUtils::from_json(
-    const std::string& json_str, std::vector<Map>& metadata)
-{
-    const auto json = nlohmann::json::parse(json_str);
-    std::cout<<"as_json_vector: "<<json<<std::endl;
-    std::cout<<"expected_metadata_vector: "<<std::endl;
-    for (const auto& md : metadata) {
-        std::cout<<md<<std::endl;
-    }
-    std::cout<<"----"<<std::endl;
-    for (const auto& [key, value] : json.items()){ 
-    std::cout<<"key["<<key<<"] "<<"value: "<<value<<std::endl;
-        Map data;
-        from_json(value, data);
-        //std::cout<<"data:"<<data<<std::endl;
-        metadata.push_back(data);
     }
 }
 

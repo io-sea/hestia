@@ -62,7 +62,6 @@ TEST_CASE("Test JsonUtils - has/remove keys", "[common]")
 {
     auto test_output_dir = TestUtils::get_test_output_dir();
     auto json_file_path   = test_output_dir / "json_file.txt";
-    std::ofstream json_file;
     hestia::Map metadata;
     metadata.set_item("my_key0", "my_val0");
     metadata.set_item("my_key1", "my_val1");
@@ -94,33 +93,11 @@ TEST_CASE("Test JsonUtils - metadata to and from json", "[common]")
     metadata.set_item("my_key0", "my_val0");
     metadata.set_item("my_key1", "my_val1");
     const auto as_json = hestia::JsonUtils::to_json(metadata);
-    std::cout<<"metadata: "<<metadata<<std::endl;
-    std::cout<<"as_json: "<<as_json<<std::endl;
 
     hestia::Map expected_metadata;
     hestia::JsonUtils::from_json(as_json, expected_metadata);
     REQUIRE(expected_metadata.get_item("my_key0") == "my_val0");
     REQUIRE(expected_metadata.get_item("my_key1") == "my_val1");
-    std::cout<<"expected_metadata: "<<expected_metadata<<std::endl;
-
-    /*std::cout<<"----------------------"<<std::endl;
-    std::vector<hestia::Map> metadata_vector;
-    metadata_vector.push_back(expected_metadata);
-    //hestia::Map metadata2;
-    //metadata2.set_item("my_key2", "my_val2");
-    //metadata_vector.push_back(metadata2);
- 
-    std::cout<<"[0]: "<<metadata_vector[0]<<std::endl; 
-    for (const auto& md : metadata_vector) {
-        std::cout<<md<<std::endl;
-    }
-    const auto as_json_vector = hestia::JsonUtils::to_json(metadata_vector);//, "KEY0");
-    std::cout<<"as_json_vector: "<<as_json_vector<<std::endl; 
-
-    std::cout<<"----------------------"<<std::endl;
-    std::vector<hestia::Map> expected_metadata_vector;
-    hestia::JsonUtils::from_json(as_json_vector, expected_metadata_vector);*/
-    
 }
 
 TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
@@ -132,7 +109,7 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
         hestia::Dictionary::Type::SEQUENCE);
 
     auto nest0 = std::make_unique<hestia::Dictionary>();
-    nest0->set_map({{"key2", "val2"}, {"key3", "val4"}});
+    nest0->set_map({{"key2", "val2"}, {"key3", "val3"}});
 
     seq_dict->add_sequence_item(std::move(nest0));
     dict.set_map_item("nested", std::move(seq_dict));
@@ -147,6 +124,8 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
     auto nested_seq = ret_dict.get_map_item("nested");
     REQUIRE(nested_seq->get_type() == hestia::Dictionary::Type::SEQUENCE);
     REQUIRE(nested_seq->get_sequence().size() == 1);
+    REQUIRE(nested_seq->get_sequence()[0]->get_map_item("key2")->get_scalar() == "val2");
+    REQUIRE(nested_seq->get_sequence()[0]->get_map_item("key3")->get_scalar() == "val3");
 
     std::string json_rebuilt;
     hestia::JsonUtils::to_json(ret_dict, json_rebuilt);

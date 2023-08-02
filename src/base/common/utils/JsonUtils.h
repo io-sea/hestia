@@ -41,9 +41,6 @@ class JsonUtils {
         Dictionary& dict,
         const std::vector<std::string>& exclude_keys = {});
 
-    static std::string to_json(
-        const std::vector<Map>& metadata, const std::string& key = {});
-
     /**
      * Read Metadata from json - only reads the top level keys
      *
@@ -51,8 +48,6 @@ class JsonUtils {
      * @param metadata to populate
      */
     static void from_json(const std::string& json, Map& metadata);
-
-    static void from_json(const std::string& json, std::vector<Map>& metadata);
 
     static bool get_value(
         const std::filesystem::path& path,
