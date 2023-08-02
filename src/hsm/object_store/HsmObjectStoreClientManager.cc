@@ -131,7 +131,9 @@ void HsmObjectStoreClientManager::setup_clients(
 
     for (const auto& backend : local_backends) {
         for (const auto& tier : tiers) {
+            LOG_INFO("Tier id is: " << tier.get_primary_key());
             for (const auto& id : backend.get_tier_ids()) {
+                LOG_INFO("Backend tier id is: " << id);
                 if (id == tier.get_primary_key()) {
                     m_tier_backends[tier.id_uint()] = backend.get_backend();
                     break;

@@ -35,6 +35,8 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     const std::vector<std::string> get_tier_ids() const;
 
+    const std::string& get_node_id() const;
+
     static std::string get_type();
 
     bool is_hsm() const;

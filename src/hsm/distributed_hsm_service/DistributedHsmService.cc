@@ -94,6 +94,42 @@ const std::vector<ObjectStoreBackend>& DistributedHsmService::get_backends()
     }
 }
 
+HsmActionResponse::Ptr DistributedHsmService::make_request(
+    const HsmActionRequest& request) const noexcept
+{
+    return m_hsm_service->make_request(request);
+}
+
+void DistributedHsmService::do_data_io_action(
+    const HsmActionRequest& request,
+    Stream* stream,
+    dataIoCompletionFunc completion_func) const
+{
+    // TODO - if the controller has the required backend then use it
+    if (m_config.m_self.is_controller()) {
+        if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
+            auto response = HsmActionResponse::create(request);
+
+            auto node_address = get_backend_address(request.target_tier());
+            if (node_address.empty()) {
+                const std::string message =
+                    "No backend found for tier: "
+                    + std::to_string(request.target_tier());
+                LOG_ERROR(message);
+                response->on_error(
+                    {HsmActionErrorCode::ITEM_NOT_FOUND, message});
+                completion_func(std::move(response));
+            }
+            LOG_INFO("Redirecting to: " + node_address);
+            response->set_redirect_location(node_address);
+            completion_func(std::move(response));
+        }
+    }
+    else {
+        m_hsm_service->do_data_io_action(request, stream, completion_func);
+    }
+}
+
 UserService* DistributedHsmService::get_user_service()
 {
     return m_user_service;
@@ -179,6 +215,63 @@ void DistributedHsmService::register_backends()
             + get_response->get_error().to_string());
     }
     m_config.m_self = *get_response->get_item_as<HsmNode>();
+
+    LOG_INFO(
+        "Have: " << m_config.m_self.backends().size()
+                 << " backends after registration");
+}
+
+std::string DistributedHsmService::get_backend_address(
+    uint8_t tier_name, const std::string&) const
+{
+    const auto user_id = m_user_service->get_current_user().get_primary_key();
+
+    auto tier_service = m_hsm_service->get_service(HsmItem::Type::TIER);
+    CrudIdentifier tier_id(
+        std::to_string(tier_name), CrudIdentifier::Type::NAME);
+    auto get_response = tier_service->make_request(CrudRequest{
+        CrudQuery{tier_id, CrudQuery::OutputFormat::ITEM}, user_id});
+    if (!get_response->ok()) {
+        throw std::runtime_error(
+            "Failed to check for tier in backend search"
+            + get_response->get_error().to_string());
+    }
+
+    if (!get_response->found()) {
+        throw std::runtime_error(
+            "Didn't find tier " + tier_id.get_name() + " in backend search");
+    }
+
+    auto tier = get_response->get_item_as<StorageTier>();
+    if (tier->get_backends().empty()) {
+        LOG_INFO("No backends found for tier: " + tier_id.get_name());
+        return {};
+    }
+    const auto node_id = tier->get_backends()[0].get_node_id();
+    LOG_INFO("Checking node id: " << node_id << " for backend");
+
+    auto node_service      = m_hsm_service->get_service(HsmItem::Type::NODE);
+    auto node_get_response = node_service->make_request(CrudRequest{
+        CrudQuery{node_id, CrudQuery::OutputFormat::ITEM}, user_id});
+    if (!node_get_response->ok()) {
+        throw std::runtime_error(
+            "Failed to check for node in backend search"
+            + node_get_response->get_error().to_string());
+    }
+
+    if (!node_get_response->found()) {
+        throw std::runtime_error(
+            "Didn't find node " + node_id + " in backend search");
+    }
+
+    auto node = node_get_response->get_item_as<HsmNode>();
+    LOG_INFO("Got node id: " << node->get_primary_key());
+    LOG_INFO("Got node address: " << node->host());
+    auto node_address = node->host();
+    if (node->port() > 0) {
+        node_address += ":" + std::to_string(node->port());
+    }
+    return node_address;
 }
 
 HsmService* DistributedHsmService::get_hsm_service()

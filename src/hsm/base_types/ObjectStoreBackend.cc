@@ -33,7 +33,9 @@ ObjectStoreBackend& ObjectStoreBackend::operator=(
         m_plugin_path       = other.m_plugin_path;
         m_custom_identifier = other.m_custom_identifier;
         m_tier_names        = other.m_tier_names;
-        m_node              = other.m_node;
+
+        m_node  = other.m_node;
+        m_tiers = other.m_tiers;
         init();
     }
     return *this;
@@ -60,6 +62,11 @@ const Dictionary& ObjectStoreBackend::get_config() const
 std::string ObjectStoreBackend::get_type()
 {
     return s_type;
+}
+
+const std::string& ObjectStoreBackend::get_node_id() const
+{
+    return m_node.get_id();
 }
 
 ObjectStoreBackend::Type ObjectStoreBackend::get_backend() const

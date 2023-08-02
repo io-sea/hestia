@@ -2,6 +2,7 @@
 
 #include "CrudServiceBackend.h"
 #include "CrudServiceWithUser.h"
+#include "HsmActionResponse.h"
 #include "HsmNode.h"
 
 #include <vector>
@@ -38,6 +39,15 @@ class DistributedHsmService {
 
     ~DistributedHsmService();
 
+    [[nodiscard]] HsmActionResponse::Ptr make_request(
+        const HsmActionRequest& request) const noexcept;
+
+    using dataIoCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
+    void do_data_io_action(
+        const HsmActionRequest& request,
+        Stream* stream,
+        dataIoCompletionFunc completion_func) const;
+
     HsmService* get_hsm_service();
 
     UserService* get_user_service();
@@ -45,6 +55,9 @@ class DistributedHsmService {
     const std::vector<ObjectStoreBackend>& get_backends() const;
 
     const DistributedHsmServiceConfig& get_self_config() const;
+
+    std::string get_backend_address(
+        uint8_t tier_name, const std::string& object_id = {}) const;
 
     void register_self();
 

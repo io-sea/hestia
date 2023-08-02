@@ -40,7 +40,7 @@ class HsmNode : public HsmItem, public OwnableModel {
   private:
     void init();
 
-    static constexpr const char s_model_type[]{"hsm_node"};
+    static constexpr const char s_model_type[]{"node"};
     BooleanField m_is_controller{"is_controller", false};
     StringField m_host_address{"host_address"};
     UIntegerField m_port{"port"};

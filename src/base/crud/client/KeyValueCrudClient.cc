@@ -184,10 +184,10 @@ void KeyValueCrudClient::prepare_create_keys(
         }
 
         for (const auto& [type, ids] : fields.m_many_many[count]) {
-            for (const auto& id : ids) {
+            for (const auto& item_id : ids) {
                 const auto many_many_key = m_config.m_prefix + ":" + type + ":"
-                                           + id + ":" + m_adapters->get_type()
-                                           + "s";
+                                           + item_id + ":"
+                                           + m_adapters->get_type() + "s";
                 set_add_kv_pairs.emplace_back(many_many_key, id);
             }
         }

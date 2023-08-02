@@ -43,26 +43,57 @@ class MockHsmWebApp : public hestia::WebApp {
 
 class MockHsmHttpClient : public hestia::HttpClient {
   public:
-    void init(hestia::DistributedHsmService* m_hsm_service)
+    void add_app(
+        hestia::DistributedHsmService* hsm_service, const std::string& address)
     {
-        m_app = std::make_unique<MockHsmWebApp>(m_hsm_service);
+        m_apps[address] = std::make_unique<MockHsmWebApp>(hsm_service);
     }
 
     hestia::HttpResponse::Ptr make_request(
         const hestia::HttpRequest& request, hestia::Stream*) override
     {
+        LOG_INFO("Got request to: " << request.get_path());
+
+        std::string working_address;
+        MockHsmWebApp* working_app{nullptr};
+        for (const auto& [address, app] : m_apps) {
+            if (hestia::StringUtils::starts_with(request.get_path(), address)) {
+                working_address = address;
+                working_app     = app.get();
+            }
+        }
+
+        if (working_app == nullptr) {
+            return hestia::HttpResponse::create(404, "Not Found");
+        }
+
         auto intercepted_request = request;
-        intercepted_request.overwrite_path(
-            hestia::StringUtils::remove_prefix(request.get_path(), m_address));
+        intercepted_request.overwrite_path(hestia::StringUtils::remove_prefix(
+            request.get_path(), working_address));
 
         hestia::RequestContext request_context(intercepted_request);
-        m_app->on_request(&request_context);
+
+        working_app->on_request(&request_context);
+
+        if (request_context.get_response()->code() == 307) {
+            working_address =
+                request_context.get_response()->header().get_item("location");
+            LOG_INFO("Got redirect to: " + working_address);
+            auto app_iter = m_apps.find(working_address);
+            working_app   = nullptr;
+            if (app_iter != m_apps.end()) {
+                working_app = app_iter->second.get();
+            }
+            if (working_app == nullptr) {
+                return hestia::HttpResponse::create(404, "Not Found");
+            }
+            working_app->on_request(&request_context);
+        }
         return std::make_unique<hestia::HttpResponse>(
             *request_context.get_response());
     }
 
-    std::string m_address{"127.0.0.1"};
-    std::unique_ptr<MockHsmWebApp> m_app;
+    std::unordered_map<std::string, std::unique_ptr<MockHsmWebApp>> m_apps;
 };
 
 class DistributedHsmObjectStoreClientTestFixture {
@@ -79,11 +110,12 @@ class DistributedHsmObjectStoreClientTestFixture {
 
     void setup_local_client()
     {
+        LOG_INFO("Setting up client");
         auto client_manager =
             std::make_unique<hestia::HsmObjectStoreClientManager>(nullptr);
         m_local_object_store_client =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
-                std::move(client_manager), m_controller_http_client.get());
+                std::move(client_manager), m_http_client.get());
 
         hestia::KeyValueStoreCrudServiceBackend crud_backend(
             m_kv_store_client.get());
@@ -102,6 +134,7 @@ class DistributedHsmObjectStoreClientTestFixture {
         hsm_service->update_tiers(m_test_user.get_primary_key());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
+        dist_hsm_config.m_controller_address = "45678";
         m_local_dist_hsm_service = hestia::DistributedHsmService::create(
             dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
@@ -111,14 +144,15 @@ class DistributedHsmObjectStoreClientTestFixture {
 
     void setup_controller()
     {
-        m_controller_http_client = std::make_unique<MockHsmHttpClient>();
+        LOG_INFO("Setting up controller");
+        m_http_client = std::make_unique<MockHsmHttpClient>();
 
         auto client_manager =
             std::make_unique<hestia::HsmObjectStoreClientManager>(nullptr);
 
         m_controller_object_store_client =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
-                std::move(client_manager), m_controller_http_client.get());
+                std::move(client_manager), m_http_client.get());
 
         hestia::KeyValueStoreCrudServiceBackend crud_backend(
             m_kv_store_client.get());
@@ -160,13 +194,16 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(true);
+        dist_hsm_config.m_self.set_host_address("45678");
+        dist_hsm_config.m_self.set_name("my_controller");
+        dist_hsm_config.m_is_server = true;
 
         m_controller_dist_hsm_service = hestia::DistributedHsmService::create(
             dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
         m_controller_dist_hsm_service->register_self();
 
-        m_controller_http_client->init(m_controller_dist_hsm_service.get());
+        m_http_client->add_app(m_controller_dist_hsm_service.get(), "45678");
 
         m_controller_object_store_client->do_initialize(
             {}, m_controller_dist_hsm_service.get());
@@ -174,8 +211,7 @@ class DistributedHsmObjectStoreClientTestFixture {
 
     void setup_worker()
     {
-        m_worker_http_client = std::make_unique<MockHsmHttpClient>();
-
+        LOG_INFO("Setting up worker");
         auto client_factory =
             std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
         auto client_manager =
@@ -184,7 +220,7 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         m_worker_object_store_client =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
-                std::move(client_manager), m_worker_http_client.get());
+                std::move(client_manager), m_http_client.get());
 
         hestia::KeyValueStoreCrudServiceBackend crud_backend(
             m_kv_store_client.get());
@@ -205,9 +241,13 @@ class DistributedHsmObjectStoreClientTestFixture {
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(false);
         dist_hsm_config.m_self.set_host_address("12345");
+        dist_hsm_config.m_self.set_name("my_worker");
+        dist_hsm_config.m_is_server = true;
 
         hestia::ObjectStoreBackend object_store_backend(
             hestia::ObjectStoreBackend::Type::MEMORY_HSM);
+        object_store_backend.set_tier_names({"0", "1", "2", "3", "4"});
+
         dist_hsm_config.m_backends = {object_store_backend};
 
         m_worker_dist_hsm_service = hestia::DistributedHsmService::create(
@@ -215,7 +255,7 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         m_worker_dist_hsm_service->register_self();
 
-        m_worker_http_client->init(m_worker_dist_hsm_service.get());
+        m_http_client->add_app(m_worker_dist_hsm_service.get(), "12345");
 
         m_worker_object_store_client->do_initialize(
             {}, m_worker_dist_hsm_service.get());
@@ -232,9 +272,8 @@ class DistributedHsmObjectStoreClientTestFixture {
                 hestia::HsmItem::hsm_object_name);
     }
 
-    std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
-    std::unique_ptr<MockHsmHttpClient> m_controller_http_client;
-    std::unique_ptr<MockHsmHttpClient> m_worker_http_client;
+    std::unique_ptr<hestia::InMemoryKeyValueStoreClient> m_kv_store_client;
+    std::unique_ptr<MockHsmHttpClient> m_http_client;
 
     std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
         m_local_object_store_client;
@@ -257,15 +296,17 @@ TEST_CASE_METHOD(
     "Test Distributed Hsm Object Store Client",
     "[hsm]")
 {
+    std::cout << m_kv_store_client->dump() << std::endl;
+
     std::string id{"0000"};
     create_object(id);
+    return;
 
     hestia::StorageObject obj(id);
     obj.set_metadata("mykey", "myval");
 
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());
-    return;
 
     hestia::Stream stream;
 

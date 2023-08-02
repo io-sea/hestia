@@ -17,7 +17,18 @@ class HsmActionResponse : public Response<HsmActionErrorCode> {
         const BaseRequest& request,
         HsmObjectStoreResponse::Ptr response = nullptr);
 
+    void set_redirect_location(const std::string& redirect)
+    {
+        m_redirect_location = redirect;
+    }
+
+    const std::string& get_redirect_location() const
+    {
+        return m_redirect_location;
+    }
+
   private:
     HsmObjectStoreResponse::Ptr m_object_store_response;
+    std::string m_redirect_location;
 };
 }  // namespace hestia

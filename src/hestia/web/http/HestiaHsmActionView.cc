@@ -84,10 +84,16 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             if (action.is_data_io_action()) {
                 auto response = HttpResponse::create();
 
-                auto completion_cb = [&response](
+                std::string redirect_location;
+
+                auto completion_cb = [&response, &redirect_location](
                                          HsmActionResponse::Ptr response_ret) {
                     if (response_ret->ok()) {
                         LOG_INFO("Data action completed sucessfully");
+                        if (!response_ret->get_redirect_location().empty()) {
+                            redirect_location =
+                                response_ret->get_redirect_location();
+                        }
                     }
                     else {
                         LOG_ERROR(
@@ -97,16 +103,19 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
                             HttpResponse::create(500, "Internal Server Error.");
                     }
                 };
-                m_hestia_service->get_hsm_service()->do_data_io_action(
+                m_hestia_service->do_data_io_action(
                     HsmActionRequest(action, user.get_primary_key()),
                     request.get_context()->get_stream(), completion_cb);
 
+                if (!redirect_location.empty()) {
+                    response = HttpResponse::create(307, "Found");
+                    response->header().set_item("Location", redirect_location);
+                }
                 return response;
             }
             else {
-                auto action_response =
-                    m_hestia_service->get_hsm_service()->make_request(
-                        HsmActionRequest(action, user.get_primary_key()));
+                auto action_response = m_hestia_service->make_request(
+                    HsmActionRequest(action, user.get_primary_key()));
                 if (!action_response->ok()) {
                     return HttpResponse::create(500, "Internal Server Error.");
                 }

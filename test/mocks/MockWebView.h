@@ -14,9 +14,11 @@
 namespace hestia::mock {
 class MockWebView : public WebView {
   public:
-    MockWebView(MockWebService* service) : WebView(), m_service(service)
+    MockWebView(MockWebService* service, bool should_redirect = true) :
+        WebView(), m_service(service)
     {
-        m_can_stream = true;
+        m_can_stream      = true;
+        m_should_redirect = should_redirect;
     }
 
     HttpResponse::Ptr on_get(
@@ -24,8 +26,18 @@ class MockWebView : public WebView {
     {
         m_user = user;
 
+        auto redirect_url = request.get_header().get_item("redirect_me");
+        if (m_should_redirect && !redirect_url.empty()) {
+            auto response = HttpResponse::create(302, "Found");
+            LOG_INFO("Returning redirect");
+            response->header().set_item("location", "http://" + redirect_url);
+            return response;
+        }
+
+        LOG_INFO("Returning body");
         auto buffer_size =
             m_service->get_data(request.get_context()->get_stream());
+
         auto response = HttpResponse::create();
         if (buffer_size == 0) {
             response->set_body("No data set!");
@@ -38,6 +50,14 @@ class MockWebView : public WebView {
         const HttpRequest& request, const User& user) override
     {
         m_user = user;
+
+        auto redirect_url = request.get_header().get_item("redirect_me");
+        if (m_should_redirect && !redirect_url.empty()) {
+            auto response = HttpResponse::create(302, "Found");
+            LOG_INFO("Returning redirect");
+            response->header().set_item("location", "http://" + redirect_url);
+            return response;
+        }
 
         LOG_INFO("Have headers: " << request.get_header().to_string());
         const auto content_length = request.get_header().get_content_length();
@@ -72,6 +92,7 @@ class MockWebView : public WebView {
     hestia::User m_user;
 
   private:
+    bool m_should_redirect{true};
     MockWebService* m_service{nullptr};
 };
 }  // namespace hestia::mock
