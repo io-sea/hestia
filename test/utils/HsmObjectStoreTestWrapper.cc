@@ -46,6 +46,7 @@ void HsmObjectStoreTestWrapper::get(
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::GET);
+    LOG_INFO("Getting object with size: " << request.object().size());
     request.set_source_tier(tier);
     auto repsonse = m_client->make_request(request, stream);
     REQUIRE(repsonse->ok());

@@ -84,14 +84,17 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             if (action.is_data_io_action()) {
                 auto response = HttpResponse::create();
 
-                auto completion_cb = [](HsmActionResponse::Ptr response_ret) {
+                auto completion_cb = [&response](
+                                         HsmActionResponse::Ptr response_ret) {
                     if (response_ret->ok()) {
                         LOG_INFO("Data action completed sucessfully");
                     }
                     else {
                         LOG_ERROR(
-                            "Error in data action"
+                            "Error in data action \n"
                             << response_ret->get_error().to_string());
+                        response =
+                            HttpResponse::create(500, "Internal Server Error.");
                     }
                 };
                 m_hestia_service->get_hsm_service()->do_data_io_action(

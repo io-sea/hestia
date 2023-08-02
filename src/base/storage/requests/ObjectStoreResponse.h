@@ -27,6 +27,8 @@ class BaseObjectStoreResponse : public Response<ErrorCode> {
 
     void set_object_found(bool is_found) { m_object_found = is_found; }
 
+    bool object_is_remote() const { return !m_object.get_location().empty(); }
+
   protected:
     StorageObject m_object;
 

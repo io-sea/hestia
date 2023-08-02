@@ -3,22 +3,24 @@ include(AddModule)
 add_module(
     MODULE_NAME web 
     HEADERS
-        WebApp.h 
-        WebView.h 
-        CrudWebView.h
         ApplicationMiddleware.h 
-        StaticContentView.h 
         UrlRouter.h 
+        WebApp.h 
         authentication/AuthenticationMiddleware.h 
         authentication/TokenAuthenticationMiddleware.h
         authentication/AuthenticationSession.h 
+        views/WebView.h 
+        views/CrudWebView.h
+        views/StaticContentView.h 
+        views/PingView.h
     SOURCES
-        StaticContentView.cc 
         WebApp.cc
-        WebView.cc
-        CrudWebView.cc
         UrlRouter.cc
         authentication/TokenAuthenticationMiddleware.cc
+        views/WebView.cc 
+        views/CrudWebView.cc
+        views/StaticContentView.cc 
+        views/PingView.cc
     INTERNAL_DEPENDENCIES 
         crud
         storage 
@@ -26,4 +28,5 @@ add_module(
     INTERNAL_INCLUDE_DIRS 
         authentication
         templates
+        views
 )

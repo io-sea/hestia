@@ -7,18 +7,22 @@
 #include "CrudClient.h"
 #include "CrudService.h"
 #include "CrudServiceBackend.h"
-#include "ErrorUtils.h"
+#include "TypedCrudRequest.h"
+
 #include "IdGenerator.h"
 #include "StorageTier.h"
 #include "StringAdapter.h"
 #include "TimeProvider.h"
-#include "TypedCrudRequest.h"
+
+#include "ErrorUtils.h"
 #include "UuidUtils.h"
 
 #include "HsmObject.h"
 
 #include "KeyValueStoreClient.h"
 #include "Logger.h"
+
+#include <cassert>
 
 #include <iostream>
 
@@ -172,9 +176,18 @@ CrudResponse::Ptr HsmService::crud_create(
     HsmItem::Type subject_type, const CrudRequest& req) const noexcept
 {
     LOG_INFO("Starting HSMService CREATE");
-
-    const auto service = m_services->get_service(subject_type);
-    auto response      = service->make_request(req);
+    CrudService* service{nullptr};
+    try {
+        service = m_services->get_service(subject_type);
+    }
+    catch (const std::exception& e) {
+        auto response =
+            CrudResponse::create(req, HsmItem::to_name(subject_type));
+        response->on_error(
+            {CrudErrorCode::ERROR, SOURCE_LOC() + " | " + e.what()});
+        return response;
+    }
+    auto response = service->make_request(req);
 
     LOG_INFO("Finished HSMService CREATE");
     return response;
@@ -256,6 +269,15 @@ void HsmService::put_data(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_id()});
     CRUD_ERROR_CHECK(get_response);
+
+    if (!get_response->found()) {
+        auto response = HsmActionResponse::create(req);
+        response->on_error(
+            {HsmActionErrorCode::ITEM_NOT_FOUND,
+             SOURCE_LOC() + " | Object " + req.get_action().get_subject_key()
+                 + " not found"});
+        completion_func(std::move(response));
+    }
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 

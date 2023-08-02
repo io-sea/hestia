@@ -13,4 +13,5 @@ ObjectStoreResponse::Ptr ObjectStoreResponse::create(
 {
     return std::make_unique<ObjectStoreResponse>(request);
 }
+
 }  // namespace hestia

@@ -73,7 +73,7 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
         hestia::CrudMethod::CREATE, my_model, {},
         hestia::CrudQuery::OutputFormat::ITEM);
 
-    hestia::CrudResponse response(request);
+    hestia::CrudResponse response(request, hestia::mock::MockModel::get_type());
     m_client->create(request, response);
 
     std::cout << m_http_endpoint->m_service->m_kv_store_client->dump()
@@ -89,7 +89,8 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
         hestia::CrudIdentifier(created_model->id()),
         hestia::CrudQuery::OutputFormat::ITEM);
     hestia::CrudRequest read_request(query, {});
-    hestia::CrudResponse read_response(read_request);
+    hestia::CrudResponse read_response(
+        read_request, hestia::mock::MockModel::get_type());
 
     m_client->read(read_request, read_response);
     REQUIRE(read_response.ok());
@@ -107,12 +108,14 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
     hestia::CrudRequest create_request(
         hestia::CrudMethod::CREATE, {}, {}, {},
         hestia::CrudQuery::OutputFormat::ITEM);
-    hestia::CrudResponse create_response(create_request);
+    hestia::CrudResponse create_response(
+        create_request, hestia::mock::MockModel::get_type());
     m_client->create(create_request, create_response);
 
     hestia::CrudQuery query2(hestia::CrudQuery::OutputFormat::ITEM);
     hestia::CrudRequest read_request2(query2, {});
-    hestia::CrudResponse read_response2(read_request2);
+    hestia::CrudResponse read_response2(
+        read_request2, hestia::mock::MockModel::get_type());
 
     m_client->read(read_request2, read_response2);
     REQUIRE(read_response2.ok());

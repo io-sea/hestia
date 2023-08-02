@@ -162,6 +162,10 @@ void MockMotrInterfaceImpl::get(
         return {true, read_size};
     };
 
+    LOG_INFO(
+        "Setting source func for object: "
+        << request.object().id() << " with size " << request.object().size());
+
     auto source = hestia::InMemoryStreamSource::create(source_func);
     stream->set_source(std::move(source));
 }

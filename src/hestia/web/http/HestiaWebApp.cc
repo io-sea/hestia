@@ -1,6 +1,7 @@
 #include "HestiaWebApp.h"
 
 #include "CrudWebView.h"
+#include "PingView.h"
 #include "StaticContentView.h"
 #include "TokenAuthenticationMiddleware.h"
 #include "UrlRouter.h"
@@ -18,6 +19,7 @@
 #include "Logger.h"
 
 namespace hestia {
+
 HestiaWebApp::HestiaWebApp(
     UserService* user_service,
     DistributedHsmService* hestia_service,
@@ -68,6 +70,9 @@ HestiaWebApp::HestiaWebApp(
     m_url_router->add_pattern(
         {api_prefix + "register", api_prefix + "login"},
         std::make_unique<HestiaUserAuthView>(m_user_service));
+
+    m_url_router->add_pattern(
+        {api_prefix + "ping"}, std::make_unique<PingView>());
 
     if (!config.m_static_resource_dir.empty()) {
         m_url_router->add_pattern(
