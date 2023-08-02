@@ -31,7 +31,7 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
 {
     if (this != &other) {
         Model::operator=(other);
-        m_backend   = other.m_backend;
+        m_backends  = other.m_backends;
         m_capacity  = other.m_capacity;
         m_bandwidth = other.m_bandwidth;
         init();
@@ -41,7 +41,7 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
 
 void StorageTier::init()
 {
-    register_scalar_field(&m_backend);
+    register_foreign_key_proxy_field(&m_backends);
     register_scalar_field(&m_capacity);
     register_scalar_field(&m_bandwidth);
 }
@@ -79,14 +79,9 @@ uint8_t StorageTier::id_uint() const
     return std::stoul(m_name.get_value());
 }
 
-const std::string& StorageTier::get_backend() const
+const std::vector<ObjectStoreBackend>& StorageTier::get_backends() const
 {
-    return m_backend.get_value();
-}
-
-void StorageTier::set_backend(const std::string& backend)
-{
-    m_backend.update_value(backend);
+    return m_backends.models();
 }
 
 }  // namespace hestia

@@ -19,8 +19,9 @@ TEST_CASE("Test HsmObject", "[hsm]")
     hestia::Dictionary copy_constructed_dict;
     copy_constructed_object.serialize(copy_constructed_dict);
 
-    REQUIRE(object_dict.to_string() == copied_dict.to_string());
-    REQUIRE(copy_constructed_dict.to_string() == copied_dict.to_string());
+    REQUIRE(object_dict.to_string(true) == copied_dict.to_string(true));
+    REQUIRE(
+        copy_constructed_dict.to_string(true) == copied_dict.to_string(true));
 
     hestia::HsmObject deserialized_object;
     deserialized_object.deserialize(copied_dict);

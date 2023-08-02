@@ -17,10 +17,14 @@ class TestCrudServiceFixture {
                 m_service->m_kv_store_client.get());
         m_parent_service = hestia::mock::MockCrudService::create_for_parent(
             m_service->m_kv_store_client.get());
+        m_many_many_parent_service =
+            hestia::mock::MockCrudService::create_many_many_parent(
+                m_service->m_kv_store_client.get());
     }
     hestia::mock::MockCrudService::Ptr m_service;
     hestia::mock::MockCrudService::Ptr m_mock_with_parent_service;
     hestia::mock::MockCrudService::Ptr m_parent_service;
+    hestia::mock::MockCrudService::Ptr m_many_many_parent_service;
 };
 
 TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
@@ -381,7 +385,6 @@ TEST_CASE_METHOD(
             attributes,
             hestia::CrudQuery::OutputFormat::ITEM});
 
-        // std::cout << m_service->m_kv_store_client->dump() << std::endl;
 
         THEN("It is created ok and returns an item")
         {
@@ -390,6 +393,27 @@ TEST_CASE_METHOD(
             auto model = response->get_item_as<hestia::mock::MockModel>();
             REQUIRE(model->name() == "model_name");
             REQUIRE(model->m_my_field.get_value() == "field_value");
+        }
+    }
+
+    WHEN("Items are created with multiple ids")
+    {
+        hestia::VecCrudIdentifier ids;
+        ids.push_back(hestia::CrudIdentifier("4"));
+        ids.push_back(hestia::CrudIdentifier("5"));
+        ids.push_back(hestia::CrudIdentifier("6"));
+
+        const auto response = m_service->make_request(hestia::CrudRequest{
+            hestia::CrudMethod::CREATE,
+            {},
+            ids,
+            {},
+            hestia::CrudQuery::OutputFormat::ID});
+
+        THEN("The correct number of items are created")
+        {
+            REQUIRE(response->ok());
+            REQUIRE(response->ids().size() == 3);
         }
     }
 }
@@ -408,8 +432,18 @@ TEST_CASE_METHOD(
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(response->ok());
 
+    hestia::mock::MockManyToManyTargetModel many_many_target_model;
+    const auto many_target_response = m_many_many_parent_service->make_request(
+        hestia::TypedCrudRequest<hestia::mock::MockManyToManyTargetModel>{
+            hestia::CrudMethod::CREATE,
+            many_many_target_model,
+            {},
+            hestia::CrudQuery::OutputFormat::ITEM});
+    REQUIRE(many_target_response->ok());
+
     hestia::mock::MockModelWithParent model;
     model.set_parent_id(response->get_item()->id());
+    model.add_many_many_id(many_target_response->get_item()->id());
 
     auto child_response = m_mock_with_parent_service->make_request(
         hestia::TypedCrudRequest<hestia::mock::MockModelWithParent>{
@@ -418,7 +452,6 @@ TEST_CASE_METHOD(
             {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(child_response->ok());
-    std::cout << m_service->m_kv_store_client->dump() << std::endl;
 
     hestia::CrudQuery query(
         hestia::CrudIdentifier(response->get_item()->id()),
@@ -429,4 +462,15 @@ TEST_CASE_METHOD(
     auto updated_parent =
         updated_parent_response->get_item_as<hestia::mock::MockParentModel>();
     REQUIRE(updated_parent->get_models().size() == 1);
+
+    hestia::CrudQuery many_many_query(
+        hestia::CrudIdentifier(many_target_response->get_item()->id()),
+        hestia::CrudQuery::OutputFormat::ITEM);
+    auto updated_many_many_response = m_many_many_parent_service->make_request(
+        hestia::CrudRequest(many_many_query, {}));
+    REQUIRE(updated_many_many_response->ok());
+    auto updated_many_many =
+        updated_many_many_response
+            ->get_item_as<hestia::mock::MockManyToManyTargetModel>();
+    REQUIRE(updated_many_many->get_many_to_many_children().size() == 1);
 }

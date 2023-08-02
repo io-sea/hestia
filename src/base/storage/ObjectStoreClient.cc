@@ -24,7 +24,7 @@ namespace hestia {
 ObjectStoreResponse::Ptr ObjectStoreClient::make_request(
     const ObjectStoreRequest& request, Stream* stream) const noexcept
 {
-    auto response = ObjectStoreResponse::create(request);
+    auto response = ObjectStoreResponse::create(request, m_id);
 
     switch (request.method()) {
         case ObjectStoreRequestMethod::GET:

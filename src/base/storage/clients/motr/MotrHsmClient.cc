@@ -13,15 +13,19 @@ MotrHsmClient::MotrHsmClient(std::unique_ptr<MotrInterface> interface) :
 }
 
 void MotrHsmClient::initialize(
-    const std::string& cache_path, const Dictionary& data)
+    const std::string& id,
+    const std::string& cache_path,
+    const Dictionary& data)
 {
     MotrConfig config;
     config.deserialize(data);
-    do_intialize(cache_path, config);
+    do_intialize(id, cache_path, config);
 }
 
-void MotrHsmClient::do_intialize(const std::string&, const MotrConfig& config)
+void MotrHsmClient::do_intialize(
+    const std::string& id, const std::string&, const MotrConfig& config)
 {
+    m_id = id;
     m_motr_interface->initialize(config);
 }
 

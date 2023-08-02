@@ -9,7 +9,6 @@ add_module(
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
         distributed_hsm_service/DistributedHsmService.h
-        distributed_hsm_service/HsmNode.h
         hsm_service/HsmService.h
         hsm_service/HsmServicesFactory.h
         hsm_service/model/CompositeLayer.h
@@ -18,7 +17,6 @@ add_module(
         hsm_service/requests/HsmActionError.h 
         key_value_store/KeyValueStoreClientFactory.h
         object_store/DistributedHsmObjectStoreClient.h
-        object_store/HsmObjectStoreClientBackend.h
         object_store/HsmObjectStoreClientFactory.h
         object_store/HsmObjectStoreClientManager.h
         s3_service/S3Service.h
@@ -28,7 +26,6 @@ add_module(
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
         distributed_hsm_service/DistributedHsmService.cc
-        distributed_hsm_service/HsmNode.cc
         hsm_service/HsmService.cc
         hsm_service/HsmServicesFactory.cc
         hsm_service/model/CompositeLayer.cc
@@ -37,7 +34,6 @@ add_module(
         hsm_service/requests/HsmActionError.cc
         key_value_store/KeyValueStoreClientFactory.cc
         object_store/DistributedHsmObjectStoreClient.cc
-        object_store/HsmObjectStoreClientBackend.cc
         object_store/HsmObjectStoreClientFactory.cc
         object_store/HsmObjectStoreClientManager.cc
         s3_service/S3Service.cc

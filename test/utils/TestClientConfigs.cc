@@ -1,9 +1,9 @@
 #include "TestClientConfigs.h"
 
-#include "HsmObjectStoreClientBackend.h"
 #include "InMemoryHsmObjectStoreClient.h"
 #include "KeyValueStoreClientFactory.h"
 #include "Logger.h"
+#include "ObjectStoreBackend.h"
 #include "StorageTier.h"
 
 namespace hestia {
@@ -22,12 +22,20 @@ void TestClientConfigs::get_hsm_memory_client_config(Dictionary& config)
     auto kv_config_dict = std::make_unique<Dictionary>();
     kv_config.serialize(*kv_config_dict);
 
-    HsmObjectStoreClientBackend object_store_config(
-        HsmObjectStoreClientBackend::Type::MEMORY_HSM,
-        InMemoryHsmObjectStoreClient::get_registry_identifier());
+    auto tiers = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+    std::vector<std::string> tier_names{"0", "1", "2", "3", "4"};
+    for (const auto& name : tier_names) {
+        StorageTier tier(std::stoul(name));
+        auto tier_dict = std::make_unique<Dictionary>();
+        tier.serialize(*tier_dict);
+        tiers->add_sequence_item(std::move(tier_dict));
+    }
+
+    ObjectStoreBackend object_store_config(
+        ObjectStoreBackend::Type::MEMORY_HSM);
+    object_store_config.set_tier_names(tier_names);
 
     InMemoryObjectStoreClientConfig in_memory_store_config;
-    std::vector<std::string> tier_names{"0", "1", "2", "3", "4"};
     in_memory_store_config.set_tiers(tier_names);
 
     Dictionary in_memory_store_config_dict;
@@ -40,24 +48,12 @@ void TestClientConfigs::get_hsm_memory_client_config(Dictionary& config)
     object_store_config.serialize(*object_store_dict);
     object_store_configs->add_sequence_item(std::move(object_store_dict));
 
-    auto tiers = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-    for (const auto& name : tier_names) {
-        StorageTier tier(std::stoul(name));
-        tier.set_backend(
-            InMemoryHsmObjectStoreClient::get_registry_identifier());
-
-        auto tier_dict = std::make_unique<Dictionary>();
-        tier.serialize(*tier_dict);
-        tiers->add_sequence_item(std::move(tier_dict));
-    }
-
     config.set_map_item(
         LoggerConfig::get_type(), std::move(logger_config_dict));
     config.set_map_item(
         KeyValueStoreClientConfig::get_type(), std::move(kv_config_dict));
     config.set_map_item(
-        HsmObjectStoreClientBackend::get_type() + "s",
-        std::move(object_store_configs));
+        ObjectStoreBackend::get_type() + "s", std::move(object_store_configs));
     config.set_map_item(StorageTier::get_type() + "s", std::move(tiers));
 }
 }  // namespace hestia

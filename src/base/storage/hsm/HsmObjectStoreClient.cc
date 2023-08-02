@@ -21,7 +21,7 @@ HsmObjectStoreClient::~HsmObjectStoreClient() {}
 HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {
-    auto response = HsmObjectStoreResponse::create(request);
+    auto response = HsmObjectStoreResponse::create(request, m_id);
     switch (request.method()) {
         case HsmObjectStoreRequestMethod::GET:
             try {
@@ -74,7 +74,7 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
 ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
     const ObjectStoreRequest& request, Stream* stream) const noexcept
 {
-    auto response = ObjectStoreResponse::create(request);
+    auto response = ObjectStoreResponse::create(request, m_id);
     if (!HsmObjectStoreRequest::is_hsm_supported_method(request.method())) {
         const std::string msg =
             "Requested unsupported type for base object operation in HSM object store client.";

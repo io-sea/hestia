@@ -22,7 +22,7 @@ class OwnableModel : public Model {
     OwnableModel& operator=(const OwnableModel& other);
 
   protected:
-    NamedForeignKeyField m_created_by{"created_by", "user"};
+    ForeignKeyField m_created_by{"created_by", "user"};
     TypedDictField<AccessControlList> m_permissions{"acl"};
 
   private:

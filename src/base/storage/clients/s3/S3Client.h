@@ -21,14 +21,21 @@ class S3Client : public ObjectStoreClient {
     static Ptr create(IS3InterfaceImpl::Ptr impl = nullptr);
 
     static Ptr create(
-        const S3Config& config, IS3InterfaceImpl::Ptr impl = nullptr);
+        const std::string& id,
+        const S3Config& config,
+        IS3InterfaceImpl::Ptr impl = nullptr);
 
     static std::string get_registry_identifier();
 
     void initialize(
-        const std::string& cache_path, const Dictionary& config) override;
+        const std::string& id,
+        const std::string& cache_path,
+        const Dictionary& config) override;
 
-    void do_initialize(const std::string& cache_path, const S3Config& config);
+    void do_initialize(
+        const std::string& id,
+        const std::string& cache_path,
+        const S3Config& config);
 
   private:
     bool exists(const StorageObject& object) const override;

@@ -170,7 +170,10 @@ bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
         return false;
     }
 
-    m_object.m_user_key = response->get_item_as<User>()->token().value();
+    const auto user_item = response->get_item_as<User>();
+    if (!user_item->tokens().empty()) {
+        m_object.m_user_key = user_item->tokens()[0].value();
+    }
     return true;
 }
 

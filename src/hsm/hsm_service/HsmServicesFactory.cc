@@ -13,8 +13,10 @@
 #include "Dataset.h"
 #include "HsmAction.h"
 #include "HsmEvent.h"
+#include "HsmNode.h"
 #include "HsmObject.h"
 #include "Namespace.h"
+#include "ObjectStoreBackend.h"
 #include "StorageTier.h"
 #include "TierExtents.h"
 #include "UserMetadata.h"
@@ -56,6 +58,11 @@ CrudService::Ptr HsmServicesFactory::create_service(
             return CrudServiceFactory<TierExtents>::create(config, backend);
         case HsmItem::Type::METADATA:
             return CrudServiceFactory<UserMetadata>::create(config, backend);
+        case HsmItem::Type::NODE:
+            return CrudServiceFactory<HsmNode>::create(config, backend);
+        case HsmItem::Type::OBJECT_STORE_BACKEND:
+            return CrudServiceFactory<ObjectStoreBackend>::create(
+                config, backend);
         case HsmItem::Type::UNKNOWN:
         default:
             return nullptr;
@@ -80,6 +87,8 @@ void HsmServiceCollection::create_default_services(
     get_service(HsmItem::Type::DATASET)
         ->register_parent_service(User::get_type(), user_service);
     get_service(HsmItem::Type::ACTION)
+        ->register_parent_service(User::get_type(), user_service);
+    get_service(HsmItem::Type::NODE)
         ->register_parent_service(User::get_type(), user_service);
 
     get_service(HsmItem::Type::OBJECT)

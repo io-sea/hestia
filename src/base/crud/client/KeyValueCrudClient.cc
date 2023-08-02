@@ -28,11 +28,25 @@ KeyValueCrudClient::KeyValueCrudClient(
 
 KeyValueCrudClient::~KeyValueCrudClient() {}
 
+void KeyValueCrudClient::process_fields(Model* item, Fields& fields) const
+{
+    VecKeyValuePair foregin_keys;
+    item->get_foreign_key_fields(foregin_keys);
+    fields.m_foreign_key.push_back(foregin_keys);
+
+    VecKeyValuePair one_to_one_defaults;
+    item->get_default_create_one_to_one_fields(one_to_one_defaults);
+    fields.m_one_to_one.push_back(one_to_one_defaults);
+
+    std::vector<Model::TypeIdsPair> many_to_many;
+    item->get_many_to_many_fields(many_to_many);
+    fields.m_many_many.push_back(many_to_many);
+}
+
 void KeyValueCrudClient::process_items(
     const CrudRequest& request,
     std::vector<std::string>& ids,
-    std::vector<VecKeyValuePair>& index_fields,
-    std::vector<VecKeyValuePair>& foregin_key_fields,
+    Fields& fields,
     Dictionary& content) const
 {
     std::size_t count{0};
@@ -45,11 +59,9 @@ void KeyValueCrudClient::process_items(
 
         VecKeyValuePair index;
         item->get_index_fields(index);
-        index_fields.push_back(index);
+        fields.m_index.push_back(index);
 
-        VecKeyValuePair foregin_keys;
-        item->get_foreign_key_fields(foregin_keys);
-        foregin_key_fields.push_back(foregin_keys);
+        process_fields(item.get(), fields);
 
         auto item_dict = std::make_unique<Dictionary>();
         get_adapter(CrudAttributes::Format::JSON)
@@ -62,14 +74,13 @@ void KeyValueCrudClient::process_items(
 void KeyValueCrudClient::process_ids(
     const CrudRequest& request,
     std::vector<std::string>& ids,
-    std::vector<VecKeyValuePair>& index_fields,
-    std::vector<VecKeyValuePair>& foregin_key_fields,
+    Fields& fields,
     const Dictionary& attributes,
     Dictionary& content) const
 {
     std::size_t count{0};
     for (const auto& crud_id : request.get_ids()) {
-        std::string id = request.get_ids()[0].get_primary_key();
+        std::string id = crud_id.get_primary_key();
         if (id.empty()) {
             id = generate_id(crud_id.get_name());
         }
@@ -79,7 +90,7 @@ void KeyValueCrudClient::process_ids(
 
         VecKeyValuePair index;
         base_item->get_index_fields(index);
-        index_fields.push_back(index);
+        fields.m_index.push_back(index);
 
         if (!attributes.is_empty()) {
             if (attributes.get_type() == Dictionary::Type::MAP) {
@@ -93,9 +104,7 @@ void KeyValueCrudClient::process_ids(
             }
         }
 
-        VecKeyValuePair foregin_keys;
-        base_item->get_foreign_key_fields(foregin_keys);
-        foregin_key_fields.push_back(foregin_keys);
+        process_fields(base_item.get(), fields);
 
         VecModelPtr base_items;
         base_items.push_back(std::move(base_item));
@@ -110,8 +119,7 @@ void KeyValueCrudClient::process_ids(
 
 void KeyValueCrudClient::process_empty(
     std::vector<std::string>& ids,
-    std::vector<VecKeyValuePair>& index_fields,
-    std::vector<VecKeyValuePair>& foregin_key_fields,
+    Fields& fields,
     const Dictionary& attributes,
     Dictionary& content) const
 {
@@ -121,16 +129,14 @@ void KeyValueCrudClient::process_empty(
 
     VecKeyValuePair index;
     base_item->get_index_fields(index);
-    index_fields.push_back(index);
+    fields.m_index.push_back(index);
 
     if (!attributes.is_empty()
         && attributes.get_type() == Dictionary::Type::MAP) {
         base_item->deserialize(attributes);
     }
 
-    VecKeyValuePair foregin_keys;
-    base_item->get_foreign_key_fields(foregin_keys);
-    foregin_key_fields.push_back(foregin_keys);
+    process_fields(base_item.get(), fields);
 
     VecModelPtr base_items;
     base_items.push_back(std::move(base_item));
@@ -145,8 +151,7 @@ void KeyValueCrudClient::prepare_create_keys(
     std::vector<KeyValuePair>& string_set_kv_pairs,
     std::vector<KeyValuePair>& set_add_kv_pairs,
     std::vector<std::string>& ids,
-    const std::vector<VecKeyValuePair>& index_fields,
-    const std::vector<VecKeyValuePair>& foregin_key_fields,
+    const Fields& fields,
     const Dictionary& content,
     const Dictionary& create_context_dict,
     const std::string& primary_key_name) const
@@ -167,30 +172,35 @@ void KeyValueCrudClient::prepare_create_keys(
 
         string_set_kv_pairs.emplace_back(get_item_key(id), content_body);
 
-        for (const auto& [name, value] : index_fields[count]) {
+        for (const auto& [name, value] : fields.m_index[count]) {
             string_set_kv_pairs.emplace_back(get_field_key(name, value), id);
         }
 
-        for (const auto& [type, field_id] : foregin_key_fields[count]) {
+        for (const auto& [type, field_id] : fields.m_foreign_key[count]) {
             const auto foreign_key = m_config.m_prefix + ":" + type + ":"
                                      + field_id + ":" + m_adapters->get_type()
                                      + "s";
             set_add_kv_pairs.emplace_back(foreign_key, id);
         }
+
+        for (const auto& [type, ids] : fields.m_many_many[count]) {
+            for (const auto& id : ids) {
+                const auto many_many_key = m_config.m_prefix + ":" + type + ":"
+                                           + id + ":" + m_adapters->get_type()
+                                           + "s";
+                set_add_kv_pairs.emplace_back(many_many_key, id);
+            }
+        }
+
         set_add_kv_pairs.emplace_back(get_set_key(), id);
         count++;
     }
 }
 
+
 void KeyValueCrudClient::create(
     const CrudRequest& crud_request, CrudResponse& crud_response)
 {
-    std::vector<std::string> ids;
-    std::vector<std::string> parent_ids;
-    std::vector<std::string> parent_names;
-    std::vector<VecKeyValuePair> index_fields;
-    std::vector<VecKeyValuePair> foregin_key_fields;
-
     Dictionary attributes_dict;
     if (crud_request.get_attributes().has_content()) {
         auto adapter = get_adapter(crud_request.get_attributes().get_format());
@@ -201,18 +211,20 @@ void KeyValueCrudClient::create(
     auto content = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
     auto item_template = m_adapters->get_model_factory()->create();
 
+    std::vector<std::string> ids;
+    std::vector<std::string> parent_ids;
+    std::vector<std::string> parent_names;
+    Fields working_fields;
+
     if (crud_request.has_items()) {
-        process_items(
-            crud_request, ids, index_fields, foregin_key_fields, *content);
+        process_items(crud_request, ids, working_fields, *content);
     }
     else if (!crud_request.get_ids().empty()) {
         process_ids(
-            crud_request, ids, index_fields, foregin_key_fields,
-            attributes_dict, *content);
+            crud_request, ids, working_fields, attributes_dict, *content);
     }
     else {
-        process_empty(
-            ids, index_fields, foregin_key_fields, attributes_dict, *content);
+        process_empty(ids, working_fields, attributes_dict, *content);
     }
 
     // Loop through foreign keys - if it has an id check that it exists.
@@ -221,7 +233,7 @@ void KeyValueCrudClient::create(
     // If it stillll has no id try to create a default entry.
     // If it can't create a default entry then fail.
     // std::size_t count{0};
-    for (auto& item_foreign_keys : foregin_key_fields) {
+    for (auto& item_foreign_keys : working_fields.m_foreign_key) {
         std::size_t key_count{0};
         for (const auto& [foreign_key_type, foreign_key_id] :
              item_foreign_keys) {
@@ -264,9 +276,8 @@ void KeyValueCrudClient::create(
     std::vector<KeyValuePair> string_set_kv_pairs;
     std::vector<KeyValuePair> set_add_kv_pairs;
     prepare_create_keys(
-        string_set_kv_pairs, set_add_kv_pairs, ids, index_fields,
-        foregin_key_fields, *content, create_context_dict,
-        item_template->get_primary_key_name());
+        string_set_kv_pairs, set_add_kv_pairs, ids, working_fields, *content,
+        create_context_dict, item_template->get_primary_key_name());
 
     const auto response = m_client->make_request(
         {KeyValueStoreRequestMethod::STRING_SET, string_set_kv_pairs,

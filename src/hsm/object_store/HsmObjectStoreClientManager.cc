@@ -12,7 +12,7 @@ HsmObjectStoreClientManager::HsmObjectStoreClientManager(
 }
 
 hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
-    const std::string& identifier) const
+    ObjectStoreBackend::Type identifier) const
 {
     if (const auto iter = m_hsm_clients.find(identifier);
         iter != m_hsm_clients.end()) {
@@ -34,7 +34,7 @@ hestia::ObjectStoreClient* HsmObjectStoreClientManager::get_client(
 }
 
 HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
-    const std::string& identifier) const
+    ObjectStoreBackend::Type identifier) const
 {
     if (const auto iter = m_hsm_clients.find(identifier);
         iter != m_hsm_clients.end()) {
@@ -64,14 +64,15 @@ ObjectStoreClient* HsmObjectStoreClientManager::get_client(
     }
 }
 
-std::string HsmObjectStoreClientManager::get_backend(uint8_t tier_id) const
+ObjectStoreBackend::Type HsmObjectStoreClientManager::get_backend(
+    uint8_t tier_id) const
 {
     if (const auto iter = m_tier_backends.find(tier_id);
         iter != m_tier_backends.end()) {
         return iter->second;
     }
     else {
-        return {};
+        return ObjectStoreBackend::Type::UNKNOWN;
     }
 }
 
@@ -90,13 +91,14 @@ HsmObjectStoreClient* HsmObjectStoreClientManager::get_hsm_client(
 bool HsmObjectStoreClientManager::has_client(uint8_t tier_id) const
 {
     const auto backend = get_backend(tier_id);
-    if (backend.empty()) {
+    if (backend == ObjectStoreBackend::Type::UNKNOWN) {
         return false;
     }
     return has_backend(backend);
 }
 
-bool HsmObjectStoreClientManager::has_backend(const std::string& backend) const
+bool HsmObjectStoreClientManager::has_backend(
+    ObjectStoreBackend::Type backend) const
 {
     return std::find(m_backends.begin(), m_backends.end(), backend)
            != m_backends.end();
@@ -119,30 +121,37 @@ bool HsmObjectStoreClientManager::have_same_client_types(
 
 void HsmObjectStoreClientManager::setup_clients(
     const std::string& cache_path,
-    const std::vector<HsmObjectStoreClientBackend>& backends,
+    const std::vector<ObjectStoreBackend>& local_backends,
     const std::vector<StorageTier>& tiers)
 {
-    LOG_INFO("Got: " << backends.size() << " backends");
+    LOG_INFO("Got: " << local_backends.size() << " backends");
 
-    for (const auto& tier : tiers) {
-        m_tier_backends[tier.id_uint()] = tier.get_backend();
+    ObjectStoreBackend::Type_enum_string_converter converter;
+    converter.init();
+
+    for (const auto& backend : local_backends) {
+        for (const auto& tier : tiers) {
+            for (const auto& id : backend.get_tier_ids()) {
+                if (id == tier.get_primary_key()) {
+                    m_tier_backends[tier.id_uint()] = backend.get_backend();
+                    break;
+                }
+            }
+        }
     }
 
-    for (const auto& backend : backends) {
-        const auto identifier = backend.get_identifier();
+    for (const auto& backend : local_backends) {
+        const auto identifier = backend.get_backend();
         m_backends.push_back(identifier);
 
-        LOG_INFO("Processing backend: " + identifier);
-
         if (!m_client_factory->is_client_type_available(backend)) {
-            std::string msg = "Client " + identifier + " not available.";
+            std::string msg =
+                "Client " + converter.to_string(identifier) + " not available.";
             throw std::runtime_error(msg);
         }
 
         if (backend.is_hsm()) {
             if (get_hsm_client(identifier) == nullptr) {
-                LOG_INFO("Setting up hsm client of type: " + identifier);
-
                 if (backend.is_built_in()) {
                     HsmObjectStoreClient::Ptr hsm_client;
                     auto client = m_client_factory->get_client(backend);
@@ -154,7 +163,8 @@ void HsmObjectStoreClientManager::setup_clients(
                             std::unique_ptr<HsmObjectStoreClient>(raw_client);
 
                         hsm_client->initialize(
-                            cache_path, backend.get_config());
+                            backend.get_primary_key(), cache_path,
+                            backend.get_config());
                         m_hsm_clients[identifier] = std::move(hsm_client);
                     }
                     else {
@@ -166,20 +176,22 @@ void HsmObjectStoreClientManager::setup_clients(
                     auto client_plugin =
                         m_client_factory->get_hsm_client_from_plugin(backend);
                     client_plugin->get_client()->initialize(
-                        cache_path, backend.get_config());
+                        backend.get_primary_key(), cache_path,
+                        backend.get_config());
                     m_hsm_plugin_clients[identifier] = std::move(client_plugin);
                 }
             }
         }
         else if (get_client(identifier) == nullptr) {
-            LOG_INFO("Setting up client of type: " + identifier);
-
             if (backend.is_built_in()) {
                 auto client = m_client_factory->get_client(backend);
-                client->initialize(cache_path, backend.get_config());
+                client->initialize(
+                    backend.get_primary_key(), cache_path,
+                    backend.get_config());
                 if (!client) {
                     throw std::runtime_error(
-                        "Failed to retrieve client of type: " + identifier);
+                        "Failed to retrieve client of type: "
+                        + converter.to_string(identifier));
                 }
                 m_clients[identifier] = std::move(client);
             }
@@ -187,7 +199,8 @@ void HsmObjectStoreClientManager::setup_clients(
                 auto client_plugin =
                     m_client_factory->get_client_from_plugin(backend);
                 client_plugin->get_client()->initialize(
-                    cache_path, backend.get_config());
+                    backend.get_primary_key(), cache_path,
+                    backend.get_config());
                 m_plugin_clients[identifier] = std::move(client_plugin);
             }
         }

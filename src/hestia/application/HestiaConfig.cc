@@ -56,8 +56,7 @@ void HestiaConfig::init()
     register_map_field(&m_event_feed_config);
 }
 
-void HestiaConfig::add_object_store_backend(
-    const HsmObjectStoreClientBackend& backend)
+void HestiaConfig::add_object_store_backend(const ObjectStoreBackend& backend)
 {
     m_backends.get_container_as_writeable().push_back(backend);
 }
@@ -88,8 +87,8 @@ const LoggerConfig& HestiaConfig::get_logger_config() const
     return m_logger.value();
 }
 
-const std::vector<HsmObjectStoreClientBackend>&
-HestiaConfig::get_object_store_backends() const
+const std::vector<ObjectStoreBackend>& HestiaConfig::get_object_store_backends()
+    const
 {
     return m_backends.container();
 }

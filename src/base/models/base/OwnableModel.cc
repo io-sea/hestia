@@ -46,7 +46,7 @@ OwnableModel& OwnableModel::operator=(const OwnableModel& other)
 
 void OwnableModel::init()
 {
-    register_named_foreign_key_field(&m_created_by);
+    register_foreign_key_field(&m_created_by);
     register_map_field(&m_permissions);
 }
 

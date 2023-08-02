@@ -18,6 +18,7 @@ class UserMetadata : public HsmItem, public Model {
 
   private:
     ScalarMapField m_data{"data"};
-    NamedForeignKeyField m_object{"object", HsmItem::hsm_object_name};
+
+    ForeignKeyField m_object{"object", HsmItem::hsm_object_name};
 };
 }  // namespace hestia

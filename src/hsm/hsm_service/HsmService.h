@@ -89,6 +89,7 @@ class HsmService : public CrudService {
         const HsmObject& working_object,
         uint8_t tier,
         const Extent& extent,
+        const std::string& store_id,
         dataIoCompletionFunc completion_func) const;
     void on_get_data_complete(
         const BaseRequest& req, dataIoCompletionFunc completion_func) const;

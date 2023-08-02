@@ -191,8 +191,8 @@ void sync_configs(
     DistributedHsmServiceConfig& hsm_config, const HestiaConfig& config)
 {
     sync_configs(hsm_config, config.get_server_config());
+    hsm_config.m_backends = config.get_object_store_backends();
 
-    hsm_config.m_self.set_backends(config.get_object_store_backends());
     hsm_config.m_self.set_version(project_config::get_project_version());
     hsm_config.m_app_name = project_config::get_project_name();
 }
@@ -236,12 +236,14 @@ void HestiaApplication::setup_hsm_service(
 
     DistributedHsmServiceConfig service_config;
     sync_configs(service_config, m_config);
+    service_config.m_is_server =
+        m_app_mode == ApplicationMode::SERVER_WORKER
+        || m_app_mode == ApplicationMode::SERVER_CONTROLLER;
 
     m_distributed_hsm_service = DistributedHsmService::create(
-        service_config, std::move(hsm_service), backend, m_user_service.get());
+        service_config, std::move(hsm_service), m_user_service.get());
 
-    if (m_app_mode == ApplicationMode::SERVER_WORKER
-        || m_app_mode == ApplicationMode::SERVER_CONTROLLER) {
+    if (service_config.m_is_server) {
         m_distributed_hsm_service->register_self();
     }
 }

@@ -18,9 +18,9 @@ class User : public Model {
 
     const std::string& password() const;
 
-    const UserToken& token() const;
+    const std::vector<UserToken>& tokens() const;
 
-    void set_token(const UserToken& token);
+    void add_token(const UserToken& token);
 
     void set_password(const std::string& password);
 
@@ -33,7 +33,7 @@ class User : public Model {
     StringField m_display_name{"display_name"};
     StringField m_password{"password"};
     BooleanField m_is_admin{"is_admin"};
-    ForeignKeyField<UserToken> m_token{"token"};
+    ForeignKeyProxyField<UserToken> m_tokens{"tokens"};
 };
 
 }  // namespace hestia

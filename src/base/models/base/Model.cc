@@ -48,16 +48,28 @@ void Model::set_has_owner(bool has_owner)
     m_has_owner = has_owner;
 }
 
-void Model::register_named_foreign_key_field(NamedForeignKeyField* field)
+void Model::register_foreign_key_field(ForeignKeyField* field)
 {
-    m_map_fields[field->get_name()]               = field;
-    m_named_foreign_key_fields[field->get_name()] = field;
+    m_map_fields[field->get_name()]         = field;
+    m_foreign_key_fields[field->get_name()] = field;
+}
+
+void Model::register_many_to_many_field(ManyToManyField* field)
+{
+    m_map_fields[field->get_name()]          = field;
+    m_many_to_many_fields[field->get_name()] = field;
 }
 
 void Model::register_foreign_key_proxy_field(DictField* field)
 {
     m_sequence_fields[field->get_name()]          = field;
     m_foreign_key_proxy_fields[field->get_name()] = field;
+}
+
+void Model::register_one_to_one_proxy_field(DictField* field)
+{
+    m_map_fields[field->get_name()]              = field;
+    m_one_to_one_proxy_fields[field->get_name()] = field;
 }
 
 Model::~Model() {}
@@ -79,13 +91,13 @@ std::time_t Model::get_creation_time() const
 
 std::string Model::get_parent_type() const
 {
-    if (m_named_foreign_key_fields.empty()) {
+    if (m_foreign_key_fields.empty()) {
         return {};
     }
-    if (m_named_foreign_key_fields.size() == 1) {
-        return m_named_foreign_key_fields.begin()->second->get_runtime_type();
+    if (m_foreign_key_fields.size() == 1) {
+        return m_foreign_key_fields.begin()->second->get_runtime_type();
     }
-    for (const auto& [key, field] : m_named_foreign_key_fields) {
+    for (const auto& [key, field] : m_foreign_key_fields) {
         if (field->is_parent()) {
             return field->get_runtime_type();
         }
@@ -132,8 +144,15 @@ bool Model::valid() const
 
 void Model::get_foreign_key_fields(VecKeyValuePair& fields) const
 {
-    for (const auto& [name, dict] : m_named_foreign_key_fields) {
+    for (const auto& [name, dict] : m_foreign_key_fields) {
         fields.push_back({dict->get_runtime_type(), dict->get_id()});
+    }
+}
+
+void Model::get_many_to_many_fields(std::vector<TypeIdsPair>& fields) const
+{
+    for (const auto& [name, dict] : m_many_to_many_fields) {
+        fields.push_back({dict->get_runtime_type(), dict->get_ids()});
     }
 }
 
@@ -141,6 +160,19 @@ void Model::get_foreign_key_proxy_fields(VecKeyValuePair& fields) const
 {
     for (const auto& [name, dict] : m_foreign_key_proxy_fields) {
         fields.push_back({dict->get_runtime_type(), dict->get_name()});
+    }
+}
+
+void Model::get_default_create_one_to_one_fields(VecKeyValuePair& fields) const
+{
+    for (const auto& [name, dict] : m_one_to_one_proxy_fields) {
+
+        if (auto as_relationship_field = dynamic_cast<RelationshipField*>(dict);
+            as_relationship_field != nullptr) {
+            if (as_relationship_field->should_default_create()) {
+                fields.push_back({dict->get_runtime_type(), dict->get_name()});
+            }
+        }
     }
 }
 

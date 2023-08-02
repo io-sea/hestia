@@ -143,8 +143,12 @@ OpStatus HestiaClient::create(
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
-        const auto current_user_token =
-            m_user_service->get_current_user().token().value();
+
+        std::string current_user_token;
+        if (!m_user_service->get_current_user().tokens().empty()) {
+            current_user_token =
+                m_user_service->get_current_user().tokens()[0].value();
+        }
 
         const auto response = service->make_request(
             CrudRequest{
@@ -185,8 +189,11 @@ OpStatus HestiaClient::update(
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
-        const auto current_user_token =
-            m_user_service->get_current_user().token().value();
+        std::string current_user_token;
+        if (!m_user_service->get_current_user().tokens().empty()) {
+            current_user_token =
+                m_user_service->get_current_user().tokens()[0].value();
+        }
 
         const auto response = service->make_request(
             CrudRequest{
@@ -230,13 +237,9 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
 
     // Serializeable::Format format = Serializeable::Format::CHILD_ID;
     CrudService* service{nullptr};
-    if (subject.m_type == HestiaType::Type::SYSTEM) {
-        if (subject.m_system_type == HestiaType::SystemType::USER) {
-            service = m_user_service.get();
-        }
-        else if (subject.m_system_type == HestiaType::SystemType::HSM_NODE) {
-            service = m_distributed_hsm_service->get_node_service();
-        }
+    if (subject.m_type == HestiaType::Type::SYSTEM
+        && subject.m_system_type == HestiaType::SystemType::USER) {
+        service = m_user_service.get();
     }
     else {
         service = m_hsm_service;
@@ -245,8 +248,11 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
     if (service != nullptr) {
         const auto current_user_id =
             m_user_service->get_current_user().get_primary_key();
-        const auto current_user_token =
-            m_user_service->get_current_user().token().value();
+        std::string current_user_token;
+        if (!m_user_service->get_current_user().tokens().empty()) {
+            current_user_token =
+                m_user_service->get_current_user().tokens()[0].value();
+        }
 
         CrudResponsePtr response;
         response = service->make_request(
@@ -313,16 +319,17 @@ OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
 void HestiaClient::load_object_store_defaults()
 {
     LOG_INFO("Loading fallback file based object store and tiers");
-    HsmObjectStoreClientBackend backend(
-        HsmObjectStoreClientBackend::Type::FILE_HSM,
-        FileHsmObjectStoreClient::get_registry_identifier());
-    m_config.add_object_store_backend(backend);
+    ObjectStoreBackend backend(ObjectStoreBackend::Type::FILE_HSM);
 
+    std::vector<std::string> tier_names;
     for (uint8_t idx = 0; idx < 5; idx++) {
+
         StorageTier tier(idx);
-        tier.set_backend(backend.get_identifier());
+        tier_names.push_back(std::to_string(idx));
         m_config.add_storage_tier(tier);
     }
+    backend.set_tier_names(tier_names);
+    m_config.add_object_store_backend(backend);
 }
 
 void HestiaClient::set_app_mode(const std::string& host, unsigned port)

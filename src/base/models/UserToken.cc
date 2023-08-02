@@ -34,7 +34,7 @@ void UserToken::init()
 {
     m_value.set_index_on(true);
     register_scalar_field(&m_value);
-    register_named_foreign_key_field(&m_user);
+    register_foreign_key_field(&m_user);
 }
 
 std::string UserToken::get_type()

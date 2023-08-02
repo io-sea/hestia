@@ -16,15 +16,13 @@ DistributedHsmServiceTestWrapper::DistributedHsmServiceTestWrapper()
     auto hsm_service = hestia::HsmService::create(
         {}, &m_kv_store_client, &m_obj_store_client, m_user_service.get());
 
-    hestia::HsmObjectStoreClientBackend object_store_backend(
-        hestia::HsmObjectStoreClientBackend::Type::MEMORY,
-        hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
+    hestia::ObjectStoreBackend object_store_backend(
+        hestia::ObjectStoreBackend::Type::MEMORY);
 
     hestia::DistributedHsmServiceConfig dist_hsm_config;
-    dist_hsm_config.m_self.add_backend(object_store_backend);
+    dist_hsm_config.m_backends.push_back(object_store_backend);
     m_dist_hsm_service = hestia::DistributedHsmService::create(
-        dist_hsm_config, std::move(hsm_service), &backend,
-        m_user_service.get());
+        dist_hsm_config, std::move(hsm_service), m_user_service.get());
 }
 
 void DistributedHsmServiceTestWrapper::add_tiers(std::size_t num_tiers)

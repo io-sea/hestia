@@ -8,10 +8,6 @@ TEST_CASE("Test HsmNode", "[hsm]")
     hestia::HsmNode node;
     node.set_host_address("127.0.0.1:8000");
 
-    hestia::HsmObjectStoreClientBackend backend;
-    backend.set_identifier("my_backend");
-    node.add_backend(backend);
-
     hestia::HsmNode copied_node = node;
     hestia::HsmNode copy_constructed_node(node);
 
@@ -33,7 +29,4 @@ TEST_CASE("Test HsmNode", "[hsm]")
 
     REQUIRE(deserialized_node.host() == node.host());
     REQUIRE(deserialized_node.backends().size() == node.backends().size());
-    REQUIRE(
-        deserialized_node.backends()[0].get_identifier()
-        == node.backends()[0].get_identifier());
 }

@@ -30,7 +30,7 @@ class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
 
         hestia::Dictionary dict;
         config.serialize(dict);
-        m_client->initialize({}, dict);
+        m_client->initialize("0000", {}, dict);
     }
 
     void get_and_check(

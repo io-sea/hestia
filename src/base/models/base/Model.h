@@ -31,6 +31,11 @@ class Model : public SerializeableWithFields {
 
     void get_foreign_key_proxy_fields(VecKeyValuePair& fields) const;
 
+    using TypeIdsPair = std::pair<std::string, std::vector<std::string>>;
+    void get_many_to_many_fields(std::vector<TypeIdsPair>& fields) const;
+
+    void get_default_create_one_to_one_fields(VecKeyValuePair& fields) const;
+
     bool has_owner() const;
 
     void init_creation_time(std::time_t ctime);
@@ -50,12 +55,17 @@ class Model : public SerializeableWithFields {
     Model& operator=(const Model& other);
 
   protected:
-    void register_named_foreign_key_field(NamedForeignKeyField* field);
+    void register_foreign_key_field(ForeignKeyField* field);
+    void register_many_to_many_field(ManyToManyField* field);
+
+    void register_one_to_one_proxy_field(DictField* field);
     void register_foreign_key_proxy_field(DictField* field);
 
-    std::unordered_map<std::string, NamedForeignKeyField*>
-        m_named_foreign_key_fields;
+    std::unordered_map<std::string, ForeignKeyField*> m_foreign_key_fields;
+    std::unordered_map<std::string, ManyToManyField*> m_many_to_many_fields;
+
     std::unordered_map<std::string, DictField*> m_foreign_key_proxy_fields;
+    std::unordered_map<std::string, DictField*> m_one_to_one_proxy_fields;
 
     bool m_has_owner{false};
     StringField m_name{"name"};
@@ -82,7 +92,7 @@ class ModelCreationContext : public SerializeableWithFields {
         m_created_by.set_id(user_id);
     }
 
-    NamedForeignKeyField m_created_by{"created_by", "user"};
+    ForeignKeyField m_created_by{"created_by", "user"};
     DateTimeField m_creation_time{"creation_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
 };

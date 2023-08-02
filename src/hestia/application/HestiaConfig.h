@@ -2,9 +2,9 @@
 
 #include "DataPlacementEngineFactory.h"
 #include "EventFeed.h"
-#include "HsmObjectStoreClientBackend.h"
 #include "KeyValueStoreClientFactory.h"
 #include "LoggerConfig.h"
+#include "ObjectStoreBackend.h"
 #include "SerializeableWithFields.h"
 #include "ServerConfig.h"
 
@@ -20,7 +20,7 @@ class HestiaConfig : public SerializeableWithFields {
 
     HestiaConfig(const HestiaConfig& other);
 
-    void add_object_store_backend(const HsmObjectStoreClientBackend& backend);
+    void add_object_store_backend(const ObjectStoreBackend& backend);
 
     void add_storage_tier(const StorageTier& tier);
 
@@ -36,8 +36,7 @@ class HestiaConfig : public SerializeableWithFields {
 
     const std::string& get_config_path() const;
 
-    const std::vector<HsmObjectStoreClientBackend>& get_object_store_backends()
-        const;
+    const std::vector<ObjectStoreBackend>& get_object_store_backends() const;
 
     const std::vector<StorageTier>& get_storage_tiers() const;
 
@@ -79,8 +78,8 @@ class HestiaConfig : public SerializeableWithFields {
     TypedDictField<LoggerConfig> m_logger{LoggerConfig::get_type()};
     TypedDictField<KeyValueStoreClientConfig> m_key_value_store_config{
         KeyValueStoreClientConfig::get_type()};
-    SequenceField<std::vector<HsmObjectStoreClientBackend>> m_backends{
-        std::string(HsmObjectStoreClientBackend::get_type()) + "s"};
+    SequenceField<std::vector<ObjectStoreBackend>> m_backends{
+        std::string(ObjectStoreBackend::get_type()) + "s"};
     SequenceField<std::vector<StorageTier>> m_tiers{
         std::string(HsmItem::tier_name) + "s"};
     TypedDictField<EventFeedConfig> m_event_feed_config{

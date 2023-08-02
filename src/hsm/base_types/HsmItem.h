@@ -19,6 +19,8 @@ class HsmItem {
         TIER,
         EXTENT,
         METADATA,
+        OBJECT_STORE_BACKEND,
+        NODE,
         UNKNOWN)
 
     // NOTE: These must be identical to the STRINGABLE_ENUM outputs (i.e. lower
@@ -32,6 +34,8 @@ class HsmItem {
     static constexpr char namespace_name[]{"namespace"};
     static constexpr char hsm_action_name[]{"action"};
     static constexpr char hsm_event_name[]{"event"};
+    static constexpr char hsm_node_name[]{"node"};
+    static constexpr char object_store_backend_name[]{"object_store_backend"};
 
     HsmItem(Type type);
 

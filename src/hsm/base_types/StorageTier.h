@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HsmItem.h"
+#include "ObjectStoreBackend.h"
 #include <string>
 
 namespace hestia {
@@ -17,15 +18,13 @@ class StorageTier : public HsmItem, public Model {
 
     static std::string get_type();
 
-    const std::string& get_backend() const;
+    const std::vector<ObjectStoreBackend>& get_backends() const;
 
     std::size_t get_capacity() const;
 
     std::size_t get_bandwidth() const;
 
     uint8_t id_uint() const;
-
-    void set_backend(const std::string& backend);
 
     void set_capacity(std::size_t capacity);
 
@@ -38,6 +37,6 @@ class StorageTier : public HsmItem, public Model {
 
     UIntegerField m_capacity{"capacity"};
     UIntegerField m_bandwidth{"bandwidth"};
-    StringField m_backend{"backend"};
+    ForeignKeyProxyField<ObjectStoreBackend> m_backends{"backends"};
 };
 }  // namespace hestia
