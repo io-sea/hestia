@@ -25,6 +25,11 @@ HttpResponse::Ptr CrudWebView::on_get(
                                   "application/json";
     response->header().set_content_type(content_type);
 
+    std::string token;
+    if (!user.tokens().empty()) {
+        token = user.tokens()[0].value();
+    }
+
     if (path.empty()) {
 
         const auto query_type = request.get_header().has_html_accept_type() ?
@@ -56,8 +61,7 @@ HttpResponse::Ptr CrudWebView::on_get(
         }
 
         auto crud_response = m_service->make_request(
-            CrudRequest(query, {user.get_primary_key(), user.token().value()}),
-            m_type_name);
+            CrudRequest(query, {user.get_primary_key(), token}), m_type_name);
 
         if (request.get_header().has_html_accept_type()) {
             std::string json_body;
@@ -74,8 +78,7 @@ HttpResponse::Ptr CrudWebView::on_get(
         CrudQuery query(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
         auto crud_response = m_service->make_request(
-            CrudRequest{query, {user.get_primary_key(), user.token().value()}},
-            m_type_name);
+            CrudRequest{query, {user.get_primary_key(), token}}, m_type_name);
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;

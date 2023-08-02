@@ -11,7 +11,8 @@ class HsmObjectStoreResponse :
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreResponse>;
 
-    HsmObjectStoreResponse(const BaseObjectStoreRequest& request);
+    HsmObjectStoreResponse(
+        const BaseObjectStoreRequest& request, const std::string& client_id);
     HsmObjectStoreResponse(
         const BaseObjectStoreRequest& request,
         HsmObjectStoreResponse::Ptr hsm_child_response);
@@ -19,7 +20,8 @@ class HsmObjectStoreResponse :
         const BaseObjectStoreRequest& request,
         ObjectStoreResponse::Ptr child_response);
 
-    static Ptr create(const BaseObjectStoreRequest& request);
+    static Ptr create(
+        const BaseObjectStoreRequest& request, const std::string& client_id);
     static Ptr create(
         const BaseObjectStoreRequest& request,
         HsmObjectStoreResponse::Ptr hsm_child_response);

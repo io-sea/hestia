@@ -36,8 +36,9 @@ class HsmObject : public HsmItem, public LockableModel {
     void init();
 
     UIntegerField m_size{"size"};
-    OneToOneProxyField<UserMetadata> m_metadata{"user_metadata"};
+
+    OneToOneProxyField<UserMetadata> m_metadata{"user_metadata", true};
     ForeignKeyProxyField<TierExtents> m_tier_extents{"tiers"};
-    NamedForeignKeyField m_dataset{"dataset", HsmItem::dataset_name};
+    ForeignKeyField m_dataset{"dataset", HsmItem::dataset_name};
 };
 }  // namespace hestia

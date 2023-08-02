@@ -45,7 +45,7 @@ TEST_CASE_METHOD(TestUserServiceFixture, "Test User Service", "[user-service]")
     REQUIRE(auth_response->get_item()->id() == id);
 
     const auto token_response = m_user_service->authenticate_with_token(
-        auth_response->get_item_as<hestia::User>()->token().value());
+        auth_response->get_item_as<hestia::User>()->tokens()[0].value());
     REQUIRE(token_response->ok());
 
     REQUIRE(token_response->get_item()->id() == id);

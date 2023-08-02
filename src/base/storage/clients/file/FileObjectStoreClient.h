@@ -16,12 +16,16 @@ class FileObjectStoreClient : public ObjectStoreClient {
     static Ptr create();
 
     static Ptr create(
-        const std::filesystem::path& root, Mode mode = Mode::DATA_AND_METADATA);
+        const std::string& id,
+        const std::filesystem::path& root,
+        Mode mode = Mode::DATA_AND_METADATA);
 
     static std::string get_registry_identifier();
 
     void do_initialize(
-        const std::filesystem::path& root, Mode mode = Mode::DATA_AND_METADATA);
+        const std::string& id,
+        const std::filesystem::path& root,
+        Mode mode = Mode::DATA_AND_METADATA);
 
     void migrate(
         const std::string& object_id,

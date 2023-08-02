@@ -3,19 +3,22 @@
 #include <stdexcept>
 
 namespace hestia {
-HsmNode::HsmNode() : OwnableModel(s_model_type, {})
+HsmNode::HsmNode() :
+    HsmItem(HsmItem::Type::NODE), OwnableModel(s_model_type, {})
 {
 
     init();
 }
 
-HsmNode::HsmNode(const std::string& id) : OwnableModel(id, s_model_type)
+HsmNode::HsmNode(const std::string& id) :
+    HsmItem(HsmItem::Type::NODE), OwnableModel(id, s_model_type)
 {
 
     init();
 }
 
-HsmNode::HsmNode(const HsmNode& other) : OwnableModel(other)
+HsmNode::HsmNode(const HsmNode& other) :
+    HsmItem(HsmItem::Type::NODE), OwnableModel(other)
 {
     *this = other;
 }
@@ -45,23 +48,12 @@ void HsmNode::init()
     register_scalar_field(&m_version);
     register_scalar_field(&m_app_type);
 
-    register_sequence_field(&m_backends);
-}
-
-void HsmNode::add_backend(const HsmObjectStoreClientBackend& backend)
-{
-    m_backends.get_container_as_writeable().push_back(backend);
+    register_foreign_key_proxy_field(&m_backends);
 }
 
 std::string HsmNode::get_type()
 {
     return s_model_type;
-}
-
-void HsmNode::set_backends(
-    const std::vector<HsmObjectStoreClientBackend>& backends)
-{
-    m_backends.get_container_as_writeable() = backends;
 }
 
 bool HsmNode::is_controller() const
@@ -79,9 +71,9 @@ unsigned HsmNode::port() const
     return m_port.get_value();
 }
 
-const std::vector<HsmObjectStoreClientBackend>& HsmNode::backends() const
+const std::vector<ObjectStoreBackend>& HsmNode::backends() const
 {
-    return m_backends.container();
+    return m_backends.models();
 }
 
 void HsmNode::set_host_address(const std::string& address)

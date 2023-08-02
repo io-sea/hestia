@@ -40,7 +40,7 @@ class TestHestiaWebAppFixture {
 
         hestia::InMemoryObjectStoreClientConfig obj_store_config;
         obj_store_config.set_tiers({"0", "1"});
-        m_obj_store_client->do_initialize({}, obj_store_config);
+        m_obj_store_client->do_initialize("0000", {}, obj_store_config);
 
         hestia::KeyValueStoreCrudServiceBackend backend(
             m_kv_store_client.get());
@@ -54,9 +54,8 @@ class TestHestiaWebAppFixture {
             m_user_service->authenticate_user("my_admin", "my_admin_password");
         REQUIRE(auth_response->ok());
 
-        hestia::HsmObjectStoreClientBackend object_store_backend(
-            hestia::HsmObjectStoreClientBackend::Type::MEMORY_HSM,
-            hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
+        hestia::ObjectStoreBackend object_store_backend(
+            hestia::ObjectStoreBackend::Type::MEMORY_HSM);
 
         auto hsm_child_services =
             std::make_unique<hestia::HsmServiceCollection>();
@@ -69,7 +68,6 @@ class TestHestiaWebAppFixture {
             hsm_child_services->get_service(hestia::HsmItem::Type::TIER);
         for (uint8_t idx = 0; idx < 2; idx++) {
             hestia::StorageTier tier(idx);
-            tier.set_backend("hestia::InMemoryHsmObjectStoreClient");
             auto create_response = tier_service->make_request(
                 hestia::TypedCrudRequest<hestia::StorageTier>{
                     hestia::CrudMethod::CREATE, tier,
@@ -86,11 +84,10 @@ class TestHestiaWebAppFixture {
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_name("my_node");
-        dist_hsm_config.m_self.add_backend(object_store_backend);
+        dist_hsm_config.m_backends = {object_store_backend};
 
         m_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), &backend,
-            m_user_service.get());
+            dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
         m_dist_hsm_service->register_self();
 
@@ -147,7 +144,7 @@ class TestHestiaWebAppFixture {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::PUT);
         req.get_header().set_auth_token(
-            m_user_service->get_current_user().token().value());
+            m_user_service->get_current_user().tokens()[0].value());
         req.get_header().set_content_type("application/json");
 
         std::vector<hestia::HsmObject::Ptr> put_objects;

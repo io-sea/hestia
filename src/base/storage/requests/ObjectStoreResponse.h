@@ -12,12 +12,17 @@ namespace hestia {
 template<typename ErrorCode>
 class BaseObjectStoreResponse : public Response<ErrorCode> {
   public:
-    BaseObjectStoreResponse(const BaseObjectStoreRequest& request) :
-        Response<ErrorCode>(request), m_object(request.object())
+    BaseObjectStoreResponse(
+        const BaseObjectStoreRequest& request, const std::string& store_id) :
+        Response<ErrorCode>(request),
+        m_object(request.object()),
+        m_store_id(store_id)
     {
     }
 
     virtual ~BaseObjectStoreResponse() = default;
+
+    const std::string& get_store_id() const { return m_store_id; }
 
     StorageObject& object() { return m_object; }
 
@@ -31,6 +36,7 @@ class BaseObjectStoreResponse : public Response<ErrorCode> {
 
   protected:
     StorageObject m_object;
+    std::string m_store_id;
 
   private:
     std::vector<StorageObject> m_objects;
@@ -42,9 +48,11 @@ class ObjectStoreResponse :
   public:
     using Ptr = std::unique_ptr<ObjectStoreResponse>;
 
-    ObjectStoreResponse(const BaseObjectStoreRequest& request);
+    ObjectStoreResponse(
+        const BaseObjectStoreRequest& request, const std::string& store_id);
 
-    static Ptr create(const BaseObjectStoreRequest& request);
+    static Ptr create(
+        const BaseObjectStoreRequest& request, const std::string& store_id);
 
     virtual ~ObjectStoreResponse() = default;
 };

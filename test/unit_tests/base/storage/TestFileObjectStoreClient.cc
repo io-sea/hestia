@@ -20,7 +20,7 @@ class FileObjectStoreTestFixture {
         const auto store_path = get_store_path();
         std::filesystem::remove_all(store_path);
         m_client = ObjectStoreTestWrapper::create(
-            hestia::FileObjectStoreClient::create(store_path));
+            hestia::FileObjectStoreClient::create("0000", store_path));
     }
 
     std::string get_store_path() const

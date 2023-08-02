@@ -300,29 +300,23 @@ CrudResponse::Ptr UserService::register_user(
     LOG_INFO("User not found - creating new one");
     User user;
     user.set_name(username);
+    user.set_password(get_hashed_password(username, password));
 
     auto create_response = make_request(TypedCrudRequest<User>{
-        CrudMethod::CREATE, user, {}, CrudQuery::OutputFormat::ITEM});
+        CrudMethod::CREATE, user, {}, CrudQuery::OutputFormat::ID});
     if (!create_response->ok()) {
         LOG_ERROR("Unexpected error creating new user");
         return create_response;
     }
 
-    const auto created_user = create_response->get_item_as<User>();
-    if (created_user == nullptr) {
-        auto response =
-            std::make_unique<CrudResponse>(request, User::get_type());
-        response->on_error(
-            {CrudErrorCode::ERROR, "Bad cast of response item to user"});
-        return response;
-    }
+    assert(!create_response->ids().empty());
 
     LOG_INFO("Adding user token");
-    UserToken token(created_user->id());
+    UserToken token(create_response->ids()[0]);
     token.set_value(m_token_generator->generate());
 
     TypedCrudRequest<UserToken> req(
-        CrudMethod::CREATE, token, {}, CrudQuery::OutputFormat::ITEM);
+        CrudMethod::CREATE, token, {}, CrudQuery::OutputFormat::ID);
     auto token_response = m_token_service->make_request(req);
     if (!token_response->ok()) {
         auto error_response =
@@ -333,25 +327,15 @@ CrudResponse::Ptr UserService::register_user(
         return error_response;
     }
 
-    const auto user_token = token_response->get_item_as<UserToken>();
-    if (user_token == nullptr) {
-        auto response = std::make_unique<CrudResponse>(req, User::get_type());
-        response->on_error(
-            {CrudErrorCode::ERROR, "Bad cast of response item to user token"});
-        return response;
+    auto get_response = make_request(CrudRequest{
+        CrudQuery{
+            CrudIdentifier(create_response->ids()[0]),
+            CrudQuery::OutputFormat::ITEM},
+        {}});
+    if (!get_response->ok()) {
+        LOG_ERROR(get_response->get_error().to_string());
     }
-
-    User updated_user(*created_user);
-    updated_user.set_password(get_hashed_password(username, password));
-    updated_user.set_token(*user_token);
-
-    auto update_response = make_request(TypedCrudRequest<User>{
-        CrudMethod::UPDATE, updated_user, {}, CrudQuery::OutputFormat::ITEM});
-    if (!update_response->ok()) {
-        LOG_ERROR(update_response->get_error().to_string());
-    }
-
-    return update_response;
+    return get_response;
 }
 
 std::string UserService::get_hashed_password(

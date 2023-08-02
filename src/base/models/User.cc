@@ -29,7 +29,7 @@ User& User::operator=(const User& other)
         m_display_name = other.m_display_name;
         m_password     = other.m_password;
         m_is_admin     = other.m_is_admin;
-        m_token        = other.m_token;
+        m_tokens       = other.m_tokens;
         init();
     }
     return *this;
@@ -43,7 +43,7 @@ void User::init()
     register_scalar_field(&m_password);
     register_scalar_field(&m_is_admin);
 
-    register_map_field(&m_token);
+    register_foreign_key_proxy_field(&m_tokens);
 }
 
 bool User::is_admin() const
@@ -56,14 +56,9 @@ const std::string& User::password() const
     return m_password.get_value();
 }
 
-const UserToken& User::token() const
+const std::vector<UserToken>& User::tokens() const
 {
-    return m_token.value();
-}
-
-void User::set_token(const UserToken& token)
-{
-    m_token.get_value_as_writeable() = token;
+    return m_tokens.models();
 }
 
 void User::set_password(const std::string& password)

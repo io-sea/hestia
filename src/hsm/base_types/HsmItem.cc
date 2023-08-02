@@ -3,8 +3,11 @@
 namespace hestia {
 
 const std::vector<HsmItem::Type> HsmItem::s_all_items = {
-    Type::DATASET,   Type::OBJECT, Type::ACTION, Type::EVENT,
-    Type::NAMESPACE, Type::TIER,   Type::EXTENT, Type::METADATA};
+    Type::DATASET,   Type::OBJECT,
+    Type::ACTION,    Type::EVENT,
+    Type::NAMESPACE, Type::TIER,
+    Type::EXTENT,    Type::METADATA,
+    Type::NODE,      Type::OBJECT_STORE_BACKEND};
 
 HsmItem::HsmItem(HsmItem::Type type) : m_hsm_type(type) {}
 
@@ -32,6 +35,10 @@ std::string HsmItem::to_name(Type type)
             return tier_extents_name;
         case Type::METADATA:
             return user_metadata_name;
+        case Type::OBJECT_STORE_BACKEND:
+            return object_store_backend_name;
+        case Type::NODE:
+            return hsm_node_name;
         case Type::UNKNOWN:
             return "";
         default:
@@ -47,14 +54,11 @@ HsmItem::Type HsmItem::from_name(const std::string& type_name)
     else if (type_name == hsm_object_name) {
         return Type::OBJECT;
     }
-    else if (type_name == dataset_name) {
+    else if (type_name == hsm_action_name) {
         return Type::ACTION;
     }
-    else if (type_name == hsm_action_name) {
-        return Type::EVENT;
-    }
     else if (type_name == hsm_event_name) {
-        return Type::DATASET;
+        return Type::EVENT;
     }
     else if (type_name == namespace_name) {
         return Type::NAMESPACE;
@@ -67,6 +71,12 @@ HsmItem::Type HsmItem::from_name(const std::string& type_name)
     }
     else if (type_name == user_metadata_name) {
         return Type::METADATA;
+    }
+    else if (type_name == hsm_node_name) {
+        return Type::NODE;
+    }
+    else if (type_name == object_store_backend_name) {
+        return Type::OBJECT_STORE_BACKEND;
     }
     else {
         return Type::UNKNOWN;

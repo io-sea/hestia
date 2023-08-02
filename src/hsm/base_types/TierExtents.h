@@ -22,6 +22,12 @@ class TierExtents : public HsmItem, public LockableModel {
 
     static std::string get_type();
 
+    const std::string& get_tier_id() const { return m_tier.get_id(); }
+
+    const std::string& get_object_id() const { return m_object.get_id(); }
+
+    const std::string& get_backend_id() const { return m_backend.get_id(); }
+
     void add_extent(const Extent& extent);
 
     bool empty() const;
@@ -32,7 +38,7 @@ class TierExtents : public HsmItem, public LockableModel {
 
     void set_tier_id(const std::string& id) { m_tier.set_id(id); }
 
-    uint8_t tier() const { return m_tier_id.get_value(); }
+    void set_backend_id(const std::string& id) { m_backend.set_id(id); }
 
     TierExtents& operator=(const TierExtents& other);
 
@@ -42,7 +48,9 @@ class TierExtents : public HsmItem, public LockableModel {
     UIntegerField m_tier_id{"tier_name", 0};
     IntKeyedSequenceField<std::map<std::size_t, Extent>> m_extents{
         "extents", "offset"};
-    NamedForeignKeyField m_object{"object", HsmItem::hsm_object_name, true};
-    NamedForeignKeyField m_tier{"tier", HsmItem::tier_name};
+
+    ForeignKeyField m_object{"object", HsmItem::hsm_object_name, true};
+    ForeignKeyField m_tier{"tier", HsmItem::tier_name};
+    ForeignKeyField m_backend{"backend", HsmItem::object_store_backend_name};
 };
 }  // namespace hestia

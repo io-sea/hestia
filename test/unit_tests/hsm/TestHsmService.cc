@@ -9,6 +9,7 @@
 
 #include "HsmService.h"
 #include "HsmServicesFactory.h"
+#include "StorageTier.h"
 #include "UserService.h"
 
 #include "TestUtils.h"
@@ -47,26 +48,26 @@ class HsmServiceTestFixture {
 
         hestia::InMemoryObjectStoreClientConfig object_store_config;
 
-        hestia::VecCrudIdentifier ids;
         for (std::size_t idx = 0; idx < 5; idx++) {
-            ids.push_back(std::to_string(idx));
+            hestia::StorageTier tier(idx);
+
+            auto response = tier_service->make_request(
+                hestia::TypedCrudRequest<hestia::StorageTier>{
+                    hestia::CrudMethod::CREATE, tier,
+                    m_test_user.get_primary_key()});
+            REQUIRE(response->ok());
+
             object_store_config.m_tier_ids.get_container_as_writeable()
                 .push_back(std::to_string(idx));
         }
-        auto response = tier_service->make_request(
-            hestia::CrudRequest{hestia::CrudMethod::CREATE, {}, ids});
-        REQUIRE(response->ok());
 
         m_object_store_client =
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
-        m_object_store_client->do_initialize({}, object_store_config);
-
-        auto placement_engine =
-            std::make_unique<hestia::BasicDataPlacementEngine>(tier_service);
+        m_object_store_client->do_initialize("0000", {}, object_store_config);
 
         m_hsm_service = std::make_unique<hestia::HsmService>(
             hestia::ServiceConfig{}, std::move(hsm_child_services),
-            m_object_store_client.get(), std::move(placement_engine));
+            m_object_store_client.get());
         m_hsm_service->update_tiers(m_test_user.get_primary_key());
     }
 
@@ -212,7 +213,7 @@ class HsmServiceTestFixture {
 
         auto object = response->get_item_as<hestia::HsmObject>();
         for (const auto& extent : object->tiers()) {
-            if (extent.tier() == tier_id) {
+            if (extent.get_tier_id() == std::to_string(tier_id)) {
                 return true;
             }
         }

@@ -2,15 +2,16 @@
 
 namespace hestia {
 HsmObjectStoreResponse::HsmObjectStoreResponse(
-    const BaseObjectStoreRequest& request) :
-    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    const BaseObjectStoreRequest& request, const std::string& client_id) :
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request, client_id)
 {
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
     const BaseObjectStoreRequest& request,
     HsmObjectStoreResponse::Ptr hsm_child_response) :
-    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(
+        request, hsm_child_response->get_store_id())
 {
     (void)hsm_child_response;
 }
@@ -18,15 +19,16 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
 HsmObjectStoreResponse::HsmObjectStoreResponse(
     const BaseObjectStoreRequest& request,
     ObjectStoreResponse::Ptr child_response) :
-    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(request)
+    BaseObjectStoreResponse<HsmObjectStoreErrorCode>(
+        request, child_response->get_store_id())
 {
     (void)child_response;
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
-    const BaseObjectStoreRequest& request)
+    const BaseObjectStoreRequest& request, const std::string& client_id)
 {
-    return std::make_unique<HsmObjectStoreResponse>(request);
+    return std::make_unique<HsmObjectStoreResponse>(request, client_id);
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(
@@ -49,7 +51,8 @@ ObjectStoreResponse::Ptr HsmObjectStoreResponse::to_base_response(
     const BaseObjectStoreRequest& request,
     const HsmObjectStoreResponse* response)
 {
-    auto base_response = ObjectStoreResponse::create(request);
+    auto base_response =
+        ObjectStoreResponse::create(request, response->get_store_id());
     if (!response->ok()) {
         base_response->on_error(
             {ObjectStoreErrorCode::ERROR, response->get_error().to_string()});

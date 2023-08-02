@@ -28,16 +28,22 @@ FileHsmObjectStoreClient::Ptr FileHsmObjectStoreClient::create()
 }
 
 void FileHsmObjectStoreClient::initialize(
-    const std::string& cache_path, const Dictionary& config_data)
+    const std::string& id,
+    const std::string& cache_path,
+    const Dictionary& config_data)
 {
     FileHsmObjectStoreClientConfig config;
     config.deserialize(config_data);
-    do_initialize(cache_path, config);
+    do_initialize(id, cache_path, config);
 }
 
 void FileHsmObjectStoreClient::do_initialize(
-    const std::string& cache_path, const FileHsmObjectStoreClientConfig& config)
+    const std::string& id,
+    const std::string& cache_path,
+    const FileHsmObjectStoreClientConfig& config)
 {
+    m_id = id;
+
     m_store = config.m_root.get_value();
 
     if (m_store.is_relative()) {
@@ -62,7 +68,7 @@ void FileHsmObjectStoreClient::put(
 {
     FileObjectStoreClient md_client;
     md_client.do_initialize(
-        m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
+        m_id, m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
     if (const auto response = md_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
@@ -78,7 +84,7 @@ void FileHsmObjectStoreClient::put(
 
     FileObjectStoreClient data_client;
     data_client.do_initialize(
-        get_tier_path(request.target_tier()),
+        m_id, get_tier_path(request.target_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     if (const auto response = data_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
@@ -98,7 +104,7 @@ void FileHsmObjectStoreClient::get(
     LOG_INFO("Getting metadata");
     FileObjectStoreClient md_client;
     md_client.do_initialize(
-        m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
+        m_id, m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
     if (const auto response = md_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
@@ -118,7 +124,7 @@ void FileHsmObjectStoreClient::get(
     LOG_INFO("Getting data");
     FileObjectStoreClient data_client;
     data_client.do_initialize(
-        get_tier_path(request.source_tier()),
+        m_id, get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     if (const auto response = data_client.make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
@@ -135,7 +141,7 @@ void FileHsmObjectStoreClient::remove(
 {
     FileObjectStoreClient md_client;
     md_client.do_initialize(
-        get_tier_path(request.source_tier()),
+        m_id, get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::METADATA_ONLY);
     if (const auto response = md_client.make_request(
             HsmObjectStoreRequest::to_base_request(request));
@@ -148,7 +154,7 @@ void FileHsmObjectStoreClient::remove(
 
     FileObjectStoreClient data_client;
     data_client.do_initialize(
-        get_tier_path(request.source_tier()),
+        m_id, get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     if (const auto response = data_client.make_request(
             HsmObjectStoreRequest::to_base_request(request));
@@ -164,7 +170,7 @@ void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
     file_client.do_initialize(
-        get_tier_path(request.source_tier()),
+        m_id, get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), true);
@@ -174,7 +180,7 @@ void FileHsmObjectStoreClient::move(const HsmObjectStoreRequest& request) const
 {
     FileObjectStoreClient file_client;
     file_client.do_initialize(
-        get_tier_path(request.source_tier()),
+        m_id, get_tier_path(request.source_tier()),
         FileObjectStoreClient::Mode::DATA_ONLY);
     file_client.migrate(
         request.object().id(), get_tier_path(request.target_tier()), false);

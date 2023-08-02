@@ -40,25 +40,31 @@ class KeyValueCrudClient : public CrudClient {
     bool is_locked(
         const CrudIdentifier& id, CrudLockType lock_type) const override;
 
+    struct Fields {
+        std::vector<VecKeyValuePair> m_index;
+        std::vector<VecKeyValuePair> m_foreign_key;
+        std::vector<VecKeyValuePair> m_one_to_one;
+        std::vector<std::vector<Model::TypeIdsPair>> m_many_many;
+    };
+
+    void process_fields(Model* item, Fields& fields) const;
+
     void process_items(
         const CrudRequest& request,
         std::vector<std::string>& ids,
-        std::vector<VecKeyValuePair>& index_fields,
-        std::vector<VecKeyValuePair>& foregin_key_fields,
+        Fields& fields,
         Dictionary& content) const;
 
     void process_ids(
         const CrudRequest& request,
         std::vector<std::string>& ids,
-        std::vector<VecKeyValuePair>& index_fields,
-        std::vector<VecKeyValuePair>& foregin_key_fields,
+        Fields& fields,
         const Dictionary& attributes,
         Dictionary& content) const;
 
     void process_empty(
         std::vector<std::string>& ids,
-        std::vector<VecKeyValuePair>& index_fields,
-        std::vector<VecKeyValuePair>& foregin_key_fields,
+        Fields& fields,
         const Dictionary& attributes,
         Dictionary& content) const;
 
@@ -66,8 +72,7 @@ class KeyValueCrudClient : public CrudClient {
         std::vector<KeyValuePair>& string_set_kv_pairs,
         std::vector<KeyValuePair>& set_add_kv_pairs,
         std::vector<std::string>& ids,
-        const std::vector<VecKeyValuePair>& index_fields,
-        const std::vector<VecKeyValuePair>& foregin_key_fields,
+        const Fields& fields,
         const Dictionary& content,
         const Dictionary& create_context_dict,
         const std::string& primary_key_name) const;

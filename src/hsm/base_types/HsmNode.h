@@ -1,11 +1,11 @@
 #pragma once
 
-#include "HsmObjectStoreClientBackend.h"
+#include "ObjectStoreBackend.h"
 #include "OwnableModel.h"
 
 namespace hestia {
 
-class HsmNode : public OwnableModel {
+class HsmNode : public HsmItem, public OwnableModel {
   public:
     HsmNode();
 
@@ -15,9 +15,7 @@ class HsmNode : public OwnableModel {
 
     using Ptr = std::unique_ptr<HsmNode>;
 
-    const std::vector<HsmObjectStoreClientBackend>& backends() const;
-
-    void add_backend(const HsmObjectStoreClientBackend& backend);
+    const std::vector<ObjectStoreBackend>& backends() const;
 
     static std::string get_type();
 
@@ -37,8 +35,6 @@ class HsmNode : public OwnableModel {
 
     void set_version(const std::string& version);
 
-    void set_backends(const std::vector<HsmObjectStoreClientBackend>& backends);
-
     HsmNode& operator=(const HsmNode& other);
 
   private:
@@ -50,7 +46,7 @@ class HsmNode : public OwnableModel {
     UIntegerField m_port{"port"};
     StringField m_version{"version"};
     StringField m_app_type{"app_type"};
-    SequenceField<std::vector<HsmObjectStoreClientBackend>> m_backends{
-        "backends"};
+
+    ForeignKeyProxyField<ObjectStoreBackend> m_backends{"backends"};
 };
 }  // namespace hestia

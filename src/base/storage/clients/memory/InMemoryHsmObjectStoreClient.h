@@ -36,9 +36,12 @@ class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {
     static std::string get_registry_identifier();
 
     void initialize(
-        const std::string& cache_path, const Dictionary& config) override;
+        const std::string& id,
+        const std::string& cache_path,
+        const Dictionary& config) override;
 
     void do_initialize(
+        const std::string& id,
         const std::string& cache_path,
         const InMemoryObjectStoreClientConfig& config);
 

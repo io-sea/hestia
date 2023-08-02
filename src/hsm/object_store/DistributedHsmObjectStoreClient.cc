@@ -60,13 +60,13 @@ void DistributedHsmObjectStoreClient::do_initialize(
     }
 
     m_client_manager->setup_clients(
-        cache_path, m_hsm_service->get_self_config().m_self.backends(), tiers);
+        cache_path, m_hsm_service->get_backends(), tiers);
 }
 
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
     const HsmObjectStoreRequest& request, Stream* stream) const
 {
-    auto response = HsmObjectStoreResponse::create(request);
+    auto response = HsmObjectStoreResponse::create(request, "");
 
     if (is_controller_node()) {
         const auto current_user_id = m_hsm_service->get_user_service()
@@ -137,7 +137,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
     const HsmObjectStoreRequest& request, Stream* stream) const
 {
-    auto response = HsmObjectStoreResponse::create(request);
+    auto response = HsmObjectStoreResponse::create(request, "");
 
     if (m_http_client == nullptr) {
         const std::string message =
@@ -153,7 +153,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
                                          .get_primary_key();
         const auto backend =
             m_client_manager->get_backend(request.target_tier());
-        if (backend.empty()) {
+        if (backend == ObjectStoreBackend::Type::UNKNOWN) {
             const std::string msg = "No backend registered for requested tier: "
                                     + std::to_string(request.target_tier());
             LOG_ERROR(msg);
@@ -161,10 +161,13 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
             return response;
         }
 
-        auto node_service = m_hsm_service->get_node_service();
+        auto node_service =
+            m_hsm_service->get_hsm_service()->get_service(HsmItem::Type::NODE);
 
+        ObjectStoreBackend::Type_enum_string_converter backend_serializer;
+        backend_serializer.init();
         Map filter;
-        filter.set_item("backend", backend);
+        filter.set_item("backend", backend_serializer.to_string(backend));
 
         CrudQuery query(
             filter, CrudQuery::Format::LIST, CrudQuery::OutputFormat::ID);
@@ -183,7 +186,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
         if (node_list_response->items().empty()) {
             const std::string msg =
                 "Failed to find any online nodes in DB for requested backend: "
-                + backend;
+                + backend_serializer.to_string(backend);
             LOG_ERROR(msg);
             response->on_error({HsmObjectStoreErrorCode::ERROR, msg});
             return response;
@@ -208,7 +211,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
         if (location.empty()) {
             const std::string msg =
                 "Failed to find any online nodes for requested backend: "
-                + backend;
+                + backend_serializer.to_string(backend);
             LOG_ERROR(msg);
             response->on_error({HsmObjectStoreErrorCode::ERROR, msg});
             return response;

@@ -8,7 +8,6 @@
 TEST_CASE("Test Storage Tier", "[hsm]")
 {
     hestia::StorageTier tier;
-    tier.set_backend("my_backend");
     tier.set_capacity(1234);
     tier.set_bandwidth(5678);
 
@@ -17,7 +16,7 @@ TEST_CASE("Test Storage Tier", "[hsm]")
 
     REQUIRE(copied_tier.get_bandwidth() == tier.get_bandwidth());
     REQUIRE(copied_tier.get_capacity() == tier.get_capacity());
-    REQUIRE(copied_tier.get_backend() == tier.get_backend());
+    REQUIRE(copied_tier.get_backends().size() == tier.get_backends().size());
 
     hestia::Dictionary tier_dict;
     tier.serialize(tier_dict);
@@ -28,16 +27,18 @@ TEST_CASE("Test Storage Tier", "[hsm]")
     hestia::Dictionary copy_constructed_tier_dict;
     copy_constructed_tier.serialize(copy_constructed_tier_dict);
 
-    REQUIRE(tier_dict.to_string() == copied_tier_dict.to_string());
+    REQUIRE(tier_dict.to_string(true) == copied_tier_dict.to_string(true));
     REQUIRE(
-        copy_constructed_tier_dict.to_string() == copied_tier_dict.to_string());
+        copy_constructed_tier_dict.to_string(true)
+        == copied_tier_dict.to_string(true));
 
     hestia::StorageTier deserialized_tier;
     deserialized_tier.deserialize(copied_tier_dict);
 
     REQUIRE(deserialized_tier.get_bandwidth() == tier.get_bandwidth());
     REQUIRE(deserialized_tier.get_capacity() == tier.get_capacity());
-    REQUIRE(deserialized_tier.get_backend() == tier.get_backend());
+    REQUIRE(
+        deserialized_tier.get_backends().size() == tier.get_backends().size());
 
     hestia::StorageTier tier_with_id(3);
     REQUIRE(tier_with_id.id_uint() == 3);

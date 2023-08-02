@@ -20,10 +20,10 @@ FileObjectStoreClient::Ptr FileObjectStoreClient::create()
 }
 
 FileObjectStoreClient::Ptr FileObjectStoreClient::create(
-    const std::filesystem::path& root, Mode mode)
+    const std::string& id, const std::filesystem::path& root, Mode mode)
 {
     auto instance = create();
-    instance->do_initialize(root, mode);
+    instance->do_initialize(id, root, mode);
     return instance;
 }
 
@@ -34,8 +34,9 @@ std::string FileObjectStoreClient::get_registry_identifier()
 }
 
 void FileObjectStoreClient::do_initialize(
-    const std::filesystem::path& root, Mode mode)
+    const std::string& id, const std::filesystem::path& root, Mode mode)
 {
+    m_id   = id;
     m_root = root;
     m_mode = mode;
     hestia::FileUtils::create_if_not_existing(m_root);
@@ -124,6 +125,7 @@ void FileObjectStoreClient::put(
     }
 
     if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+        LOG_INFO("Adding to sink: " << get_data_path(object.id()));
         if (stream != nullptr) {
             auto stream_sink =
                 std::make_unique<FileStreamSink>(get_data_path(object.id()));

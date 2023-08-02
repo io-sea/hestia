@@ -33,6 +33,7 @@ TierExtents& TierExtents::operator=(const TierExtents& other)
         m_extents = other.m_extents;
         m_object  = other.m_object;
         m_tier    = other.m_tier;
+        m_backend = other.m_backend;
         init();
     }
     return *this;
@@ -47,8 +48,10 @@ void TierExtents::init()
 {
     register_scalar_field(&m_tier_id);
     register_sequence_field(&m_extents);
-    register_named_foreign_key_field(&m_object);
-    register_named_foreign_key_field(&m_tier);
+
+    register_foreign_key_field(&m_object);
+    register_foreign_key_field(&m_tier);
+    register_foreign_key_field(&m_backend);
 }
 
 void TierExtents::add_extent(const Extent& extent)

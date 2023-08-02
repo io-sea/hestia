@@ -27,7 +27,7 @@ class UserToken : public Model {
 
     static constexpr const char s_model_type[]{"user_token"};
     StringField m_value{"value"};
-    NamedForeignKeyField m_user{"user", "user"};
+    ForeignKeyField m_user{"user", "user"};
 };
 
 }  // namespace hestia

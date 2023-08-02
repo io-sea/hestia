@@ -30,10 +30,10 @@ S3Client::Ptr S3Client::create(IS3InterfaceImpl::Ptr impl)
 }
 
 S3Client::Ptr S3Client::create(
-    const S3Config& config, IS3InterfaceImpl::Ptr impl)
+    const std::string& id, const S3Config& config, IS3InterfaceImpl::Ptr impl)
 {
     auto instance = create(std::move(impl));
-    instance->do_initialize({}, config);
+    instance->do_initialize(id, {}, config);
     return instance;
 }
 
@@ -43,15 +43,20 @@ std::string S3Client::get_registry_identifier()
 }
 
 void S3Client::initialize(
-    const std::string& cache_path, const Dictionary& config_data)
+    const std::string& id,
+    const std::string& cache_path,
+    const Dictionary& config_data)
 {
     S3Config config;
     config.deserialize(config_data);
-    do_initialize(cache_path, config);
+    do_initialize(id, cache_path, config);
 }
 
-void S3Client::do_initialize(const std::string&, const S3Config& config)
+void S3Client::do_initialize(
+    const std::string& id, const std::string&, const S3Config& config)
 {
+    m_id = id;
+
     m_impl->initialize(config);
 
     m_container_adapter =

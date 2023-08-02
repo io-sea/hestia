@@ -4,16 +4,9 @@
 #include "ScalarField.h"
 
 #include <cassert>
-#include <iostream>
 #include <vector>
 
 namespace hestia {
-
-template<typename T>
-class ForeignKeyField : public TypedDictField<T> {
-  public:
-    ForeignKeyField(const std::string& name) : TypedDictField<T>(name) {}
-};
 
 template<typename T>
 class ForeignKeyProxyField : public DictField {
@@ -50,48 +43,73 @@ class ForeignKeyProxyField : public DictField {
     std::vector<T> m_models;
 };
 
-template<typename T>
-class OneToOneProxyField : public TypedDictField<T> {
+class RelationshipField {
   public:
-    OneToOneProxyField(const std::string& name) : TypedDictField<T>(name) {}
+    RelationshipField(bool default_create = false) :
+        m_default_create(default_create)
+    {
+    }
+
+    bool should_default_create() const { return m_default_create; }
+
+  private:
+    bool m_default_create{false};
 };
 
-class NamedForeignKeyField : public DictField {
+template<typename T>
+class OneToOneProxyField : public RelationshipField, public TypedDictField<T> {
   public:
-    NamedForeignKeyField(
+    OneToOneProxyField(const std::string& name, bool default_create = false) :
+        RelationshipField(default_create), TypedDictField<T>(name)
+    {
+    }
+};
+
+class ForeignKeyField : public DictField {
+  public:
+    ForeignKeyField(
         const std::string& name,
         const std::string& type,
-        bool is_parent = false) :
-        DictField(name), m_is_parent(is_parent)
-    {
-        m_type = type;
-    }
+        bool is_parent = false);
 
     void serialize(
-        Dictionary& dict, Format format = Format::FULL) const override
-    {
-        (void)format;
-        dict.set_map({{m_uuid.get_name(), m_uuid.value_as_string()}});
-    }
+        Dictionary& dict, Format format = Format::FULL) const override;
 
     void deserialize(
-        const Dictionary& dict, Format format = Format::FULL) override
-    {
-        (void)format;
-        if (dict.has_map_item(m_uuid.get_name())) {
-            m_uuid.value_from_string(
-                dict.get_map_item(m_uuid.get_name())->get_scalar());
-        }
-    }
-    bool is_parent() const { return m_is_parent; }
+        const Dictionary& dict, Format format = Format::FULL) override;
 
-    const std::string& get_id() const { return m_uuid.get_value(); }
+    bool is_parent() const;
 
-    void set_id(const std::string& id) { m_uuid.update_value(id); }
+    const std::string& get_id() const;
+
+    void set_id(const std::string& id);
 
   private:
     bool m_is_parent{false};
     StringField m_uuid{"id"};
+};
+
+class ManyToManyField : public DictField {
+  public:
+    ManyToManyField(const std::string& name, const std::string& type);
+
+    void serialize(
+        Dictionary& dict, Format format = Format::FULL) const override;
+
+    void deserialize(
+        const Dictionary& dict, Format format = Format::FULL) override;
+
+    const std::vector<std::string>& get_ids() const;
+
+    void set_ids(const std::vector<std::string>& ids);
+
+    void add_id(const std::string& id)
+    {
+        m_uuids.get_container_as_writeable().push_back(id);
+    }
+
+  private:
+    ScalarSequenceField<std::vector<std::string>> m_uuids{"ids"};
 };
 
 }  // namespace hestia

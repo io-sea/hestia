@@ -69,7 +69,7 @@ TEST_CASE_METHOD(
     TestWebAppTestFixture, "Test Token auth middleware", "[web_app]")
 {
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
-    request.get_header().set_auth_token(m_test_user.token().value());
+    request.get_header().set_auth_token(m_test_user.tokens()[0].value());
 
     hestia::RequestContext request_context(request);
 

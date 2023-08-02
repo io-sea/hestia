@@ -35,10 +35,9 @@ class ObjectStoreClient {
     virtual ~ObjectStoreClient() = default;
 
     virtual void initialize(
-        const std::string& cache_path, const Dictionary& config)
+        const std::string& id, const std::string&, const Dictionary&)
     {
-        (void)cache_path;
-        (void)config;
+        m_id = id;
     }
 
     /**
@@ -69,6 +68,8 @@ class ObjectStoreClient {
         Stream* stream) const = 0;
 
     virtual void remove(const StorageObject& object) const = 0;
+
+    std::string m_id;
 
   private:
     void on_exception(

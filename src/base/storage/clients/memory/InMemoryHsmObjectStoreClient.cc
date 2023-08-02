@@ -27,16 +27,22 @@ InMemoryHsmObjectStoreClient::Ptr InMemoryHsmObjectStoreClient::create()
 }
 
 void InMemoryHsmObjectStoreClient::initialize(
-    const std::string& cache_path, const Dictionary& config_data)
+    const std::string& id,
+    const std::string& cache_path,
+    const Dictionary& config_data)
 {
     InMemoryObjectStoreClientConfig config;
     config.deserialize(config_data);
-    do_initialize(cache_path, config);
+    do_initialize(id, cache_path, config);
 }
 
 void InMemoryHsmObjectStoreClient::do_initialize(
-    const std::string&, const InMemoryObjectStoreClientConfig& config)
+    const std::string& id,
+    const std::string&,
+    const InMemoryObjectStoreClientConfig& config)
 {
+    m_id = id;
+
     for (const auto& tier_id : config.m_tier_ids.container()) {
         m_tiers[tier_id] = std::make_unique<InMemoryObjectStoreClient>();
     }

@@ -22,6 +22,7 @@ add_module(
         base/LockableModel.cc
         base/OwnableModel.cc
         base/StringAdapter.cc
+        base/RelationshipField.cc
     INTERNAL_INCLUDE_DIRS 
         base
     INTERNAL_DEPENDENCIES

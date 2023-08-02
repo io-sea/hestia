@@ -12,6 +12,8 @@ add_module(
         Dataset.h
         Namespace.h
         UserMetadata.h
+        ObjectStoreBackend.h 
+        HsmNode.h
     SOURCES
         HsmItem.cc
         HsmObject.cc
@@ -22,6 +24,8 @@ add_module(
         Dataset.cc
         Namespace.cc
         UserMetadata.cc
+        ObjectStoreBackend.cc
+        HsmNode.cc
     INTERNAL_DEPENDENCIES 
         common
         models

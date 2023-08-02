@@ -45,9 +45,9 @@ HsmObject& HsmObject::operator=(const HsmObject& other)
 void HsmObject::init()
 {
     register_scalar_field(&m_size);
-    register_map_field(&m_metadata);
+    register_one_to_one_proxy_field(&m_metadata);
     register_foreign_key_proxy_field(&m_tier_extents);
-    register_named_foreign_key_field(&m_dataset);
+    register_foreign_key_field(&m_dataset);
 }
 
 const Map& HsmObject::metadata() const

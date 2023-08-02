@@ -36,7 +36,7 @@ void CacheTestFixture::do_init(
 
 CacheTestFixture::~CacheTestFixture()
 {
-    std::filesystem::remove_all(get_cache_path());
+    // std::filesystem::remove_all(get_cache_path());
 }
 
 std::string CacheTestFixture::get_cache_path() const

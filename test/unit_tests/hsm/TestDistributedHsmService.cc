@@ -7,10 +7,10 @@
 
 #include "DistributedHsmService.h"
 
-#include "HsmObjectStoreClientBackend.h"
 #include "HsmObjectStoreClientManager.h"
 #include "HsmService.h"
 #include "HttpClient.h"
+#include "ObjectStoreBackend.h"
 #include "TypedCrudRequest.h"
 #include "UserService.h"
 
@@ -43,16 +43,16 @@ class DistributedHsmServiceTestFixture {
             hestia::ServiceConfig{}, m_kv_store_client.get(),
             m_object_store_client.get(), m_user_service.get());
 
-        hestia::HsmObjectStoreClientBackend object_store_backend(
-            hestia::HsmObjectStoreClientBackend::Type::MEMORY,
-            hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
+        hestia::ObjectStoreBackend object_store_backend(
+            hestia::ObjectStoreBackend::Type::MEMORY);
+        object_store_backend.add_tier_id("0000");
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
-        dist_hsm_config.m_self.add_backend(object_store_backend);
+        dist_hsm_config.m_is_server = true;
+        dist_hsm_config.m_backends.push_back(object_store_backend);
 
         m_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), &crud_backend,
-            m_user_service.get());
+            dist_hsm_config, std::move(hsm_service), m_user_service.get());
     }
 
     std::unique_ptr<hestia::KeyValueStoreClient> m_kv_store_client;
@@ -71,8 +71,9 @@ TEST_CASE_METHOD(
 
     hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
 
-    auto get_response = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::CrudRequest{query, {}});
+    auto get_response = m_dist_hsm_service->get_hsm_service()
+                            ->get_service(hestia::HsmItem::Type::NODE)
+                            ->make_request(hestia::CrudRequest{query, {}});
     REQUIRE(get_response->ok());
     REQUIRE(get_response->items().size() == 1);
 
@@ -80,16 +81,18 @@ TEST_CASE_METHOD(
     hestia::HsmNode node(id);
     node.set_host_address("127.0.0.1");
 
-    hestia::HsmObjectStoreClientBackend backend;
-    backend.set_identifier("my_backend");
-    node.add_backend(backend);
+    hestia::ObjectStoreBackend backend(
+        hestia::ObjectStoreBackend::Type::MEMORY);
 
-    auto put_response = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::TypedCrudRequest{hestia::CrudMethod::CREATE, node, {}});
+    auto put_response = m_dist_hsm_service->get_hsm_service()
+                            ->get_service(hestia::HsmItem::Type::NODE)
+                            ->make_request(hestia::TypedCrudRequest{
+                                hestia::CrudMethod::CREATE, node, {}});
     REQUIRE(put_response->ok());
 
-    auto get_response2 = m_dist_hsm_service->get_node_service()->make_request(
-        hestia::CrudRequest{query, {}});
+    auto get_response2 = m_dist_hsm_service->get_hsm_service()
+                             ->get_service(hestia::HsmItem::Type::NODE)
+                             ->make_request(hestia::CrudRequest{query, {}});
 
     REQUIRE(get_response2->ok());
     REQUIRE(get_response2->items().size() == 2);

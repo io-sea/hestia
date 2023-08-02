@@ -301,16 +301,18 @@ void HsmService::put_data(
         m_object_store->make_request(data_put_request, stream);
     CRUD_ERROR_CHECK(data_put_response);
 
+    const auto store_id = data_put_response->get_store_id();
+
     if (stream->waiting_for_content()) {
         auto stream_complete_func =
             [this, base_req = BaseRequest(req),
              working_obj_copy = *working_object, chosen_tier, working_extent,
-             user_id          = req.get_user_id(),
+             user_id          = req.get_user_id(), store_id,
              completion_func](StreamState stream_state) {
                 if (stream_state.ok()) {
                     this->on_put_data_complete(
                         base_req, user_id, working_obj_copy, chosen_tier,
-                        working_extent, completion_func);
+                        working_extent, store_id, completion_func);
                 }
                 else {
                     auto response = HsmActionResponse::create(base_req);
@@ -324,7 +326,7 @@ void HsmService::put_data(
     else {
         on_put_data_complete(
             req, req.get_user_id(), *working_object, chosen_tier,
-            working_extent, completion_func);
+            working_extent, store_id, completion_func);
     }
 }
 
@@ -334,12 +336,13 @@ void HsmService::on_put_data_complete(
     const HsmObject& working_object,
     uint8_t tier,
     const Extent& working_extent,
+    const std::string& store_id,
     dataIoCompletionFunc completion_func) const
 {
     TierExtents extent;
     bool extent_needs_creation{true};
     for (const auto& tier_extent : working_object.tiers()) {
-        if (tier_extent.tier() == tier) {
+        if (tier_extent.get_tier_id() == get_tier_id(tier)) {
             extent                = tier_extent;
             extent_needs_creation = false;
             break;
@@ -349,6 +352,7 @@ void HsmService::on_put_data_complete(
     if (extent_needs_creation) {
         extent.set_object_id(working_object.get_primary_key());
         extent.set_tier_id(get_tier_id(tier));
+        extent.set_backend_id(store_id);
     }
     extent.add_extent(working_extent);
 
@@ -410,8 +414,7 @@ void HsmService::get_data(
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_id()});
-
-    // ERROR_CHECK(object_response);
+    CRUD_ERROR_CHECK(get_response);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -490,10 +493,10 @@ HsmActionResponse::Ptr HsmService::move_data(
     TierExtents target_extent;
     bool extent_needs_creation{true};
     for (const auto& tier_extent : working_object->tiers()) {
-        if (tier_extent.tier() == req.source_tier()) {
+        if (tier_extent.get_tier_id() == get_tier_id(req.source_tier())) {
             source_extent = tier_extent;
         }
-        if (tier_extent.tier() == req.target_tier()) {
+        if (tier_extent.get_tier_id() == get_tier_id(req.target_tier())) {
             target_extent         = tier_extent;
             extent_needs_creation = false;
         }
@@ -501,7 +504,8 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     if (extent_needs_creation) {
         target_extent.set_object_id(working_object->get_primary_key());
-        target_extent.set_tier_id(get_tier_id(target_extent.tier()));
+        target_extent.set_tier_id(get_tier_id(req.target_tier()));
+        target_extent.set_backend_id(copy_data_response->get_store_id());
     }
     target_extent.add_extent(working_extent);
     source_extent.remove_extent(working_extent);
@@ -579,10 +583,10 @@ HsmActionResponse::Ptr HsmService::copy_data(
     TierExtents target_extent;
     bool extent_needs_creation{true};
     for (const auto& tier_extent : working_object->tiers()) {
-        if (tier_extent.tier() == req.source_tier()) {
+        if (tier_extent.get_tier_id() == get_tier_id(req.source_tier())) {
             source_extent = tier_extent;
         }
-        if (tier_extent.tier() == req.target_tier()) {
+        if (tier_extent.get_tier_id() == get_tier_id(req.target_tier())) {
             target_extent         = tier_extent;
             extent_needs_creation = false;
         }
@@ -590,7 +594,8 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     if (extent_needs_creation) {
         target_extent.set_object_id(working_object->get_primary_key());
-        target_extent.set_tier_id(get_tier_id(target_extent.tier()));
+        target_extent.set_tier_id(get_tier_id(req.target_tier()));
+        target_extent.set_backend_id(copy_data_response->get_store_id());
     }
     target_extent.add_extent(working_extent);
 
@@ -659,7 +664,7 @@ HsmActionResponse::Ptr HsmService::release_data(
 
     TierExtents extent;
     for (const auto& tier_extent : working_object->tiers()) {
-        if (tier_extent.tier() == req.source_tier()) {
+        if (tier_extent.get_tier_id() == get_tier_id(req.source_tier())) {
             extent = tier_extent;
             break;
         }

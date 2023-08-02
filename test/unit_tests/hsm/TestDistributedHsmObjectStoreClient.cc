@@ -103,8 +103,7 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         m_local_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), &crud_backend,
-            m_user_service.get());
+            dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
         m_local_object_store_client->do_initialize(
             {}, m_local_dist_hsm_service.get());
@@ -147,8 +146,6 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         for (std::size_t idx = 0; idx < 5; idx++) {
             hestia::StorageTier tier(idx);
-            tier.set_backend(hestia::InMemoryHsmObjectStoreClient::
-                                 get_registry_identifier());
             auto response = tier_service->make_request(hestia::TypedCrudRequest{
                 hestia::CrudMethod::CREATE,
                 tier,
@@ -165,8 +162,7 @@ class DistributedHsmObjectStoreClientTestFixture {
         dist_hsm_config.m_self.set_is_controller(true);
 
         m_controller_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), &crud_backend,
-            m_user_service.get());
+            dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
         m_controller_dist_hsm_service->register_self();
 
@@ -210,14 +206,12 @@ class DistributedHsmObjectStoreClientTestFixture {
         dist_hsm_config.m_self.set_is_controller(false);
         dist_hsm_config.m_self.set_host_address("12345");
 
-        hestia::HsmObjectStoreClientBackend object_store_backend(
-            hestia::HsmObjectStoreClientBackend::Type::MEMORY_HSM,
-            hestia::InMemoryHsmObjectStoreClient::get_registry_identifier());
-        dist_hsm_config.m_self.set_backends({object_store_backend});
+        hestia::ObjectStoreBackend object_store_backend(
+            hestia::ObjectStoreBackend::Type::MEMORY_HSM);
+        dist_hsm_config.m_backends = {object_store_backend};
 
         m_worker_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), &crud_backend,
-            m_user_service.get());
+            dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
         m_worker_dist_hsm_service->register_self();
 
