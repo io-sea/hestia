@@ -134,6 +134,38 @@ bool ObjectStoreBackend::is_mock() const
            || m_backend_type.get_value() == ObjectStoreBackend::Type::MOCK_S3;
 }
 
+std::string ObjectStoreBackend::get_plugin_path() const
+{
+    if (!m_plugin_path.get_value().empty()) {
+        return m_plugin_path.get_value();
+    }
+    else {
+        switch (m_backend_type.get_value()) {
+            case ObjectStoreBackend::Type::PHOBOS:
+                return "libhestia_phobos_plugin";
+            case ObjectStoreBackend::Type::MOTR:
+                return "libhestia_motr_plugin";
+            case ObjectStoreBackend::Type::S3:
+                return "libhestia_s3_plugin";
+            case ObjectStoreBackend::Type::MOCK_PHOBOS:
+                return "libhestia_mock_phobos_plugin";
+            case ObjectStoreBackend::Type::MOCK_MOTR:
+                return "libhestia_mock_motr_plugin";
+            case ObjectStoreBackend::Type::MOCK_S3:
+                return "libhestia_mock_s3_plugin";
+            case ObjectStoreBackend::Type::FILE:
+            case ObjectStoreBackend::Type::MEMORY:
+            case ObjectStoreBackend::Type::FILE_HSM:
+            case ObjectStoreBackend::Type::MEMORY_HSM:
+            case ObjectStoreBackend::Type::CUSTOM:
+            case ObjectStoreBackend::Type::CUSTOM_HSM:
+            case ObjectStoreBackend::Type::UNKNOWN:
+            default:
+                return {};
+        }
+    }
+}
+
 bool ObjectStoreBackend::is_built_in() const
 {
     return !is_plugin();

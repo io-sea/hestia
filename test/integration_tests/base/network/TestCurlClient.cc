@@ -166,7 +166,7 @@ TEST_CASE_METHOD(
     REQUIRE(reconstructed_response == content);
 }
 
-TEST_CASE_METHOD(TestCurlClientFixture, "Test Redirect", "[curl]")
+TEST_CASE_METHOD(TestCurlClientFixture, "Test Redirect", "[.curl]")
 {
     run_redirect_server();
 
@@ -188,7 +188,7 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Redirect", "[curl]")
 }
 
 TEST_CASE_METHOD(
-    TestCurlClientFixture, "Test Curl client - Large Body Redirect", "[curl]")
+    TestCurlClientFixture, "Test Curl client - Large Body Redirect", "[.curl]")
 {
     run_redirect_server();
 

@@ -1,0 +1,3 @@
+server:
+  web_app: 
+    interface: s3

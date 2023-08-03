@@ -1,71 +1,53 @@
-# Extended build guide
+# Developer Guide
 
-```
-# Make a directory to hold the temporary build files
-mkdir -p build
+This document covers more detailed Local Build and Test options for Hestia, as well as information on the CI.
 
-# Change directory to the build directory
-cd build
+- [Developer Guide](#developer-guide)
+- [Local build guide](#local-build-guide)
+  - [Testing](#testing)
+  - [Linting and Static Analysis](#linting-and-static-analysis)
+  - [Packaging](#packaging)
+  - [Object Store Plugins](#object-store-plugins)
+    - [Cortx-Motr](#cortx-motr)
+    - [Phobos](#phobos)
+- [Integration Testing](#integration-testing)
+  - [S3](#s3)
+    - [Minio](#minio)
+
+# Local build guide
+
+Hestia is built with a recent version of CMake (>=3.24). If you system provided package is too old CMake can be downloaded as a standalone executable, we have a script [here](/infra/scripts/bootstrap_cmake.sh) to help.
+
+
+```bash
+# Make a directory to hold the build files and change to it
+mkdir build; cd build
 
 # Configure the Hestia build using CMake
-cmake \
-    [options below] \
-    /path/to/hestia/project
+cmake /path/to/hestia/source
 
-cd /path/to/hestia/project
+# Build Hestia
+make build 
 
-# Build the Hestia project
-make -C build 
-
-# Install the Hestia executable
-make -C build install
+# Install Hestia 
+make install
 ```
-
-### Useful Options
-
-#### Setting Compile/Link Flags
-Option | Effect
------- | ------
-`-DCMAKE_CXX_COMPILER=...` | Set the C++ compiler.
-`-DCMAKE_CXX_FLAGS=...`    | Set the flags to pass to the C++ compiler. Overrides the default flags.
-`-DCMAKE_BUILD_TYPE=...`   | Set to `Release` or `Debug` for release or debug builds. Sets a number of flags by default.
-
-#### Enabling/Disabling Sections of Hestia
-Option | Effect
------- | ------
-`-DHESTIA_BUILD_TESTS=...`     | Set to `ON` to build Hestia tests and enable the `make test` target, or `OFF` to skip (Default `OFF`).
-`-DHESTIA_BUILD_DOCUMENTATION=...`     | Set to `ON` to generate doxygen documentation (Default `OFF`).
-
-#### Setting installation directories
-Option | Effect
------- | ------
-`-DCMAKE_INSTALL_PREFIX=...` | Set to the root install directory for the compiled libraries and programs.
-`-DCMAKE_INSTALL_BINDIR=...` | Set the install directory for the `hestia` executable. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `bin`).
-`-DCMAKE_INSTALL_LIBDIR=...` | Set the install directory for `hestia` libraries. Use a relative path to set the path relative to `${CMAKE_INSTALL_PREFIX}`. (Default `lib`).
 
 ## Testing
 
-Units test can be run with `make -C build test`, given `HESTIA_BUILD_TESTS` was set to `ON` during the build process. 
-To enable code coverage targets, the single CMake option of `CODE_COVERAGE` needs to be set to 'ON'. 
-It is described [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
+Units test can be run with `make test`, assuming `HESTIA_BUILD_TESTS` was set to `ON` during the build process. To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be set to `ON`, described further [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
 
-# Running Static Analysis
+## Linting and Static Analysis
 
-## Clang Format
+We use `clang-format` and `clang-tidy` for linting. To enable linting we need to build with a compile-commands database, the CMake option `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` provides this.
 
-### Dependencies
-
-#### Mac
-
-On Mac `brew` currently packages `clang-format` and `llvm` as version 16, which are newer than the CI version and have compatibility issues. If you have already installed that you can unlink it with `brew unlink clang-format llvm`. 
-
-For us, version 15 works. You can get `llvm@15` with `brew`:
+On Mac `brew` currently packages `clang-format` and `llvm` as version 16, which are newer than the CI version. This can lead to compatibility issues. For us, version 15 works:
 
 ```bash
 brew install llvm@15
 ```
 
-If you want to use this as your default compiler add the following to your `.zshrc`
+If you want to use this as your default compiler add the following to your `.zshrc`.
 
 ```bash
 echo 'export PATH="/opt/homebrew/opt/llvm@15/bin:$PATH"' >> ~/.zshrc
@@ -73,82 +55,77 @@ echo 'export LDFLAGS="-L/opt/homebrew/opt/llvm@15/lib"' >> ~/.zshrc
 echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm@15/include"' >> ~/.zshrc
 ```
 
-### Run
-
-The format script is `infra/scripts/run_format.sh`, which in turn runs `infra/scripts/format.sh`. In that file if you are on Mac you need to explicitly enter the path to `llvm@15` as the clang exe (something like: `/opt/homebrew/opt/llvm@15/bin/clang-format`). After that you can run:
-
-```bash
-infra/scripts/run_format.sh
-```
-
-which will update files with any needed changes.
-
-## Clang Tidy
-
-### Dependencies
-
-#### Mac
-
-It comes with `apple-clang`, but to install `llvm-15` which we use for CI, run 
-
-```bash
-brew install llvm@15
-```
-
-If you want to use this as your default compiler add the following to your `.zshrc`
-
-```bash
-echo 'export PATH="/opt/homebrew/opt/llvm@15/bin:$PATH"' >> ~/.zshrc
-echo 'export LDFLAGS="-L/opt/homebrew/opt/llvm@15/lib"' >> ~/.zshrc
-echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm@15/include"' >> ~/.zshrc
-```
-
-While not monitored, a more recent version of llvm should work for the linter.
-
-### Prepare build
-
-The build needs to be configured with the brew llvm version of `clang` rather than the `clang` packaged with Mac, you can point cmake to the chosen one by doing (e.g. on Mac):
+Before running CMake, the compiler should be explicitly set to this one also:
 
 ```bash
 export CC=/opt/homebrew/opt/llvm@15/bin/clang
 export CXX=/opt/homebrew/opt/llvm@15/bin/clang++
 ```
 
-Now you can run cmake in with a **clean** build directory (`$BUILD_DIR`) in the same shell session. It needs to exports its compile commands, so do:
+To do formatting you can run:
 
 ```bash
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $SOURCE_DIR
+infra/scripts/run_format.sh
 ```
 
-### Run
-
-You can do the following in the source directory, pointing to the `$BUILD_DIR`:
+and linting:
 
 ```bash
-infra/scripts/run_lint.sh $BUILD_DIR
+infra/scripts/run_lint.sh /path/to/build/dir
 ```
 
-# Building Plugins
+## Packaging
 
-## Cortx-Motr
+Hestia can be packaged with:
 
-To build the Cortx-Motr Hestia plugin, you will need motr installed. As they provide
-no official RPMs, we build our own for Rocky8, and store them in the [Gitlab package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33).
+```bash
+make package
+```
 
-For instructions on installing and building these beyond "download, untar, install with yum", see [this document](/doc/Markdown/motr_use.md).
+which will build an RPM and/or TGZ depending on the platform. The CMake Option `BUILD_SHARED_LIBS` should be `OFF` when building the package - otherwise library link dependencies will be incorrect.
 
-## Phobos
+## Object Store Plugins
 
-Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON`. Note, this 
-will silently fail on a Mac and not look for phobos. 
+Hestia provides interfaces to some object stores via Plugin - to support building the project on platforms not supported by those interfaces and for clean licensing.
+
+### Cortx-Motr
+
+To build the Cortx-Motr plugin, you will need `motr` installed. For convenience we provide RPMs for RHEL 8 in our [Gitlab package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33), with further build instructions [here](/doc/Markdown/motr_use.md).
+
+### Phobos
+
+Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON`. Note, this will silently fail on a Mac and not look for phobos. 
 
 To build Phobos, you need to install the following dependencies. 
 
-```
+```bash
 yum install -y autoconf automake libtool openssl-devel gcc-c++ git wget doxygen rpm-build python3-devel libxml2-devel libcurl-devel \
     make glib2-devel which jansson-devel libini_config-devel libattr-devel sg3_utils-devel protobuf-c-devel libpq-devel
 ```
 
-Then you can run the [following script](/infra/scripts/build_phobos.sh) 
-as `infra/scripts/build_phobos.sh infra/cmake/patches` to build Phobos
-(tested in rocky8 docker container).
+Then you can run the [following script](/infra/scripts/build_phobos.sh) as follows:
+
+```bash
+infra/scripts/build_phobos.sh infra/cmake/patches
+``` 
+
+to apply our patches and build Phobos.
+
+# Integration Testing
+
+This section documents some setup to help with testing Hestia against third-party applications.
+
+## S3
+
+### Minio
+
+Minio provides several object store interfaces. For us it is useful as an S3 server for running our S3 client against.
+
+```bash
+# https://min.io/download#/macos
+brew install minio/stable/minio
+MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password minio server /mnt/data --console-address ":9001"
+```
+
+From there you can log into the admin console, create access tokens, buckets and objects.
+

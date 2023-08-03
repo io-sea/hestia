@@ -47,7 +47,7 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     bool is_built_in() const;
 
-    std::string get_plugin_path() const { return m_plugin_path.get_value(); }
+    std::string get_plugin_path() const;
 
     const std::vector<std::string>& get_tier_names() const;
 
