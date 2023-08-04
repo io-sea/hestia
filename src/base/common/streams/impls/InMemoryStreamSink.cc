@@ -1,5 +1,7 @@
 #include "InMemoryStreamSink.h"
 
+#include "Logger.h"
+
 namespace hestia {
 InMemoryStreamSink::InMemoryStreamSink(const WriteableBufferView& buffer) :
     m_write_buffer(buffer)

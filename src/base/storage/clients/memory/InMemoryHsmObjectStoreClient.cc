@@ -2,10 +2,49 @@
 
 #include "RequestException.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
+
 #include <cassert>
+#include <stdexcept>
 
 namespace hestia {
+
+InMemoryObjectStoreClientConfig::InMemoryObjectStoreClientConfig() :
+    SerializeableWithFields("in_memory_hsm_object_store_client")
+{
+    init();
+}
+
+InMemoryObjectStoreClientConfig::InMemoryObjectStoreClientConfig(
+    const InMemoryObjectStoreClientConfig& other) :
+    SerializeableWithFields(other)
+{
+    *this = other;
+}
+
+InMemoryObjectStoreClientConfig& InMemoryObjectStoreClientConfig::operator=(
+    const InMemoryObjectStoreClientConfig& other)
+{
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_tier_ids = other.m_tier_ids;
+        init();
+    }
+    return *this;
+}
+
+void InMemoryObjectStoreClientConfig::init()
+{
+    register_sequence_field(&m_tier_ids);
+}
+
+void InMemoryObjectStoreClientConfig::set_tiers(
+    const std::vector<std::string>& tiers)
+{
+    m_tier_ids.get_container_as_writeable() = tiers;
+}
+
 InMemoryHsmObjectStoreClient::InMemoryHsmObjectStoreClient()
 {
     LOG_INFO("Created");
@@ -54,7 +93,9 @@ InMemoryObjectStoreClient* InMemoryHsmObjectStoreClient::get_tier_client(
     if (auto iter = m_tiers.find(std::to_string(tier)); iter != m_tiers.end()) {
         return iter->second.get();
     }
-    return nullptr;
+    throw std::runtime_error(
+        SOURCE_LOC() + " | Client not found for tier " + std::to_string(tier)
+        + " - it is missing from the input config.");
 }
 
 std::string InMemoryHsmObjectStoreClient::dump() const

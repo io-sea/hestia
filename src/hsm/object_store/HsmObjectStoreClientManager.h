@@ -32,8 +32,9 @@ class HsmObjectStoreClientManager {
 
     void setup_clients(
         const std::string& cache_path,
-        const std::vector<ObjectStoreBackend>& backends,
-        const std::vector<StorageTier>& tiers);
+        const std::string& node_id,
+        const std::vector<StorageTier>& tiers,
+        const std::vector<ObjectStoreBackend>& backends = {});
 
   private:
     bool has_backend(ObjectStoreBackend::Type backend) const;

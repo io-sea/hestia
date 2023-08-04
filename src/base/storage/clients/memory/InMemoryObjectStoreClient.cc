@@ -71,6 +71,7 @@ void InMemoryObjectStoreClient::get(
             const auto status = m_data.read(object.id(), extent, buffer);
             return {status.is_ok(), status.m_bytes_read};
         };
+        LOG_INFO("Getting data with size: " << extent.m_length);
         auto source = InMemoryStreamSource::create(source_func);
         source->set_size(extent.m_length);
         stream->set_source(std::move(source));
@@ -90,6 +91,7 @@ void InMemoryObjectStoreClient::put(
     }
 
     if (stream != nullptr) {
+        LOG_INFO("Have stream - setting sink");
         auto sink_func = [this, object, extent](
                              const ReadableBufferView& buffer,
                              std::size_t offset) -> InMemoryStreamSink::Status {
@@ -102,6 +104,7 @@ void InMemoryObjectStoreClient::put(
         sink->set_size(extent.m_length);
         stream->set_sink(std::move(sink));
     }
+    LOG_INFO("Finished client PUT: " + object.to_string())
 }
 
 void InMemoryObjectStoreClient::remove(const StorageObject& object) const

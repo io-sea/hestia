@@ -144,7 +144,12 @@ void from_json_internal(
         auto scalar_dict =
             std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
         scalar_dict->set_scalar(j);
-        dict.set_map_item(parent_key, std::move(scalar_dict));
+        if (parent_key.empty()) {
+            dict.add_sequence_item(std::move(scalar_dict));
+        }
+        else {
+            dict.set_map_item(parent_key, std::move(scalar_dict));
+        }
     }
 }
 

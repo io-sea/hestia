@@ -301,18 +301,30 @@ void HsmService::put_data(
         m_object_store->make_request(data_put_request, stream);
     CRUD_ERROR_CHECK(data_put_response);
 
+    const auto requires_db_update = !data_put_response->object_is_remote();
+    if (requires_db_update) {
+        LOG_INFO("Will update db from this node");
+    }
     const auto store_id = data_put_response->get_store_id();
 
     if (stream->waiting_for_content()) {
+        LOG_INFO("Stream waiting for content");
         auto stream_complete_func =
             [this, base_req = BaseRequest(req),
              working_obj_copy = *working_object, chosen_tier, working_extent,
-             user_id          = req.get_user_id(), store_id,
+             user_id          = req.get_user_id(), store_id, requires_db_update,
              completion_func](StreamState stream_state) {
+                LOG_INFO("Stream completed");
                 if (stream_state.ok()) {
-                    this->on_put_data_complete(
-                        base_req, user_id, working_obj_copy, chosen_tier,
-                        working_extent, store_id, completion_func);
+                    if (requires_db_update) {
+                        this->on_put_data_complete(
+                            base_req, user_id, working_obj_copy, chosen_tier,
+                            working_extent, store_id, completion_func);
+                    }
+                    else {
+                        auto response = HsmActionResponse::create(base_req);
+                        completion_func(std::move(response));
+                    }
                 }
                 else {
                     auto response = HsmActionResponse::create(base_req);
@@ -324,9 +336,15 @@ void HsmService::put_data(
         stream->set_completion_func(stream_complete_func);
     }
     else {
-        on_put_data_complete(
-            req, req.get_user_id(), *working_object, chosen_tier,
-            working_extent, store_id, completion_func);
+        if (requires_db_update) {
+            on_put_data_complete(
+                req, req.get_user_id(), *working_object, chosen_tier,
+                working_extent, store_id, completion_func);
+        }
+        else {
+            auto response = HsmActionResponse::create(req);
+            completion_func(std::move(response));
+        }
     }
 }
 
@@ -339,6 +357,7 @@ void HsmService::on_put_data_complete(
     const std::string& store_id,
     dataIoCompletionFunc completion_func) const
 {
+    LOG_INFO("Doing db update");
     TierExtents extent;
     bool extent_needs_creation{true};
     for (const auto& tier_extent : working_object.tiers()) {
@@ -424,7 +443,12 @@ void HsmService::get_data(
 
     auto working_extent = req.extent();
     if (working_extent.empty()) {
-        working_extent = {0, stream->get_source_size()};
+        const auto tier_id = get_tier_id(req.source_tier());
+        for (const auto& tier_extent : working_object->tiers()) {
+            if (tier_id == tier_extent.get_tier_id()) {
+                working_extent = {0, tier_extent.get_size()};
+            }
+        }
     }
     data_request.set_extent(working_extent);
 

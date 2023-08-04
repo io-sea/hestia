@@ -124,6 +124,24 @@ void DistributedHsmService::do_data_io_action(
             response->set_redirect_location(node_address);
             completion_func(std::move(response));
         }
+        else if (
+            request.get_action().get_action() == HsmAction::Action::GET_DATA) {
+            auto response = HsmActionResponse::create(request);
+
+            auto node_address = get_backend_address(request.source_tier());
+            if (node_address.empty()) {
+                const std::string message =
+                    "No backend found for tier: "
+                    + std::to_string(request.source_tier());
+                LOG_ERROR(message);
+                response->on_error(
+                    {HsmActionErrorCode::ITEM_NOT_FOUND, message});
+                completion_func(std::move(response));
+            }
+            LOG_INFO("Redirecting to: " + node_address);
+            response->set_redirect_location(node_address);
+            completion_func(std::move(response));
+        }
     }
     else {
         m_hsm_service->do_data_io_action(request, stream, completion_func);
@@ -191,6 +209,10 @@ void DistributedHsmService::register_backends()
         LOG_INFO(
             "Adding self id to backend: " << m_config.m_self.get_primary_key());
         backend.set_node_id(m_config.m_self.get_primary_key());
+
+        Dictionary dict;
+        backend.serialize(dict);
+
         auto response =
             backend_service->make_request(TypedCrudRequest<ObjectStoreBackend>(
                 CrudMethod::CREATE, backend,
@@ -218,7 +240,13 @@ void DistributedHsmService::register_backends()
 
     LOG_INFO(
         "Have: " << m_config.m_self.backends().size()
-                 << " backends after registration");
+                 << " backends after registration for node: "
+                 << m_config.m_self.get_primary_key());
+
+    if (!m_config.m_self.backends().empty()) {
+        Dictionary dict;
+        m_config.m_self.backends()[0].serialize(dict);
+    }
 }
 
 std::string DistributedHsmService::get_backend_address(

@@ -55,18 +55,37 @@ void DistributedHsmObjectStoreClient::do_initialize(
     std::vector<StorageTier> tiers;
     for (const auto& item : response->items()) {
         const auto tier = dynamic_cast<const StorageTier*>(item.get());
-        LOG_INFO("Adding tier: " << std::to_string(tier->id_uint()));
+        LOG_INFO(
+            "Adding tier: " << std::to_string(tier->id_uint())
+                            << " with id: " << tier->get_primary_key());
         tiers.emplace_back(*tier);
     }
 
     m_client_manager->setup_clients(
-        cache_path, m_hsm_service->get_backends(), tiers);
+        cache_path, m_hsm_service->get_self_config().m_self.get_primary_key(),
+        tiers, m_hsm_service->get_backends());
 }
 
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
     const HsmObjectStoreRequest& request, Stream* stream) const
 {
     auto response = HsmObjectStoreResponse::create(request, "");
+
+    if (m_http_client == nullptr) {
+        const std::string message =
+            "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    if (m_hsm_service->get_self_config().m_is_server) {
+        const std::string message =
+            "Attempting remote get from a Server-Worker. Backends have been misconfigured.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
 
     auto controller_endpoint =
         m_hsm_service->get_self_config().m_controller_address;
@@ -96,15 +115,6 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
             {HsmObjectStoreErrorCode::ERROR, get_response->message()});
         return response;
     }
-    if (stream != nullptr && stream->has_content()) {
-        auto stream_state = stream->flush();
-        if (!stream_state.ok()) {
-            response->on_error(
-                {HsmObjectStoreErrorCode::ERROR,
-                 "Failed in stream flush: " + stream_state.to_string()});
-            return response;
-        }
-    }
     return response;
 }
 
@@ -116,6 +126,14 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
     if (m_http_client == nullptr) {
         const std::string message =
             "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    if (m_hsm_service->get_self_config().m_is_server) {
+        const std::string message =
+            "Attempting remote put from a Server-Worker. Backends have been misconfigured.";
         LOG_ERROR(message);
         response->on_error({HsmObjectStoreErrorCode::ERROR, message});
         return response;
@@ -149,16 +167,17 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
             {HsmObjectStoreErrorCode::ERROR, put_response->message()});
         return response;
     }
-    if (stream != nullptr && stream->has_content()) {
-        auto stream_state = stream->flush();
-        if (!stream_state.ok()) {
-            response->on_error(
-                {HsmObjectStoreErrorCode::ERROR,
-                 "Failed in stream flush: " + stream_state.to_string()});
-            return response;
-        }
-    }
 
+    if (auto location = put_response->header().get_item("location");
+        !location.empty()) {
+        response->object().set_location(location);
+    }
+    else {
+        response->object().set_location(controller_endpoint);
+    }
+    LOG_INFO(
+        "Remote PUT complete ok to location: "
+        << response->object().get_location());
     return response;
 }
 
@@ -192,7 +211,9 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
         }
         else if (request.method() == HsmObjectStoreRequestMethod::GET) {
             LOG_INFO(
-                "Did not find client for source tier - creating remote get");
+                "Did not find client for source tier "
+                + std::to_string(request.source_tier())
+                + "- creating remote get");
             return do_remote_get(request, stream);
         }
     }

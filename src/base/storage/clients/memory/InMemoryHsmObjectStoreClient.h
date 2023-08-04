@@ -9,18 +9,20 @@
 namespace hestia {
 class InMemoryObjectStoreClientConfig : public SerializeableWithFields {
   public:
-    InMemoryObjectStoreClientConfig() :
-        SerializeableWithFields("in_memory_hsm_object_store_client")
-    {
-        register_sequence_field(&m_tier_ids);
-    }
+    InMemoryObjectStoreClientConfig();
 
-    void set_tiers(const std::vector<std::string>& tiers)
-    {
-        m_tier_ids.get_container_as_writeable() = tiers;
-    }
+    InMemoryObjectStoreClientConfig(
+        const InMemoryObjectStoreClientConfig& other);
+
+    void set_tiers(const std::vector<std::string>& tiers);
+
+    InMemoryObjectStoreClientConfig& operator=(
+        const InMemoryObjectStoreClientConfig& other);
 
     ScalarSequenceField<std::vector<std::string>> m_tier_ids{"tiers"};
+
+  private:
+    void init();
 };
 
 class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {

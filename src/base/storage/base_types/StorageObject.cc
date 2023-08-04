@@ -60,7 +60,7 @@ void StorageObject::set_metadata(
 
 void StorageObject::set_location(const std::string& address)
 {
-    m_location = address;
+    m_location.update_value(address);
 }
 
 bool StorageObject::empty() const

@@ -140,3 +140,39 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
     hestia::JsonUtils::to_json(ret_dict, json_rebuilt);
     REQUIRE(json_rebuilt == json);
 }
+
+TEST_CASE("Test JsonUtils - General dict", "[common]")
+{
+    std::string content = "{\"backend_type\":\"memory_hsm\", \
+        \"config\": \
+            {\"tiers\":[\"0\",\"1\",\"2\",\"3\",\"4\"], \
+            \"type\":\"in_memory_hsm_object_store_client\"}, \
+        \"creation_time\":\"1691138875711091\", \
+        \"id\":\"b1523f76-b5b2-f8e1-6be0-b9e20a19a070\", \
+        \"last_modified_time\":\"1691138875711091\", \
+        \"node\":{\"id\":\"4f3910f0-7438-57be-b6b7-bdb19f3eb703\"}, \
+        \"tier_names\":[\"0\",\"1\",\"2\",\"3\",\"4\"], \
+        \"tiers\":{\"ids\":[ \
+            \"43b09901-49b6-df83-3e79-a9f6f116a5f4\", \
+            \"95c26482-0b3d-7723-17c8-19a419d0bd1c\", \
+            \"0196124d-6c0d-bfdd-1a87-9d1d3959fea0\", \
+            \"421a4b4d-5a6a-e74c-b27c-18f0b23b58b5\", \
+            \"3513299b-c90a-6459-02b9-c1542668109a\"]}, \
+        \"type\":\"object_store_client\"}";
+
+    hestia::Dictionary dict;
+    hestia::JsonUtils::from_json(content, dict);
+
+    REQUIRE(!dict.is_empty());
+    REQUIRE(dict.has_map_item("config"));
+    REQUIRE(dict.get_map_item("config")->has_map_item("tiers"));
+    REQUIRE(
+        dict.get_map_item("config")->get_map_item("tiers")->get_type()
+        == hestia::Dictionary::Type::SEQUENCE);
+    REQUIRE(
+        dict.get_map_item("config")
+            ->get_map_item("tiers")
+            ->get_sequence()
+            .size()
+        == 5);
+}

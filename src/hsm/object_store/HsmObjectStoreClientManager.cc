@@ -121,22 +121,41 @@ bool HsmObjectStoreClientManager::have_same_client_types(
 
 void HsmObjectStoreClientManager::setup_clients(
     const std::string& cache_path,
-    const std::vector<ObjectStoreBackend>& local_backends,
-    const std::vector<StorageTier>& tiers)
+    const std::string& node_id,
+    const std::vector<StorageTier>& tiers,
+    const std::vector<ObjectStoreBackend>& local_backends)
 {
     LOG_INFO("Got: " << local_backends.size() << " backends");
 
     ObjectStoreBackend::Type_enum_string_converter converter;
     converter.init();
 
-    for (const auto& backend : local_backends) {
+    if (node_id.empty()) {
+        LOG_INFO("Setting up clients in standalone mode");
+        // Standlone client - use 'hardcoded' tiers and backends straight from
+        // config
+        for (const auto& backend : local_backends) {
+            for (const auto& tier : tiers) {
+                LOG_INFO("Tier id is: " << tier.get_primary_key());
+                for (const auto& id : backend.get_tier_ids()) {
+                    LOG_INFO("Backend tier id is: " << id);
+                    if (id == tier.get_primary_key()) {
+                        m_tier_backends[tier.id_uint()] = backend.get_backend();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else {
         for (const auto& tier : tiers) {
             LOG_INFO("Tier id is: " << tier.get_primary_key());
-            for (const auto& id : backend.get_tier_ids()) {
-                LOG_INFO("Backend tier id is: " << id);
-                if (id == tier.get_primary_key()) {
+            for (const auto& backend : tier.get_backends()) {
+                LOG_INFO("Backend id is: " << backend.get_primary_key());
+                if (backend.get_node_id() == node_id) {
+                    LOG_INFO(
+                        "Backend is on this node - registering it for tier");
                     m_tier_backends[tier.id_uint()] = backend.get_backend();
-                    break;
                 }
             }
         }
