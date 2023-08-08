@@ -84,6 +84,18 @@ make package
 
 which will build an RPM and/or TGZ depending on the platform. The CMake Option `BUILD_SHARED_LIBS` should be `OFF` when building the package - otherwise library link dependencies will be incorrect.
 
+Hestia's source code can be packaged as a source RPM/TGZ by running: 
+
+```bash
+make package_source
+```
+
+### Packaging on Gitlab
+
+On the [Pipeline Schedules](https://git.ichec.ie/io-sea-internal/hestia/-/pipeline_schedules), there are three pipelines available that will create a release from the most recent tagged version on master.
+
+These pipelines will automatically create an RPM, source RPM and TGZ of Hestia for Rocky8 and upload them to the Gitlab package registry. It will link these in the release page created.
+
 ## Object Store Plugins
 
 Hestia provides interfaces to some object stores via Plugin - to support building the project on platforms not supported by those interfaces and for clean licensing.
