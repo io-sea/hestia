@@ -331,9 +331,9 @@ Master_build:
       - ${CMAKE_BUILD_DIR}/*.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 week
-
+    
 Master_deploy_current_build:
-  <<: *default_nightly_job
+  <<: *master_build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
         && $CI_COMMIT_REF_NAME == "master"
@@ -345,7 +345,7 @@ Master_deploy_current_build:
     HESTIA_PROJECT_VERSION: "${CI_PATCH_RELEASE_VERSION}"
 
 Master_deploy_minor_build:
-  <<: *default_nightly_job
+  <<: *master_build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
         && $CI_COMMIT_REF_NAME == "master"
@@ -356,7 +356,7 @@ Master_deploy_minor_build:
     HESTIA_PROJECT_VERSION: "${CI_MINOR_RELEASE_VERSION}"
 
 Master_deploy_major_build:
-  <<: *default_nightly_job
+  <<: *master_build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
         && $CI_COMMIT_REF_NAME == "master"
