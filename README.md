@@ -22,10 +22,7 @@ Usage: hestia [OPTIONS] [SUBCOMMAND]
 
 Options:
   -h,--help                   Print this help message and exit
-  --verbose                   Print extra diagnostics to Stderr
   --version                   Print application version
-  -c,--config TEXT            Path to a Hestia config file.
-  -t,--token TEXT             User authentication token.
 
 Subcommands:
   dataset                     dataset commands
@@ -36,6 +33,8 @@ Subcommands:
   tier                        tier commands
   extent                      extent commands
   metadata                    metadata commands
+  node                        node commands
+  object_store_backend        object_store_backend commands
   user                        user commands
   hsm_node                    hsm_node commands
   server                      Run the Hestia Server
@@ -98,14 +97,10 @@ Hestia is supported on Linux (`RHEL 8` is the primary development platform) and 
 #### Required
 
 * A `c++17` compatible compiler
-* `cmake >= 3.24` ([script provided](infra/scripts/bootstrap_cmake.sh) to fetch if system version too old)
+* `cmake >= 3.24`. NOTE: This is currently newer than the system version in many distros. A [script is provided](infra/scripts/bootstrap_cmake.sh) to fetch it if the system version is too old.
+* `build-essential` or `Development Tools` equivalent build tooling - depending on the build platform.
 
-The following (including development headers):
-* `curl`
-* `libxml2`
-* `OpenSSL` 
-
-Several libraries are also automatically fetched if not found, using CMake `FetchContent`. See the [Hestia Developer Guide](./doc/DeveloperGuide.md) for details.
+Several libraries are automatically fetched if not found, using CMake `FetchContent`. See the [Hestia Developer Guide](./doc/DeveloperGuide.md) for details.
 
 ### Doing the build
 

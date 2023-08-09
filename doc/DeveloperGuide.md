@@ -7,6 +7,7 @@ This document covers more detailed Local Build and Test options for Hestia, as w
   - [Testing](#testing)
   - [Linting and Static Analysis](#linting-and-static-analysis)
   - [Packaging](#packaging)
+    - [Packaging on Gitlab](#packaging-on-gitlab)
   - [Object Store Plugins](#object-store-plugins)
     - [Cortx-Motr](#cortx-motr)
     - [Phobos](#phobos)
@@ -32,6 +33,26 @@ make build
 # Install Hestia 
 make install
 ```
+
+During the build several third-party libraries are downloaded and built if system versions are not found. You can also build against the system versions in most cases. The main dependencies are:
+
+* OpenSSL
+* cURL
+* nlohmann JSON
+* hiredis
+* yaml-cpp
+* spdlog
+* CLI11
+* Catch2
+
+Optional dependencies for Plugins are:
+
+* libxml2
+* libS3
+* Proxygen
+* CEA Phobos
+* Cortx Motr
+
 
 ## Testing
 

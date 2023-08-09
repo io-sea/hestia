@@ -13,7 +13,7 @@ add_module(
 )
 
 if(HESTIA_WITH_S3_CLIENT)
-    find_package(CURL QUIET)
+    fetch_curl()
     fetch_libxml2()
     fetch_libs3()
 

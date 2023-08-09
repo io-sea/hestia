@@ -70,7 +70,24 @@ macro(fetch_libxml2)
         SYSTEM
         FIND_PACKAGE_ARGS
         )
+        set(LIBXML2_WITH_LZMA OFF CACHE INTERNAL "")
+        set(LIBXML2_WITH_PYTHON OFF CACHE INTERNAL "")
+        set(LIBXML2_WITH_TESTS OFF CACHE INTERNAL "")
         FetchContent_MakeAvailable(LibXml2)
+endmacro()
+
+macro(fetch_curl)
+    FetchContent_Declare(
+        CURL
+        GIT_REPOSITORY https://github.com/curl/curl/
+        GIT_TAG 50490c0679fcd0e50bb3a8fbf2d9244845652cf0 # V8.2.1
+        SYSTEM
+        FIND_PACKAGE_ARGS
+    )
+    set(CURL_ENABLE_SSL OFF CACHE INTERNAL "")
+    set(BUILD_CURL_EXE OFF CACHE INTERNAL "")
+    set(HTTP_ONLY ON CACHE INTERNAL "")
+    FetchContent_MakeAvailable(CURL)
 endmacro()
 
 # https://github.com/redis/hiredis

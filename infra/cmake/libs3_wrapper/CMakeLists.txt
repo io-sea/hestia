@@ -4,6 +4,7 @@ project(libs3 VERSION 4.1 LANGUAGES C CXX)
 
 find_package(CURL QUIET)
 find_package(LibXml2 QUIET)
+find_package(OpenSSL QUIET)
 
 add_library(s3 STATIC
     src/bucket.c 
@@ -23,7 +24,11 @@ add_library(s3 STATIC
 
 target_compile_definitions(s3 PUBLIC LIBS3_VER_MAJOR="4" LIBS3_VER_MINOR="1")
 target_include_directories(s3 PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
-target_link_libraries(s3 PUBLIC CURL::libcurl LibXml2::LibXml2)
+target_link_libraries(s3 PUBLIC 
+    CURL::libcurl 
+    LibXml2::LibXml2
+    OpenSSL::SSL 
+    OpenSSL::Crypto)
 
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
