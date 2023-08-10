@@ -57,10 +57,13 @@ class MockHsmHttpClient : public hestia::HttpClient {
     {
         LOG_INFO("Got request to: " << request.get_path());
 
+        const auto stripped_path =
+            hestia::StringUtils::remove_prefix(request.get_path(), "http://");
+
         std::string working_address;
         MockHsmWebApp* working_app{nullptr};
         for (const auto& [address, app] : m_apps) {
-            if (hestia::StringUtils::starts_with(request.get_path(), address)) {
+            if (hestia::StringUtils::starts_with(stripped_path, address)) {
                 working_address = address;
                 working_app     = app.get();
             }
@@ -71,8 +74,8 @@ class MockHsmHttpClient : public hestia::HttpClient {
         }
 
         auto intercepted_request = request;
-        intercepted_request.overwrite_path(hestia::StringUtils::remove_prefix(
-            request.get_path(), working_address));
+        intercepted_request.overwrite_path(
+            hestia::StringUtils::remove_prefix(stripped_path, working_address));
 
         hestia::RequestContext request_context(intercepted_request);
         if (input_stream != nullptr
@@ -86,8 +89,13 @@ class MockHsmHttpClient : public hestia::HttpClient {
         working_app->on_request(&request_context);
 
         if (request_context.get_response()->code() == 307) {
-            working_address =
-                request_context.get_response()->header().get_item("location");
+            working_address = hestia::StringUtils::remove_prefix(
+                request_context.get_response()->header().get_item("location"),
+                "http://");
+            const auto& [start, rest] =
+                hestia::StringUtils::split_on_first(working_address, "/");
+            working_address = start;
+
             LOG_INFO("Got redirect to: " + working_address);
             auto app_iter = m_apps.find(working_address);
             working_app   = nullptr;

@@ -88,10 +88,6 @@ void KeyValueCrudClient::process_ids(
 
         auto base_item = m_adapters->get_model_factory()->create();
 
-        VecKeyValuePair index;
-        base_item->get_index_fields(index);
-        fields.m_index.push_back(index);
-
         if (!attributes.is_empty()) {
             if (attributes.get_type() == Dictionary::Type::MAP) {
                 base_item->deserialize(attributes);
@@ -103,6 +99,10 @@ void KeyValueCrudClient::process_ids(
                 base_item->deserialize(*attributes.get_sequence()[count]);
             }
         }
+
+        VecKeyValuePair index;
+        base_item->get_index_fields(index);
+        fields.m_index.push_back(index);
 
         process_fields(base_item.get(), fields);
 
@@ -127,14 +127,14 @@ void KeyValueCrudClient::process_empty(
 
     auto base_item = m_adapters->get_model_factory()->create();
 
-    VecKeyValuePair index;
-    base_item->get_index_fields(index);
-    fields.m_index.push_back(index);
-
     if (!attributes.is_empty()
         && attributes.get_type() == Dictionary::Type::MAP) {
         base_item->deserialize(attributes);
     }
+
+    VecKeyValuePair index;
+    base_item->get_index_fields(index);
+    fields.m_index.push_back(index);
 
     process_fields(base_item.get(), fields);
 
@@ -498,6 +498,8 @@ void KeyValueCrudClient::update_proxy_dicts(
          m_config.m_endpoint});
     error_check("SET LIST", proxy_response.get());
 
+    assert(string_get_keys.size() == foreign_key_proxy_keys.size());
+
     std::vector<std::string> proxy_value_keys;
     std::vector<std::size_t> proxy_value_offsets;
     for (std::size_t idx = 0; idx < string_get_keys.size(); idx++) {
@@ -508,6 +510,7 @@ void KeyValueCrudClient::update_proxy_dicts(
             else {
                 const auto offset = idx * fields.size() + jdx;
                 const auto type   = fields[jdx].first;
+                assert(offset < proxy_response->ids().size());
                 std::size_t count{0};
                 for (const auto& id : proxy_response->ids()[offset]) {
                     const auto key = m_config.m_prefix + ":" + type + ":" + id;
@@ -645,12 +648,11 @@ void KeyValueCrudClient::read(
         }
     }
 
-    if (request.get_query().is_id_output_format()) {
-        auto item_template = m_adapters->get_model_factory()->create();
-        response_dict->get_scalars(
-            item_template->get_primary_key_name(), crud_response.ids());
-    }
-    else if (request.get_query().is_attribute_output_format()) {
+    auto item_template = m_adapters->get_model_factory()->create();
+    response_dict->get_scalars(
+        item_template->get_primary_key_name(), crud_response.ids());
+
+    if (request.get_query().is_attribute_output_format()) {
         adapter->dict_to_string(
             *response_dict, crud_response.attributes().buffer());
     }

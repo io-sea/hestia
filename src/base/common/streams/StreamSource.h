@@ -25,5 +25,9 @@ class StreamSource : public StreamIO {
      */
     [[nodiscard]] virtual IOResult read(
         WriteableBufferView& buffer) noexcept = 0;
+
+    virtual bool supports_seek() const { return false; }
+
+    virtual void seek_to(std::size_t) {}
 };
 }  // namespace hestia

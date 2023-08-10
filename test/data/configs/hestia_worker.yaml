@@ -1,6 +1,6 @@
 server:
-  host_address: 127.0.0.1
-  host_port: 8090
+  host: 127.0.0.1
+  port: 8090
   web_app: hestia::HsmService
   backend: hestia::Basic
   controller: false
@@ -14,8 +14,8 @@ web_apps:
 server_backends:
   - identifier: hestia::Basic
 
-object_store_clients:
-  - identifier: hestia::FileHsmObjectStoreClient
-    source: built_in
-    type: hsm
-    root: hsm_object_store_worker0
+object_store_backends:
+  - backend_type: file_hsm
+    tier_names: ["0", "1", "2", "3", "4"]
+    config: 
+      root: hsm_object_store_worker0

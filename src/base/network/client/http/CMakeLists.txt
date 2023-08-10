@@ -5,21 +5,17 @@ set(OPTIONAL_SOURCES)
 set(OPTIONAL_DEPENDENCIES)
 set(OPTIONAL_INCLUDE_DIRS)
 
-find_package(CURL QUIET)
-if(${CURL_FOUND})
-    list(APPEND OPTIONAL_HEADERS 
-        curl/CurlClient.h
-        curl/CurlHandle.h
-        )
-    list(APPEND OPTIONAL_SOURCES 
-        curl/CurlClient.cc
-        curl/CurlHandle.cc
-        )
-    list(APPEND OPTIONAL_DEPENDENCIES CURL::libcurl)
-    list(APPEND OPTIONAL_INCLUDE_DIRS curl)
-else()
-    message(STATUS "Curl not found - skipping Curl http client.")
-endif()
+fetch_curl()
+list(APPEND OPTIONAL_HEADERS 
+    curl/CurlClient.h
+    curl/CurlHandle.h
+    )
+list(APPEND OPTIONAL_SOURCES 
+    curl/CurlClient.cc
+    curl/CurlHandle.cc
+    )
+list(APPEND OPTIONAL_DEPENDENCIES CURL::libcurl)
+list(APPEND OPTIONAL_INCLUDE_DIRS curl)
 
 add_module(
     MODULE_NAME http_client 

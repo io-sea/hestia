@@ -109,7 +109,8 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
 
                 if (!redirect_location.empty()) {
                     response = HttpResponse::create(307, "Found");
-                    response->header().set_item("Location", redirect_location);
+                    response->header().set_item(
+                        "Location", "http://" + redirect_location + m_path);
                 }
                 return response;
             }

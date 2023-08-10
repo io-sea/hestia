@@ -72,7 +72,7 @@ size_t CurlClient::on_write(void* buffer, size_t nmemb)
 size_t CurlClient::curl_read_data(
     char* buffer, size_t, size_t nmemb, void* userp)
 {
-    LOG_INFO("Callback fired: ");
+    LOG_INFO("Callback fired with size: " << nmemb);
     if (userp == nullptr) {
         return 0;
     }
@@ -117,6 +117,30 @@ size_t CurlClient::on_read(char* buffer, size_t nmemb)
     return num_to_read;
 }
 
+size_t CurlClient::curl_seek_data(void* userp, curl_off_t offset, int origin)
+{
+    LOG_INFO(
+        "Seek data fired with offset: " << offset << " and origin " << origin);
+    if (userp == nullptr) {
+        return 0;
+    }
+
+    auto client = reinterpret_cast<CurlClient*>(userp);
+    return client->on_seek(offset, origin);
+}
+
+size_t CurlClient::on_seek(curl_off_t offset, int)
+{
+    auto handle = m_handles[std::this_thread::get_id()];
+    if (handle->m_request_context.m_stream != nullptr) {
+        if (handle->m_request_context.m_stream->supports_source_seek()) {
+            handle->m_request_context.m_stream->seek_source_to(offset);
+            return 0;
+        }
+    }
+    return 2;
+}
+
 void CurlClient::setup_handle(CurlHandle* handle)
 {
     auto rc = curl_easy_setopt(
@@ -146,6 +170,21 @@ void CurlClient::setup_handle(CurlHandle* handle)
     if (rc != CURLE_OK) {
         throw std::runtime_error(
             "Failed to set curl readdata with error: "
+            + handle->m_error_buffer);
+    }
+
+    rc = curl_easy_setopt(
+        handle->m_handle, CURLOPT_SEEKFUNCTION, curl_seek_data);
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl seekfunction with error: "
+            + handle->m_error_buffer);
+    }
+
+    rc = curl_easy_setopt(handle->m_handle, CURLOPT_SEEKDATA, this);
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl seekdata with error: "
             + handle->m_error_buffer);
     }
 }

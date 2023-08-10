@@ -215,8 +215,8 @@ void CrudService::on_exception(
     CrudResponse* response,
     const RequestError<CrudErrorCode>& error) const
 {
-    const std::string msg =
-        "Error in " + request.method_as_string() + " method: ";
+    const std::string msg = SOURCE_LOC() + " | Error in "
+                            + request.method_as_string() + " method: ";
     LOG_ERROR(msg << error);
     response->on_error(error);
 }

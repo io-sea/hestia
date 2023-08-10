@@ -44,6 +44,18 @@ StreamState Stream::reset()
     return stream_state;
 }
 
+bool Stream::supports_source_seek() const
+{
+    return m_source && m_source->supports_seek();
+}
+
+void Stream::seek_source_to(std::size_t offset)
+{
+    if (supports_source_seek()) {
+        m_source->seek_to(offset);
+    }
+}
+
 void Stream::set_completion_func(completionFunc func)
 {
     m_completion_func = func;

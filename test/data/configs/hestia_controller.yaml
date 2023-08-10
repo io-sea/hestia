@@ -1,0 +1,12 @@
+server:
+  host_address: 127.0.0.1
+  host_port: 8080
+  controller: true
+  tag: controller0
+
+tiers:
+  - name: "0"
+  - name: "1"
+  - name: "2"
+  - name: "3"
+  - name: "4"

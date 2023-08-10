@@ -59,6 +59,11 @@ HestiaWebApp::HestiaWebApp(
         std::make_unique<CrudWebView>(
             hestia_service->get_hsm_service(), HsmNode::get_type()));
     m_url_router->add_pattern(
+        {api_prefix + HsmItem::object_store_backend_name + "s"},
+        std::make_unique<CrudWebView>(
+            hestia_service->get_hsm_service(),
+            HsmItem::object_store_backend_name));
+    m_url_router->add_pattern(
         {api_prefix + User::get_type() + "s"},
         std::make_unique<CrudWebView>(
             hestia_service->get_user_service(), User::get_type()));

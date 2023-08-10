@@ -16,6 +16,10 @@ class FileStreamSource : public StreamSource {
 
     [[nodiscard]] IOResult read(WriteableBufferView& buffer) noexcept override;
 
+    bool supports_seek() const override { return true; }
+
+    void seek_to(std::size_t offset) override;
+
   private:
     void close();
 

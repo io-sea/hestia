@@ -36,6 +36,8 @@ class UserService : public CrudService {
 
     const User& get_current_user() const;
 
+    CrudUserContext get_current_user_context() const;
+
     BaseResponse::Ptr load_or_create_default_user();
 
     CrudResponse::Ptr authenticate_user(

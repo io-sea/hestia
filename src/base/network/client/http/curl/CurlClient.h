@@ -46,6 +46,10 @@ class CurlClient : public HttpClient {
 
     size_t on_read(char* buffer, size_t nmemb);
 
+    static size_t curl_seek_data(void* userp, curl_off_t offset, int origin);
+
+    size_t on_seek(curl_off_t offset, int origin);
+
     void setup_handle(CurlHandle* handle);
 
     CurlClientConfig m_config;

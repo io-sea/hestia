@@ -164,7 +164,7 @@ void DistributedHsmService::register_self()
     CrudIdentifier id(m_config.m_self.name(), CrudIdentifier::Type::NAME);
     auto get_response = node_service->make_request(CrudRequest{
         CrudQuery(id, CrudQuery::OutputFormat::ITEM),
-        m_user_service->get_current_user().get_primary_key()});
+        m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to check for pre-existing tag: "
@@ -176,7 +176,7 @@ void DistributedHsmService::register_self()
 
         auto create_response = node_service->make_request(TypedCrudRequest{
             CrudMethod::CREATE, m_config.m_self,
-            m_user_service->get_current_user().get_primary_key(),
+            m_user_service->get_current_user_context(),
             CrudQuery::OutputFormat::ITEM});
         if (!create_response->ok()) {
             LOG_ERROR(
@@ -216,7 +216,7 @@ void DistributedHsmService::register_backends()
         auto response =
             backend_service->make_request(TypedCrudRequest<ObjectStoreBackend>(
                 CrudMethod::CREATE, backend,
-                m_user_service->get_current_user().get_primary_key()));
+                m_user_service->get_current_user_context()));
         if (!response->ok()) {
             throw std::runtime_error(
                 "Failed to register backend: "
@@ -230,7 +230,7 @@ void DistributedHsmService::register_backends()
     CrudIdentifier id(m_config.m_self.get_primary_key());
     auto get_response = node_service->make_request(CrudRequest{
         CrudQuery(id, CrudQuery::OutputFormat::ITEM),
-        m_user_service->get_current_user().get_primary_key()});
+        m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to update local node after registering backends: "
@@ -252,13 +252,12 @@ void DistributedHsmService::register_backends()
 std::string DistributedHsmService::get_backend_address(
     uint8_t tier_name, const std::string&) const
 {
-    const auto user_id = m_user_service->get_current_user().get_primary_key();
-
     auto tier_service = m_hsm_service->get_service(HsmItem::Type::TIER);
     CrudIdentifier tier_id(
         std::to_string(tier_name), CrudIdentifier::Type::NAME);
     auto get_response = tier_service->make_request(CrudRequest{
-        CrudQuery{tier_id, CrudQuery::OutputFormat::ITEM}, user_id});
+        CrudQuery{tier_id, CrudQuery::OutputFormat::ITEM},
+        m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to check for tier in backend search"
@@ -280,7 +279,8 @@ std::string DistributedHsmService::get_backend_address(
 
     auto node_service      = m_hsm_service->get_service(HsmItem::Type::NODE);
     auto node_get_response = node_service->make_request(CrudRequest{
-        CrudQuery{node_id, CrudQuery::OutputFormat::ITEM}, user_id});
+        CrudQuery{node_id, CrudQuery::OutputFormat::ITEM},
+        m_user_service->get_current_user_context()});
     if (!node_get_response->ok()) {
         throw std::runtime_error(
             "Failed to check for node in backend search"

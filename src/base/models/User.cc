@@ -1,5 +1,7 @@
 #include "User.h"
 
+#include <stdexcept>
+
 namespace hestia {
 
 User::User() : Model(s_model_type)
@@ -54,6 +56,15 @@ bool User::is_admin() const
 const std::string& User::password() const
 {
     return m_password.get_value();
+}
+
+const UserToken& User::get_first_token() const
+{
+    if (m_tokens.models().empty()) {
+        throw std::out_of_range(
+            "Attempted to access first token - but no tokens set");
+    }
+    return m_tokens.models()[0];
 }
 
 const std::vector<UserToken>& User::tokens() const

@@ -36,9 +36,9 @@ HttpResponse::Ptr CrudWebView::on_get(
                                     CrudQuery::OutputFormat::DICT :
                                     CrudQuery::OutputFormat::ATTRIBUTES;
         CrudQuery query(query_type);
+        bool has_id{false};
         if (!request.get_queries().empty()) {
             CrudIdentifier id;
-            bool has_id{false};
             if (const auto name_val = request.get_queries().get_item("name");
                 !name_val.empty()) {
                 id.set_name(name_val);
@@ -63,6 +63,10 @@ HttpResponse::Ptr CrudWebView::on_get(
         auto crud_response = m_service->make_request(
             CrudRequest(query, {user.get_primary_key(), token}), m_type_name);
 
+        if (has_id && !crud_response->found()) {
+            return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+        }
+
         if (request.get_header().has_html_accept_type()) {
             std::string json_body;
             JsonUtils::to_json(*crud_response->dict(), json_body, {}, 4);
@@ -79,6 +83,9 @@ HttpResponse::Ptr CrudWebView::on_get(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
         auto crud_response = m_service->make_request(
             CrudRequest{query, {user.get_primary_key(), token}}, m_type_name);
+        if (!crud_response->found()) {
+            return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+        }
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;
@@ -116,6 +123,11 @@ HttpResponse::Ptr CrudWebView::on_put(
                 attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES},
             m_type_name);
+    }
+    if (!crud_response->ok()) {
+        return HttpResponse::create(
+            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+             crud_response->get_error().to_string()});
     }
 
     response->set_body(crud_response->attributes().get_buffer());

@@ -84,8 +84,10 @@ void FileKeyValueStoreClient::set_list(
         const auto prefix = StringUtils::replace(key, ':', '_');
         const auto path   = m_store / (prefix + "_set.meta");
 
+        std::vector<std::string> values;
         if (!std::filesystem::exists(path)) {
-            return;
+            total_values.push_back(values);
+            continue;
         }
 
         File in_file(path);
@@ -93,7 +95,6 @@ void FileKeyValueStoreClient::set_list(
         in_file.read_lines(file_values);
 
         std::set<std::string> s(file_values.begin(), file_values.end());
-        std::vector<std::string> values;
         for (const auto& value : s) {
             values.push_back(value);
         }

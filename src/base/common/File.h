@@ -53,6 +53,8 @@ class File {
 
     std::pair<OpStatus, ReadState> read_lines(std::vector<std::string>& lines);
 
+    void seek_to(std::size_t offset);
+
     /**
      * Write to the file - the file is opened if needed
      * @param data buffer to write from

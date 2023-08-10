@@ -5,13 +5,15 @@
 namespace hestia {
 
 ObjectStoreBackend::ObjectStoreBackend() :
-    HsmItem(HsmItem::Type::OBJECT_STORE_BACKEND), Model(s_type)
+    HsmItem(HsmItem::Type::OBJECT_STORE_BACKEND),
+    Model(HsmItem::object_store_backend_name)
 {
     init();
 }
 
 ObjectStoreBackend::ObjectStoreBackend(ObjectStoreBackend::Type client_type) :
-    HsmItem(HsmItem::Type::OBJECT_STORE_BACKEND), Model(s_type)
+    HsmItem(HsmItem::Type::OBJECT_STORE_BACKEND),
+    Model(HsmItem::object_store_backend_name)
 {
     m_backend_type.update_value(client_type);
     init();
@@ -61,7 +63,7 @@ const Dictionary& ObjectStoreBackend::get_config() const
 
 std::string ObjectStoreBackend::get_type()
 {
-    return s_type;
+    return HsmItem::object_store_backend_name;
 }
 
 const std::string& ObjectStoreBackend::get_node_id() const

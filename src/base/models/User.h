@@ -20,6 +20,8 @@ class User : public Model {
 
     const std::vector<UserToken>& tokens() const;
 
+    const UserToken& get_first_token() const;
+
     void add_token(const UserToken& token);
 
     void set_password(const std::string& password);

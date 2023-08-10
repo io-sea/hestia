@@ -38,7 +38,7 @@ TEST_CASE("Test YamlUtils - hestia config", "[common]")
     REQUIRE(root);
     REQUIRE(root->get_type() == hestia::Dictionary::Type::MAP);
 
-    auto object_store_config = root->get_map_item("object_store_clients");
+    auto object_store_config = root->get_map_item("object_store_backends");
     REQUIRE(object_store_config);
     REQUIRE(
         object_store_config->get_type() == hestia::Dictionary::Type::SEQUENCE);
@@ -49,9 +49,9 @@ TEST_CASE("Test YamlUtils - hestia config", "[common]")
         == hestia::Dictionary::Type::MAP);
     REQUIRE(
         object_store_config->get_sequence()[0]
-            ->get_map_item("identifier")
+            ->get_map_item("type")
             ->get_scalar()
-        == "hestia::FileHsmObjectStoreClient");
+        == "file_hsm");
 }
 
 TEST_CASE("Yaml Utils Dict to Yaml", "[common]")
@@ -74,5 +74,6 @@ TEST_CASE("Yaml Utils Dict to Yaml", "[common]")
 
     hestia::YamlUtils::load(out_yaml_path.string(), out_dict);
     LOG_DEBUG("Serialized Event : " + out_yaml);
-    REQUIRE(dict == out_dict);  // Deep comparison
+    REQUIRE(
+        dict.to_string(true) == out_dict.to_string(true));  // Deep comparison
 }

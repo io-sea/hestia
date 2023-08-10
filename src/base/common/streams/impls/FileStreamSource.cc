@@ -16,6 +16,11 @@ FileStreamSource::~FileStreamSource()
     close();
 }
 
+void FileStreamSource::seek_to(std::size_t offset)
+{
+    m_file.seek_to(offset);
+}
+
 IOResult FileStreamSource::read(WriteableBufferView& buffer) noexcept
 {
     if (const auto state = get_state(); !state.ok()) {

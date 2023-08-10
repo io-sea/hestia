@@ -103,6 +103,10 @@ class Stream {
      */
     void set_source(StreamSource::Ptr source);
 
+    bool supports_source_seek() const;
+
+    void seek_source_to(std::size_t offset);
+
     /**
      * Sets the size of the source
      *

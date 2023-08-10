@@ -117,6 +117,15 @@ const User& UserService::get_current_user() const
     return m_current_user;
 }
 
+CrudUserContext UserService::get_current_user_context() const
+{
+    std::string token;
+    if (!m_current_user.tokens().empty()) {
+        token = m_current_user.get_first_token().value();
+    }
+    return {m_current_user.get_primary_key(), token};
+}
+
 BaseResponse::Ptr UserService::load_or_create_default_user()
 {
     const auto default_user_name = "hestia_default_user";

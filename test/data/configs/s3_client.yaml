@@ -1,2 +1,2 @@
-object_store_clients:
+object_store_backends:
   - backend_type: s3

@@ -26,7 +26,7 @@ HttpCrudClient::~HttpCrudClient() {}
 void HttpCrudClient::create(
     const CrudRequest& crud_request, CrudResponse& crud_response)
 {
-    auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
+    const auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
     HttpRequest request(path, HttpRequest::Method::PUT);
     request.get_header().set_content_type("application/json");
     request.get_header().set_auth_token(
@@ -43,8 +43,25 @@ void HttpCrudClient::create(
             {CrudErrorCode::ERROR,
              "Error in http client CREATE: " + response->to_string()});
     }
+
     get_adapter(CrudAttributes::Format::JSON)
         ->from_string({response->body()}, crud_response.items());
+
+    std::vector<std::string> ids;
+    for (const auto& item : crud_response.items()) {
+        ids.push_back({item->get_primary_key()});
+    }
+    crud_response.ids() = ids;
+
+    if (crud_request.get_query().is_attribute_output_format()) {
+        crud_response.attributes().buffer() = response->body();
+    }
+    else if (crud_request.get_query().is_dict_output_format()) {
+        auto content = std::make_unique<Dictionary>();
+        get_adapter(CrudAttributes::Format::JSON)
+            ->dict_from_string(response->body(), *content);
+        crud_response.set_dict(std::move(content));
+    }
 }
 
 void HttpCrudClient::read(
@@ -88,6 +105,8 @@ void HttpCrudClient::read(
 
         HttpRequest request(path, HttpRequest::Method::GET);
         request.get_header().set_content_type("application/json");
+        request.get_header().set_auth_token(
+            crud_request.get_user_context().m_token);
 
         const auto response = m_client->make_request(request);
 

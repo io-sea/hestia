@@ -68,7 +68,6 @@ class ObjectStoreBackend : public HsmItem, public Model {
   private:
     void init();
 
-    static constexpr const char s_type[]{"object_store_client"};
     EnumField<
         ObjectStoreBackend::Type,
         ObjectStoreBackend::Type_enum_string_converter>
