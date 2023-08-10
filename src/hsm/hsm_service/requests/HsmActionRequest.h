@@ -1,8 +1,8 @@
 #pragma once
 
+#include "CrudRequest.h"
 #include "Extent.h"
 #include "HsmAction.h"
-#include "Request.h"
 
 #include <memory>
 
@@ -14,13 +14,14 @@ class HsmActionRequest :
   public:
     using Ptr = std::unique_ptr<HsmActionRequest>;
 
-    HsmActionRequest(const HsmAction& action, const std::string& user_id);
+    HsmActionRequest(
+        const HsmAction& action, const CrudUserContext& user_context);
 
     Extent extent() const;
 
     const HsmAction& get_action() const;
 
-    const std::string& get_user_id() const;
+    const CrudUserContext& get_user_context() const;
 
     std::string method_as_string() const override;
 
@@ -37,7 +38,7 @@ class HsmActionRequest :
     HsmItem::Type get_subject() const { return m_action.get_subject(); }
 
   private:
-    std::string m_user_id;
+    CrudUserContext m_user_context;
     HsmAction m_action;
 };
 }  // namespace hestia

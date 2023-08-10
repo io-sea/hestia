@@ -103,7 +103,9 @@ OpStatus MockHestiaClient::do_data_movement_action(HsmAction& action)
 }
 
 void MockHestiaClient::do_data_io_action(
-    HsmAction& action, Stream* stream, dataIoCompletionFunc completion_func)
+    const HsmAction& action,
+    Stream* stream,
+    dataIoCompletionFunc completion_func)
 {
     if (action.get_action() == HsmAction::Action::PUT_DATA) {
         auto sink_func = [this, action](

@@ -8,6 +8,7 @@
 #include "HsmObject.h"
 #include "HsmServicesFactory.h"
 
+#include "ErrorUtils.h"
 #include "Stream.h"
 
 #include <unordered_map>
@@ -85,14 +86,21 @@ class HsmService : public CrudService {
 
     void on_put_data_complete(
         const BaseRequest& req,
-        const std::string& user_id,
+        const CrudUserContext& user_context,
         const HsmObject& working_object,
         uint8_t tier,
         const Extent& extent,
         const std::string& store_id,
+        const HsmAction& working_action,
         dataIoCompletionFunc completion_func) const;
+
     void on_get_data_complete(
-        const BaseRequest& req, dataIoCompletionFunc completion_func) const;
+        const BaseRequest& req,
+        const HsmAction& working_action,
+        dataIoCompletionFunc completion_func) const;
+
+    CrudResponsePtr get_or_create_action(
+        const HsmActionRequest& req, HsmAction& working_action) const;
 
     const std::string& get_tier_id(uint8_t tier) const;
 

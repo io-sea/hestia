@@ -17,6 +17,10 @@ class HestiaWebPages {
                 + get_url(HsmItem::dataset_name) + "</a></p>";
         body += "<p><a href=\"" + get_url(HsmItem::tier_name) + "\">"
                 + get_url(HsmItem::tier_name) + "</a></p>";
+        body += "<p><a href=\"" + get_url(HsmItem::hsm_action_name) + "\">"
+                + get_url(HsmItem::hsm_action_name) + "</a></p>";
+        body += "<p><a href=\"" + get_url(HsmItem::tier_extents_name) + "\">"
+                + get_url(HsmItem::tier_extents_name) + "</a></p>";
         body += "<p><a href=\"" + get_url(HsmItem::object_store_backend_name)
                 + "\">" + get_url(HsmItem::object_store_backend_name)
                 + "</a></p>";

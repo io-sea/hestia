@@ -82,6 +82,16 @@ void ObjectStoreBackend::set_tier_names(
     m_tier_names.get_container_as_writeable() = tier_names;
 }
 
+bool ObjectStoreBackend::has_tier_name(const std::string& name) const
+{
+    for (const auto& tier_name : m_tier_names.container()) {
+        if (tier_name == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 const std::vector<std::string>& ObjectStoreBackend::get_tier_names() const
 {
     return m_tier_names.container();

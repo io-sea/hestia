@@ -30,7 +30,7 @@ class HestiaHsmActionView : public CrudWebView {
 
   private:
     HttpResponse::Ptr do_hsm_action(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request, const Map& action_map, const User& user);
 
     DistributedHsmService* m_hestia_service{nullptr};
 };

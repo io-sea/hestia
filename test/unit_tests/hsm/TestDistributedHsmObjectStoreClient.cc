@@ -4,6 +4,7 @@
 
 #include "DistributedHsmService.h"
 
+#include "ApplicationMiddleware.h"
 #include "DataPlacementEngine.h"
 #include "HestiaHsmActionView.h"
 #include "PingView.h"
@@ -25,6 +26,20 @@
 
 #include <iostream>
 
+class MockHsmMiddleware : public hestia::ApplicationMiddleware {
+  public:
+    hestia::HttpResponse::Ptr call(
+        const hestia::HttpRequest& request,
+        hestia::User& user,
+        hestia::responseProviderFunc func)
+    {
+        user = m_test_user;
+        return func(request);
+    }
+
+    hestia::User m_test_user;
+};
+
 class MockHsmWebApp : public hestia::WebApp {
   public:
     MockHsmWebApp(hestia::DistributedHsmService* hsm_service) :
@@ -40,6 +55,11 @@ class MockHsmWebApp : public hestia::WebApp {
 
         m_url_router->add_pattern(
             {api_prefix + "ping"}, std::make_unique<hestia::PingView>());
+
+        auto middleware = std::make_unique<MockHsmMiddleware>();
+        middleware->m_test_user =
+            hsm_service->get_user_service()->get_current_user();
+        add_middleware(std::move(middleware));
     }
 };
 

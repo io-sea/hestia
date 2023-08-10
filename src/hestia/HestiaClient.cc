@@ -141,22 +141,10 @@ OpStatus HestiaClient::create(
         service = m_hsm_service;
     }
     if (service != nullptr) {
-        const auto current_user_id =
-            m_user_service->get_current_user().get_primary_key();
-
-        std::string current_user_token;
-        if (!m_user_service->get_current_user().tokens().empty()) {
-            current_user_token =
-                m_user_service->get_current_user().tokens()[0].value();
-        }
-
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::CREATE,
-                {current_user_id, current_user_token},
-                ids,
-                attributes,
-                CrudQuery::OutputFormat::ATTRIBUTES,
+                CrudMethod::CREATE, m_user_service->get_current_user_context(),
+                ids, attributes, CrudQuery::OutputFormat::ATTRIBUTES,
                 output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "CREATE");
@@ -187,19 +175,11 @@ OpStatus HestiaClient::update(
         service = m_hsm_service;
     }
     if (service != nullptr) {
-        const auto current_user_id =
-            m_user_service->get_current_user().get_primary_key();
-        std::string current_user_token;
-        if (!m_user_service->get_current_user().tokens().empty()) {
-            current_user_token =
-                m_user_service->get_current_user().tokens()[0].value();
-        }
-
         const auto response = service->make_request(
             CrudRequest{
-                CrudMethod::UPDATE,
-                CrudUserContext{current_user_id, current_user_token}, ids,
-                attributes, CrudQuery::OutputFormat::ATTRIBUTES, output_format},
+                CrudMethod::UPDATE, m_user_service->get_current_user_context(),
+                ids, attributes, CrudQuery::OutputFormat::ATTRIBUTES,
+                output_format},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "UPDATE");
         attributes = response->attributes();
@@ -221,10 +201,10 @@ OpStatus HestiaClient::remove(
         service = m_hsm_service;
     }
     if (service != nullptr) {
-        const auto current_user_id =
-            m_user_service->get_current_user().get_primary_key();
         const auto response = service->make_request(
-            CrudRequest{CrudMethod::REMOVE, current_user_id, ids},
+            CrudRequest{
+                CrudMethod::REMOVE, m_user_service->get_current_user_context(),
+                ids},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "REMOVE");
     }
@@ -246,17 +226,9 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
     }
 
     if (service != nullptr) {
-        const auto current_user_id =
-            m_user_service->get_current_user().get_primary_key();
-        std::string current_user_token;
-        if (!m_user_service->get_current_user().tokens().empty()) {
-            current_user_token =
-                m_user_service->get_current_user().tokens()[0].value();
-        }
-
         CrudResponsePtr response;
         response = service->make_request(
-            CrudRequest{query, {current_user_id, current_user_token}},
+            CrudRequest{query, m_user_service->get_current_user_context()},
             HsmItem::to_name(subject.m_hsm_type));
         ERROR_CHECK(response, "READ");
         query.attributes() = response->attributes();
@@ -276,7 +248,9 @@ std::string HestiaClient::get_runtime_info() const
 }
 
 void HestiaClient::do_data_io_action(
-    HsmAction& action, Stream* stream, dataIoCompletionFunc completion_func)
+    const HsmAction& action,
+    Stream* stream,
+    dataIoCompletionFunc completion_func)
 {
     clear_last_error();
 
@@ -286,27 +260,24 @@ void HestiaClient::do_data_io_action(
                 set_last_error(
                     "Error in data io operation: "
                     + response->get_error().to_string());
-                completion_func(rc::error(response->get_error()), {});
+                completion_func(
+                    rc::error(response->get_error()), response->get_action());
             }
             else {
-                completion_func({}, {});
+                completion_func({}, response->get_action());
             }
         };
-    const auto current_user_id =
-        m_user_service->get_current_user().get_primary_key();
     m_hsm_service->do_data_io_action(
-        HsmActionRequest{action, current_user_id}, stream, hsm_completion_func);
+        HsmActionRequest{action, m_user_service->get_current_user_context()},
+        stream, hsm_completion_func);
 }
 
 OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
 {
     clear_last_error();
 
-    const auto current_user_id =
-        m_user_service->get_current_user().get_primary_key();
-
-    if (const auto response =
-            m_hsm_service->make_request({action, current_user_id});
+    if (const auto response = m_hsm_service->make_request(
+            {action, m_user_service->get_current_user_context()});
         !response->ok()) {
         set_last_error(
             "Error in data movement operation: "

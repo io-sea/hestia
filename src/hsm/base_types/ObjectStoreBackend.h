@@ -51,6 +51,8 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     const std::vector<std::string>& get_tier_names() const;
 
+    bool has_tier_name(const std::string& name) const;
+
     std::string to_string() const;
 
     void set_config(const Dictionary& dict) { m_config.update_value(dict); }

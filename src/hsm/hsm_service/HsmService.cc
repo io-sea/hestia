@@ -26,21 +26,22 @@
 
 #include <iostream>
 
-#define ERROR_CHECK(response)                                                  \
+#define ERROR_CHECK(response, working_action)                                  \
     if (!response->ok()) {                                                     \
-        return hestia::HsmActionResponse::create(req, std::move(response));    \
+        return hestia::HsmActionResponse::create(                              \
+            req, working_action, std::move(response));                         \
     }
 
-#define CRUD_ERROR_CHECK(response)                                             \
+#define CRUD_ERROR_CHECK(response, working_action)                             \
     if (!response->ok()) {                                                     \
-        auto response = HsmActionResponse::create(req);                        \
+        auto response = HsmActionResponse::create(req, working_action);        \
         response->on_error(                                                    \
             {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
     }
 
 
-#define ON_ERROR(code, message)                                                \
-    auto response = hestia::HsmActionResponse::create(req);                    \
+#define ON_ERROR(code, message, working_action)                                \
+    auto response = hestia::HsmActionResponse::create(req, working_action);    \
     response->on_error({hestia::HsmActionErrorCode::code, msg});               \
     return response;
 
@@ -251,6 +252,27 @@ CrudResponse::Ptr HsmService::crud_identify(
     return response;
 }
 
+CrudResponsePtr HsmService::get_or_create_action(
+    const HsmActionRequest& req, HsmAction& working_action) const
+{
+    if (req.get_action().get_primary_key().empty()) {
+        auto action_service = m_services->get_service(HsmItem::Type::ACTION);
+        HsmAction working_action = req.get_action();
+        auto action_response =
+            action_service->make_request(TypedCrudRequest<HsmAction>{
+                CrudMethod::CREATE, req.get_action(), req.get_user_context(),
+                CrudQuery::OutputFormat::ITEM});
+        if (!action_response->ok()) {
+            return action_response;
+        }
+        working_action = *action_response->get_item_as<HsmAction>();
+    }
+    else {
+        working_action = req.get_action();
+    }
+    return CrudResponse::create(req, HsmItem::hsm_action_name);
+}
+
 void HsmService::put_data(
     const HsmActionRequest& req,
     hestia::Stream* stream,
@@ -262,16 +284,19 @@ void HsmService::put_data(
         "Starting HSMService PUT DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
-    auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
+    HsmAction working_action;
+    auto action_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action);
 
-    auto get_response = object_service->make_request(CrudRequest{
+    auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
+    auto get_response   = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
-        req.get_user_id()});
-    CRUD_ERROR_CHECK(get_response);
+        req.get_user_context()});
+    CRUD_ERROR_CHECK(get_response, working_action);
 
     if (!get_response->found()) {
-        auto response = HsmActionResponse::create(req);
+        auto response = HsmActionResponse::create(req, working_action);
         response->on_error(
             {HsmActionErrorCode::ITEM_NOT_FOUND,
              SOURCE_LOC() + " | Object " + req.get_action().get_subject_key()
@@ -299,7 +324,7 @@ void HsmService::put_data(
 
     auto data_put_response =
         m_object_store->make_request(data_put_request, stream);
-    CRUD_ERROR_CHECK(data_put_response);
+    CRUD_ERROR_CHECK(data_put_response, working_action);
 
     const auto requires_db_update = !data_put_response->object_is_remote();
     if (requires_db_update) {
@@ -312,22 +337,26 @@ void HsmService::put_data(
         auto stream_complete_func =
             [this, base_req = BaseRequest(req),
              working_obj_copy = *working_object, chosen_tier, working_extent,
-             user_id          = req.get_user_id(), store_id, requires_db_update,
+             user_context     = req.get_user_context(), store_id,
+             requires_db_update, working_action,
              completion_func](StreamState stream_state) {
                 LOG_INFO("Stream completed");
                 if (stream_state.ok()) {
                     if (requires_db_update) {
                         this->on_put_data_complete(
-                            base_req, user_id, working_obj_copy, chosen_tier,
-                            working_extent, store_id, completion_func);
+                            base_req, user_context, working_obj_copy,
+                            chosen_tier, working_extent, store_id,
+                            working_action, completion_func);
                     }
                     else {
-                        auto response = HsmActionResponse::create(base_req);
+                        auto response =
+                            HsmActionResponse::create(base_req, working_action);
                         completion_func(std::move(response));
                     }
                 }
                 else {
-                    auto response = HsmActionResponse::create(base_req);
+                    auto response =
+                        HsmActionResponse::create(base_req, working_action);
                     response->on_error(
                         {HsmActionErrorCode::ERROR, stream_state.to_string()});
                     completion_func(std::move(response));
@@ -338,11 +367,11 @@ void HsmService::put_data(
     else {
         if (requires_db_update) {
             on_put_data_complete(
-                req, req.get_user_id(), *working_object, chosen_tier,
-                working_extent, store_id, completion_func);
+                req, req.get_user_context(), *working_object, chosen_tier,
+                working_extent, store_id, working_action, completion_func);
         }
         else {
-            auto response = HsmActionResponse::create(req);
+            auto response = HsmActionResponse::create(req, working_action);
             completion_func(std::move(response));
         }
     }
@@ -350,11 +379,12 @@ void HsmService::put_data(
 
 void HsmService::on_put_data_complete(
     const BaseRequest& req,
-    const std::string& user_id,
+    const CrudUserContext& user_context,
     const HsmObject& working_object,
     uint8_t tier,
     const Extent& working_extent,
     const std::string& store_id,
+    const HsmAction& working_action,
     dataIoCompletionFunc completion_func) const
 {
     LOG_INFO("Doing db update");
@@ -378,16 +408,18 @@ void HsmService::on_put_data_complete(
     CrudResponsePtr extent_put_response;
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent_needs_creation) {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::CREATE, extent, user_id));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::CREATE, extent, user_context));
     }
     else {
-        extent_put_response = extent_service->make_request(
-            TypedCrudRequest<TierExtents>(CrudMethod::UPDATE, extent, user_id));
+        extent_put_response =
+            extent_service->make_request(TypedCrudRequest<TierExtents>(
+                CrudMethod::UPDATE, extent, user_context));
     }
 
     if (!extent_put_response->ok()) {
-        auto response = HsmActionResponse::create(req);
+        auto response = HsmActionResponse::create(req, working_action);
         response->on_error(
             {HsmActionErrorCode::ERROR,
              extent_put_response->get_error().to_string()});
@@ -398,8 +430,8 @@ void HsmService::on_put_data_complete(
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, working_object, user_id});
-    auto response = HsmActionResponse::create(req);
+            CrudMethod::UPDATE, working_object, user_context});
+    auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService PUT");
 
@@ -427,13 +459,17 @@ void HsmService::get_data(
         "Starting HSMService GET DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
+    HsmAction working_action;
+    auto action_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action);
+
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
     auto get_response = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
-        req.get_user_id()});
-    CRUD_ERROR_CHECK(get_response);
+        req.get_user_context()});
+    CRUD_ERROR_CHECK(get_response, working_action);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -457,13 +493,15 @@ void HsmService::get_data(
 
     if (stream->waiting_for_content()) {
         auto stream_complete_func =
-            [this, base_req = BaseRequest(req),
+            [this, base_req = BaseRequest(req), working_action,
              completion_func](StreamState stream_state) {
                 if (stream_state.ok()) {
-                    this->on_get_data_complete(base_req, completion_func);
+                    this->on_get_data_complete(
+                        base_req, working_action, completion_func);
                 }
                 else {
-                    auto response = HsmActionResponse::create(base_req);
+                    auto response =
+                        HsmActionResponse::create(base_req, working_action);
                     response->on_error(
                         {HsmActionErrorCode::ERROR, stream_state.to_string()});
                     completion_func(std::move(response));
@@ -471,15 +509,17 @@ void HsmService::get_data(
             };
     }
     else {
-        on_get_data_complete(req, completion_func);
+        on_get_data_complete(req, working_action, completion_func);
     }
 }
 
 void HsmService::on_get_data_complete(
-    const BaseRequest& req, dataIoCompletionFunc completion_func) const
+    const BaseRequest& req,
+    const HsmAction& working_action,
+    dataIoCompletionFunc completion_func) const
 {
     LOG_INFO("Finished HSMService GET");
-    completion_func(HsmActionResponse::create(req));
+    completion_func(HsmActionResponse::create(req, working_action));
 }
 
 HsmActionResponse::Ptr HsmService::move_data(
@@ -489,13 +529,17 @@ HsmActionResponse::Ptr HsmService::move_data(
         "Starting HSMService MOVE DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
+    HsmAction working_action;
+    auto action_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action);
+
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
     auto get_response = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
-        req.get_user_id()});
-    CRUD_ERROR_CHECK(get_response);
+        req.get_user_context()});
+    CRUD_ERROR_CHECK(get_response, working_action);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -511,7 +555,7 @@ HsmActionResponse::Ptr HsmService::move_data(
     copy_data_request.set_target_tier(req.target_tier());
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
-    ERROR_CHECK(copy_data_response);
+    ERROR_CHECK(copy_data_response, working_action);
 
     TierExtents source_extent;
     TierExtents target_extent;
@@ -539,25 +583,25 @@ HsmActionResponse::Ptr HsmService::move_data(
     if (extent_needs_creation) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::CREATE, target_extent, req.get_user_id()));
+                CrudMethod::CREATE, target_extent, req.get_user_context()));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, target_extent, req.get_user_id()));
+                CrudMethod::UPDATE, target_extent, req.get_user_context()));
     }
 
-    CRUD_ERROR_CHECK(extent_put_response);
+    CRUD_ERROR_CHECK(extent_put_response, working_action);
     extent_put_response =
         extent_service->make_request(TypedCrudRequest<TierExtents>(
-            CrudMethod::UPDATE, source_extent, req.get_user_id()));
-    CRUD_ERROR_CHECK(extent_put_response);
+            CrudMethod::UPDATE, source_extent, req.get_user_context()));
+    CRUD_ERROR_CHECK(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_id()});
-    CRUD_ERROR_CHECK(object_put_response);
-    auto response = HsmActionResponse::create(req);
+            CrudMethod::UPDATE, *working_object, req.get_user_context()});
+    CRUD_ERROR_CHECK(object_put_response, working_action);
+    auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService MOVE DATA");
 
@@ -581,12 +625,16 @@ HsmActionResponse::Ptr HsmService::copy_data(
         "Starting HSMService COPY DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
+    HsmAction working_action;
+    auto action_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action);
+
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
-        req.get_user_id()});
-    CRUD_ERROR_CHECK(get_response);
+        req.get_user_context()});
+    CRUD_ERROR_CHECK(get_response, working_action);
     const auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest copy_data_request(
@@ -601,7 +649,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
     copy_data_request.set_target_tier(req.target_tier());
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
-    ERROR_CHECK(copy_data_response);
+    ERROR_CHECK(copy_data_response, working_action);
 
     TierExtents source_extent;
     TierExtents target_extent;
@@ -628,21 +676,21 @@ HsmActionResponse::Ptr HsmService::copy_data(
     if (extent_needs_creation) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::CREATE, target_extent, req.get_user_id()));
+                CrudMethod::CREATE, target_extent, req.get_user_context()));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, target_extent, req.get_user_id()));
+                CrudMethod::UPDATE, target_extent, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK(extent_put_response);
+    CRUD_ERROR_CHECK(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_id()});
-    CRUD_ERROR_CHECK(object_put_response);
+            CrudMethod::UPDATE, *working_object, req.get_user_context()});
+    CRUD_ERROR_CHECK(object_put_response, working_action);
 
-    auto response = HsmActionResponse::create(req);
+    auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService COPY DATA");
 
@@ -664,12 +712,16 @@ HsmActionResponse::Ptr HsmService::release_data(
 {
     LOG_INFO("Starting HSMService RELEASE_DATA: " + req.to_string());
 
+    HsmAction working_action;
+    auto action_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action);
+
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
-        req.get_user_id()});
-    CRUD_ERROR_CHECK(get_response);
+        req.get_user_context()});
+    CRUD_ERROR_CHECK(get_response, working_action);
     auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest remove_data_request(
@@ -684,7 +736,7 @@ HsmActionResponse::Ptr HsmService::release_data(
     remove_data_request.set_source_tier(req.source_tier());
     auto remove_data_response =
         m_object_store->make_request(remove_data_request);
-    ERROR_CHECK(remove_data_response);
+    ERROR_CHECK(remove_data_response, working_action);
 
     TierExtents extent;
     for (const auto& tier_extent : working_object->tiers()) {
@@ -700,19 +752,19 @@ HsmActionResponse::Ptr HsmService::release_data(
     if (extent.empty()) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::REMOVE, extent, req.get_user_id()));
+                CrudMethod::REMOVE, extent, req.get_user_context()));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, extent, req.get_user_id()));
+                CrudMethod::UPDATE, extent, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK(extent_put_response);
+    CRUD_ERROR_CHECK(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_id()});
-    auto response = HsmActionResponse::create(req);
+            CrudMethod::UPDATE, *working_object, req.get_user_context()});
+    auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService REMOVE");
 

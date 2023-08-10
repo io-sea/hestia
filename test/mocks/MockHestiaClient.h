@@ -41,7 +41,7 @@ class MockHestiaClient : public IHestiaClient {
     OpStatus do_data_movement_action(HsmAction& action) override;
 
     void do_data_io_action(
-        HsmAction& action,
+        const HsmAction& action,
         Stream* stream,
         dataIoCompletionFunc completion_func) override;
 

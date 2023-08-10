@@ -423,15 +423,16 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
         if (m_client_command.is_data_put_action()) {
             stream.set_source(
                 FileStreamSource::create(m_client_command.m_path));
+            m_client_command.m_action.set_size(stream.get_source_size());
         }
         else {
             stream.set_sink(FileStreamSink::create(m_client_command.m_path));
         }
 
         auto completion_cb =
-            [&status](OpStatus ret_status, const HsmAction& action) {
+            [&status, this](OpStatus ret_status, const HsmAction& action) {
                 status = ret_status;
-                (void)action;
+                m_console_interface->console_write(action.get_primary_key());
             };
 
         client->do_data_io_action(

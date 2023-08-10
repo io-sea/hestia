@@ -105,10 +105,29 @@ void DistributedHsmService::do_data_io_action(
     Stream* stream,
     dataIoCompletionFunc completion_func) const
 {
-    // TODO - if the controller has the required backend then use it
+
     if (m_config.m_self.is_controller()) {
+
+        std::string tier_name;
         if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
-            auto response = HsmActionResponse::create(request);
+            tier_name = std::to_string(request.target_tier());
+        }
+        else {
+            tier_name = std::to_string(request.source_tier());
+        }
+
+        for (const auto& backend : get_backends()) {
+            if (backend.has_tier_name(tier_name)) {
+                LOG_INFO("Controller has backend locally - using that.");
+                m_hsm_service->do_data_io_action(
+                    request, stream, completion_func);
+                return;
+            }
+        }
+
+        if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
+            auto response =
+                HsmActionResponse::create(request, request.get_action());
 
             auto node_address = get_backend_address(request.target_tier());
             if (node_address.empty()) {
@@ -120,13 +139,16 @@ void DistributedHsmService::do_data_io_action(
                     {HsmActionErrorCode::ITEM_NOT_FOUND, message});
                 completion_func(std::move(response));
             }
-            LOG_INFO("Redirecting to: " + node_address);
-            response->set_redirect_location(node_address);
-            completion_func(std::move(response));
+            else {
+                LOG_INFO("Redirecting to: " + node_address);
+                response->set_redirect_location(node_address);
+                completion_func(std::move(response));
+            }
         }
         else if (
             request.get_action().get_action() == HsmAction::Action::GET_DATA) {
-            auto response = HsmActionResponse::create(request);
+            auto response =
+                HsmActionResponse::create(request, request.get_action());
 
             auto node_address = get_backend_address(request.source_tier());
             if (node_address.empty()) {
@@ -138,9 +160,11 @@ void DistributedHsmService::do_data_io_action(
                     {HsmActionErrorCode::ITEM_NOT_FOUND, message});
                 completion_func(std::move(response));
             }
-            LOG_INFO("Redirecting to: " + node_address);
-            response->set_redirect_location(node_address);
-            completion_func(std::move(response));
+            else {
+                LOG_INFO("Redirecting to: " + node_address);
+                response->set_redirect_location(node_address);
+                completion_func(std::move(response));
+            }
         }
     }
     else {

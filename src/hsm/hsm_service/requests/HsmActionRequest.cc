@@ -4,10 +4,10 @@
 
 namespace hestia {
 HsmActionRequest::HsmActionRequest(
-    const HsmAction& action, const std::string& user_id) :
+    const HsmAction& action, const CrudUserContext& user_context) :
     BaseRequest(),
     MethodRequest<HsmAction::Action>(action.get_action()),
-    m_user_id(user_id),
+    m_user_context(user_context),
     m_action(action)
 {
 }
@@ -38,9 +38,9 @@ std::string HsmActionRequest::subject_as_string() const
     return HsmItem::to_name(get_subject());
 }
 
-const std::string& HsmActionRequest::get_user_id() const
+const CrudUserContext& HsmActionRequest::get_user_context() const
 {
-    return m_user_id;
+    return m_user_context;
 }
 
 const HsmAction& HsmActionRequest::get_action() const

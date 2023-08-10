@@ -29,21 +29,49 @@ HestiaHsmActionView::~HestiaHsmActionView() {}
 HttpResponse::Ptr HestiaHsmActionView::on_get(
     const HttpRequest& request, const User& user)
 {
-    return do_hsm_action(request, user);
+    auto path = StringUtils::split_on_first(
+                    request.get_path(),
+                    "/" + std::string(HsmItem::hsm_action_name) + "s")
+                    .second;
+    hestia::StringUtils::remove_prefix(path, "/");
+
+    if (path.empty() || path == "/") {
+        Map action_map;
+        request.get_header().get_data().copy_with_prefix(
+            "hestia.hsm_action.", action_map);
+
+        if (!action_map.empty()) {
+            return do_hsm_action(request, action_map, user);
+        }
+    }
+    return CrudWebView::on_get(request, user);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_put(
     const HttpRequest& request, const User& user)
 {
-    return do_hsm_action(request, user);
+    auto path = StringUtils::split_on_first(
+                    request.get_path(),
+                    "/" + std::string(HsmItem::hsm_action_name) + "s")
+                    .second;
+    hestia::StringUtils::remove_prefix(path, "/");
+
+    if (path.empty() || path == "/") {
+        Map action_map;
+        request.get_header().get_data().copy_with_prefix(
+            "hestia.hsm_action.", action_map);
+
+        if (!action_map.empty()) {
+            return do_hsm_action(request, action_map, user);
+        }
+    }
+    return CrudWebView::on_put(request, user);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_delete(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, const User& user)
 {
-    (void)request;
-    (void)m_hestia_service;
-    return HttpResponse::create();
+    return CrudWebView::on_delete(request, user);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_head(
@@ -59,71 +87,56 @@ HttpResponse::Ptr HestiaHsmActionView::on_head(
 
 
 HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request, const Map& action_map, const User& user)
 {
-    auto path = StringUtils::split_on_first(
-                    request.get_path(),
-                    "/" + std::string(HsmItem::hsm_action_name) + "s")
-                    .second;
-    hestia::StringUtils::remove_prefix(path, "/");
+    LOG_INFO("Processing HSM Action");
 
-    if (path.empty()) {
-        Map action_map;
-        request.get_header().get_data().copy_with_prefix(
-            "hestia.hsm_action.", action_map);
+    Dictionary action_dict;
+    action_dict.expand(action_map);
 
-        if (!action_map.empty()) {
-            LOG_INFO("Processing HSM Action");
+    HsmAction action;
+    action.deserialize(action_dict);
 
-            Dictionary action_dict;
-            action_dict.expand(action_map);
+    auto response = HttpResponse::create();
 
-            HsmAction action;
-            action.deserialize(action_dict);
+    if (action.is_data_io_action()) {
+        std::string redirect_location;
 
-            if (action.is_data_io_action()) {
-                auto response = HttpResponse::create();
-
-                std::string redirect_location;
-
-                auto completion_cb = [&response, &redirect_location](
-                                         HsmActionResponse::Ptr response_ret) {
-                    if (response_ret->ok()) {
-                        LOG_INFO("Data action completed sucessfully");
-                        if (!response_ret->get_redirect_location().empty()) {
-                            redirect_location =
-                                response_ret->get_redirect_location();
-                        }
-                    }
-                    else {
-                        LOG_ERROR(
-                            "Error in data action \n"
-                            << response_ret->get_error().to_string());
-                        response =
-                            HttpResponse::create(500, "Internal Server Error.");
-                    }
-                };
-                m_hestia_service->do_data_io_action(
-                    HsmActionRequest(action, user.get_primary_key()),
-                    request.get_context()->get_stream(), completion_cb);
-
-                if (!redirect_location.empty()) {
-                    response = HttpResponse::create(307, "Found");
-                    response->header().set_item(
-                        "Location", "http://" + redirect_location + m_path);
+        auto completion_cb = [&response, &redirect_location](
+                                 HsmActionResponse::Ptr response_ret) {
+            if (response_ret->ok()) {
+                LOG_INFO("Data action completed sucessfully");
+                if (!response_ret->get_redirect_location().empty()) {
+                    redirect_location = response_ret->get_redirect_location();
                 }
-                return response;
             }
             else {
-                auto action_response = m_hestia_service->make_request(
-                    HsmActionRequest(action, user.get_primary_key()));
-                if (!action_response->ok()) {
-                    return HttpResponse::create(500, "Internal Server Error.");
-                }
+                LOG_ERROR(
+                    "Error in data action \n"
+                    << response_ret->get_error().to_string());
+                response = HttpResponse::create(500, "Internal Server Error.");
             }
+        };
+        m_hestia_service->do_data_io_action(
+            HsmActionRequest(action, user.get_primary_key()),
+            request.get_context()->get_stream(), completion_cb);
+
+        if (!redirect_location.empty()) {
+            response = HttpResponse::create(307, "Found");
+            response->header().set_item(
+                "Location", "http://" + redirect_location + m_path);
         }
     }
-    return HttpResponse::create(404, "Not Found.");
+    else {
+        auto action_response = m_hestia_service->make_request(
+            HsmActionRequest(action, user.get_primary_key()));
+
+        if (!action_response->ok()) {
+            return HttpResponse::create(500, "Internal Server Error.");
+        }
+    }
+
+    return response;
 }
 
 }  // namespace hestia

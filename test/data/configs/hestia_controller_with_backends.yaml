@@ -1,0 +1,18 @@
+server:
+  host_address: 127.0.0.1
+  host_port: 8080
+  controller: true
+  tag: controller0
+
+tiers:
+  - name: "0"
+  - name: "1"
+  - name: "2"
+  - name: "3"
+  - name: "4"
+
+object_store_backends:
+  - backend_type: file_hsm
+    tier_names: ["0", "1", "2", "3", "4"]
+    config: 
+      root: hsm_object_store_controller0
