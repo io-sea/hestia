@@ -23,6 +23,8 @@ class BasicHttpServer : public Server {
 
     void on_failure(const std::string& reason);
 
+    void receive_until_header_end(std::string& message, Socket* socket);
+
     std::unique_ptr<TcpServer> m_tcp_server;
 };
 }  // namespace hestia

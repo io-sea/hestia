@@ -27,6 +27,7 @@ add_module(
         HestiaCli.cc
         HestiaClient.cc
         HestiaServer.cc
+        HestiaTypes.cc
         application/HestiaConfig.cc
         application/HestiaCache.cc
         application/HestiaApplication.cc

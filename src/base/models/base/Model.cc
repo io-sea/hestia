@@ -142,10 +142,11 @@ bool Model::valid() const
     return !m_id.get_value().empty();
 }
 
-void Model::get_foreign_key_fields(VecKeyValuePair& fields) const
+void Model::get_foreign_key_fields(VecForeignKeyContext& fields) const
 {
     for (const auto& [name, dict] : m_foreign_key_fields) {
-        fields.push_back({dict->get_runtime_type(), dict->get_id()});
+        fields.push_back(
+            {dict->get_runtime_type(), dict->get_name(), dict->get_id()});
     }
 }
 

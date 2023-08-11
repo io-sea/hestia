@@ -61,6 +61,35 @@ std::string CrudClient::get_type() const
     return m_adapters->get_type();
 }
 
+Dictionary::Ptr CrudClient::create_child(
+    const std::string& type,
+    const std::string& parent_id,
+    const CrudUserContext& user_context) const
+{
+    const auto child_service_iter = m_child_services.find(type);
+    if (child_service_iter == m_child_services.end()) {
+        THROW_WITH_SOURCE_LOC(
+            "Attempted to find child service for type: " + type
+            + " but it is not registered.");
+    }
+
+    CrudIdentifier id;
+    id.set_parent_primary_key(parent_id);
+    auto create_response = child_service_iter->second->make_request(CrudRequest{
+        CrudMethod::CREATE,
+        user_context,
+        {id},
+        {},
+        CrudQuery::OutputFormat::DICT});
+    if (!create_response->ok()) {
+        throw std::runtime_error(
+            "Failed to create default child: "
+            + create_response->get_error().to_string());
+    }
+    return std::make_unique<Dictionary>(
+        *create_response->dict()->get_sequence()[0]);
+}
+
 void CrudClient::get_or_create_default_parent(
     const std::string& type, const std::string& user_id)
 {

@@ -66,6 +66,11 @@ class CrudClient {
     void get_or_create_default_parent(
         const std::string& type, const std::string& user_id);
 
+    Dictionary::Ptr create_child(
+        const std::string& type,
+        const std::string& parent_id,
+        const CrudUserContext& user_context) const;
+
     std::string get_default_parent_id(const std::string& type) const;
 
     void set_default_parent_id(const std::string& type, const std::string& id);

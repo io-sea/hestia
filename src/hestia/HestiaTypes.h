@@ -12,14 +12,11 @@ class HestiaType {
 
     HestiaType() = default;
 
-    HestiaType(HsmItem::Type hsm_type) : m_type{Type::HSM}, m_hsm_type(hsm_type)
-    {
-    }
+    HestiaType(HsmItem::Type hsm_type);
 
-    HestiaType(SystemType system_type) :
-        m_type{Type::SYSTEM}, m_system_type(system_type)
-    {
-    }
+    HestiaType(SystemType system_type);
+
+    static std::string to_string(HestiaType type);
 
     Type m_type{Type::HSM};
     HsmItem::Type m_hsm_type{HsmItem::Type::OBJECT};

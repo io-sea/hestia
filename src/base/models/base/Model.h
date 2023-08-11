@@ -9,6 +9,13 @@
 namespace hestia {
 class Model : public SerializeableWithFields {
   public:
+    struct ForeignKeyContext {
+        std::string m_type;
+        std::string m_name;
+        std::string m_id;
+    };
+    using VecForeignKeyContext = std::vector<ForeignKeyContext>;
+
     explicit Model(const std::string& type);
 
     explicit Model(const std::string& id, const std::string& type);
@@ -27,7 +34,7 @@ class Model : public SerializeableWithFields {
 
     std::string get_parent_type() const;
 
-    void get_foreign_key_fields(VecKeyValuePair& fields) const;
+    void get_foreign_key_fields(VecForeignKeyContext& fields) const;
 
     void get_foreign_key_proxy_fields(VecKeyValuePair& fields) const;
 

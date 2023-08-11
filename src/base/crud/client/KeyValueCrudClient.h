@@ -42,7 +42,8 @@ class KeyValueCrudClient : public CrudClient {
 
     struct Fields {
         std::vector<VecKeyValuePair> m_index;
-        std::vector<VecKeyValuePair> m_foreign_key;
+        std::vector<Model::VecForeignKeyContext> m_foreign_key;
+        std::vector<VecKeyValuePair> m_foreign_key_id_replacements;
         std::vector<VecKeyValuePair> m_one_to_one;
         std::vector<std::vector<Model::TypeIdsPair>> m_many_many;
     };

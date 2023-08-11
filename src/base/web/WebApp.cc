@@ -28,7 +28,7 @@ bool WebApp::get_streamable(const std::string& request_path) const
     if (!m_url_router) {
         return false;
     }
-    auto view = m_url_router->get_view(request_path);
+    const auto view = m_url_router->get_view(request_path);
     if (view == nullptr) {
         return false;
     }

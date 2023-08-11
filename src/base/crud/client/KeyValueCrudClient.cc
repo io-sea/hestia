@@ -30,7 +30,7 @@ KeyValueCrudClient::~KeyValueCrudClient() {}
 
 void KeyValueCrudClient::process_fields(Model* item, Fields& fields) const
 {
-    VecKeyValuePair foregin_keys;
+    Model::VecForeignKeyContext foregin_keys;
     item->get_foreign_key_fields(foregin_keys);
     fields.m_foreign_key.push_back(foregin_keys);
 
@@ -166,6 +166,12 @@ void KeyValueCrudClient::prepare_create_keys(
         primary_key_dict->set_scalar(id);
         item_dict->set_map_item(primary_key_name, std::move(primary_key_dict));
 
+        for (const auto& [name, id] :
+             fields.m_foreign_key_id_replacements[count]) {
+            auto fk_item = item_dict->get_map_item(name);
+            fk_item->set_map({{"id", id}});
+        }
+
         std::string content_body;
         get_adapter(CrudAttributes::Format::JSON)
             ->dict_to_string(*item_dict, content_body);
@@ -176,10 +182,10 @@ void KeyValueCrudClient::prepare_create_keys(
             string_set_kv_pairs.emplace_back(get_field_key(name, value), id);
         }
 
-        for (const auto& [type, field_id] : fields.m_foreign_key[count]) {
-            const auto foreign_key = m_config.m_prefix + ":" + type + ":"
-                                     + field_id + ":" + m_adapters->get_type()
-                                     + "s";
+        for (const auto& field_context : fields.m_foreign_key[count]) {
+            const auto foreign_key =
+                m_config.m_prefix + ":" + field_context.m_type + ":"
+                + field_context.m_id + ":" + m_adapters->get_type() + "s";
             set_add_kv_pairs.emplace_back(foreign_key, id);
         }
 
@@ -232,12 +238,10 @@ void KeyValueCrudClient::create(
     // If it still has no id, but we have a parent name try to use that.
     // If it stillll has no id try to create a default entry.
     // If it can't create a default entry then fail.
-    // std::size_t count{0};
     for (auto& item_foreign_keys : working_fields.m_foreign_key) {
-        std::size_t key_count{0};
-        for (const auto& [foreign_key_type, foreign_key_id] :
-             item_foreign_keys) {
-            if (foreign_key_id.empty()) {
+        VecKeyValuePair id_replacements;
+        for (auto& field_context : item_foreign_keys) {
+            if (field_context.m_id.empty()) {
                 const auto parent_type = item_template->get_parent_type();
                 if (parent_type.empty()) {
                     THROW_WITH_SOURCE_LOC(
@@ -250,12 +254,25 @@ void KeyValueCrudClient::create(
                         parent_type, crud_request.get_user_context().m_id);
                     default_parent_id = get_default_parent_id(parent_type);
                 }
-                item_foreign_keys[key_count] =
-                    KeyValuePair{foreign_key_type, default_parent_id};
+                field_context.m_id = default_parent_id;
+                id_replacements.push_back(
+                    {field_context.m_name, default_parent_id});
             }
-            key_count++;
         }
-        // count++;
+        working_fields.m_foreign_key_id_replacements.push_back(id_replacements);
+    }
+
+    // If we have a one-to-one relationship with a 'default create' property
+    // then create the other side of the relationship as a child.
+    std::size_t instance_count{0};
+    for (const auto& instance : working_fields.m_one_to_one) {
+        for (const auto& [type, name] : instance) {
+            auto child_dict = create_child(
+                type, ids[instance_count], crud_request.get_user_context());
+            content->get_sequence()[instance_count]->set_map_item(
+                name, std::move(child_dict));
+        }
+        instance_count++;
     }
 
     const auto current_time = m_time_provider->get_current_time();
@@ -497,8 +514,6 @@ void KeyValueCrudClient::update_proxy_dicts(
         {KeyValueStoreRequestMethod::SET_LIST, foreign_key_proxy_keys,
          m_config.m_endpoint});
     error_check("SET LIST", proxy_response.get());
-
-    assert(string_get_keys.size() == foreign_key_proxy_keys.size());
 
     std::vector<std::string> proxy_value_keys;
     std::vector<std::size_t> proxy_value_offsets;

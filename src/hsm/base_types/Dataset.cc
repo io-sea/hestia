@@ -34,8 +34,8 @@ Dataset& Dataset::operator=(const Dataset& other)
 
 void Dataset::init()
 {
-    register_map_field(&m_objects);
-    register_map_field(&m_namespaces);
+    register_foreign_key_proxy_field(&m_objects);
+    register_foreign_key_proxy_field(&m_namespaces);
 }
 
 std::string Dataset::get_type()

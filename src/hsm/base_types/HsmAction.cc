@@ -16,7 +16,7 @@ HsmAction::HsmAction(HsmItem::Type subject, HsmAction::Action action) :
 }
 
 HsmAction::HsmAction(const HsmAction& other) :
-    HsmItem(HsmItem::Type::ACTION), OwnableModel(HsmItem::hsm_action_name, {})
+    HsmItem(other), OwnableModel(other)
 {
     *this = other;
 }

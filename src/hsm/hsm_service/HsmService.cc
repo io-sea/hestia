@@ -255,20 +255,16 @@ CrudResponse::Ptr HsmService::crud_identify(
 CrudResponsePtr HsmService::get_or_create_action(
     const HsmActionRequest& req, HsmAction& working_action) const
 {
-    if (req.get_action().get_primary_key().empty()) {
+    if (working_action.get_primary_key().empty()) {
         auto action_service = m_services->get_service(HsmItem::Type::ACTION);
-        HsmAction working_action = req.get_action();
         auto action_response =
             action_service->make_request(TypedCrudRequest<HsmAction>{
-                CrudMethod::CREATE, req.get_action(), req.get_user_context(),
+                CrudMethod::CREATE, working_action, req.get_user_context(),
                 CrudQuery::OutputFormat::ITEM});
         if (!action_response->ok()) {
             return action_response;
         }
         working_action = *action_response->get_item_as<HsmAction>();
-    }
-    else {
-        working_action = req.get_action();
     }
     return CrudResponse::create(req, HsmItem::hsm_action_name);
 }
@@ -280,13 +276,14 @@ void HsmService::put_data(
 {
     assert(stream != nullptr);
 
-    LOG_INFO(
-        "Starting HSMService PUT DATA: " + req.to_string() + " | "
-        + req.get_action().get_subject_key());
-
-    HsmAction working_action;
-    auto action_response = get_or_create_action(req, working_action);
+    HsmAction working_action = req.get_action();
+    auto action_response     = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK(action_response, working_action);
+
+    LOG_INFO(
+        "Starting HSMService PUT DATA: " + req.to_string()
+            + " | Subject Id: " + req.get_action().get_subject_key()
+        << " | Action Id: " << working_action.get_primary_key());
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
@@ -433,7 +430,9 @@ void HsmService::on_put_data_complete(
             CrudMethod::UPDATE, working_object, user_context});
     auto response = HsmActionResponse::create(req, working_action);
 
-    LOG_INFO("Finished HSMService PUT");
+    LOG_INFO(
+        "Finished HSMService PUT | Action ID: "
+        + working_action.get_primary_key());
 
     add_put_event(m_event_feed.get(), working_object, tier);
 

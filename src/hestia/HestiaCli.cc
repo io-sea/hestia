@@ -487,7 +487,9 @@ OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
         }
     }
     else if (m_client_command.is_read_method()) {
-        LOG_INFO("CLI Read request");
+        LOG_INFO(
+            "CLI Read request for type: "
+            << HestiaType::to_string(m_client_command.m_subject));
         CrudQuery query;
         const auto& [output_format, output_attr_format] =
             m_client_command.parse_read_inputs(

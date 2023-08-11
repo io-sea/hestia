@@ -39,7 +39,6 @@ BasicHttpServer::Status BasicHttpServer::start()
     TcpServer::Address socket_address;
     socket_address.m_host = m_config.m_ip;
     socket_address.m_port = m_config.m_http_port;
-    // socket_address.mPrefix = mListenAddress.mPrefix;
 
     LOG_INFO(
         "Starting server on " << socket_address.m_host << " with port "
@@ -59,7 +58,7 @@ BasicHttpServer::Status BasicHttpServer::start()
     return {};
 }
 
-HttpResponse::Ptr write_to_stream(HttpRequest& req, Stream* stream)
+HttpResponse::Ptr write_to_stream(const HttpRequest& req, Stream* stream)
 {
     auto response = HttpResponse::create();
     if (!req.body().empty()) {
@@ -75,16 +74,23 @@ HttpResponse::Ptr write_to_stream(HttpRequest& req, Stream* stream)
     return response;
 }
 
+void BasicHttpServer::receive_until_header_end(
+    std::string& message, Socket* socket)
+{
+    while (message.rfind("\r\n\r\n") == message.npos) {
+        socket->respond(
+            HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE))
+                ->to_string());
+        message.append(socket->recieve());
+    }
+}
+
 void BasicHttpServer::on_connection(Socket* socket)
 {
     auto message = socket->recieve();
+
     if (socket->connected()) {
-        while (message.rfind("\r\n\r\n") == message.npos) {
-            socket->respond(
-                HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE))
-                    ->to_string());
-            message.append(socket->recieve());
-        }
+        receive_until_header_end(message, socket);
         LOG_INFO("Got message: " + message);
 
         HttpRequest request(message);

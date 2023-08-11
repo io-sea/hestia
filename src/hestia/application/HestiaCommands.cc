@@ -2,6 +2,7 @@
 
 #include "ConsoleInterface.h"
 #include "StringUtils.h"
+#include "User.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -18,7 +19,7 @@ void HestiaClientCommand::set_hsm_subject(const std::string& subject)
 void HestiaClientCommand::set_system_subject(const std::string& subject)
 {
     m_subject.m_type        = HestiaType::Type::SYSTEM;
-    m_subject.m_system_type = subject == "user" ?
+    m_subject.m_system_type = subject == User::get_type() ?
                                   HestiaType::SystemType::USER :
                                   HestiaType::SystemType::HSM_NODE;
 }
