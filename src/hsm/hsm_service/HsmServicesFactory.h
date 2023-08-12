@@ -16,6 +16,7 @@ class CrudResponse;
 using CrudResponsePtr = std::unique_ptr<CrudResponse>;
 
 class UserService;
+class EventFeed;
 class HsmServiceCollection;
 
 class HsmServicesFactory {
@@ -24,7 +25,8 @@ class HsmServicesFactory {
         HsmItem::Type type,
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        UserService* user_service);
+        UserService* user_service,
+        EventFeed* event_feed);
 };
 
 class HsmServiceCollection {
@@ -35,7 +37,8 @@ class HsmServiceCollection {
     void create_default_services(
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        UserService* user_service);
+        UserService* user_service,
+        EventFeed* event_feed);
 
     void add_service(HsmItem::Type type, CrudServicePtr service);
 

@@ -30,13 +30,14 @@ class HsmService : public CrudService {
         HsmServiceCollection::Ptr service_collection,
         HsmObjectStoreClient* object_store,
         std::unique_ptr<DataPlacementEngine> placement_engine = {},
-        std::unique_ptr<EventFeed> event_feed                 = {});
+        EventFeed* event_feed                                 = nullptr);
 
     static Ptr create(
         const ServiceConfig& config,
         KeyValueStoreClient* client,
         HsmObjectStoreClient* object_store,
-        UserService* user_service);
+        UserService* user_service,
+        EventFeed* event_feed);
 
     virtual ~HsmService();
 
@@ -107,7 +108,7 @@ class HsmService : public CrudService {
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;
-    std::unique_ptr<EventFeed> m_event_feed;
+    EventFeed* m_event_feed{nullptr};
     std::unordered_map<uint8_t, std::string> m_tier_cache;
 };
 }  // namespace hestia

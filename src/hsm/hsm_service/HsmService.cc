@@ -47,6 +47,7 @@
 
 namespace hestia {
 
+/*
 void add_put_event(EventFeed* feed, const HsmObject& obj, uint8_t tier)
 {
     if (feed == nullptr) {
@@ -59,19 +60,21 @@ void add_put_event(EventFeed* feed, const HsmObject& obj, uint8_t tier)
     event.m_target_tier = tier;
     feed->log_event(event);
 }
+*/
 
 HsmService::HsmService(
     const ServiceConfig& config,
     HsmServiceCollection::Ptr service_collection,
     HsmObjectStoreClient* object_store,
     std::unique_ptr<DataPlacementEngine> placement_engine,
-    std::unique_ptr<EventFeed> event_feed) :
+    EventFeed* event_feed) :
     CrudService(config),
     m_services(std::move(service_collection)),
     m_object_store(object_store),
     m_placement_engine(std::move(placement_engine)),
-    m_event_feed(std::move(event_feed))
+    m_event_feed(event_feed)
 {
+    (void)m_event_feed;
     LOG_INFO("Creating HsmService");
 }
 
@@ -79,12 +82,14 @@ HsmService::Ptr HsmService::create(
     const ServiceConfig& config,
     KeyValueStoreClient* client,
     HsmObjectStoreClient* object_store,
-    UserService* user_service)
+    UserService* user_service,
+    EventFeed* event_feed)
 {
     KeyValueStoreCrudServiceBackend backend(client);
 
     auto services = std::make_unique<HsmServiceCollection>();
-    services->create_default_services(config, &backend, user_service);
+    services->create_default_services(
+        config, &backend, user_service, event_feed);
 
     auto placement_engine = std::make_unique<BasicDataPlacementEngine>(
         services->get_service(HsmItem::Type::TIER));
@@ -229,12 +234,14 @@ CrudResponse::Ptr HsmService::crud_remove(
         return response;
     }
 
+    /*
     if (subject_type == HsmItem::Type::OBJECT && m_event_feed) {
         EventFeed::Event event;
         event.m_id     = req.get_id();
         event.m_method = EventFeed::Event::Method::REMOVE_ALL;
         m_event_feed->log_event(event);
     }
+    */
 
     LOG_INFO("Finished HSMService REMOVE");
     return response;
@@ -434,7 +441,9 @@ void HsmService::on_put_data_complete(
         "Finished HSMService PUT | Action ID: "
         + working_action.get_primary_key());
 
+    /*
     add_put_event(m_event_feed.get(), working_object, tier);
+    */
 
     completion_func(std::move(response));
 }
@@ -604,6 +613,7 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     LOG_INFO("Finished HSMService MOVE DATA");
 
+    /*
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = working_object->id();
@@ -613,6 +623,7 @@ HsmActionResponse::Ptr HsmService::move_data(
         event.m_target_tier = req.target_tier();
         m_event_feed->log_event(event);
     }
+    */
 
     return response;
 }
@@ -693,6 +704,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     LOG_INFO("Finished HSMService COPY DATA");
 
+    /*
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = working_object->id();
@@ -702,6 +714,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
         event.m_target_tier = req.target_tier();
         m_event_feed->log_event(event);
     }
+    */
 
     return response;
 }
@@ -767,6 +780,7 @@ HsmActionResponse::Ptr HsmService::release_data(
 
     LOG_INFO("Finished HSMService REMOVE");
 
+    /*
     if (m_event_feed) {
         EventFeed::Event event;
         event.m_id          = req.get_action().get_subject_key();
@@ -775,6 +789,7 @@ HsmActionResponse::Ptr HsmService::release_data(
         ;
         m_event_feed->log_event(event);
     }
+    */
 
     return response;
 }

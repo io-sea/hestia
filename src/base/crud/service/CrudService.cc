@@ -1,6 +1,7 @@
 #include "CrudService.h"
 
 #include "CrudClient.h"
+#include "EventFeed.h"
 #include "IdGenerator.h"
 #include "TimeProvider.h"
 
@@ -29,9 +30,11 @@ namespace hestia {
 CrudService::CrudService(
     const ServiceConfig& config,
     std::unique_ptr<CrudClient> client,
+    EventFeed* event_feed,
     std::unique_ptr<IdGenerator> id_generator,
     std::unique_ptr<TimeProvider> time_provider) :
     Service<CrudRequest, CrudResponse, CrudErrorCode>(config),
+    m_event_feed(event_feed),
     m_client(std::move(client)),
     m_id_generator(std::move(id_generator)),
     m_time_provider(std::move(time_provider))
@@ -113,6 +116,10 @@ CrudService::~CrudService() {}
     LOG_INFO(
         "Finished Subject: " << get_type()
                              << ", Method: " << request.method_as_string());
+
+    if (m_event_feed != nullptr) {
+        m_event_feed->on_event(CrudEvent(request.method(), request, *response));
+    }
 
     return response;
 }

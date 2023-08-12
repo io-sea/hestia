@@ -8,11 +8,12 @@
 #include "CrudServiceFactory.h"
 #include "CrudServiceWithUser.h"
 #include "TypedCrudRequest.h"
+
+#include "EventFeed.h"
 #include "UserService.h"
 
 #include "Dataset.h"
 #include "HsmAction.h"
-#include "HsmEvent.h"
 #include "HsmNode.h"
 #include "HsmObject.h"
 #include "Namespace.h"
@@ -29,7 +30,8 @@ CrudService::Ptr HsmServicesFactory::create_service(
     HsmItem::Type type,
     const ServiceConfig& config_in,
     CrudServiceBackend* backend,
-    UserService* user_service)
+    UserService* user_service,
+    EventFeed* event_feed)
 {
     ServiceConfig config = config_in;
     config.m_item_prefix = HsmItem::to_name(type);
@@ -40,29 +42,32 @@ CrudService::Ptr HsmServicesFactory::create_service(
     switch (type) {
         case HsmItem::Type::OBJECT:
             return CrudServiceFactory<HsmObject>::create(
-                config, backend, nullptr,
+                config, backend, event_feed, nullptr,
                 std::make_unique<DefaultIdGenerator>(object_minimum_id));
         case HsmItem::Type::DATASET:
             return CrudServiceFactory<Dataset>::create(
-                config, backend, user_service);
+                config, backend, event_feed, user_service);
         case HsmItem::Type::ACTION:
             return CrudServiceFactory<HsmAction>::create(
-                config, backend, user_service);
-        case HsmItem::Type::EVENT:
-            return CrudServiceFactory<HsmEvent>::create(config, backend);
+                config, backend, event_feed, user_service);
         case HsmItem::Type::NAMESPACE:
-            return CrudServiceFactory<Namespace>::create(config, backend);
+            return CrudServiceFactory<Namespace>::create(
+                config, backend, event_feed);
         case HsmItem::Type::TIER:
-            return CrudServiceFactory<StorageTier>::create(config, backend);
+            return CrudServiceFactory<StorageTier>::create(
+                config, backend, event_feed);
         case HsmItem::Type::EXTENT:
-            return CrudServiceFactory<TierExtents>::create(config, backend);
+            return CrudServiceFactory<TierExtents>::create(
+                config, backend, event_feed);
         case HsmItem::Type::METADATA:
-            return CrudServiceFactory<UserMetadata>::create(config, backend);
+            return CrudServiceFactory<UserMetadata>::create(
+                config, backend, event_feed);
         case HsmItem::Type::NODE:
-            return CrudServiceFactory<HsmNode>::create(config, backend);
+            return CrudServiceFactory<HsmNode>::create(
+                config, backend, event_feed);
         case HsmItem::Type::OBJECT_STORE_BACKEND:
             return CrudServiceFactory<ObjectStoreBackend>::create(
-                config, backend);
+                config, backend, event_feed);
         case HsmItem::Type::UNKNOWN:
         default:
             return nullptr;
@@ -74,14 +79,15 @@ HsmServiceCollection::~HsmServiceCollection() {}
 void HsmServiceCollection::create_default_services(
     const ServiceConfig& config,
     CrudServiceBackend* backend,
-    UserService* user_service)
+    UserService* user_service,
+    EventFeed* event_feed)
 {
     for (const auto& item : HsmItem::get_all_items()) {
 
         auto config_in = config;
         add_service(
             item, HsmServicesFactory::create_service(
-                      item, config_in, backend, user_service));
+                      item, config_in, backend, user_service, event_feed));
     }
 
     get_service(HsmItem::Type::DATASET)

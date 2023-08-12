@@ -20,11 +20,23 @@ class StringAdapter {
         int index                                = -1,
         Serializeable::Format format_in = Serializeable::Format::UNSET) const;
 
+    virtual void to_dict(
+        const Model& item,
+        Dictionary& output,
+        const Dictionary& override      = {},
+        Serializeable::Format format_in = Serializeable::Format::UNSET) const;
+
     virtual void to_string(
         const VecModelPtr& items,
         std::string& output,
         const std::vector<Dictionary>& overrides = {},
         int index                                = -1,
+        Serializeable::Format format_in = Serializeable::Format::UNSET) const;
+
+    virtual void to_string(
+        const Model& item,
+        std::string& output,
+        const Dictionary& override      = {},
         Serializeable::Format format_in = Serializeable::Format::UNSET) const;
 
     virtual void from_string(

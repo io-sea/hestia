@@ -38,7 +38,6 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_web
     hestia_mocks
     hestia_s3_backend
-    hestia_event_feed
     hestia_test_utils
     Catch2::Catch2
     ${PLATFORM_LIBS})

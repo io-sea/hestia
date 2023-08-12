@@ -10,6 +10,9 @@ add_module(
         client/HttpCrudClient.h 
         client/HttpCrudPath.h 
         client/KeyValueCrudClient.h 
+        events/CrudEvent.h 
+        events/EventFeed.h 
+        events/EventSink.h
         requests/BaseCrudRequest.h
         requests/CrudRequest.h 
         requests/CrudResponse.h 
@@ -29,6 +32,9 @@ add_module(
         client/HttpCrudClient.cc 
         client/HttpCrudPath.cc
         client/KeyValueCrudClient.cc
+        events/CrudEvent.cc 
+        events/EventFeed.cc
+        events/EventSink.cc
         requests/BaseCrudRequest.cc
         requests/CrudQuery.cc
         requests/CrudIdentifier.cc
@@ -40,6 +46,7 @@ add_module(
         service/CrudServiceWithUser.cc
     INTERNAL_INCLUDE_DIRS 
         client
+        events
         requests
         service
     INTERNAL_DEPENDENCIES 

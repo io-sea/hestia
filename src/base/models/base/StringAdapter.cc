@@ -75,6 +75,30 @@ void StringAdapter::to_dict(
     }
 }
 
+void StringAdapter::to_string(
+    const Model& item,
+    std::string& output,
+    const Dictionary& override,
+    Serializeable::Format format_in) const
+{
+    Dictionary dict;
+    to_dict(item, dict, override, format_in);
+    dict_to_string(dict, output);
+}
+
+void StringAdapter::to_dict(
+    const Model& item,
+    Dictionary& output,
+    const Dictionary& override,
+    Serializeable::Format format_in) const
+{
+    const auto format =
+        format_in == Serializeable::Format::UNSET ? m_format : format_in;
+
+    item.serialize(output, format);
+    output.merge(override);
+}
+
 void StringAdapter::from_string(
     const std::vector<std::string>& inputs,
     std::vector<Model::Ptr>& items,

@@ -25,10 +25,11 @@ set(UNIT_TEST_SOURCES
     base/crud/TestLockableModel.cc
     base/crud/TestCrudService.cc
     base/crud/TestHttpCrudClient.cc
+    base/crud/TestCrudEventSink.cc 
+    base/crud/TestEventFeed.cc
     base/web/TestWebApp.cc
     base/web/TestUserService.cc
     base/web/TestS3Authorization.cc
-    hsm/TestEventFeed.cc
     hsm/TestMockMotrBackend.cc
     hsm/TestMockMotrHsm.cc
     hsm/TestMotrHsmClient.cc
@@ -37,6 +38,7 @@ set(UNIT_TEST_SOURCES
     hsm/TestHsmObject.cc
     hsm/TestTierExtents.cc
     hsm/TestHsmService.cc
+    hsm/TestHsmEventSink.cc
     hsm/TestDistributedHsmService.cc
     hsm/TestDistributedHsmObjectStoreClient.cc
     hsm/TestS3HsmService.cc
@@ -60,7 +62,7 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     hestia_lib
     hestia_server
     hestia_storage
-    hestia_event_feed
+    hestia_hsm
     hestia_mock_motr
     hestia_mocks
     hestia_test_utils
@@ -87,7 +89,6 @@ target_code_coverage(hestia_mock_s3_plugin ALL)
 target_code_coverage(hestia_s3_plugin ALL)
 target_code_coverage(hestia_main)
 target_code_coverage(hestia_lib ALL)
-# target_code_coverage(hestia_event_feed)
 target_code_coverage(${UNIT_TEST_MODULE} ALL)
 
 catch_discover_tests(${UNIT_TEST_MODULE})

@@ -29,6 +29,7 @@ add_module(
         hsm_service/HsmService.cc
         hsm_service/HsmServicesFactory.cc
         hsm_service/model/CompositeLayer.cc
+        hsm_service/events/HsmEventSink.cc
         hsm_service/requests/HsmActionResponse.cc
         hsm_service/requests/HsmActionRequest.cc
         hsm_service/requests/HsmActionError.cc
@@ -44,6 +45,7 @@ add_module(
         distributed_hsm_service
         hsm_service
         hsm_service/model
+        hsm_service/events
         hsm_service/requests
         key_value_store
         object_store
@@ -53,7 +55,6 @@ add_module(
         storage
         http_client
         web
-        event_feed
         hsm_base_types
 )
 

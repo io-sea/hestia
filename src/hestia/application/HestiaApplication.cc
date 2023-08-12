@@ -4,6 +4,9 @@
 #include "HsmService.h"
 #include "HsmServicesFactory.h"
 
+#include "EventFeed.h"
+#include "EventSink.h"
+#include "HsmEventSink.h"
 #include "UserService.h"
 
 #include "CurlClient.h"
@@ -203,7 +206,7 @@ void HestiaApplication::setup_hsm_service(
     auto hsm_services = std::make_unique<HsmServiceCollection>();
 
     hsm_services->create_default_services(
-        config, backend, m_user_service.get());
+        config, backend, m_user_service.get(), m_event_feed.get());
 
     if (m_config.default_dataset_enabled()) {
         hsm_services->get_service(HsmItem::Type::DATASET)
@@ -224,13 +227,12 @@ void HestiaApplication::setup_hsm_service(
         hsm_services->get_service(HsmItem::Type::TIER));
 
     auto event_feed = std::make_unique<EventFeed>();
-    event_feed->initialize(
-        m_config.get_cache_path(), m_config.get_event_feed_config());
+    event_feed->initialize(m_config.get_event_feed_config());
 
     ServiceConfig hsm_service_config;
     auto hsm_service = std::make_unique<HsmService>(
         hsm_service_config, std::move(hsm_services),
-        m_object_store_client.get(), std::move(dpe), std::move(event_feed));
+        m_object_store_client.get(), std::move(dpe));
     m_hsm_service = hsm_service.get();
     m_hsm_service->update_tiers(current_user_id);
 

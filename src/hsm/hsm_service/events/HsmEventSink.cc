@@ -1,4 +1,4 @@
-#include "RbhEvent.h"
+#include "HsmEventSink.h"
 
 #include "Dictionary.h"
 #include "HashUtils.h"
@@ -9,6 +9,23 @@
 
 namespace hestia {
 
+HsmEventSink::HsmEventSink(HsmService* hsm_service) : m_hsm_service(hsm_service)
+{
+}
+
+void HsmEventSink::on_event(const CrudEvent&)
+{
+    (void)m_hsm_service;
+    // if needed can 'enrich; the event with info from hsm_service
+    // before writing to file
+    // e.g. for a metadata update event we may need to
+    // write it as an 'object update' event to make life
+    // easier from robinhood. I guess they only care about
+    // object events - which we can filter through a 'subject_type' filed in
+    // CrudEvent feed from cRUDservice->get_type call
+}
+
+/*
 std::string RbhEvent::type_to_string(const RbhTypes& event_type)
 {
     switch (event_type) {
@@ -262,5 +279,6 @@ void RbhEvent::inode_xattr(Dictionary& dict) const
 
     set_xattrs(dict, m_meta);
 }
+*/
 
 }  // namespace hestia

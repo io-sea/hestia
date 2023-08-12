@@ -11,7 +11,6 @@ add_library(hestia_headers INTERFACE)
 target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 add_subdirectory(base)
-add_subdirectory(event_feed)
 add_subdirectory(hsm)
 add_subdirectory(hestia)
 

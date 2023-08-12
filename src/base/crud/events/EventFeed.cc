@@ -1,8 +1,8 @@
 #include "EventFeed.h"
 
+#include "EventSink.h"
 #include "Logger.h"
 #include "Map.h"
-#include "RbhEvent.h"
 
 #include <filesystem>
 #include <fstream>
@@ -12,20 +12,6 @@
 #include <string>
 
 namespace hestia {
-
-void convert_put(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
-void convert_remove(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
-void convert_remove_all(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
-void convert_copy(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
-void convert_move(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
-
-void event_to_string(
-    const EventFeed::Event& event, std::string& str, const bool sorted = false);
 
 EventFeedConfig::EventFeedConfig() : SerializeableWithFields(s_type)
 {
@@ -49,7 +35,6 @@ EventFeedConfig& EventFeedConfig::operator=(const EventFeedConfig& other)
         SerializeableWithFields::operator=(other);
         m_output_path = other.m_output_path;
         m_active      = other.m_active;
-        m_sorted_keys = other.m_sorted_keys;
         init();
     }
     return *this;
@@ -59,7 +44,6 @@ void EventFeedConfig::init()
 {
     register_scalar_field(&m_output_path);
     register_scalar_field(&m_active);
-    register_scalar_field(&m_sorted_keys);
 }
 
 bool EventFeedConfig::is_active() const
@@ -72,67 +56,27 @@ const std::string& EventFeedConfig::get_output_path() const
     return m_output_path.get_value();
 }
 
-bool EventFeedConfig::should_sort_keys() const
-{
-    return m_sorted_keys.get_value();
-}
-
-void EventFeed::initialize(
-    const std::string& cache_path, const EventFeedConfig& config)
+void EventFeed::initialize(const EventFeedConfig& config)
 {
     m_config = config;
 
     if (m_config.is_active() == false) {
         return;
     }
-
-    m_output_file_path = m_config.get_output_path();
-    if (m_output_file_path.is_relative()) {
-        m_output_file_path =
-            std::filesystem::path(cache_path) / m_output_file_path;
-    }
-
-    LOG_INFO("Initializing Event Feed at: " << m_output_file_path);
-
-    m_output_file.open(m_output_file_path, std::ios::trunc);
-    m_output_file.close();  // Flush output file
 }
 
-void EventFeed::log_event(const EventFeed::Event& event)
+void EventFeed::on_event(const CrudEvent& event)
 {
     if (!m_config.is_active()) {
         return;
     }
 
-    std::string str;
-    event_to_string(event, str, m_config.should_sort_keys());
-
-    if (m_config.should_sort_keys()) {
-        LOG_INFO("Serializing event in sorted order : Testing only")
-    }
-    LOG_INFO("Logging event to event feed");
-    m_output_file.open(m_output_file_path, std::ios::app);
-    m_output_file << str;
-    m_output_file.close();
-}
-
-void event_to_string(
-    const EventFeed::Event& event, std::string& str, const bool sorted)
-{
-    switch (event.m_method) {
-        case EventFeed::Event::Method::PUT:
-            return convert_put(event, str, sorted);
-        case EventFeed::Event::Method::COPY:
-            return convert_copy(event, str, sorted);
-        case EventFeed::Event::Method::REMOVE_ALL:
-            return convert_remove_all(event, str, sorted);
-        case EventFeed::Event::Method::REMOVE:
-            return convert_remove(event, str, sorted);
-        case EventFeed::Event::Method::MOVE:
-            return convert_move(event, str, sorted);
+    for (const auto& sink : m_sinks) {
+        sink->on_event(event);
     }
 }
 
+/*
 void convert_put(
     const EventFeed::Event& event, std::string& str, const bool sorted)
 {
@@ -187,5 +131,6 @@ void convert_move(
 
     str = del_yaml + put_yaml;
 }
+*/
 
 }  // namespace hestia

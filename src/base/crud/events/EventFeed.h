@@ -1,12 +1,10 @@
 #pragma once
 
+#include "CrudEvent.h"
+#include "EventSink.h"
 #include "SerializeableWithFields.h"
 
-#include <filesystem>
-#include <fstream>
-
 namespace hestia {
-
 class EventFeedConfig : public SerializeableWithFields {
 
   public:
@@ -20,8 +18,6 @@ class EventFeedConfig : public SerializeableWithFields {
 
     const std::string& get_output_path() const;
 
-    bool should_sort_keys() const;
-
     EventFeedConfig& operator=(const EventFeedConfig& other);
 
   private:
@@ -30,38 +26,23 @@ class EventFeedConfig : public SerializeableWithFields {
     static constexpr const char s_type[]{"event_feed"};
     StringField m_output_path{"output_path", "event_feed.yaml"};
     BooleanField m_active{"active", false};
-    BooleanField m_sorted_keys{
-        "sorted_keys", false};  // For debug purposes only
 };
 
 /// Class for logging filesystem events to librobinhood-compatible YAML
 class EventFeed {
   public:
-    struct Event {
-        enum class Method { PUT, REMOVE, REMOVE_ALL, COPY, MOVE };
-
-        std::string m_id;
-        unsigned long m_length{0};
-
-        unsigned int m_source_tier{0};
-        unsigned int m_target_tier{0};
-
-        Method m_method;
-        void method_to_string(std::string& out);
-    };
-
     /// @brief Initialize an instance with the config provided
     /// @param config EventFeed configuration
-    void initialize(
-        const std::string& cache_path, const EventFeedConfig& config);
+    void initialize(const EventFeedConfig& config);
+
+    void add_sink(std::unique_ptr<EventSink> sink);
 
     /// @brief Serialize a filesystem-impacting event
     /// @param req Event data to serialize
-    void log_event(const Event& event);
+    void on_event(const CrudEvent& event);
 
   private:
+    std::vector<std::unique_ptr<EventSink>> m_sinks;
     EventFeedConfig m_config;
-    std::filesystem::path m_output_file_path;
-    std::ofstream m_output_file;
 };
 }  // namespace hestia

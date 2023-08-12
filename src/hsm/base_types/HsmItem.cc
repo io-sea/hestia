@@ -3,11 +3,9 @@
 namespace hestia {
 
 const std::vector<HsmItem::Type> HsmItem::s_all_items = {
-    Type::DATASET,   Type::OBJECT,
-    Type::ACTION,    Type::EVENT,
-    Type::NAMESPACE, Type::TIER,
-    Type::EXTENT,    Type::METADATA,
-    Type::NODE,      Type::OBJECT_STORE_BACKEND};
+    Type::DATASET,   Type::OBJECT, Type::ACTION,
+    Type::NAMESPACE, Type::TIER,   Type::EXTENT,
+    Type::METADATA,  Type::NODE,   Type::OBJECT_STORE_BACKEND};
 
 HsmItem::HsmItem(HsmItem::Type type) : m_hsm_type(type) {}
 
@@ -25,8 +23,6 @@ std::string HsmItem::to_name(Type type)
             return hsm_object_name;
         case Type::ACTION:
             return hsm_action_name;
-        case Type::EVENT:
-            return hsm_event_name;
         case Type::NAMESPACE:
             return namespace_name;
         case Type::TIER:
@@ -56,9 +52,6 @@ HsmItem::Type HsmItem::from_name(const std::string& type_name)
     }
     else if (type_name == hsm_action_name) {
         return Type::ACTION;
-    }
-    else if (type_name == hsm_event_name) {
-        return Type::EVENT;
     }
     else if (type_name == namespace_name) {
         return Type::NAMESPACE;

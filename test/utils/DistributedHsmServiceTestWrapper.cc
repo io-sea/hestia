@@ -14,7 +14,8 @@ DistributedHsmServiceTestWrapper::DistributedHsmServiceTestWrapper()
     m_user_service = hestia::UserService::create({}, &backend);
 
     auto hsm_service = hestia::HsmService::create(
-        {}, &m_kv_store_client, &m_obj_store_client, m_user_service.get());
+        {}, &m_kv_store_client, &m_obj_store_client, m_user_service.get(),
+        nullptr);
 
     hestia::ObjectStoreBackend object_store_backend(
         hestia::ObjectStoreBackend::Type::MEMORY);

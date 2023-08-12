@@ -8,7 +8,6 @@ set(LINK_MODULES_FOR_EXPORT
         models
         crud
         web
-        event_feed
         hsm
         hsm_base_types
         app

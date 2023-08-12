@@ -41,7 +41,7 @@ class DistributedHsmServiceTestFixture {
 
         auto hsm_service = hestia::HsmService::create(
             hestia::ServiceConfig{}, m_kv_store_client.get(),
-            m_object_store_client.get(), m_user_service.get());
+            m_object_store_client.get(), m_user_service.get(), nullptr);
 
         hestia::ObjectStoreBackend object_store_backend(
             hestia::ObjectStoreBackend::Type::MEMORY);

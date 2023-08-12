@@ -14,6 +14,7 @@ class KeyValueStoreClient;
 class HttpClient;
 class HsmObjectStoreClient;
 class UserService;
+class EventFeed;
 
 class CrudServiceBackend;
 
@@ -83,6 +84,7 @@ class HestiaApplication : public IHestiaApplication {
     std::unique_ptr<DistributedHsmService> m_distributed_hsm_service;
     HsmService* m_hsm_service{nullptr};
 
+    std::unique_ptr<EventFeed> m_event_feed;
     std::unique_ptr<KeyValueStoreClient> m_kv_store_client;
     std::unique_ptr<HttpClient> m_http_client;
     std::unique_ptr<HsmObjectStoreClient> m_object_store_client;

@@ -14,7 +14,6 @@ class HsmItem {
         DATASET,
         OBJECT,
         ACTION,
-        EVENT,
         NAMESPACE,
         TIER,
         EXTENT,
@@ -33,7 +32,6 @@ class HsmItem {
     static constexpr char dataset_name[]{"dataset"};
     static constexpr char namespace_name[]{"namespace"};
     static constexpr char hsm_action_name[]{"action"};
-    static constexpr char hsm_event_name[]{"event"};
     static constexpr char hsm_node_name[]{"node"};
     static constexpr char object_store_backend_name[]{"object_store_backend"};
 

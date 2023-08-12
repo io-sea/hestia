@@ -6,7 +6,6 @@ add_module(
         HsmItem.h
         HsmObject.h
         HsmAction.h
-        HsmEvent.h
         StorageTier.h
         TierExtents.h
         Dataset.h
@@ -18,7 +17,6 @@ add_module(
         HsmItem.cc
         HsmObject.cc
         HsmAction.cc
-        HsmEvent.cc
         StorageTier.cc 
         TierExtents.cc
         Dataset.cc
