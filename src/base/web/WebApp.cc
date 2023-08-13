@@ -23,20 +23,9 @@ void WebApp::add_middleware(ApplicationMiddleware::Ptr middleware)
     m_middleware.push_back(std::move(middleware));
 }
 
-bool WebApp::get_streamable(const std::string& request_path) const
-{
-    if (!m_url_router) {
-        return false;
-    }
-    const auto view = m_url_router->get_view(request_path);
-    if (view == nullptr) {
-        return false;
-    }
-    return view->can_stream();
-}
 
-
-void WebApp::on_request(RequestContext* request_context) const noexcept
+void WebApp::on_event(
+    RequestContext* request_context, HttpEvent event) const noexcept
 {
     if (!m_url_router) {
         request_context->set_response(
@@ -58,10 +47,11 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     }
 
     auto response = HttpResponse::create();
-    User user;
     if (m_middleware.empty()) {
         try {
-            response = view->get_response(request_context->get_request(), user);
+            response = view->on_event(
+                request_context->get_request(), event,
+                request_context->get_auth_context());
         }
         catch (const std::exception& e) {
             LOG_ERROR("Unhandled exception in view: " << e.what());
@@ -74,7 +64,8 @@ void WebApp::on_request(RequestContext* request_context) const noexcept
     else {
         try {
             response = on_middleware_layer(
-                view, user, 0, request_context->get_request());
+                view, request_context->get_auth_context(), 0,
+                request_context->get_request(), event);
         }
         catch (const std::exception& e) {
             LOG_ERROR(
@@ -114,20 +105,22 @@ HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& request) const
 
 HttpResponse::Ptr WebApp::on_middleware_layer(
     WebView* view,
-    User& user,
+    AuthorizationContext& auth,
     std::size_t working_idx,
-    const HttpRequest& request) const
+    const HttpRequest& request,
+    HttpEvent event) const
 {
     if (working_idx == m_middleware.size()) {
-        return view->get_response(request, user);
+        return view->on_event(request, event, auth);
     }
     else {
-        auto response_provider = [this, view, &user,
-                                  working_idx](const HttpRequest& request) {
-            return on_middleware_layer(view, user, working_idx + 1, request);
+        auto response_provider = [this, view, &auth, working_idx,
+                                  event](const HttpRequest& request) {
+            return on_middleware_layer(
+                view, auth, working_idx + 1, request, event);
         };
         return m_middleware[working_idx]->call(
-            request, user, response_provider);
+            request, auth, event, response_provider);
     }
 }
 

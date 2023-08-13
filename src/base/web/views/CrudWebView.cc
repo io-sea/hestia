@@ -16,19 +16,21 @@ std::string CrudWebView::get_path(const HttpRequest& request) const
 }
 
 HttpResponse::Ptr CrudWebView::on_get(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
+    if (event != HttpEvent::EOM) {
+        return HttpResponse::create(
+            HttpResponse::CompletionStatus::AWAITING_EOM);
+    }
+
     const auto path         = get_path(request);
     auto response           = hestia::HttpResponse::create();
     const auto content_type = request.get_header().has_html_accept_type() ?
                                   "text/html" :
                                   "application/json";
     response->header().set_content_type(content_type);
-
-    std::string token;
-    if (!user.tokens().empty()) {
-        token = user.tokens()[0].value();
-    }
 
     if (path.empty()) {
 
@@ -61,7 +63,8 @@ HttpResponse::Ptr CrudWebView::on_get(
         }
 
         auto crud_response = m_service->make_request(
-            CrudRequest(query, {user.get_primary_key(), token}), m_type_name);
+            CrudRequest(query, {auth.m_user_id, auth.m_user_token}),
+            m_type_name);
 
         if (has_id && !crud_response->found()) {
             return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
@@ -82,7 +85,8 @@ HttpResponse::Ptr CrudWebView::on_get(
         CrudQuery query(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
         auto crud_response = m_service->make_request(
-            CrudRequest{query, {user.get_primary_key(), token}}, m_type_name);
+            CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
+            m_type_name);
         if (!crud_response->found()) {
             return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
         }
@@ -92,8 +96,15 @@ HttpResponse::Ptr CrudWebView::on_get(
 }
 
 HttpResponse::Ptr CrudWebView::on_put(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
+    if (event != HttpEvent::EOM) {
+        return HttpResponse::create(
+            HttpResponse::CompletionStatus::AWAITING_EOM);
+    }
+
     const auto path = get_path(request);
 
     auto response = HttpResponse::create();
@@ -107,7 +118,7 @@ HttpResponse::Ptr CrudWebView::on_put(
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::CREATE,
-                user.get_primary_key(),
+                {auth.m_user_id, auth.m_user_token},
                 {},
                 attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES},
@@ -118,7 +129,7 @@ HttpResponse::Ptr CrudWebView::on_put(
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE,
-                user.get_primary_key(),
+                {auth.m_user_id, auth.m_user_token},
                 {id},
                 attributes,
                 CrudQuery::OutputFormat::ATTRIBUTES},

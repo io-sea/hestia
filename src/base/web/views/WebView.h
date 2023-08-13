@@ -1,7 +1,8 @@
 #pragma once
 
+#include "AuthorizationContext.h"
+#include "HttpEvent.h"
 #include "HttpRequest.h"
-#include "User.h"
 
 #include <memory>
 
@@ -14,32 +15,41 @@ class WebView {
 
     virtual ~WebView() = default;
 
-    virtual HttpResponse::Ptr get_response(
-        const HttpRequest& request, const User& = {});
+    HttpResponse::Ptr on_event(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     void set_path(const std::string& path);
 
-    bool can_stream() const { return m_can_stream; }
-
   protected:
     virtual HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     virtual HttpResponse::Ptr on_put(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     virtual HttpResponse::Ptr on_post(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     virtual HttpResponse::Ptr on_delete(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     virtual HttpResponse::Ptr on_head(
-        const HttpRequest& request, const User& user);
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
 
     virtual HttpResponse::Ptr on_not_supported(const HttpRequest& request);
 
     std::string m_path;
-    bool m_can_stream = false;
 };
 }  // namespace hestia

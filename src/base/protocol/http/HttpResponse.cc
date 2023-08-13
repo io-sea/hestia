@@ -14,6 +14,11 @@ HttpResponse::HttpResponse(const HttpError& err) : m_body(err.get_message())
     m_message        = code_and_id.second;
 }
 
+HttpResponse::HttpResponse(CompletionStatus status) :
+    m_completion_status(status)
+{
+}
+
 HttpResponse::Ptr HttpResponse::create()
 {
     return std::make_unique<HttpResponse>();
@@ -28,6 +33,11 @@ HttpResponse::Ptr HttpResponse::create(
 HttpResponse::Ptr HttpResponse::create(const HttpError& err)
 {
     return std::make_unique<HttpResponse>(err);
+}
+
+HttpResponse::Ptr HttpResponse::create(CompletionStatus status)
+{
+    return std::make_unique<HttpResponse>(status);
 }
 
 HttpHeader& HttpResponse::header()

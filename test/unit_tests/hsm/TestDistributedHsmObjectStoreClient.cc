@@ -30,14 +30,15 @@ class MockHsmMiddleware : public hestia::ApplicationMiddleware {
   public:
     hestia::HttpResponse::Ptr call(
         const hestia::HttpRequest& request,
-        hestia::User& user,
+        hestia::AuthorizationContext& user,
+        hestia::HttpEvent,
         hestia::responseProviderFunc func)
     {
         user = m_test_user;
         return func(request);
     }
 
-    hestia::User m_test_user;
+    hestia::AuthorizationContext m_test_user;
 };
 
 class MockHsmWebApp : public hestia::WebApp {
@@ -56,9 +57,11 @@ class MockHsmWebApp : public hestia::WebApp {
         m_url_router->add_pattern(
             {api_prefix + "ping"}, std::make_unique<hestia::PingView>());
 
-        auto middleware = std::make_unique<MockHsmMiddleware>();
-        middleware->m_test_user =
-            hsm_service->get_user_service()->get_current_user();
+        auto middleware   = std::make_unique<MockHsmMiddleware>();
+        auto current_user = hsm_service->get_user_service()->get_current_user();
+
+        middleware->m_test_user.m_user_id    = current_user.get_primary_key();
+        middleware->m_test_user.m_user_token = current_user.tokens()[0].value();
         add_middleware(std::move(middleware));
     }
 };
@@ -97,17 +100,10 @@ class MockHsmHttpClient : public hestia::HttpClient {
         intercepted_request.overwrite_path(
             hestia::StringUtils::remove_prefix(stripped_path, working_address));
 
-        hestia::RequestContext request_context(intercepted_request);
-        if (input_stream != nullptr
-            && request.get_method() == hestia::HttpRequest::Method::PUT) {
-            std::string dummy_source(input_stream->get_source_size(), ' ');
-            request_context.get_stream()->set_source(
-                hestia::InMemoryStreamSource::create(
-                    hestia::ReadableBufferView(dummy_source)));
-        }
+        hestia::RequestContext request_context;
+        request_context.set_request(intercepted_request);
 
-        working_app->on_request(&request_context);
-
+        working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
         if (request_context.get_response()->code() == 307) {
             working_address = hestia::StringUtils::remove_prefix(
                 request_context.get_response()->header().get_item("location"),
@@ -125,15 +121,13 @@ class MockHsmHttpClient : public hestia::HttpClient {
             if (working_app == nullptr) {
                 return hestia::HttpResponse::create(404, "Not Found");
             }
-            working_app->on_request(&request_context);
+            working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
         }
 
+        working_app->on_event(&request_context, hestia::HttpEvent::EOM);
+
         if (input_stream != nullptr) {
-            LOG_INFO(
-                "Stream has content: "
-                << request_context.get_stream()->has_content());
-            if (request.get_method() == hestia::HttpRequest::Method::PUT
-                && request_context.get_stream()->waiting_for_content()) {
+            if (request.get_method() == hestia::HttpRequest::Method::PUT) {
                 std::vector<char> buffer(1024);
                 hestia::WriteableBufferView buffer_view(buffer);
                 auto read_result = input_stream->read(buffer_view);
@@ -148,9 +142,7 @@ class MockHsmHttpClient : public hestia::HttpClient {
                     REQUIRE(request_context.get_stream()->reset().ok());
                 }
             }
-            else if (
-                request.get_method() == hestia::HttpRequest::Method::GET
-                && request_context.get_stream()->has_content()) {
+            else if (request.get_method() == hestia::HttpRequest::Method::GET) {
                 std::vector<char> buffer(1024);
                 hestia::WriteableBufferView buffer_view(buffer);
                 auto read_result =
@@ -169,7 +161,6 @@ class MockHsmHttpClient : public hestia::HttpClient {
                 }
             }
         }
-
         auto response = std::make_unique<hestia::HttpResponse>(
             *request_context.get_response());
         LOG_INFO("Setting location header to: " << working_address);

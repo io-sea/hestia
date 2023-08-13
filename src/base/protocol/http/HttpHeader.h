@@ -11,6 +11,8 @@ class HttpHeader {
 
     HttpHeader(const std::vector<std::string>& lines);
 
+    void add_line(const std::string& line);
+
     void for_each(Map::onItem func) const;
 
     std::string get_item(const std::string& key) const;
@@ -21,6 +23,8 @@ class HttpHeader {
 
     std::string get_content_length() const;
 
+    std::size_t get_content_length_as_size_t() const;
+
     void set_item(const std::string& key, const std::string& value);
 
     void set_items(const Map& items);
@@ -28,6 +32,8 @@ class HttpHeader {
     std::string to_string() const;
 
     bool has_html_accept_type() const;
+
+    bool has_expect_continue() const;
 
     void set_content_type(const std::string& content_type);
 

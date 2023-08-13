@@ -37,24 +37,26 @@ class TestWebAppTestFixture {
         auto register_response =
             m_user_service->register_user("my_admin", "my_admin_password");
         REQUIRE(register_response->ok());
-        m_test_user = *register_response->get_item_as<hestia::User>();
-
+        auto user             = register_response->get_item_as<hestia::User>();
+        m_test_user.m_user_id = user->get_primary_key();
+        m_test_user.m_user_token = user->get_first_token().value();
         m_web_app = std::make_unique<TestWebApp>(m_user_service.get());
     }
 
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;
     std::unique_ptr<TestWebApp> m_web_app;
     std::unique_ptr<hestia::UserService> m_user_service;
-    hestia::User m_test_user;
+    hestia::AuthorizationContext m_test_user;
 };
 
 
 TEST_CASE_METHOD(TestWebAppTestFixture, "Test Basic web app", "[web_app]")
 {
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
-    hestia::RequestContext request_context(request);
+    hestia::RequestContext request_context;
+    request_context.set_request(request);
 
-    m_web_app->on_request(&request_context);
+    m_web_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
 
     auto response                      = request_context.get_response();
     const std::string no_data_response = "No data set!";
@@ -69,16 +71,17 @@ TEST_CASE_METHOD(
     TestWebAppTestFixture, "Test Token auth middleware", "[web_app]")
 {
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
-    request.get_header().set_auth_token(m_test_user.tokens()[0].value());
+    request.get_header().set_auth_token(m_test_user.m_user_token);
 
-    hestia::RequestContext request_context(request);
+    hestia::RequestContext request_context;
+    request_context.set_request(request);
 
     auto token_auth = std::make_unique<hestia::TokenAuthenticationMiddleware>();
     token_auth->set_user_service(m_user_service.get());
 
     m_web_app->add_middleware(std::move(token_auth));
 
-    m_web_app->on_request(&request_context);
+    m_web_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
 
     auto response                      = request_context.get_response();
     const std::string no_data_response = "No data set!";
@@ -88,7 +91,5 @@ TEST_CASE_METHOD(
         == std::to_string(no_data_response.size()));
     REQUIRE(response->body() == no_data_response);
 
-    REQUIRE(
-        m_web_app->m_view->m_user.get_primary_key()
-        == m_test_user.get_primary_key());
+    REQUIRE(m_web_app->m_view->m_user.m_user_id == m_test_user.m_user_id);
 }

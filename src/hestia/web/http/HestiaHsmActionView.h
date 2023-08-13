@@ -17,20 +17,30 @@ class HestiaHsmActionView : public CrudWebView {
     ~HestiaHsmActionView();
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
     HttpResponse::Ptr on_put(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
     HttpResponse::Ptr on_delete(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
     HttpResponse::Ptr on_head(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
   private:
     HttpResponse::Ptr do_hsm_action(
-        const HttpRequest& request, const Map& action_map, const User& user);
+        const HttpRequest& request,
+        const Map& action_map,
+        const AuthorizationContext& auth);
 
     DistributedHsmService* m_hestia_service{nullptr};
 };

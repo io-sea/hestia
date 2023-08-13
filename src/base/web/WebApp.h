@@ -1,7 +1,8 @@
 #pragma once
 
+#include "AuthorizationContext.h"
+#include "HttpEvent.h"
 #include "HttpRequest.h"
-#include "User.h"
 
 #include <functional>
 #include <memory>
@@ -26,7 +27,8 @@ class WebApp {
 
     void add_middleware(std::unique_ptr<ApplicationMiddleware> middleware);
 
-    virtual void on_request(RequestContext* request_context) const noexcept;
+    virtual void on_event(
+        RequestContext* request_context, HttpEvent event) const noexcept;
 
     void set_url_router(std::unique_ptr<UrlRouter> router);
 
@@ -38,9 +40,10 @@ class WebApp {
 
     HttpResponse::Ptr on_middleware_layer(
         WebView* view,
-        User& user,
+        AuthorizationContext& auth,
         std::size_t working_idx,
-        const HttpRequest& request) const;
+        const HttpRequest& request,
+        HttpEvent event) const;
 
     std::vector<std::unique_ptr<ApplicationMiddleware>> m_middleware;
     std::unique_ptr<UrlRouter> m_url_router;

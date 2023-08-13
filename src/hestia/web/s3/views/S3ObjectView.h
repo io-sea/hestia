@@ -11,16 +11,24 @@ class S3ObjectView : public WebView {
     S3ObjectView(S3Service* service);
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent,
+        const AuthorizationContext&) override;
 
     HttpResponse::Ptr on_put(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent,
+        const AuthorizationContext&) override;
 
     HttpResponse::Ptr on_delete(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent,
+        const AuthorizationContext&) override;
 
     HttpResponse::Ptr on_head(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent,
+        const AuthorizationContext&) override;
 
     S3Service* m_service{nullptr};
     std::unique_ptr<S3ObjectAdapter> m_object_adatper;

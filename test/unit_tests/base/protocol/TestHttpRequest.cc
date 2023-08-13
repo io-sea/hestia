@@ -5,15 +5,17 @@
 TEST_CASE("Test HttpRequest", "[protocol]")
 {
     const std::string msg =
-        "PUT /my_path?list-type=2&encoding-type=url HTTP/1.1\n"
-        "Host: localhost:8000\n"
-        "Connection: keep-alive\n"
-        "Content-Length: 9\n"
-        "Content-Type: application/x-www-form-urlencoded\n"
-        "\n"
+        "PUT /my_path?list-type=2&encoding-type=url HTTP/1.1\r\n"
+        "Host: localhost:8000\r\n"
+        "Connection: keep-alive\r\n"
+        "Content-Length: 9\r\n"
+        "Content-Type: application/x-www-form-urlencoded\r\n"
+        "\r\n"
         "key=value";
 
-    hestia::HttpRequest request(msg);
+    hestia::HttpRequest request;
+    request.on_chunk(msg);
+
     REQUIRE(request.get_method_as_string() == "PUT");
     REQUIRE(request.get_header().get_content_length() == "9");
     REQUIRE(request.body() == "key=value");

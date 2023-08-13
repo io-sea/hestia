@@ -30,8 +30,12 @@ class MockHttpClient : public hestia::HttpClient {
         intercepted_request.overwrite_path(
             hestia::StringUtils::remove_prefix(request.get_path(), m_address));
 
-        hestia::RequestContext request_context(intercepted_request);
-        m_app->on_request(&request_context);
+        hestia::RequestContext request_context;
+        request_context.get_writeable_request() = request;
+        request_context.get_writeable_request().overwrite_path(
+            hestia::StringUtils::remove_prefix(request.get_path(), m_address));
+
+        m_app->on_event(&request_context, hestia::HttpEvent::EOM);
         return std::make_unique<hestia::HttpResponse>(
             *request_context.get_response());
     }

@@ -20,7 +20,8 @@ S3ObjectView::S3ObjectView(S3Service* service) :
     LOG_INFO("Loaded object view");
 }
 
-HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request, const User&)
+HttpResponse::Ptr S3ObjectView::on_get(
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
 
@@ -78,7 +79,8 @@ HttpResponse::Ptr S3ObjectView::on_get(const HttpRequest& request, const User&)
     return response;
 }
 
-HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request, const User&)
+HttpResponse::Ptr S3ObjectView::on_head(
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
 
@@ -127,7 +129,8 @@ HttpResponse::Ptr S3ObjectView::on_head(const HttpRequest& request, const User&)
     return response;
 }
 
-HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
+HttpResponse::Ptr S3ObjectView::on_put(
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
 
@@ -169,7 +172,7 @@ HttpResponse::Ptr S3ObjectView::on_put(const HttpRequest& request, const User&)
 }
 
 HttpResponse::Ptr S3ObjectView::on_delete(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
     /*

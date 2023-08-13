@@ -12,9 +12,7 @@
 namespace hestia {
 class RequestContext {
   public:
-    RequestContext(const HttpRequest& request);
-
-    void set_request(const HttpRequest& request);
+    RequestContext();
 
     [[nodiscard]] StreamState clear_stream();
 
@@ -24,11 +22,15 @@ class RequestContext {
 
     Stream* get_stream() const;
 
-    AuthorizationContext* get_auth_context();
+    AuthorizationContext& get_auth_context();
 
     HttpResponse* get_response() const;
 
     const HttpRequest& get_request() const;
+
+    HttpRequest& get_writeable_request();
+
+    void set_request(const HttpRequest& req);
 
     void on_input_complete();
 

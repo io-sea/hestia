@@ -16,7 +16,9 @@ class StaticContentView : public WebView {
 
   private:
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
     bool read(const std::string& path, std::string& content) const;
 

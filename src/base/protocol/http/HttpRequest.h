@@ -15,8 +15,6 @@ class HttpRequest {
     HttpRequest(
         const std::string& path, Method method, const HttpHeader& header = {});
 
-    HttpRequest(const std::string& message);
-
     const std::string& body() const;
 
     std::string& body() { return m_body; }
@@ -39,6 +37,10 @@ class HttpRequest {
 
     RequestContext* get_context() const;
 
+    void on_chunk(const std::string& msg);
+
+    bool has_read_header() const;
+
     bool is_content_outstanding() const;
 
     std::string to_string() const;
@@ -52,6 +54,8 @@ class HttpRequest {
     std::string m_body;
     HttpPreamble m_preamble;
     HttpHeader m_header;
+    bool m_has_read_header{false};
+    bool m_has_read_preamble{false};
 };
 
 using responseProviderFunc =

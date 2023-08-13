@@ -12,48 +12,51 @@ HttpRequest::HttpRequest(
     m_preamble.m_path = path;
 }
 
-HttpRequest::HttpRequest(const std::string& message)
+void HttpRequest::on_chunk(const std::string& msg)
 {
-    std::stringstream ss(message);
+    if (m_has_read_header) {
+        m_body += msg;
+    }
+    else {
+        std::stringstream ss(msg);
+        std::string buffer;
+        while (std::getline(ss, buffer, '\n')) {
+            if (!m_has_read_preamble) {
+                HttpParser::parse_preamble(buffer, m_preamble);
+                m_has_read_preamble = true;
 
-    std::string buffer;
-    bool first_line{true};
+                if (m_preamble.m_method == "GET") {
+                    m_method = Method::GET;
+                }
+                else if (m_preamble.m_method == "PUT") {
+                    m_method = Method::PUT;
+                }
+                else if (m_preamble.m_method == "POST") {
+                    m_method = Method::POST;
+                }
+                else if (m_preamble.m_method == "DELETE") {
+                    m_method = Method::DELETE;
+                }
+                else if (m_preamble.m_method == "HEAD") {
+                    m_method = Method::HEAD;
+                }
+            }
+            else if (buffer == "\r") {
+                m_has_read_header = true;
+            }
+            else if (m_has_read_header) {
+                m_body += buffer;
+            }
+            else {
+                m_header.add_line(buffer);
+            }
+        }
+    }
+}
 
-    std::vector<std::string> headers;
-    bool in_body{false};
-    while (std::getline(ss, buffer, '\n')) {
-        if (first_line) {
-            HttpParser::parse_preamble(buffer, m_preamble);
-            first_line = false;
-        }
-        else if (buffer.size() <= 1) {
-            in_body = true;
-        }
-        else if (in_body) {
-            m_body += buffer;
-        }
-        else {
-            headers.push_back(buffer);
-        }
-    }
-
-    if (m_preamble.m_method == "GET") {
-        m_method = Method::GET;
-    }
-    else if (m_preamble.m_method == "PUT") {
-        m_method = Method::PUT;
-    }
-    else if (m_preamble.m_method == "POST") {
-        m_method = Method::POST;
-    }
-    else if (m_preamble.m_method == "DELETE") {
-        m_method = Method::DELETE;
-    }
-    else if (m_preamble.m_method == "HEAD") {
-        m_method = Method::HEAD;
-    }
-
-    m_header = HttpHeader(headers);
+bool HttpRequest::has_read_header() const
+{
+    return m_has_read_header;
 }
 
 const std::string& HttpRequest::body() const

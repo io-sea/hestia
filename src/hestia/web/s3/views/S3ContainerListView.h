@@ -11,7 +11,9 @@ class S3ContainerListView : public WebView {
     S3ContainerListView(S3Service* service);
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
   private:
     S3Service* m_service{nullptr};

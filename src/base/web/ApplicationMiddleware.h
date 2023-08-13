@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AuthorizationContext.h"
+#include "HttpEvent.h"
 #include "HttpRequest.h"
 #include "UserService.h"
 
@@ -14,7 +16,10 @@ class ApplicationMiddleware {
     void set_user_service(UserService* service) { m_user_service = service; }
 
     virtual HttpResponse::Ptr call(
-        const HttpRequest& request, User& user, responseProviderFunc func) = 0;
+        const HttpRequest& request,
+        AuthorizationContext& auth,
+        HttpEvent event,
+        responseProviderFunc func) = 0;
 
   protected:
     UserService* m_user_service{nullptr};

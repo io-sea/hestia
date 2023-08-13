@@ -17,39 +17,50 @@ class MockWebView : public WebView {
     MockWebView(MockWebService* service, bool should_redirect = true) :
         WebView(), m_service(service)
     {
-        m_can_stream      = true;
         m_should_redirect = should_redirect;
     }
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override
     {
-        m_user = user;
+        m_user = auth;
 
         auto redirect_url = request.get_header().get_item("redirect_me");
         if (m_should_redirect && !redirect_url.empty()) {
-            auto response = HttpResponse::create(302, "Found");
+            auto response = HttpResponse::create(307, "Found");
             LOG_INFO("Returning redirect");
             response->header().set_item("location", "http://" + redirect_url);
             return response;
         }
 
-        LOG_INFO("Returning body");
-        auto buffer_size =
-            m_service->get_data(request.get_context()->get_stream());
+        if (event == HttpEvent::HEADERS) {
+            auto buffer_size =
+                m_service->get_data(request.get_context()->get_stream());
 
-        auto response = HttpResponse::create();
-        if (buffer_size == 0) {
-            response->set_body("No data set!");
-            return response;
+            if (buffer_size == 0) {
+                auto response = HttpResponse::create();
+                response->set_body("No data set!");
+                return response;
+            }
+            else {
+                LOG_INFO("Returning await eom");
+                return HttpResponse::create(
+                    HttpResponse::CompletionStatus::AWAITING_EOM);
+            }
         }
-        return response;
+        else {
+            return HttpResponse::create();
+        }
     }
 
     HttpResponse::Ptr on_put(
-        const HttpRequest& request, const User& user) override
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override
     {
-        m_user = user;
+        m_user = auth;
 
         auto redirect_url = request.get_header().get_item("redirect_me");
         if (m_should_redirect && !redirect_url.empty()) {
@@ -59,37 +70,23 @@ class MockWebView : public WebView {
             return response;
         }
 
-        LOG_INFO("Have headers: " << request.get_header().to_string());
-        const auto content_length = request.get_header().get_content_length();
-
-        if (request.get_context()->finished()) {
+        if (event == HttpEvent::HEADERS) {
+            const auto content_length =
+                request.get_header().get_content_length();
+            LOG_INFO("Preparing internal buffer of size " << content_length);
+            m_service->set_data(
+                std::stoi(content_length), request.get_context()->get_stream());
+            LOG_INFO("Completion status is awaiting body chunk");
+            return HttpResponse::create(
+                HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
+        }
+        else {
+            LOG_INFO("Handling EOM");
             return HttpResponse::create();
         }
-
-        LOG_INFO(
-            "Preparing internal persistent buffer of size " << content_length);
-        m_service->set_data(
-            std::stoi(content_length), request.get_context()->get_stream());
-
-        if (request.is_content_outstanding()) {  // Fetch body if not complete
-            return HttpResponse::create(
-                HttpError(HttpError::Code::_100_CONTINUE));
-        }
-
-        auto status = request.get_context()->get_stream()->write(
-            ReadableBufferView(request.body()));
-        request.get_context()->on_input_complete();
-
-        if (!status.ok() || request.get_context()->get_response()->error()) {
-            LOG_ERROR(
-                "Error writing body to stream: " << status.m_state.message());
-            return HttpResponse::create(
-                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR));
-        }
-        return HttpResponse::create();
     }
 
-    hestia::User m_user;
+    hestia::AuthorizationContext m_user;
 
   private:
     bool m_should_redirect{true};

@@ -16,7 +16,7 @@ S3ContainerListView::S3ContainerListView(S3Service* service) :
 }
 
 HttpResponse::Ptr S3ContainerListView::on_get(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
     (void)m_service;

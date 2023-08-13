@@ -16,7 +16,9 @@ class HestiaUserAuthView : public WebView {
     ~HestiaUserAuthView();
 
     HttpResponse::Ptr on_post(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
   private:
     UserService* m_user_service{nullptr};

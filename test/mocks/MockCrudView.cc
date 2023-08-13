@@ -15,29 +15,29 @@ std::string MockCrudView::get_path(const HttpRequest& request) const
 }
 
 HttpResponse::Ptr MockCrudView::on_get(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
     const auto path = get_path(request);
     auto response   = hestia::HttpResponse::create();
     if (path.empty()) {
         CrudQuery query(CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response =
-            m_service->make_request(CrudRequest(query, user.get_primary_key()));
+        auto crud_response = m_service->make_request(
+            CrudRequest(query, {auth.m_user_id, auth.m_user_token}));
         response->set_body(crud_response->attributes().get_buffer());
     }
     else {
         const auto id = path;
         CrudQuery query(
             CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
-        auto crud_response =
-            m_service->make_request(CrudRequest{query, user.get_primary_key()});
+        auto crud_response = m_service->make_request(
+            CrudRequest{query, {auth.m_user_id, auth.m_user_token}});
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;
 }
 
 HttpResponse::Ptr MockCrudView::on_put(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
     const auto path = get_path(request);
 
@@ -50,7 +50,7 @@ HttpResponse::Ptr MockCrudView::on_put(
     if (path.empty()) {
         crud_response = m_service->make_request(CrudRequest{
             CrudMethod::CREATE,
-            user.get_primary_key(),
+            {auth.m_user_id, auth.m_user_token},
             {},
             attributes,
             CrudQuery::OutputFormat::ATTRIBUTES});
@@ -59,7 +59,7 @@ HttpResponse::Ptr MockCrudView::on_put(
         const CrudIdentifier id(path);
         crud_response = m_service->make_request(CrudRequest{
             CrudMethod::UPDATE,
-            user.get_primary_key(),
+            {auth.m_user_id, auth.m_user_token},
             {id},
             attributes,
             CrudQuery::OutputFormat::ATTRIBUTES});

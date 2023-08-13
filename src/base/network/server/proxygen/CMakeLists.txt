@@ -12,17 +12,11 @@ add_module(
     HEADERS
         ProxygenServer.h
         ProxygenRequestHandler.h
-        ProxygenGetRequestHandler.h
-        ProxygenPutRequestHandler.h
-        ProxygenUnsupportedRequestHandler.h
         ProxygenHandlerFactory.h
         ProxygenMessage.h
     SOURCES
         ProxygenServer.cc
         ProxygenRequestHandler.cc
-        ProxygenGetRequestHandler.cc
-        ProxygenPutRequestHandler.cc
-        ProxygenUnsupportedRequestHandler.cc
         ProxygenHandlerFactory.cc
         ProxygenMessage.cc
     INTERNAL_DEPENDENCIES

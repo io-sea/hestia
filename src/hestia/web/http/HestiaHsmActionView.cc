@@ -21,13 +21,14 @@ HestiaHsmActionView::HestiaHsmActionView(
     CrudWebView(hestia_service->get_hsm_service(), HsmItem::hsm_action_name),
     m_hestia_service(hestia_service)
 {
-    m_can_stream = true;
 }
 
 HestiaHsmActionView::~HestiaHsmActionView() {}
 
 HttpResponse::Ptr HestiaHsmActionView::on_get(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
     auto path = StringUtils::split_on_first(
                     request.get_path(),
@@ -41,14 +42,24 @@ HttpResponse::Ptr HestiaHsmActionView::on_get(
             "hestia.hsm_action.", action_map);
 
         if (!action_map.empty()) {
-            return do_hsm_action(request, action_map, user);
+            if (event == HttpEvent::HEADERS) {
+                return do_hsm_action(request, action_map, auth);
+            }
+            else {
+                return HttpResponse::create();
+            }
+        }
+        else {
+            return CrudWebView::on_get(request, event, auth);
         }
     }
-    return CrudWebView::on_get(request, user);
+    return CrudWebView::on_get(request, event, auth);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_put(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
     auto path = StringUtils::split_on_first(
                     request.get_path(),
@@ -62,20 +73,30 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
             "hestia.hsm_action.", action_map);
 
         if (!action_map.empty()) {
-            return do_hsm_action(request, action_map, user);
+            if (event == HttpEvent::HEADERS) {
+                return do_hsm_action(request, action_map, auth);
+            }
+            else {
+                return HttpResponse::create();
+            }
+        }
+        else {
+            return CrudWebView::on_put(request, event, auth);
         }
     }
-    return CrudWebView::on_put(request, user);
+    return CrudWebView::on_put(request, event, auth);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_delete(
-    const HttpRequest& request, const User& user)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
-    return CrudWebView::on_delete(request, user);
+    return CrudWebView::on_delete(request, event, auth);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_head(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     const auto path =
         StringUtils::split_on_first(request.get_path(), "/objects").second;
@@ -87,7 +108,9 @@ HttpResponse::Ptr HestiaHsmActionView::on_head(
 
 
 HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
-    const HttpRequest& request, const Map& action_map, const User& user)
+    const HttpRequest& request,
+    const Map& action_map,
+    const AuthorizationContext& auth)
 {
     LOG_INFO("Processing HSM Action");
 
@@ -97,7 +120,8 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     HsmAction action;
     action.deserialize(action_dict);
 
-    auto response = HttpResponse::create();
+    auto response = HttpResponse::create(
+        HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
 
     if (action.is_data_io_action()) {
         std::string redirect_location;
@@ -118,7 +142,7 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             }
         };
         m_hestia_service->do_data_io_action(
-            HsmActionRequest(action, user.get_primary_key()),
+            HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
             request.get_context()->get_stream(), completion_cb);
 
         if (!redirect_location.empty()) {
@@ -129,7 +153,7 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     }
     else {
         auto action_response = m_hestia_service->make_request(
-            HsmActionRequest(action, user.get_primary_key()));
+            HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}));
 
         if (!action_response->ok()) {
             return HttpResponse::create(500, "Internal Server Error.");

@@ -19,7 +19,8 @@ S3ContainerView::S3ContainerView(S3Service* service) :
     LOG_INFO("Loaded S3ContainerView");
 }
 
-HttpResponse::Ptr S3ContainerView::on_get(const HttpRequest&, const User&)
+HttpResponse::Ptr S3ContainerView::on_get(
+    const HttpRequest&, HttpEvent, const AuthorizationContext&)
 {
     /*
     auto hsm_service = m_service->get_hsm_service();
@@ -59,7 +60,7 @@ HttpResponse::Ptr S3ContainerView::on_get(const HttpRequest&, const User&)
 }
 
 HttpResponse::Ptr S3ContainerView::on_put(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
     /*
@@ -98,7 +99,7 @@ HttpResponse::Ptr S3ContainerView::on_put(
 }
 
 HttpResponse::Ptr S3ContainerView::on_delete(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
     /*
@@ -120,7 +121,7 @@ HttpResponse::Ptr S3ContainerView::on_delete(
 }
 
 HttpResponse::Ptr S3ContainerView::on_head(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
     (void)m_service;

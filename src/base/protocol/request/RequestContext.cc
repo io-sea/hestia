@@ -3,17 +3,21 @@
 #include "Logger.h"
 
 namespace hestia {
-RequestContext::RequestContext(const HttpRequest& request) :
+RequestContext::RequestContext() :
     m_response(HttpResponse::create()), m_stream(Stream::create())
 {
-    m_request = request;
     m_request.set_context(this);
 }
 
-void RequestContext::set_request(const HttpRequest& request)
+void RequestContext::set_request(const HttpRequest& req)
 {
-    m_request = request;
+    m_request = req;
     m_request.set_context(this);
+}
+
+HttpRequest& RequestContext::get_writeable_request()
+{
+    return m_request;
 }
 
 Stream* RequestContext::get_stream() const
@@ -21,9 +25,9 @@ Stream* RequestContext::get_stream() const
     return m_stream.get();
 }
 
-AuthorizationContext* RequestContext::get_auth_context()
+AuthorizationContext& RequestContext::get_auth_context()
 {
-    return &m_auth_context;
+    return m_auth_context;
 }
 
 HttpResponse* RequestContext::get_response() const

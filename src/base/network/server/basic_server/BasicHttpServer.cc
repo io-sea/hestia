@@ -58,136 +58,140 @@ BasicHttpServer::Status BasicHttpServer::start()
     return {};
 }
 
-HttpResponse::Ptr write_to_stream(const HttpRequest& req, Stream* stream)
+bool BasicHttpServer::on_head(
+    RequestContext& request_context, Socket* socket) const
 {
-    auto response = HttpResponse::create();
-    if (!req.body().empty()) {
-        auto status = stream->write(ReadableBufferView(req.body()));
-        LOG_INFO("Wrote " << status.m_num_transferred << " bytes to stream");
-        if (!status.ok()) {
-            LOG_ERROR(
-                "Error writing body to stream: " << status.m_state.message());
-            response = HttpResponse::create(
-                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR));
-        }
-    }
-    return response;
-}
+    LOG_INFO(
+        "Got headers: "
+        << request_context.get_request().get_header().to_string());
 
-void BasicHttpServer::receive_until_header_end(
-    std::string& message, Socket* socket)
-{
-    while (message.rfind("\r\n\r\n") == message.npos) {
+    m_web_app->on_event(&request_context, HttpEvent::HEADERS);
+    if (request_context.get_response()->get_completion_status()
+        == HttpResponse::CompletionStatus::FINISHED) {
+        LOG_INFO("Response finished after reading headers - don't want body");
+        socket->respond(request_context.get_response()->to_string());
+        return true;
+    }
+    else if (request_context.get_request().get_header().has_expect_continue()) {
+        LOG_INFO("Info responding to expect continue");
         socket->respond(
             HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE))
                 ->to_string());
-        message.append(socket->recieve());
     }
+    return false;
+}
+
+bool BasicHttpServer::on_body_chunk(
+    RequestContext& context,
+    Socket* socket,
+    HttpEvent& last_event,
+    std::size_t expected_body_size,
+    std::size_t& body_count) const
+{
+    IOResult write_result;
+    if (last_event == HttpEvent::HEADERS
+        && context.get_request().body().size() >= expected_body_size) {
+        write_result = context.get_stream()->write(
+            ReadableBufferView(context.get_request().body()));
+    }
+    else {
+        write_result =
+            context.get_stream()->write(ReadableBufferView(socket->recieve()));
+    }
+
+    if (!write_result.ok()) {
+        LOG_ERROR("Failed to write to stream ");
+        socket->respond(
+            HttpResponse::create(
+                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR))
+                ->to_string());
+        return true;
+    }
+
+    body_count += write_result.m_num_transferred;
+    last_event = HttpEvent::BODY;
+
+    if (body_count >= expected_body_size) {
+        LOG_INFO("Finished with streamed body - sending eom");
+        m_web_app->on_event(&context, HttpEvent::EOM);
+        socket->respond(context.get_response()->to_string());
+        return true;
+    }
+    return false;
 }
 
 void BasicHttpServer::on_connection(Socket* socket)
 {
-    auto message = socket->recieve();
+    RequestContext request_context;
+    HttpEvent last_event{HttpEvent::CONNECTED};
 
-    if (socket->connected()) {
-        receive_until_header_end(message, socket);
-        LOG_INFO("Got message: " + message);
-
-        HttpRequest request(message);
-        RequestContext request_context(request);
-
-        auto content_length_string = request.get_header().get_content_length();
-        std::size_t content_length = 0;
-        if (!content_length_string.empty()) {
-            content_length = std::stoul(content_length_string);
-        }
-        // Set up stream if the requested view supports this
-        if (m_web_app->get_streamable(
-                request_context.get_request().get_path())) {
-            m_web_app->on_request(&request_context);
-
-            //  Handle input (outstanding request body)
-            // Not supported: streamed body and streamed response
-            if (request_context.get_stream()->waiting_for_content()) {
-                std::size_t total_received = request.body().size();
-
-                // Handle initial body if parsed
-                auto status =
-                    write_to_stream(request, request_context.get_stream());
-                if (status->error()) {
-                    socket->respond(status->to_string());
+    std::size_t received_body_count{0};
+    std::size_t expected_body_size{0};
+    while (socket->connected()) {
+        if (last_event == HttpEvent::CONNECTED) {
+            request_context.get_writeable_request().on_chunk(socket->recieve());
+            if (request_context.get_request().has_read_header()) {
+                const bool should_disconnect = on_head(request_context, socket);
+                if (should_disconnect) {
+                    break;
                 }
-                while (total_received < content_length) {
-                    // Ask for more data
-                    socket->respond(
-                        HttpResponse::create(
-                            HttpError(HttpError::Code::_100_CONTINUE))
-                            ->to_string());
-
-                    // Get further data
-                    request.body().assign(socket->recieve());
-                    LOG_INFO("Got " << request.body().size() << " extra bytes.")
-                    total_received += request.body().size();
-
-                    // Push body chunk to stream
-                    auto status =
-                        write_to_stream(request, request_context.get_stream());
-                    if (status->error()) {
-                        socket->respond(status->to_string());
-                        break;
-                    }
-                }
-                // Reset response & respond based on stream status
-                request_context.set_response(nullptr);
-                request_context.on_input_complete();
+                last_event = HttpEvent::HEADERS;
             }
-
-            LOG_INFO(
-                "Sending response: "
-                << request_context.get_response()->to_string());
-            socket->respond(request_context.get_response()->to_string());
         }
-        // Non-streamed input
         else {
-            while (request.body().size() < content_length) {
-                socket->respond(HttpResponse::create(
-                                    HttpError(HttpError::Code::_100_CONTINUE))
-                                    ->to_string());
-                request.body().append(socket->recieve());
-                LOG_INFO("Got " << request.body().size() << " total bytes.")
+            if (last_event == HttpEvent::HEADERS) {
+                expected_body_size = request_context.get_request()
+                                         .get_header()
+                                         .get_content_length_as_size_t();
             }
-            request_context.set_request(request);
-            // Process with full body
-            m_web_app->on_request(&request_context);
 
-            LOG_INFO(
-                "Sending response: "
-                << request_context.get_response()->to_string());
-            socket->respond(request_context.get_response()->to_string());
-        }
+            if (expected_body_size == 0) {
+                m_web_app->on_event(&request_context, HttpEvent::EOM);
+                socket->respond(request_context.get_response()->to_string());
+                if (request_context.get_stream()->has_content()) {
+                    LOG_INFO("Responding with stream");
+                    request_context.set_output_chunk_handler(
+                        [&socket](
+                            const hestia::ReadableBufferView& buffer,
+                            bool finished) {
+                            (void)finished;
+                            socket->respond(
+                                std::string(buffer.data(), buffer.length()));
+                            return buffer.length();
+                        });
+                    request_context.flush_stream();
+                }
+                break;
+            }
+            else if (
+                request_context.get_response()->get_completion_status()
+                == HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK) {
+                const bool should_disconnect = on_body_chunk(
+                    request_context, socket, last_event, expected_body_size,
+                    received_body_count);
+                if (should_disconnect) {
+                    break;
+                }
+            }
+            else {
+                if (request_context.get_request().body().size()
+                    < expected_body_size) {
+                    request_context.get_writeable_request().body() +=
+                        socket->recieve();
+                }
 
-        // Handle streamed response
-        if (request_context.get_stream()->has_content()) {
-            request_context.set_output_chunk_handler(
-                [&socket](
-                    const hestia::ReadableBufferView& buffer, bool finished) {
-                    (void)finished;
+                if (request_context.get_writeable_request().body().size()
+                    >= expected_body_size) {
+                    LOG_INFO("Finished with body - sending eom");
+                    m_web_app->on_event(&request_context, HttpEvent::EOM);
                     socket->respond(
-                        std::string(buffer.data(), buffer.length()));
-                    return buffer.length();
-                });
-            LOG_INFO("Responding with provided stream");
-            request_context.flush_stream();
+                        request_context.get_response()->to_string());
+                    break;
+                }
+            }
         }
-
-        socket->close();
     }
-    else if (socket->closed()) {
-        LOG_INFO("Client closed connection");
-    }
-    else {
-        LOG_ERROR("Connection error");
-    }
+    socket->close();
 }
 
 void BasicHttpServer::wait_until_bound()

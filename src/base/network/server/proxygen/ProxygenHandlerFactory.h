@@ -9,7 +9,7 @@ namespace hestia {
 
 class ProxygenHandlerFactory : public proxygen::RequestHandlerFactory {
   public:
-    ProxygenHandlerFactory(WebApp* web_app);
+    ProxygenHandlerFactory(WebApp* web_app, std::size_t max_buffer_size);
 
     void onServerStart(folly::EventBase*) noexcept override;
 
@@ -21,6 +21,7 @@ class ProxygenHandlerFactory : public proxygen::RequestHandlerFactory {
 
   private:
     WebApp* m_web_app{nullptr};
+    std::size_t m_max_buffer_size{0};
 };
 }  // namespace hestia
 

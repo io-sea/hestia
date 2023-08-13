@@ -19,7 +19,7 @@ class ProxygenServer : public Server {
   public:
     ProxygenServer(const Server::Config& config, WebApp* web_app);
 
-    ~ProxygenServer();
+    virtual ~ProxygenServer();
 
     Status initialize() override;
 

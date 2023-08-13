@@ -21,7 +21,7 @@ ProxygenServer::ProxygenServer(const Server::Config& config, WebApp* web_app) :
 
 ProxygenServer::~ProxygenServer()
 {
-    stop();
+    ProxygenServer::stop();
 }
 
 ProxygenServer::Status ProxygenServer::initialize()
@@ -48,7 +48,8 @@ ProxygenServer::Status ProxygenServer::initialize()
     options.shutdownOn               = {SIGINT, SIGTERM};
     options.enableContentCompression = false;
     options.handlerFactories         = proxygen::RequestHandlerChain()
-                                   .addThen<ProxygenHandlerFactory>(m_web_app)
+                                   .addThen<ProxygenHandlerFactory>(
+                                       m_web_app, m_config.m_body_buffer_size)
                                    .build();
     options.h2cEnabled = true;
 

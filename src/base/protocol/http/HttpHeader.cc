@@ -14,21 +14,26 @@ HttpHeader::HttpHeader()
 HttpHeader::HttpHeader(const std::vector<std::string>& lines)
 {
     for (const auto& line : lines) {
-        const auto loc = line.find(":");
-        if (loc == line.npos) {
-            continue;
-        }
-
-        auto tag = line.substr(0, loc);
-        StringUtils::trim(tag);
-        auto value = line.substr(loc + 1, line.size() - loc);
-        StringUtils::trim(value);
-
-        if (tag.empty() || value.empty()) {
-            continue;
-        }
-        set_item(tag, value);
+        add_line(line);
     }
+}
+
+void HttpHeader::add_line(const std::string& line)
+{
+    const auto loc = line.find(":");
+    if (loc == line.npos) {
+        return;
+    }
+
+    auto tag = line.substr(0, loc);
+    StringUtils::trim(tag);
+    auto value = line.substr(loc + 1, line.size() - loc);
+    StringUtils::trim(value);
+
+    if (tag.empty() || value.empty()) {
+        return;
+    }
+    set_item(tag, value);
 }
 
 void HttpHeader::set_items(const Map& items)
@@ -112,6 +117,11 @@ bool HttpHeader::has_html_accept_type() const
     return false;
 }
 
+bool HttpHeader::has_expect_continue() const
+{
+    return get_item("Expect") == "100-continue";
+}
+
 void HttpHeader::set_content_type(const std::string& content_type)
 {
     m_content_type = content_type;
@@ -122,4 +132,21 @@ std::string HttpHeader::get_content_length() const
 {
     return get_item("Content-Length");
 }
+
+std::size_t HttpHeader::get_content_length_as_size_t() const
+{
+    const auto length_str = get_content_length();
+    if (length_str.empty()) {
+        return 0;
+    }
+
+    try {
+        auto length = std::stoull(length_str);
+        return length;
+    }
+    catch (const std::exception&) {
+        return 0;
+    }
+}
+
 }  // namespace hestia

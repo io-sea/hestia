@@ -9,10 +9,14 @@ class MockCrudView : public WebView {
     MockCrudView(CrudService* service) : WebView(), m_service(service) {}
 
     HttpResponse::Ptr on_get(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
     HttpResponse::Ptr on_put(
-        const HttpRequest& request, const User& user) override;
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
   private:
     std::string get_path(const HttpRequest& request) const;

@@ -19,8 +19,13 @@ void StaticContentView::set_buffer(const std::string& buffer)
 }
 
 HttpResponse::Ptr StaticContentView::on_get(
-    const HttpRequest& request, const User&)
+    const HttpRequest& request, HttpEvent event, const AuthorizationContext&)
 {
+    if (event != HttpEvent::EOM) {
+        return HttpResponse::create(
+            HttpResponse::CompletionStatus::AWAITING_EOM);
+    }
+
     if (m_type == Type::BUFFER) {
         auto response = HttpResponse::create();
         response->set_body(m_buffer);

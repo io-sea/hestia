@@ -11,9 +11,15 @@ class CrudWebView : public WebView {
     {
     }
 
-    HttpResponse::Ptr on_get(const HttpRequest& request, const User&) override;
+    HttpResponse::Ptr on_get(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
-    HttpResponse::Ptr on_put(const HttpRequest& request, const User&) override;
+    HttpResponse::Ptr on_put(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
 
   private:
     std::string get_path(const HttpRequest& request) const;

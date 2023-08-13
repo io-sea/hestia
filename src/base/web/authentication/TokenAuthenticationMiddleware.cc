@@ -8,23 +8,23 @@
 namespace hestia {
 
 HttpResponse::Ptr TokenAuthenticationMiddleware::call(
-    const HttpRequest& request, User& user, responseProviderFunc func)
+    const HttpRequest& request,
+    AuthorizationContext& auth,
+    HttpEvent event,
+    responseProviderFunc func)
 {
+    if (event != HttpEvent::HEADERS) {
+        return func(request);
+    }
+
     LOG_INFO("Into TokenAuthenticationMiddleware");
     if (auto auth_token = request.get_header().get_item("Authorization");
         !auth_token.empty()) {
         auto auth_response =
             m_user_service->authenticate_with_token(auth_token);
         if (auth_response->ok()) {
-
-            const auto user_response =
-                dynamic_cast<const User*>(auth_response->get_item());
-            if (user_response == nullptr) {
-                throw std::runtime_error(
-                    "Failed to case auth response type to user");
-            }
-            user = *user_response;
-            LOG_INFO("Authenticated user: " + user.get_primary_key());
+            auth.m_user_id = auth_response->get_item()->get_primary_key();
+            LOG_INFO("Authenticated user: " + auth.m_user_id);
         }
     }
     return func(request);

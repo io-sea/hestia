@@ -21,6 +21,15 @@ class BasicHttpServer : public Server {
   private:
     void on_connection(Socket* socket);
 
+    bool on_head(RequestContext& context, Socket* socket) const;
+
+    bool on_body_chunk(
+        RequestContext& context,
+        Socket* socket,
+        HttpEvent& last_event,
+        std::size_t expected_body_size,
+        std::size_t& body_count) const;
+
     void on_failure(const std::string& reason);
 
     void receive_until_header_end(std::string& message, Socket* socket);

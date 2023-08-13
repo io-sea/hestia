@@ -9,7 +9,8 @@ class TokenAuthenticationMiddleware : public AuthenticationMiddleware {
   public:
     HttpResponse::Ptr call(
         const HttpRequest& request,
-        User& user,
+        AuthorizationContext& auth,
+        HttpEvent event,
         responseProviderFunc func) override;
 };
 }  // namespace hestia

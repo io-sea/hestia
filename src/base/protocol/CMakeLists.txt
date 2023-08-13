@@ -20,7 +20,6 @@ add_module(
         s3/S3Object.h
         s3/S3Container.h
     SOURCES
-        AuthorizationContext.cc
         http/HttpRequest.cc 
         http/HttpResponse.cc 
         http/HttpHeader.cc
