@@ -4,11 +4,11 @@
 #include "WebView.h"
 
 namespace hestia {
-class S3Service;
+class DistributedHsmService;
 
 class S3ObjectView : public WebView {
   public:
-    S3ObjectView(S3Service* service);
+    S3ObjectView(DistributedHsmService* service);
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,
@@ -30,7 +30,7 @@ class S3ObjectView : public WebView {
         HttpEvent,
         const AuthorizationContext&) override;
 
-    S3Service* m_service{nullptr};
+    DistributedHsmService* m_service{nullptr};
     std::unique_ptr<S3ObjectAdapter> m_object_adatper;
 };
 }  // namespace hestia

@@ -39,6 +39,8 @@ class HttpResponse {
 
     const std::string& body() const;
 
+    std::string& body() { return m_body; }
+
     HttpHeader& header();
 
     const HttpHeader& header() const;

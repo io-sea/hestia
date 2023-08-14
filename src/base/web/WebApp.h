@@ -32,8 +32,6 @@ class WebApp {
 
     void set_url_router(std::unique_ptr<UrlRouter> router);
 
-    bool get_streamable(const std::string& request_path) const;
-
   protected:
     virtual HttpResponse::Ptr on_view_not_found(
         const HttpRequest& request) const;
@@ -44,6 +42,8 @@ class WebApp {
         std::size_t working_idx,
         const HttpRequest& request,
         HttpEvent event) const;
+
+    void log_event(const HttpRequest req, HttpEvent event) const;
 
     std::vector<std::unique_ptr<ApplicationMiddleware>> m_middleware;
     std::unique_ptr<UrlRouter> m_url_router;

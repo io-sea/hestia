@@ -30,28 +30,7 @@ class S3AuthorisationSession {
 
     bool has_signed_payload(const HttpRequest& request) const;
 
-    bool parse_authorisation_info(const HttpRequest& request);
-
-    void parse_signed_headers(const std::string& headers);
-
-    void parse_queries(const HttpRequest& request);
-
-    void parse_credentials(const std::string& credentials);
-
-    std::string extract_string_part(
-        const std::string& complete,
-        const std::string& identifier,
-        const std::string& delimiter) const;
-
-    std::string create_canonical_request(const HttpRequest& request) const;
-
-    std::string create_string_to_sign(
-        const HttpRequest& request, const std::string& canonical_request) const;
-
-    std::string get_signature(const std::string& input) const;
-
     UserService* m_user_service{nullptr};
-
     S3AuthorisationObject m_object;
 };
 }  // namespace hestia

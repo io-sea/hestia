@@ -23,6 +23,29 @@ void WebApp::add_middleware(ApplicationMiddleware::Ptr middleware)
     m_middleware.push_back(std::move(middleware));
 }
 
+void WebApp::log_event(const HttpRequest req, HttpEvent event) const
+{
+    std::string event_str;
+    switch (event) {
+        case HttpEvent::CONNECTED:
+            event_str = "connected";
+            break;
+        case HttpEvent::HEADERS:
+            event_str = "headers";
+            break;
+        case HttpEvent::BODY:
+            event_str = "body";
+            break;
+        case HttpEvent::EOM:
+            event_str = "eom";
+            break;
+        default:
+            event_str = "unknown";
+    }
+    LOG_INFO(
+        req.get_method_as_string() + " | " + req.get_path() + " | "
+        + event_str);
+}
 
 void WebApp::on_event(
     RequestContext* request_context, HttpEvent event) const noexcept
@@ -32,10 +55,7 @@ void WebApp::on_event(
             on_view_not_found(request_context->get_request()));
     }
 
-    LOG_INFO("Requested path: " + request_context->get_request().get_path());
-    LOG_INFO(
-        "Requested method: "
-        + request_context->get_request().get_method_as_string());
+    log_event(request_context->get_request(), event);
 
     auto view =
         m_url_router->get_view(request_context->get_request().get_path());
@@ -97,9 +117,8 @@ void WebApp::on_event(
     request_context->set_response(std::move(response));
 }
 
-HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& request) const
+HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest&) const
 {
-    (void)request;
     return HttpResponse::create(404, "Not Found");
 }
 

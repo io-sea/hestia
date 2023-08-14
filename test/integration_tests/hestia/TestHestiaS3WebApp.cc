@@ -14,8 +14,6 @@
 #include "DistributedHsmServiceTestWrapper.h"
 #include "ObjectStoreTestWrapper.h"
 
-#include "S3Service.h"
-
 #include "TestUtils.h"
 
 #include <iostream>

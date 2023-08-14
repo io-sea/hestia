@@ -1,11 +1,12 @@
 #include "S3ContainerView.h"
 
+#include "DistributedHsmService.h"
 #include "S3DatasetAdapter.h"
 #include "S3Path.h"
-#include "S3Service.h"
 #include "S3ViewUtils.h"
 
 #include "HsmService.h"
+#include "TypedCrudRequest.h"
 
 #include "Logger.h"
 
@@ -13,24 +14,24 @@
 #include <sstream>
 
 namespace hestia {
-S3ContainerView::S3ContainerView(S3Service* service) :
+S3ContainerView::S3ContainerView(DistributedHsmService* service) :
     m_service(service), m_dataset_adatper(std::make_unique<S3DatasetAdapter>())
 {
     LOG_INFO("Loaded S3ContainerView");
 }
 
 HttpResponse::Ptr S3ContainerView::on_get(
-    const HttpRequest&, HttpEvent, const AuthorizationContext&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    /*
-    auto hsm_service = m_service->get_hsm_service();
-
     const auto s3_path = S3Path(request.get_path());
 
-    CrudQuery query(KeyValuePair{"name", s3_path.m_container_name});
+    CrudQuery query(
+        KeyValuePair{"name", s3_path.m_container_name}, CrudQuery::Format::GET,
+        CrudQuery::OutputFormat::ITEM);
+    const auto get_response = m_service->make_request(
+        CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
+        HsmItem::dataset_name);
 
-    auto get_response = hsm_service->make_request(
-        {HsmItem::Type::DATASET, std::make_unique<CrudRequest>(query)});
     if (!get_response->ok()) {
         LOG_ERROR(get_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
@@ -40,60 +41,60 @@ HttpResponse::Ptr S3ContainerView::on_get(
         return HttpResponse::create(404, "Not Found");
     }
 
+    auto dataset = get_response->get_item_as<Dataset>();
+
     auto response = HttpResponse::create();
-
-    // S3ViewUtils::metadata_to_header(container.m_user_metadata,
-    // response.get());
-
-
-
-    std::string body;
-    m_dataset_adatper->on_list(get_response->items(), body);
-
-    response->set_body(body);
+    m_dataset_adatper->on_list(*dataset, response->body());
     response->header().set_item(
         "Content-Length", std::to_string(response->body().size()));
 
-        */
-    auto response = HttpResponse::create();
     return response;
 }
 
 HttpResponse::Ptr S3ContainerView::on_put(
-    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    (void)request;
-    /*
-    auto hsm_service = m_service->get_hsm_service();
-
     const auto s3_path = S3Path(request.get_path());
 
-    Dataset dataset;
-    dataset.set_name(s3_path.m_container_name);
+    CrudIdentifier id;
+    id.set_name(s3_path.m_container_name);
 
-    auto exists_response =
-        hsm_service->make_request({dataset, HsmServiceRequestMethod::EXISTS});
-    if (!exists_response->ok()) {
-        LOG_ERROR(exists_response->get_error().to_string());
+    CrudQuery query(
+        KeyValuePair{"name", s3_path.m_container_name}, CrudQuery::Format::GET,
+        CrudQuery::OutputFormat::ITEM);
+    const auto get_response = m_service->make_request(
+        CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
+        HsmItem::dataset_name);
+
+    if (!get_response->ok()) {
+        LOG_ERROR(get_response->get_error().to_string());
         return HttpResponse::create(500, "Internal Server Error");
     }
 
-    if (exists_response->object_found()) {
-        return HttpResponse::create(409, "Conflict");
+    if (!get_response->found()) {
+        auto create_response = m_service->make_request(
+            CrudRequest{
+                CrudMethod::CREATE, {auth.m_user_id, auth.m_user_token}, {id}},
+            HsmItem::dataset_name);
+        if (!create_response->ok()) {
+            LOG_ERROR(create_response->get_error().to_string());
+            return HttpResponse::create(500, "Internal Server Error");
+        }
     }
-    */
-    // S3ViewUtils::header_to_metadata(request, container.m_user_metadata);
+    else {
+        Dataset dataset;
+        dataset.set_name(s3_path.m_container_name);
 
-    /*
-    auto put_response =
-        hsm_service->make_request({dataset, HsmServiceRequestMethod::UPDATE});
-    if (!put_response->ok()) {
-        LOG_ERROR(put_response->get_error().to_string());
-        return HttpResponse::create(500, "Internal Server Error");
+        auto update_response = m_service->make_request(
+            TypedCrudRequest<Dataset>(
+                CrudMethod::UPDATE, dataset,
+                {auth.m_user_id, auth.m_user_token}),
+            HsmItem::dataset_name);
+        if (!update_response->ok()) {
+            LOG_ERROR(update_response->get_error().to_string());
+            return HttpResponse::create(500, "Internal Server Error");
+        }
     }
-    */
-
-    // FAIL_CHECK(m_service->put(container));
 
     return HttpResponse::create(201, "Created");
 }
@@ -124,7 +125,6 @@ HttpResponse::Ptr S3ContainerView::on_head(
     const HttpRequest& request, HttpEvent, const AuthorizationContext&)
 {
     (void)request;
-    (void)m_service;
     /*
     auto hsm_service = m_service->get_hsm_service();
 

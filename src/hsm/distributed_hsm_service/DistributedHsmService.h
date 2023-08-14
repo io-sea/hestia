@@ -42,6 +42,10 @@ class DistributedHsmService {
     [[nodiscard]] HsmActionResponse::Ptr make_request(
         const HsmActionRequest& request) const noexcept;
 
+    [[nodiscard]] CrudResponse::Ptr make_request(
+        const CrudRequest& request,
+        const std::string& type = {}) const noexcept;
+
     using dataIoCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
     void do_data_io_action(
         const HsmActionRequest& request,

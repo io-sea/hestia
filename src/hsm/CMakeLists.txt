@@ -19,9 +19,8 @@ add_module(
         object_store/DistributedHsmObjectStoreClient.h
         object_store/HsmObjectStoreClientFactory.h
         object_store/HsmObjectStoreClientManager.h
-        s3_service/S3Service.h
-        s3_service/S3DatasetAdapter.h
-        s3_service/S3ObjectAdapter.h
+        s3/S3DatasetAdapter.h
+        s3/S3ObjectAdapter.h
     SOURCES
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
@@ -37,9 +36,8 @@ add_module(
         object_store/DistributedHsmObjectStoreClient.cc
         object_store/HsmObjectStoreClientFactory.cc
         object_store/HsmObjectStoreClientManager.cc
-        s3_service/S3Service.cc
-        s3_service/S3DatasetAdapter.cc
-        s3_service/S3ObjectAdapter.cc
+        s3/S3DatasetAdapter.cc
+        s3/S3ObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
         distributed_hsm_service
@@ -50,7 +48,7 @@ add_module(
         key_value_store
         object_store
         namespace_service
-        s3_service
+        s3
     INTERNAL_DEPENDENCIES 
         storage
         http_client

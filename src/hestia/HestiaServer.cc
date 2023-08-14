@@ -1,7 +1,6 @@
 #include "HestiaServer.h"
 
 #include "DistributedHsmService.h"
-#include "S3Service.h"
 
 #include "HsmObjectStoreClient.h"
 #include "HttpClient.h"
@@ -25,17 +24,14 @@ HestiaServer::HestiaServer() {}
 OpStatus HestiaServer::run()
 {
     WebApp::Ptr web_app;
-    std::unique_ptr<S3Service> s3_service;
 
     if (m_config.get_server_config().get_web_app_config().get_interface()
         == WebAppConfig::Interface::S3) {
         LOG_INFO("Running S3 interface");
-        s3_service =
-            std::make_unique<S3Service>(m_distributed_hsm_service.get());
 
         HestiaS3WebAppConfig config;
         web_app = std::make_unique<HestiaS3WebApp>(
-            config, s3_service.get(), m_user_service.get());
+            config, m_distributed_hsm_service.get(), m_user_service.get());
     }
     else {
         LOG_INFO("Running http interface");

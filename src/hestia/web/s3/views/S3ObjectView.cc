@@ -1,7 +1,7 @@
 #include "S3ObjectView.h"
 
+#include "DistributedHsmService.h"
 #include "S3Path.h"
-#include "S3Service.h"
 #include "S3ViewUtils.h"
 
 #include "HsmObject.h"
@@ -14,7 +14,7 @@
 #include <sstream>
 
 namespace hestia {
-S3ObjectView::S3ObjectView(S3Service* service) :
+S3ObjectView::S3ObjectView(DistributedHsmService* service) :
     m_service(service), m_object_adatper(std::make_unique<S3ObjectAdapter>())
 {
     LOG_INFO("Loaded object view");

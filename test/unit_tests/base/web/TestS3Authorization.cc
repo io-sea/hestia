@@ -279,7 +279,7 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     TestS3AuthorizationFixture,
     "S3 authorization - unsigned-payload",
-    "[.authorisation]")
+    "[authorisation]")
 {
     hestia::S3AuthorisationSession auth_session(m_user_service.get());
 

@@ -94,6 +94,12 @@ const std::vector<ObjectStoreBackend>& DistributedHsmService::get_backends()
     }
 }
 
+CrudResponse::Ptr DistributedHsmService::make_request(
+    const CrudRequest& request, const std::string& type) const noexcept
+{
+    return m_hsm_service->make_request(request, type);
+}
+
 HsmActionResponse::Ptr DistributedHsmService::make_request(
     const HsmActionRequest& request) const noexcept
 {

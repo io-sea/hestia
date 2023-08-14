@@ -9,14 +9,14 @@
 
 #include "UserService.h"
 
-#include "S3Service.h"
+#include "DistributedHsmService.h"
 
 namespace hestia {
 HestiaS3WebApp::HestiaS3WebApp(
     HestiaS3WebAppConfig config,
-    S3Service* s3_service,
+    DistributedHsmService* hsm_service,
     UserService* user_service) :
-    WebApp(user_service), m_config(config), m_s3_service(s3_service)
+    WebApp(user_service), m_config(config), m_hsm_service(hsm_service)
 {
     (void)m_config;
     set_up_routing();
@@ -28,11 +28,11 @@ void HestiaS3WebApp::set_up_routing()
 {
     auto s3_router = std::make_unique<S3UrlRouter>();
 
-    s3_router->set_object_view(std::make_unique<S3ObjectView>(m_s3_service));
+    s3_router->set_object_view(std::make_unique<S3ObjectView>(m_hsm_service));
     s3_router->set_container_view(
-        std::make_unique<S3ContainerView>(m_s3_service));
+        std::make_unique<S3ContainerView>(m_hsm_service));
     s3_router->set_container_list_view(
-        std::make_unique<S3ContainerListView>(m_s3_service));
+        std::make_unique<S3ContainerListView>(m_hsm_service));
 
     m_url_router = std::move(s3_router);
 }
@@ -40,5 +40,7 @@ void HestiaS3WebApp::set_up_routing()
 void HestiaS3WebApp::set_up_middleware()
 {
     auto auth_middleware = std::make_unique<S3AuthenticationMiddleware>();
+    auth_middleware->set_user_service(m_user_service);
+    add_middleware(std::move(auth_middleware));
 }
 }  // namespace hestia

@@ -5,35 +5,24 @@
 namespace hestia {
 HttpResponse::Ptr S3AuthenticationMiddleware::call(
     const HttpRequest& request,
-    AuthorizationContext&,
-    HttpEvent,
+    AuthorizationContext& auth,
+    HttpEvent event,
     responseProviderFunc func)
 {
-    auto auth_session = S3AuthorisationSession(m_user_service);
-
-    const auto status = auth_session.authorise(request);
-
-    /*
-    if (status != deimos::protocol::s3::S3Authorisation::Status::VALID)
-    {
-        auto error = auth->getError();
-        HttpResponse response;
-
-        proxygen::ResponseBuilder(downstream_)
-            .status(
-                auth_error->https_error_code,
-                auth_error->https_error_identifier)
-            .body(
-                auth_error->get_error_response_body(m_header->getIdentifier()))
-            .sendWithEOM();
-
-        spdlog::warn(
-            "authorisation is invalid: {} ({})",
-            auth_error->https_error_identifier, auth_error->https_error_code);
-        return response;
+    if (event != HttpEvent::HEADERS) {
+        return func(request);
     }
-    */
 
+    auto auth_session = S3AuthorisationSession(m_user_service);
+    const auto status = auth_session.authorise(request);
+    if (status.is_valid()) {
+        auth.m_user_id    = status.m_user_identifier;
+        auth.m_user_token = status.m_user_key;
+        LOG_INFO("Authenticated user: " + auth.m_user_id);
+    }
+    else {
+        LOG_INFO("Did not authenticate user: " + status.to_string());
+    }
     return func(request);
 }
 }  // namespace hestia
