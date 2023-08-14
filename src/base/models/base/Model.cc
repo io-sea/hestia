@@ -107,6 +107,24 @@ std::string Model::get_parent_type() const
         + get_runtime_type());
 }
 
+std::string Model::get_parent_id() const
+{
+    if (m_foreign_key_fields.empty()) {
+        return {};
+    }
+    if (m_foreign_key_fields.size() == 1) {
+        return m_foreign_key_fields.begin()->second->get_id();
+    }
+    for (const auto& [key, field] : m_foreign_key_fields) {
+        if (field->is_parent()) {
+            return field->get_id();
+        }
+    }
+    throw std::runtime_error(
+        "Ambigious request for parent type in model type: "
+        + get_runtime_type());
+}
+
 bool Model::has_owner() const
 {
     return m_has_owner;

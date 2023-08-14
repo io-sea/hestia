@@ -32,7 +32,7 @@ UserToken& UserToken::operator=(const UserToken& other)
 
 void UserToken::init()
 {
-    m_value.set_index_on(true);
+    m_value.set_index_scope(BaseField::IndexScope::GLOBAL);
     register_scalar_field(&m_value);
     register_foreign_key_field(&m_user);
 }

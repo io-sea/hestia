@@ -34,6 +34,7 @@ Dataset& Dataset::operator=(const Dataset& other)
 
 void Dataset::init()
 {
+    m_name.set_index_scope(BaseField::IndexScope::PARENT);
     register_foreign_key_proxy_field(&m_objects);
     register_foreign_key_proxy_field(&m_namespaces);
 }

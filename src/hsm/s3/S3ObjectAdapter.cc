@@ -26,7 +26,7 @@ void S3ObjectAdapter::dict_to_string(
 }
 
 void S3ObjectAdapter::get_headers(
-    const Dataset& dataset, const HsmObject& object, Map& header)
+    const Dataset& dataset, const HsmObject& object, Map& header) const
 {
     header.set_item(
         "Creation-Time", std::to_string(object.get_creation_time()));

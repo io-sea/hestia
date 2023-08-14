@@ -101,11 +101,13 @@ void SerializeableWithFields::init_id(const std::string& id)
 }
 
 void SerializeableWithFields::get_index_fields(
-    std::vector<KeyValuePair>& fields) const
+    std::vector<IndexField>& fields) const
 {
     for (const auto& [name, value] : m_scalar_fields) {
-        if (value->should_index_on() && !value->value_as_string().empty()) {
-            fields.push_back({name, value->value_as_string()});
+        if (value->get_index_scope() != BaseField::IndexScope::NONE
+            && !value->value_as_string().empty()) {
+            fields.push_back(
+                {value->get_index_scope(), name, value->value_as_string()});
         }
     }
 }

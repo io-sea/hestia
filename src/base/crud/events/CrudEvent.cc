@@ -11,8 +11,6 @@ CrudEvent::CrudEvent() : Model(s_type)
 
 void CrudEvent::init()
 {
-    m_name.set_index_on(true);
-
     register_scalar_field(&m_method);
 
     register_sequence_field(&m_subject_ids);

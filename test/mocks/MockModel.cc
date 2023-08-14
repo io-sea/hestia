@@ -57,7 +57,7 @@ std::string MockModel::get_type()
 
 void MockModel::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::PARENT);
     register_scalar_field(&m_my_field);
 }
 
@@ -120,7 +120,7 @@ std::string MockModelWithParent::get_type()
 
 void MockModelWithParent::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::PARENT);
     register_scalar_field(&m_my_field);
 
     register_foreign_key_field(&m_parent);
@@ -155,7 +155,7 @@ MockParentModel& MockParentModel::operator=(const MockParentModel& other)
 
 void MockParentModel::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
     register_scalar_field(&m_my_field);
     register_foreign_key_proxy_field(&m_models);
 }
@@ -218,7 +218,7 @@ MockManyToManyTargetModel& MockManyToManyTargetModel::operator=(
 
 void MockManyToManyTargetModel::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
     register_foreign_key_proxy_field(&m_children);
 }
 

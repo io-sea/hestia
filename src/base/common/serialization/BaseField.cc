@@ -2,8 +2,8 @@
 
 namespace hestia {
 
-BaseField::BaseField(const std::string& name, bool index_on) :
-    m_index_on(index_on), m_name(name)
+BaseField::BaseField(const std::string& name, IndexScope index_scope) :
+    m_index_scope(index_scope), m_name(name)
 {
 }
 
@@ -27,9 +27,9 @@ bool BaseField::is_primary_key() const
     return m_is_primary_key;
 }
 
-void BaseField::set_index_on(bool index_on)
+BaseField::IndexScope BaseField::get_index_scope() const
 {
-    m_index_on = index_on;
+    return m_index_scope;
 }
 
 void BaseField::set_is_primary_key(bool is_primary)
@@ -37,9 +37,9 @@ void BaseField::set_is_primary_key(bool is_primary)
     m_is_primary_key = is_primary;
 }
 
-bool BaseField::should_index_on() const
+void BaseField::set_index_scope(IndexScope index_scope)
 {
-    return m_index_on;
+    m_index_scope = index_scope;
 }
 
 }  // namespace hestia

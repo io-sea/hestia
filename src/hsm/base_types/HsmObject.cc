@@ -44,6 +44,8 @@ HsmObject& HsmObject::operator=(const HsmObject& other)
 
 void HsmObject::init()
 {
+    m_name.set_index_scope(BaseField::IndexScope::PARENT);
+
     register_scalar_field(&m_size);
     register_one_to_one_proxy_field(&m_metadata);
     register_foreign_key_proxy_field(&m_tier_extents);

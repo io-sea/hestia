@@ -47,6 +47,7 @@ class S3AuthorisationObject {
     static std::string to_string(Status status);
 
     std::string m_user_identifier;
+    std::string m_user_internal_id;
     std::string m_user_key;
     std::string m_date;
     std::string m_region;

@@ -13,7 +13,8 @@ namespace hestia {
  */
 class ScalarField : public BaseField {
   public:
-    ScalarField(const std::string& name, bool index_on = false);
+    ScalarField(
+        const std::string& name, IndexScope index_scope = IndexScope::NONE);
 
     virtual ~ScalarField() = default;
 
@@ -28,8 +29,8 @@ class TypedScalarField : public ScalarField {
     TypedScalarField(
         const std::string& name,
         const T& default_value = T(),
-        bool index_on          = false) :
-        ScalarField(name, index_on), m_value(default_value)
+        IndexScope index_scope = IndexScope::NONE) :
+        ScalarField(name, index_scope), m_value(default_value)
     {
     }
 

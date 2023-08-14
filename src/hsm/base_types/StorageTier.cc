@@ -41,7 +41,7 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
 
 void StorageTier::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
 
     register_foreign_key_proxy_field(&m_backends);
     register_scalar_field(&m_capacity);

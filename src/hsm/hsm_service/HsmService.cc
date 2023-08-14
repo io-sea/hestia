@@ -431,10 +431,15 @@ void HsmService::on_put_data_complete(
         completion_func(std::move(response));
     }
 
+    auto updated_object = working_object;
+    if (extent.get_size() > updated_object.size()) {
+        updated_object.set_size(extent.get_size());
+    }
+
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, working_object, user_context});
+            CrudMethod::UPDATE, updated_object, user_context});
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO(

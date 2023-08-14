@@ -16,11 +16,16 @@ namespace hestia {
  */
 class BaseField {
   public:
-    BaseField(const std::string& name, bool index_on = false);
+    enum class IndexScope { NONE, GLOBAL, PARENT };
+
+    BaseField(
+        const std::string& name, IndexScope index_scope = IndexScope::NONE);
 
     virtual ~BaseField() = default;
 
     const std::string& get_name() const;
+
+    IndexScope get_index_scope() const;
 
     bool is_primary_key() const;
 
@@ -28,15 +33,13 @@ class BaseField {
 
     void reset();
 
-    void set_index_on(bool index_on);
+    void set_index_scope(IndexScope index_scope);
 
     void set_is_primary_key(bool is_primary);
 
-    bool should_index_on() const;
-
   protected:
     bool m_modified{false};
-    bool m_index_on{false};
+    IndexScope m_index_scope{IndexScope::NONE};
     bool m_is_primary_key{false};
     std::string m_name;
 };

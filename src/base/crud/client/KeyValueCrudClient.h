@@ -41,7 +41,9 @@ class KeyValueCrudClient : public CrudClient {
         const CrudIdentifier& id, CrudLockType lock_type) const override;
 
     struct Fields {
-        std::vector<VecKeyValuePair> m_index;
+        std::vector<SerializeableWithFields::VecIndexField> m_index;
+        std::vector<std::string> m_parent_names;
+        std::vector<std::string> m_parent_ids;
         std::vector<Model::VecForeignKeyContext> m_foreign_key;
         std::vector<VecKeyValuePair> m_foreign_key_id_replacements;
         std::vector<VecKeyValuePair> m_one_to_one;

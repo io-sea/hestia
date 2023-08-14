@@ -16,7 +16,7 @@ HttpResponse::Ptr S3AuthenticationMiddleware::call(
     auto auth_session = S3AuthorisationSession(m_user_service);
     const auto status = auth_session.authorise(request);
     if (status.is_valid()) {
-        auth.m_user_id    = status.m_user_identifier;
+        auth.m_user_id    = status.m_user_internal_id;
         auth.m_user_token = status.m_user_key;
         LOG_INFO("Authenticated user: " + auth.m_user_id);
     }

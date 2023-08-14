@@ -41,6 +41,10 @@ void KeyValueCrudClient::process_fields(Model* item, Fields& fields) const
     std::vector<Model::TypeIdsPair> many_to_many;
     item->get_many_to_many_fields(many_to_many);
     fields.m_many_many.push_back(many_to_many);
+
+    if (auto parent_id = item->get_parent_id(); !parent_id.empty()) {
+        fields.m_parent_ids.push_back(parent_id);
+    }
 }
 
 void KeyValueCrudClient::process_items(
@@ -57,7 +61,7 @@ void KeyValueCrudClient::process_items(
         }
         ids.push_back(id);
 
-        VecKeyValuePair index;
+        SerializeableWithFields::VecIndexField index;
         item->get_index_fields(index);
         fields.m_index.push_back(index);
 
@@ -87,6 +91,15 @@ void KeyValueCrudClient::process_ids(
         ids.push_back(id);
 
         auto base_item = m_adapters->get_model_factory()->create();
+        if (!crud_id.get_name().empty()) {
+            base_item->set_name(crud_id.get_name());
+        }
+        if (!crud_id.get_parent_name().empty()) {
+            fields.m_parent_names.push_back(crud_id.get_parent_name());
+        }
+        if (!crud_id.get_parent_primary_key().empty()) {
+            fields.m_parent_ids.push_back(crud_id.get_parent_primary_key());
+        }
 
         if (!attributes.is_empty()) {
             if (attributes.get_type() == Dictionary::Type::MAP) {
@@ -100,7 +113,7 @@ void KeyValueCrudClient::process_ids(
             }
         }
 
-        VecKeyValuePair index;
+        SerializeableWithFields::VecIndexField index;
         base_item->get_index_fields(index);
         fields.m_index.push_back(index);
 
@@ -132,7 +145,7 @@ void KeyValueCrudClient::process_empty(
         base_item->deserialize(attributes);
     }
 
-    VecKeyValuePair index;
+    SerializeableWithFields::VecIndexField index;
     base_item->get_index_fields(index);
     fields.m_index.push_back(index);
 
@@ -178,8 +191,20 @@ void KeyValueCrudClient::prepare_create_keys(
 
         string_set_kv_pairs.emplace_back(get_item_key(id), content_body);
 
-        for (const auto& [name, value] : fields.m_index[count]) {
-            string_set_kv_pairs.emplace_back(get_field_key(name, value), id);
+        for (const auto& [scope, name, value] : fields.m_index[count]) {
+            std::string field_key;
+            if (scope == BaseField::IndexScope::GLOBAL) {
+                field_key = name;
+            }
+            else {
+                std::string parent_id;
+                if (fields.m_parent_ids.size() == fields.m_index.size()) {
+                    parent_id = fields.m_parent_ids[count];
+                }
+                field_key = parent_id.empty() ? name : parent_id + "::" + name;
+            }
+            string_set_kv_pairs.emplace_back(
+                get_field_key(field_key, value), id);
         }
 
         for (const auto& field_context : fields.m_foreign_key[count]) {
@@ -202,7 +227,6 @@ void KeyValueCrudClient::prepare_create_keys(
         count++;
     }
 }
-
 
 void KeyValueCrudClient::create(
     const CrudRequest& crud_request, CrudResponse& crud_response)
@@ -238,6 +262,7 @@ void KeyValueCrudClient::create(
     // If it still has no id, but we have a parent name try to use that.
     // If it stillll has no id try to create a default entry.
     // If it can't create a default entry then fail.
+    std::size_t count{0};
     for (auto& item_foreign_keys : working_fields.m_foreign_key) {
         VecKeyValuePair id_replacements;
         for (auto& field_context : item_foreign_keys) {
@@ -248,18 +273,29 @@ void KeyValueCrudClient::create(
                         "Have empty foreign key id and missing parent type");
                 }
 
-                auto default_parent_id = get_default_parent_id(parent_type);
-                if (default_parent_id.empty()) {
-                    get_or_create_default_parent(
-                        parent_type, crud_request.get_user_context().m_id);
-                    default_parent_id = get_default_parent_id(parent_type);
+                if (working_fields.m_parent_ids.size()
+                    == working_fields.m_foreign_key.size()) {
+                    field_context.m_id = working_fields.m_parent_ids[count];
+                    id_replacements.push_back(
+                        {field_context.m_name,
+                         working_fields.m_parent_ids[count]});
                 }
-                field_context.m_id = default_parent_id;
-                id_replacements.push_back(
-                    {field_context.m_name, default_parent_id});
+                else {
+                    auto default_parent_id = get_default_parent_id(parent_type);
+                    if (default_parent_id.empty()) {
+                        get_or_create_default_parent(
+                            parent_type, crud_request.get_user_context().m_id);
+                        default_parent_id = get_default_parent_id(parent_type);
+                    }
+                    field_context.m_id = default_parent_id;
+                    id_replacements.push_back(
+                        {field_context.m_name, default_parent_id});
+                    working_fields.m_parent_ids.push_back(default_parent_id);
+                }
             }
         }
         working_fields.m_foreign_key_id_replacements.push_back(id_replacements);
+        count++;
     }
 
     // If we have a one-to-one relationship with a 'default create' property
@@ -444,11 +480,16 @@ bool KeyValueCrudClient::prepare_query_keys_with_id(
             string_get_keys.push_back(get_item_key(working_id));
         }
         else if (id.has_name()) {
-            const auto id_request_key = get_field_key("name", id.get_name());
-            const auto response       = m_client->make_request(
+            std::string field_prefix;
+            if (id.has_parent_primary_key()) {
+                field_prefix += id.get_parent_primary_key() + "::";
+            }
+            const auto id_request_key =
+                get_field_key(field_prefix + "name", id.get_name());
+            const auto response = m_client->make_request(
                 {KeyValueStoreRequestMethod::STRING_GET,
-                       {id_request_key},
-                       m_config.m_endpoint});
+                 {id_request_key},
+                 m_config.m_endpoint});
             error_check("STRING_GET", response.get());
             if (response->items().empty() || response->items()[0].empty()) {
                 return false;

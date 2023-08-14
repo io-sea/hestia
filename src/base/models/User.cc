@@ -39,7 +39,7 @@ User& User::operator=(const User& other)
 
 void User::init()
 {
-    m_name.set_index_on(true);
+    m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
 
     register_scalar_field(&m_display_name);
     register_scalar_field(&m_password);

@@ -22,7 +22,7 @@ class S3ObjectAdapter : public StringAdapter {
         const Dictionary& dict, std::string& output) const override;
 
     void get_headers(
-        const Dataset& dataset, const HsmObject& object, Map& header);
+        const Dataset& dataset, const HsmObject& object, Map& header) const;
 
   private:
     std::string m_metadata_prefix;

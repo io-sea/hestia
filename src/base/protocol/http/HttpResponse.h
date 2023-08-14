@@ -35,6 +35,11 @@ class HttpResponse {
         return m_completion_status;
     }
 
+    void set_completion_status(CompletionStatus status)
+    {
+        m_completion_status = status;
+    }
+
     const std::string& message() const;
 
     const std::string& body() const;

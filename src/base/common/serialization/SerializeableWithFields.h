@@ -32,7 +32,22 @@ class SerializeableWithFields : public Serializeable {
     void deserialize(
         const Dictionary& dict, Format format = Format::FULL) override;
 
-    void get_index_fields(std::vector<KeyValuePair>& fields) const;
+    struct IndexField {
+        IndexField(
+            BaseField::IndexScope scope,
+            const std::string& name,
+            const std::string& value) :
+            m_scope(scope), m_name(name), m_value(value)
+        {
+        }
+
+        BaseField::IndexScope m_scope{BaseField::IndexScope::PARENT};
+        std::string m_name;
+        std::string m_value;
+    };
+    using VecIndexField = std::vector<IndexField>;
+
+    void get_index_fields(std::vector<IndexField>& fields) const;
 
     std::string get_primary_key() const;
 

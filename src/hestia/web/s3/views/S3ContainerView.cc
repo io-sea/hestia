@@ -25,9 +25,11 @@ HttpResponse::Ptr S3ContainerView::on_get(
 {
     const auto s3_path = S3Path(request.get_path());
 
-    CrudQuery query(
-        KeyValuePair{"name", s3_path.m_container_name}, CrudQuery::Format::GET,
-        CrudQuery::OutputFormat::ITEM);
+    CrudIdentifier id;
+    id.set_name(s3_path.m_container_name);
+    id.set_parent_primary_key(auth.m_user_id);
+
+    CrudQuery query(id, CrudQuery::OutputFormat::ITEM);
     const auto get_response = m_service->make_request(
         CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
         HsmItem::dataset_name);
@@ -58,6 +60,7 @@ HttpResponse::Ptr S3ContainerView::on_put(
 
     CrudIdentifier id;
     id.set_name(s3_path.m_container_name);
+    id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery query(
         KeyValuePair{"name", s3_path.m_container_name}, CrudQuery::Format::GET,

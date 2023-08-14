@@ -23,7 +23,7 @@ class S3Config : public SerializeableWithFields {
 
     StringField m_metadataprefix{"metadata_prefix"};
     StringField m_user_agent{"user_agent"};
-    StringField m_default_host{"default_host"};
+    StringField m_default_host{"default_host", "127.0.0.1:8000"};
 };
 
 class IS3InterfaceImpl {

@@ -4,8 +4,8 @@
 #include "UuidUtils.h"
 
 namespace hestia {
-ScalarField::ScalarField(const std::string& name, bool index_on) :
-    BaseField(name, index_on)
+ScalarField::ScalarField(const std::string& name, IndexScope index_scope) :
+    BaseField(name, index_scope)
 {
 }
 
