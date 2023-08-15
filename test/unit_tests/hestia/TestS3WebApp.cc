@@ -15,86 +15,22 @@
 #include "InMemoryKeyValueStoreClient.h"
 #include "RequestContext.h"
 
+#include "DistributedHsmServiceTestWrapper.h"
+
 #include "Logger.h"
 #include <iostream>
-
-class MockS3TokenGenerator : public hestia::UserTokenGenerator {
-  public:
-    std::string generate(const std::string& key = {}) const override
-    {
-        (void)key;
-        return m_token;
-    }
-
-    std::string m_token{"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"};
-};
 
 class WebAppTestFixture {
   public:
     WebAppTestFixture()
     {
-        m_kv_store_client =
-            std::make_unique<hestia::InMemoryKeyValueStoreClient>();
-
-        m_object_store_client =
-            std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
-
-        hestia::InMemoryObjectStoreClientConfig hsm_memory_client_config;
-        hsm_memory_client_config.set_tiers({"0", "1", "2", "3", "4"});
-
-        hestia::Dictionary serialized_config;
-        hsm_memory_client_config.serialize(serialized_config);
-        m_object_store_client->initialize("0", {}, serialized_config);
-
-        hestia::ObjectStoreBackend object_store_backend(
-            hestia::ObjectStoreBackend::Type::MEMORY_HSM);
-        object_store_backend.set_tier_names({"0", "1", "2", "3", "4"});
-        object_store_backend.set_config(serialized_config);
-
-        hestia::KeyValueStoreCrudServiceBackend crud_backend(
-            m_kv_store_client.get());
-
-        auto token_generator = std::make_unique<MockS3TokenGenerator>();
-        m_token_generator    = token_generator.get();
-
-        m_user_service = hestia::UserService::create(
-            {}, &crud_backend, nullptr, nullptr, std::move(token_generator));
-        auto register_response = m_user_service->register_user(
-            "AKIAIOSFODNN7EXAMPLE", "my_admin_password");
-        REQUIRE(register_response->ok());
-
-        auto auth_response = m_user_service->authenticate_user(
-            "AKIAIOSFODNN7EXAMPLE", "my_admin_password");
-        REQUIRE(auth_response->ok());
-
-        auto hsm_service = hestia::HsmService::create(
-            hestia::ServiceConfig{}, m_kv_store_client.get(),
-            m_object_store_client.get(), m_user_service.get(), nullptr);
-
-        auto tier_service =
-            hsm_service->get_service(hestia::HsmItem::Type::TIER);
-
-        for (std::size_t idx = 0; idx < 5; idx++) {
-            hestia::StorageTier tier(idx);
-            auto response = tier_service->make_request(hestia::TypedCrudRequest{
-                hestia::CrudMethod::CREATE,
-                tier,
-                {m_user_service->get_current_user().get_primary_key()}});
-            REQUIRE(response->ok());
-        }
-        hsm_service->update_tiers(
-            m_user_service->get_current_user().get_primary_key());
-
-        hestia::DistributedHsmServiceConfig dist_hsm_config;
-        dist_hsm_config.m_is_server = true;
-        dist_hsm_config.m_backends.push_back(object_store_backend);
-
-        m_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), m_user_service.get());
+        m_fixture = std::make_unique<DistributedHsmServiceTestWrapper>();
+        m_fixture->init("AKIAIOSFODNN7EXAMPLE", "my_admin_password", 5);
 
         hestia::HestiaS3WebAppConfig app_config;
         m_web_app = std::make_unique<hestia::HestiaS3WebApp>(
-            app_config, m_dist_hsm_service.get(), m_user_service.get());
+            app_config, m_fixture->m_dist_hsm_service.get(),
+            m_fixture->m_user_service.get());
     }
 
     void add_s3_headers(hestia::HttpRequest& req)
@@ -105,7 +41,7 @@ class WebAppTestFixture {
         auth_object.m_date            = "20130524";
         auth_object.m_region          = "us-east-1";
         auth_object.m_user_identifier = "AKIAIOSFODNN7EXAMPLE";
-        auth_object.m_user_key        = m_token_generator->m_token;
+        auth_object.m_user_key        = m_fixture->m_token_generator->m_token;
         auth_object.m_signed_headers  = {
             "host", "range", "x-amz-content-sha256", "x-amz-date"};
 
@@ -217,14 +153,7 @@ class WebAppTestFixture {
         return response;
     }
 
-    std::unique_ptr<hestia::InMemoryKeyValueStoreClient> m_kv_store_client;
-    std::unique_ptr<hestia::InMemoryHsmObjectStoreClient> m_object_store_client;
-
-    std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
-
-    MockS3TokenGenerator* m_token_generator{nullptr};
-    std::unique_ptr<hestia::UserService> m_user_service;
-
+    std::unique_ptr<DistributedHsmServiceTestWrapper> m_fixture;
     std::unique_ptr<hestia::HestiaS3WebApp> m_web_app;
     std::unique_ptr<hestia::RequestContext> m_working_context;
 };

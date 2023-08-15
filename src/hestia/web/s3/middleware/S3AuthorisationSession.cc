@@ -55,9 +55,6 @@ const S3AuthorisationObject& S3AuthorisationSession::authorise(
 
 bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
 {
-    User user;
-    user.set_name(m_object.m_user_identifier);
-
     CrudQuery query(
         KeyValuePair{"name", m_object.m_user_identifier},
         CrudQuery::Format::GET, CrudQuery::OutputFormat::ITEM);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Map.h"
 #include <string>
 
 namespace hestia {
@@ -19,7 +20,11 @@ class S3Object {
         return os;
     }
 
+    Map metadata;
     std::string m_container;
     std::string m_name;
+    std::string m_user;
+    std::string m_user_token;
+    std::string m_region;
 };
 }  // namespace hestia

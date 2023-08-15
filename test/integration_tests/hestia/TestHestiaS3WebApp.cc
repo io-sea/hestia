@@ -22,18 +22,13 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
   public:
     S3ClientTestFixture() : ObjectStoreTestWrapper("s3_plugin")
     {
-        m_hsm_service_wrapper =
-            std::make_unique<DistributedHsmServiceTestWrapper>();
-
-        hestia::KeyValueStoreCrudServiceBackend crud_backend(
-            &m_hsm_service_wrapper->m_kv_store_client);
-
-        m_user_service = hestia::UserService::create({}, &crud_backend);
+        m_fixture = std::make_unique<DistributedHsmServiceTestWrapper>();
+        m_fixture->init("AKIAIOSFODNN7EXAMPLE", "my_admin_password", 5);
 
         hestia::HestiaS3WebAppConfig web_app_config;
         m_web_app = std::make_unique<hestia::HestiaS3WebApp>(
-            web_app_config, m_hsm_service_wrapper->m_dist_hsm_service.get(),
-            m_user_service.get());
+            web_app_config, m_fixture->m_dist_hsm_service.get(),
+            m_fixture->m_user_service.get());
 
         hestia::Server::Config server_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
@@ -46,8 +41,7 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
         m_client->initialize("0", {}, {});
     }
 
-    std::unique_ptr<DistributedHsmServiceTestWrapper> m_hsm_service_wrapper;
-    std::unique_ptr<hestia::UserService> m_user_service;
+    std::unique_ptr<DistributedHsmServiceTestWrapper> m_fixture;
 
     std::unique_ptr<hestia::HestiaS3WebApp> m_web_app;
     std::unique_ptr<hestia::BasicHttpServer> m_server;
@@ -57,9 +51,17 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
 
 TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
 {
+    auto user_id = "AKIAIOSFODNN7EXAMPLE";
+    auto user_key =
+        m_fixture->m_user_service->get_current_user_context().m_token;
+
     const auto id = "0000";
     hestia::StorageObject obj(id);
-    obj.get_metadata_as_writeable().set_item("key", "0000");
+    obj.get_metadata_as_writeable().set_item("my_key", "my_value");
+    obj.get_metadata_as_writeable().set_item("hestia-bucket_name", "my_bucket");
+    obj.get_metadata_as_writeable().set_item("hestia-user_id", user_id);
+    obj.get_metadata_as_writeable().set_item("hestia-user_token", user_key);
+
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 
     hestia::ReadableBufferView read_buffer(content);
@@ -68,27 +70,21 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
     hestia::Stream stream;
     stream.set_source(std::move(source));
 
-    return;
     put(obj, &stream);
     REQUIRE(stream.reset().ok());
-    return;
 
-    /*
     std::vector<char> returned_buffer(content.length());
     hestia::WriteableBufferView write_buffer(returned_buffer);
 
     auto sink = hestia::InMemoryStreamSink::create(write_buffer);
     stream.set_sink(std::move(sink));
 
-    hestia::ObjectStoreRequest memory_store_req(
-        obj, hestia::ObjectStoreRequestMethod::GET);
-    REQUIRE(object_store->make_request(memory_store_req, &stream)->ok());
-
-    // get(obj, &stream);
+    get(obj, &stream);
     REQUIRE(stream.reset().ok());
 
     std::string recontstructed_content(
         returned_buffer.begin(), returned_buffer.end());
     REQUIRE(recontstructed_content == content);
-    */
+
+    return;
 }

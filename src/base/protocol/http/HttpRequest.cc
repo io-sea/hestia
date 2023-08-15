@@ -3,6 +3,8 @@
 #include "HttpParser.h"
 #include "RequestContext.h"
 
+#include "StringUtils.h"
+
 namespace hestia {
 
 HttpRequest::HttpRequest(
@@ -48,7 +50,13 @@ void HttpRequest::on_chunk(const std::string& msg)
                 m_body += buffer;
             }
             else {
-                m_header.add_line(buffer);
+                if (StringUtils::ends_with(buffer, "\r")) {
+                    m_header.add_line(m_header_buffer + buffer);
+                    m_header_buffer.clear();
+                }
+                else {
+                    m_header_buffer = buffer;
+                }
             }
         }
     }

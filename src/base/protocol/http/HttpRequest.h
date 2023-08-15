@@ -56,6 +56,8 @@ class HttpRequest {
     HttpHeader m_header;
     bool m_has_read_header{false};
     bool m_has_read_preamble{false};
+
+    std::string m_header_buffer;
 };
 
 using responseProviderFunc =

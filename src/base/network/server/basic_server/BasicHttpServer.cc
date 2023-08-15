@@ -113,6 +113,21 @@ bool BasicHttpServer::on_body_chunk(
 
     if (body_count >= expected_body_size) {
         LOG_INFO("Finished with streamed body - sending eom");
+
+        // if (context.get_stream()->waiting_for_content())
+        //{
+        LOG_INFO("Resetting stream");
+        auto reset_state = context.get_stream()->reset();
+        if (!reset_state.ok()) {
+            LOG_ERROR("Error resetting stream: " << reset_state.to_string());
+            socket->respond(
+                HttpResponse::create(
+                    HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR))
+                    ->to_string());
+            return true;
+        }
+        //}
+
         m_web_app->on_event(&context, HttpEvent::EOM);
         socket->respond(context.get_response()->to_string());
         return true;
@@ -130,6 +145,7 @@ void BasicHttpServer::on_connection(Socket* socket)
     while (socket->connected()) {
         if (last_event == HttpEvent::CONNECTED) {
             request_context.get_writeable_request().on_chunk(socket->recieve());
+
             if (request_context.get_request().has_read_header()) {
                 const bool should_disconnect = on_head(request_context, socket);
                 if (should_disconnect) {
@@ -183,6 +199,22 @@ void BasicHttpServer::on_connection(Socket* socket)
                 if (request_context.get_writeable_request().body().size()
                     >= expected_body_size) {
                     LOG_INFO("Finished with body - sending eom");
+
+                    if (request_context.get_stream()->waiting_for_content()) {
+                        auto reset_state =
+                            request_context.get_stream()->reset();
+                        if (!reset_state.ok()) {
+                            LOG_ERROR(
+                                "Error resetting stream: "
+                                << reset_state.to_string());
+                            socket->respond(
+                                HttpResponse::create(
+                                    HttpError(HttpError::Code::
+                                                  _500_INTERNAL_SERVER_ERROR))
+                                    ->to_string());
+                            break;
+                        }
+                    }
                     m_web_app->on_event(&request_context, HttpEvent::EOM);
                     socket->respond(
                         request_context.get_response()->to_string());

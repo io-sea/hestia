@@ -81,6 +81,12 @@ void S3Client::get(
 {
     S3Object s3_object;
     S3Container s3_container;
+
+    m_object_adapter->to_s3(s3_object, object);
+
+    LOG_INFO("Doing GET with StorageObject: " + object.to_string());
+    LOG_INFO("Doing GET with S3Object: " + s3_object.to_string());
+
     m_impl->get(s3_object, extent, stream);
     m_object_adapter->from_s3(object, s3_container, s3_object);
 }

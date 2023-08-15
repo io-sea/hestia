@@ -180,6 +180,8 @@ class TestHestiaWebAppFixture {
         action_map.add_key_prefix("hestia.hsm_action.");
 
         req.get_header().set_items(action_map);
+        req.get_header().set_auth_token(
+            m_user_service->get_current_user().tokens()[0].value());
         req.body()    = content;
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
@@ -212,6 +214,8 @@ class TestHestiaWebAppFixture {
         action_map.add_key_prefix("hestia.hsm_action.");
 
         req.get_header().set_items(action_map);
+        req.get_header().set_auth_token(
+            m_user_service->get_current_user().tokens()[0].value());
 
         auto response = m_http_client->make_request(req, &stream);
         REQUIRE(!response->error());

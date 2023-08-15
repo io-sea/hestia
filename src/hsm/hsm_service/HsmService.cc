@@ -32,13 +32,22 @@
             req, working_action, std::move(response));                         \
     }
 
-#define CRUD_ERROR_CHECK(response, working_action)                             \
+#define CRUD_ERROR_CHECK(response, working_action, completion_func)            \
     if (!response->ok()) {                                                     \
-        auto response = HsmActionResponse::create(req, working_action);        \
-        response->on_error(                                                    \
+        auto action_response = HsmActionResponse::create(req, working_action); \
+        action_response->on_error(                                             \
             {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
+        completion_func(std::move(action_response));                           \
+        return;                                                                \
     }
 
+#define CRUD_ERROR_CHECK_RETURN(response, working_action)                      \
+    if (!response->ok()) {                                                     \
+        auto action_response = HsmActionResponse::create(req, working_action); \
+        action_response->on_error(                                             \
+            {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
+        return action_response;                                                \
+    }
 
 #define ON_ERROR(code, message, working_action)                                \
     auto response = hestia::HsmActionResponse::create(req, working_action);    \
@@ -284,8 +293,8 @@ void HsmService::put_data(
     assert(stream != nullptr);
 
     HsmAction working_action = req.get_action();
-    auto action_response     = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK(action_response, working_action);
+    auto action_get_response = get_or_create_action(req, working_action);
+    CRUD_ERROR_CHECK(action_get_response, working_action, completion_func);
 
     LOG_INFO(
         "Starting HSMService PUT DATA: " + req.to_string()
@@ -297,7 +306,7 @@ void HsmService::put_data(
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK(get_response, working_action);
+    CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
     if (!get_response->found()) {
         auto response = HsmActionResponse::create(req, working_action);
@@ -328,7 +337,7 @@ void HsmService::put_data(
 
     auto data_put_response =
         m_object_store->make_request(data_put_request, stream);
-    CRUD_ERROR_CHECK(data_put_response, working_action);
+    CRUD_ERROR_CHECK(data_put_response, working_action, completion_func);
 
     const auto requires_db_update = !data_put_response->object_is_remote();
     if (requires_db_update) {
@@ -474,7 +483,7 @@ void HsmService::get_data(
 
     HsmAction working_action;
     auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK(action_response, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action, completion_func);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
@@ -482,7 +491,7 @@ void HsmService::get_data(
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK(get_response, working_action);
+    CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -544,7 +553,7 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     HsmAction working_action;
     auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK(action_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
@@ -552,7 +561,7 @@ HsmActionResponse::Ptr HsmService::move_data(
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK(get_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -604,16 +613,16 @@ HsmActionResponse::Ptr HsmService::move_data(
                 CrudMethod::UPDATE, target_extent, req.get_user_context()));
     }
 
-    CRUD_ERROR_CHECK(extent_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
     extent_put_response =
         extent_service->make_request(TypedCrudRequest<TierExtents>(
             CrudMethod::UPDATE, source_extent, req.get_user_context()));
-    CRUD_ERROR_CHECK(extent_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
             CrudMethod::UPDATE, *working_object, req.get_user_context()});
-    CRUD_ERROR_CHECK(object_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(object_put_response, working_action);
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService MOVE DATA");
@@ -642,14 +651,14 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     HsmAction working_action;
     auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK(action_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK(get_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
     const auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest copy_data_request(
@@ -698,12 +707,12 @@ HsmActionResponse::Ptr HsmService::copy_data(
             extent_service->make_request(TypedCrudRequest<TierExtents>(
                 CrudMethod::UPDATE, target_extent, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK(extent_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
             CrudMethod::UPDATE, *working_object, req.get_user_context()});
-    CRUD_ERROR_CHECK(object_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(object_put_response, working_action);
 
     auto response = HsmActionResponse::create(req, working_action);
 
@@ -731,14 +740,14 @@ HsmActionResponse::Ptr HsmService::release_data(
 
     HsmAction working_action;
     auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK(action_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK(get_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
     auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest remove_data_request(
@@ -776,7 +785,7 @@ HsmActionResponse::Ptr HsmService::release_data(
             extent_service->make_request(TypedCrudRequest<TierExtents>(
                 CrudMethod::UPDATE, extent, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK(extent_put_response, working_action);
+    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{

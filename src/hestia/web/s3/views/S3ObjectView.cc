@@ -186,13 +186,15 @@ HttpResponse::Ptr S3ObjectView::on_put(
     }
 
     HsmObject object;
+    std::string container_key;
     if (container_get_response->found()) {
         LOG_INFO("Found container - using it for object");
 
+        container_key = container_get_response->get_item()->get_primary_key();
+
         CrudIdentifier object_id;
         object_id.set_name(s3_path.m_object_id);
-        object_id.set_parent_primary_key(
-            container_get_response->get_item()->get_primary_key());
+        object_id.set_parent_primary_key(container_key);
 
         auto obj_get_response = m_service->make_request(
             CrudRequest{
@@ -209,6 +211,26 @@ HttpResponse::Ptr S3ObjectView::on_put(
             object = *obj_get_response->get_item_as<HsmObject>();
         }
     }
+    else {
+        // Create container
+        Dataset dataset;
+        dataset.set_name(s3_path.m_container_name);
+
+        auto container_create_response = m_service->make_request(
+            TypedCrudRequest<Dataset>{
+                CrudMethod::CREATE,
+                dataset,
+                {auth.m_user_id, auth.m_user_token},
+                CrudQuery::OutputFormat::ID},
+            HsmItem::dataset_name);
+        if (!container_create_response->ok()) {
+            LOG_ERROR(container_create_response->get_error().to_string());
+            return HttpResponse::create(
+                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                 "Server error creating container for object."});
+        }
+        container_key = container_create_response->ids()[0];
+    }
 
     if (!object.get_primary_key().empty()) {
         auto update_response = m_service->make_request(
@@ -224,12 +246,9 @@ HttpResponse::Ptr S3ObjectView::on_put(
     else {
         CrudIdentifier object_id;
         object_id.set_name(s3_path.m_object_id);
-        object_id.set_parent_primary_key(
-            container_get_response->get_item()->get_primary_key());
+        object_id.set_parent_primary_key(container_key);
 
-        LOG_INFO(
-            "Creating object with parent primary key: "
-            << container_get_response->get_item()->get_primary_key());
+        LOG_INFO("Creating object with parent primary key: " << container_key);
 
         auto create_response = m_service->make_request(
             CrudRequest{
