@@ -37,9 +37,13 @@ class EventFeed {
 
     void add_sink(std::unique_ptr<EventSink> sink);
 
+    bool will_handle(const std::string& subject_type, CrudMethod method) const;
+
     /// @brief Serialize a filesystem-impacting event
     /// @param req Event data to serialize
     void on_event(const CrudEvent& event);
+
+    bool is_active() const { return m_config.is_active(); }
 
   private:
     std::vector<std::unique_ptr<EventSink>> m_sinks;

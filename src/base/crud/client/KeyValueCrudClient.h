@@ -19,13 +19,18 @@ class KeyValueCrudClient : public CrudClient {
     virtual ~KeyValueCrudClient();
 
   private:
-    void create(const CrudRequest& request, CrudResponse& response) override;
+    void create(
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs = false) override;
 
     void read(
         const CrudRequest& request, CrudResponse& response) const override;
 
     void update(
-        const CrudRequest& request, CrudResponse& response) const override;
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs = false) const override;
 
     void remove(const VecCrudIdentifier& ids) const override;
 

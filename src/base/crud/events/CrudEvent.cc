@@ -21,54 +21,40 @@ void CrudEvent::init()
 }
 
 CrudEvent::CrudEvent(
-    CrudMethod method, const CrudRequest& request, CrudResponse& response) :
+    const std::string& subject_type,
+    CrudMethod method,
+    const CrudRequest&,
+    CrudResponse& response) :
     Model(s_type)
 {
     init();
-    m_method.update_value(method);
 
-    for (const auto& item : response.items()) {
-        m_subject_ids.get_container_as_writeable().push_back(
-            item->get_primary_key());
+    m_subject_type.init_value(subject_type);
+    m_method.init_value(method);
 
-        if (item->has_owner() && !m_foreign_key_fields.empty()) {
-            auto parent_type = item->get_parent_type();
-            if (m_foreign_key_fields.size() == 1) {
-                m_parent_ids.get_container_as_writeable().push_back(
-                    m_foreign_key_fields.begin()->second->get_id());
-            }
-            else {
-                for (const auto& [key, field] : m_foreign_key_fields) {
-                    if (field->is_parent()) {
-                        m_parent_ids.get_container_as_writeable().push_back(
-                            field->get_id());
-                        break;
-                    }
-                }
-            }
-        }
-        else {
-            m_parent_ids.get_container_as_writeable().push_back("");
-        }
-    }
+    m_subject_ids.get_container_as_writeable() = response.ids();
+    m_parent_ids.get_container_as_writeable()  = response.parent_ids();
+    m_modified_attrs                           = response.modified_attrs();
+}
 
-    // Determine updated fields from the request and response
-    Dictionary dict;
-    switch (request.get_query().get_output_format()) {
-        case CrudQuery::OutputFormat::ATTRIBUTES:
-            m_updated_attr_string.update_value(
-                response.attributes().get_buffer());
-            break;
-        case CrudQuery::OutputFormat::DICT:
-            m_updated_fields.deserialize(*response.dict(), Format::MODIFIED);
-            break;
-        case CrudQuery::OutputFormat::ITEM:
-            response.get_item()->serialize(dict, Format::MODIFIED);
-            m_updated_fields.deserialize(dict);
-            break;
-        case CrudQuery::OutputFormat::ID:
-            break;
-    }
+const std::vector<std::string>& CrudEvent::get_ids() const
+{
+    return m_subject_ids.container();
+}
+
+const std::vector<Map>& CrudEvent::get_modified_attrs() const
+{
+    return m_modified_attrs;
+}
+
+const std::string& CrudEvent::get_subject_type() const
+{
+    return m_subject_type.get_value();
+}
+
+CrudMethod CrudEvent::get_method() const
+{
+    return m_method.get_value();
 }
 
 }  // namespace hestia

@@ -52,8 +52,6 @@ void YamlUtils::load_all(
 void YamlUtils::dict_to_yaml(
     const Dictionary& dict, std::string& yaml, const bool sorted)
 {
-    yaml = "";
-
     if (dict.get_type() != Dictionary::Type::MAP) {
         return;
     }
@@ -78,7 +76,7 @@ void YamlUtils::dict_to_yaml(
         emitter << YAML::EndMap;
     }
     emitter << YAML::EndDoc;
-    yaml.assign(emitter.c_str());
+    yaml += emitter.c_str();
 }
 
 

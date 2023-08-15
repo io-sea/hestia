@@ -40,12 +40,16 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
 
   protected:
     virtual void create(
-        const CrudRequest& request, CrudResponse& response) const;
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs) const;
 
     virtual void read(const CrudRequest& request, CrudResponse& response) const;
 
     virtual void update(
-        const CrudRequest& request, CrudResponse& response) const;
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs) const;
 
     virtual void remove(const VecCrudIdentifier& id) const;
 

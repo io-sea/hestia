@@ -56,34 +56,16 @@
 
 namespace hestia {
 
-/*
-void add_put_event(EventFeed* feed, const HsmObject& obj, uint8_t tier)
-{
-    if (feed == nullptr) {
-        return;
-    }
-    EventFeed::Event event;
-    event.m_id          = obj.get_primary_key();
-    event.m_length      = obj.size();
-    event.m_method      = EventFeed::Event::Method::PUT;
-    event.m_target_tier = tier;
-    feed->log_event(event);
-}
-*/
-
 HsmService::HsmService(
     const ServiceConfig& config,
     HsmServiceCollection::Ptr service_collection,
     HsmObjectStoreClient* object_store,
-    std::unique_ptr<DataPlacementEngine> placement_engine,
-    EventFeed* event_feed) :
+    std::unique_ptr<DataPlacementEngine> placement_engine) :
     CrudService(config),
     m_services(std::move(service_collection)),
     m_object_store(object_store),
-    m_placement_engine(std::move(placement_engine)),
-    m_event_feed(event_feed)
+    m_placement_engine(std::move(placement_engine))
 {
-    (void)m_event_feed;
     LOG_INFO("Creating HsmService");
 }
 
@@ -242,15 +224,6 @@ CrudResponse::Ptr HsmService::crud_remove(
     if (!response->ok()) {
         return response;
     }
-
-    /*
-    if (subject_type == HsmItem::Type::OBJECT && m_event_feed) {
-        EventFeed::Event event;
-        event.m_id     = req.get_id();
-        event.m_method = EventFeed::Event::Method::REMOVE_ALL;
-        m_event_feed->log_event(event);
-    }
-    */
 
     LOG_INFO("Finished HSMService REMOVE");
     return response;
@@ -455,10 +428,6 @@ void HsmService::on_put_data_complete(
         "Finished HSMService PUT | Action ID: "
         + working_action.get_primary_key());
 
-    /*
-    add_put_event(m_event_feed.get(), working_object, tier);
-    */
-
     completion_func(std::move(response));
 }
 
@@ -627,18 +596,6 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     LOG_INFO("Finished HSMService MOVE DATA");
 
-    /*
-    if (m_event_feed) {
-        EventFeed::Event event;
-        event.m_id          = working_object->id();
-        event.m_length      = working_object->size();
-        event.m_method      = EventFeed::Event::Method::COPY;
-        event.m_source_tier = req.source_tier();
-        event.m_target_tier = req.target_tier();
-        m_event_feed->log_event(event);
-    }
-    */
-
     return response;
 }
 
@@ -718,18 +675,6 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     LOG_INFO("Finished HSMService COPY DATA");
 
-    /*
-    if (m_event_feed) {
-        EventFeed::Event event;
-        event.m_id          = working_object->id();
-        event.m_length      = working_object->size();
-        event.m_method      = EventFeed::Event::Method::COPY;
-        event.m_source_tier = req.source_tier();
-        event.m_target_tier = req.target_tier();
-        m_event_feed->log_event(event);
-    }
-    */
-
     return response;
 }
 
@@ -793,17 +738,6 @@ HsmActionResponse::Ptr HsmService::release_data(
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService REMOVE");
-
-    /*
-    if (m_event_feed) {
-        EventFeed::Event event;
-        event.m_id          = req.get_action().get_subject_key();
-        event.m_method      = EventFeed::Event::Method::REMOVE;
-        event.m_source_tier = req.source_tier();
-        ;
-        m_event_feed->log_event(event);
-    }
-    */
 
     return response;
 }

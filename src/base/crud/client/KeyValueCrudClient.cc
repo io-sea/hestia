@@ -229,7 +229,9 @@ void KeyValueCrudClient::prepare_create_keys(
 }
 
 void KeyValueCrudClient::create(
-    const CrudRequest& crud_request, CrudResponse& crud_response)
+    const CrudRequest& crud_request,
+    CrudResponse& crud_response,
+    bool record_modified_attrs)
 {
     Dictionary attributes_dict;
     if (crud_request.get_attributes().has_content()) {
@@ -353,11 +355,22 @@ void KeyValueCrudClient::create(
         get_adapter(CrudAttributes::Format::JSON)
             ->from_dict(*content, crud_response.items());
     }
+
+    if (record_modified_attrs) {
+        for (const auto& item : content->get_sequence()) {
+            Map flat_attrs;
+            item->flatten(flat_attrs);
+            crud_response.modified_attrs().push_back(flat_attrs);
+        }
+    }
+
     crud_response.ids() = ids;
 }
 
 void KeyValueCrudClient::update(
-    const CrudRequest& crud_request, CrudResponse& crud_response) const
+    const CrudRequest& crud_request,
+    CrudResponse& crud_response,
+    bool record_modified_attrs) const
 {
     std::vector<std::string> ids;
     if (crud_request.has_items()) {
@@ -452,6 +465,14 @@ void KeyValueCrudClient::update(
     else if (crud_request.get_query().is_item_output_format()) {
         get_adapter(CrudAttributes::Format::JSON)
             ->from_dict(*updated_content, crud_response.items());
+    }
+
+    if (record_modified_attrs) {
+        for (const auto& item : updated_content->get_sequence()) {
+            Map flat_attrs;
+            item->flatten(flat_attrs);
+            crud_response.modified_attrs().push_back(flat_attrs);
+        }
     }
     crud_response.ids() = ids;
 }

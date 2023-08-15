@@ -41,6 +41,10 @@ class CrudResponse : public Response<CrudErrorCode> {
 
     std::vector<std::string>& ids() { return m_ids; }
 
+    std::vector<std::string>& parent_ids() { return m_parent_ids; }
+
+    std::vector<Map>& modified_attrs() { return m_modified_attrs; };
+
     bool found() const;
 
     void set_item(std::unique_ptr<Model> item);
@@ -55,7 +59,11 @@ class CrudResponse : public Response<CrudErrorCode> {
     VecModelPtr m_items;
     std::unique_ptr<Dictionary> m_items_dict;
     CrudAttributes m_attributes;
+
     std::vector<std::string> m_ids;
+    std::vector<std::string> m_parent_ids;
+
+    std::vector<Map> m_modified_attrs;
 
     bool m_locked{false};
     std::string m_type;

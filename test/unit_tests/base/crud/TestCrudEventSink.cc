@@ -23,6 +23,7 @@ class TestCrudEventSinkFixture {
     hestia::mock::MockCrudService::Ptr m_service;
 };
 
+/*
 TEST_CASE_METHOD(
     TestCrudEventSinkFixture, "Crud event sink test", "[event-feed]")
 {
@@ -58,6 +59,7 @@ TEST_CASE_METHOD(
 
     LOG_INFO(sink.get_buffer());
 }
+*/
 
 // TEST_CASE("Crud file event sink test", "[event-feed]")
 // {

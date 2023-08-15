@@ -28,13 +28,18 @@ class CrudClient {
 
     virtual ~CrudClient();
 
-    virtual void create(const CrudRequest& request, CrudResponse& response) = 0;
+    virtual void create(
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs = false) = 0;
 
     virtual void read(
         const CrudRequest& request, CrudResponse& response) const = 0;
 
     virtual void update(
-        const CrudRequest& request, CrudResponse& response) const = 0;
+        const CrudRequest& request,
+        CrudResponse& response,
+        bool record_modified_attrs = false) const = 0;
 
     virtual void remove(const VecCrudIdentifier& ids) const = 0;
 

@@ -24,7 +24,7 @@ HttpCrudClient::HttpCrudClient(
 HttpCrudClient::~HttpCrudClient() {}
 
 void HttpCrudClient::create(
-    const CrudRequest& crud_request, CrudResponse& crud_response)
+    const CrudRequest& crud_request, CrudResponse& crud_response, bool)
 {
     const auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
     HttpRequest request(path, HttpRequest::Method::PUT);
@@ -124,7 +124,7 @@ void HttpCrudClient::read(
 }
 
 void HttpCrudClient::update(
-    const CrudRequest& crud_request, CrudResponse& crud_response) const
+    const CrudRequest& crud_request, CrudResponse& crud_response, bool) const
 {
     auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
 

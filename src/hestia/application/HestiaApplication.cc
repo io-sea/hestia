@@ -203,6 +203,9 @@ void sync_configs(
 void HestiaApplication::setup_hsm_service(
     const ServiceConfig& config, CrudServiceBackend* backend)
 {
+    m_event_feed = std::make_unique<EventFeed>();
+    m_event_feed->initialize(m_config.get_event_feed_config());
+
     auto hsm_services = std::make_unique<HsmServiceCollection>();
 
     hsm_services->create_default_services(
@@ -226,15 +229,21 @@ void HestiaApplication::setup_hsm_service(
         PlacementEngineType::BASIC,
         hsm_services->get_service(HsmItem::Type::TIER));
 
-    auto event_feed = std::make_unique<EventFeed>();
-    event_feed->initialize(m_config.get_event_feed_config());
-
     ServiceConfig hsm_service_config;
     auto hsm_service = std::make_unique<HsmService>(
         hsm_service_config, std::move(hsm_services),
         m_object_store_client.get(), std::move(dpe));
     m_hsm_service = hsm_service.get();
     m_hsm_service->update_tiers(current_user_id);
+
+    if (m_event_feed->is_active() && uses_local_storage()) {
+        const auto output_path =
+            get_cache_path() + "/"
+            + m_config.get_event_feed_config().get_output_path();
+        auto event_sink =
+            std::make_unique<HsmEventSink>(output_path, m_hsm_service);
+        m_event_feed->add_sink(std::move(event_sink));
+    }
 
     DistributedHsmServiceConfig service_config;
     sync_configs(service_config, m_config);

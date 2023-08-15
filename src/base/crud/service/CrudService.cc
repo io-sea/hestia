@@ -52,10 +52,16 @@ CrudService::~CrudService() {}
 
     auto response = std::make_unique<CrudResponse>(request, get_type());
 
+    bool record_modified_attrs{false};
+    if (m_event_feed != nullptr) {
+        record_modified_attrs =
+            m_event_feed->will_handle(get_type(), request.method());
+    }
+
     switch (request.method()) {
         case CrudMethod::CREATE:
             try {
-                create(request, *response);
+                create(request, *response, record_modified_attrs);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -67,7 +73,7 @@ CrudService::~CrudService() {}
             break;
         case CrudMethod::UPDATE:
             try {
-                update(request, *response);
+                update(request, *response, record_modified_attrs);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -118,16 +124,19 @@ CrudService::~CrudService() {}
                              << ", Method: " << request.method_as_string());
 
     if (m_event_feed != nullptr) {
-        m_event_feed->on_event(CrudEvent(request.method(), request, *response));
+        m_event_feed->on_event(
+            CrudEvent(get_type(), request.method(), request, *response));
     }
 
     return response;
 }
 
 void CrudService::create(
-    const CrudRequest& request, CrudResponse& response) const
+    const CrudRequest& request,
+    CrudResponse& response,
+    bool record_modified_attrs) const
 {
-    m_client->create(request, response);
+    m_client->create(request, response, record_modified_attrs);
 }
 
 void CrudService::read(const CrudRequest& request, CrudResponse& response) const
@@ -141,9 +150,11 @@ void CrudService::set_default_name(const std::string& name)
 }
 
 void CrudService::update(
-    const CrudRequest& request, CrudResponse& response) const
+    const CrudRequest& request,
+    CrudResponse& response,
+    bool record_modified_attrs) const
 {
-    m_client->update(request, response);
+    m_client->update(request, response, record_modified_attrs);
 }
 
 void CrudService::remove(const VecCrudIdentifier& ids) const

@@ -14,9 +14,12 @@ class HsmService;
 // file based derived versions.
 class HsmEventSink : public EventSink {
   public:
-    HsmEventSink(HsmService* hsm_service);
+    HsmEventSink(const std::string& output_file, HsmService* hsm_service);
 
     void on_event(const CrudEvent& event) override;
+
+    bool will_handle(
+        const std::string& subject_type, CrudMethod method) const override;
 
     /*
     enum class RbhTypes {  // Events Robinhood recognizes
@@ -38,6 +41,8 @@ class HsmEventSink : public EventSink {
 
   private:
     HsmService* m_hsm_service{nullptr};
+    std::string m_output_file;
+
     /*
     void upsert(Dictionary& dict) const;
     void del(Dictionary& dict) const;

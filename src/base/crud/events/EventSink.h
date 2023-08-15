@@ -11,6 +11,11 @@ class EventSink {
     virtual ~EventSink() = default;
 
     virtual void on_event(const CrudEvent& event) = 0;
+
+    virtual bool will_handle(const std::string&, CrudMethod) const
+    {
+        return false;
+    }
 };
 
 class CrudEventFileSink : public EventSink {
