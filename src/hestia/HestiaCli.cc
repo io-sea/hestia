@@ -7,6 +7,7 @@
 
 #include "ConsoleInterface.h"
 #include "DaemonManager.h"
+#include "ErrorUtils.h"
 #include "Logger.h"
 #include "UuidUtils.h"
 
@@ -406,6 +407,9 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
 
         const auto status =
             client->do_data_movement_action(m_client_command.m_action);
+        if (status.ok()) {
+            m_console_interface->console_write(m_client_command.m_action.id());
+        }
         return status;
     }
     else if (m_client_command.is_data_io_action()) {
@@ -437,7 +441,27 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
 
         client->do_data_io_action(
             m_client_command.m_action, &stream, completion_cb);
-        (void)stream.flush();
+
+        if (m_client_command.is_data_put_action()) {
+            if (stream.waiting_for_content()) {
+                auto result = stream.flush();
+                if (!result.ok()) {
+                    const auto msg =
+                        "Failed to flush stream with: " + result.to_string();
+                    LOG_ERROR(msg);
+                    return {OpStatus::Status::ERROR, -1, msg};
+                }
+            }
+        }
+        else if (stream.has_content()) {
+            auto result = stream.flush();
+            if (!result.ok()) {
+                const auto msg =
+                    "Failed to flush stream with: " + result.to_string();
+                LOG_ERROR(msg);
+                return {OpStatus::Status::ERROR, -1, msg};
+            }
+        }
         return status;
     }
     return {

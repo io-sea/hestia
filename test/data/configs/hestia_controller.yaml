@@ -10,3 +10,6 @@ tiers:
   - name: "2"
   - name: "3"
   - name: "4"
+
+event_feed:
+  active: true

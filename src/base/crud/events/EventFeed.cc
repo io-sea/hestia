@@ -83,8 +83,6 @@ bool EventFeed::will_handle(
 
 void EventFeed::on_event(const CrudEvent& event)
 {
-    LOG_INFO("Got event feed event");
-
     if (!m_config.is_active()) {
         return;
     }

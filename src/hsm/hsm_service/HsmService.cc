@@ -298,8 +298,12 @@ void HsmService::put_data(
             working_object->size(), req.target_tier());
     }
 
+    StorageObject storage_object(working_object->id());
+    storage_object.get_metadata_as_writeable().set_item(
+        "hestia-user_token", req.get_user_context().m_token);
+
     HsmObjectStoreRequest data_put_request(
-        working_object->id(), HsmObjectStoreRequestMethod::PUT);
+        storage_object, HsmObjectStoreRequestMethod::PUT);
     data_put_request.set_target_tier(chosen_tier);
 
     auto working_extent = req.extent();
@@ -616,6 +620,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
     CRUD_ERROR_CHECK_RETURN(get_response, working_action);
+
     const auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest copy_data_request(
@@ -631,6 +636,12 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response, working_action);
+
+    if (copy_data_response->is_handled_remote()) {
+        auto response = HsmActionResponse::create(req, working_action);
+        LOG_INFO("Finished HSMService COPY DATA - Handled on remote");
+        return response;
+    }
 
     TierExtents source_extent;
     TierExtents target_extent;

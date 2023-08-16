@@ -118,8 +118,41 @@ void HttpCrudClient::read(
                 {CrudErrorCode::ERROR,
                  "Error in http client GET: " + response->to_string()});
         }
-        get_adapter(CrudAttributes::Format::JSON)
-            ->from_string({response->body()}, crud_response.items());
+        LOG_INFO("Got response: " << response->body());
+
+        std::vector<std::string> ids;
+
+        if (crud_request.get_query().is_id_output_format()) {
+            Dictionary dict;
+            get_adapter(CrudAttributes::Format::JSON)
+                ->dict_from_string(response->body(), dict);
+            if (dict.get_type() == Dictionary::Type::SEQUENCE) {
+                for (const auto& item : dict.get_sequence()) {
+                    if (item->has_map_item("id")) {
+                        ids.push_back(item->get_map_item("id")->get_scalar());
+                    }
+                }
+            }
+            else {
+                if (dict.has_map_item("id")) {
+                    ids.push_back(dict.get_map_item("id")->get_scalar());
+                }
+            }
+            crud_response.ids() = ids;
+        }
+        else if (crud_request.get_query().is_attribute_output_format()) {
+            crud_response.attributes().buffer() = response->body();
+        }
+        else if (crud_request.get_query().is_dict_output_format()) {
+            auto dict = std::make_unique<Dictionary>();
+            get_adapter(CrudAttributes::Format::JSON)
+                ->dict_from_string(response->body(), *dict);
+            crud_response.set_dict(std::move(dict));
+        }
+        else if (crud_request.get_query().is_item_output_format()) {
+            get_adapter(CrudAttributes::Format::JSON)
+                ->from_string({response->body()}, crud_response.items());
+        }
     }
 }
 

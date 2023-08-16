@@ -79,12 +79,16 @@ void FileObjectStoreClient::migrate(
     if (keep_existing) {
         if (m_mode == Mode::DATA_AND_METADATA
             || m_mode == Mode::METADATA_ONLY) {
-            std::filesystem::copy(source_metadata_path, target_metadata_path);
+            std::filesystem::copy(
+                source_metadata_path, target_metadata_path,
+                std::filesystem::copy_options::overwrite_existing);
         }
 
         if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
             if (std::filesystem::is_regular_file(source_data_path)) {
-                std::filesystem::copy(source_data_path, target_data_path);
+                std::filesystem::copy(
+                    source_data_path, target_data_path,
+                    std::filesystem::copy_options::overwrite_existing);
             }
         }
     }

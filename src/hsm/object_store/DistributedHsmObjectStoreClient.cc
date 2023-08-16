@@ -144,7 +144,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
 
     HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
     action.set_subject_key(request.object().get_primary_key());
-    action.set_size(request.object().size());
+    action.set_size(stream->get_source_size());
     action.set_target_tier(request.target_tier());
 
     const auto path = controller_endpoint + "/api/v1/"
@@ -159,8 +159,13 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
     flat_dict.add_key_prefix("hestia.hsm_action.");
 
     http_request.get_header().set_items(flat_dict);
-    auto put_response = m_http_client->make_request(http_request, stream);
+    http_request.get_header().set_item(
+        "content-length", std::to_string(stream->get_source_size()));
+    http_request.get_header().set_item(
+        "Authorisation",
+        request.object().metadata().get_item("hestia-user_token"));
 
+    const auto put_response = m_http_client->make_request(http_request, stream);
     if (put_response->error()) {
         LOG_ERROR("Failed in remote put request: " << put_response->message());
         response->on_error(
@@ -178,6 +183,67 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
     LOG_INFO(
         "Remote PUT complete ok to location: "
         << response->object().get_location());
+    return response;
+}
+
+HsmObjectStoreResponse::Ptr
+DistributedHsmObjectStoreClient::do_remote_copy_or_move(
+    const HsmObjectStoreRequest& request, bool is_copy) const
+{
+    auto response = HsmObjectStoreResponse::create(request, "");
+    response->set_is_handled_remote(true);
+
+    if (m_http_client == nullptr) {
+        const std::string message =
+            "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    if (m_hsm_service->get_self_config().m_is_server) {
+        const std::string message =
+            "Attempting remote copy/move from a Server-Worker. Backends have been misconfigured.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    auto controller_endpoint =
+        m_hsm_service->get_self_config().m_controller_address;
+
+    auto action_type =
+        is_copy ? HsmAction::Action::COPY_DATA : HsmAction::Action::MOVE_DATA;
+
+    HsmAction action(HsmItem::Type::OBJECT, action_type);
+    action.set_subject_key(request.object().get_primary_key());
+    action.set_target_tier(request.target_tier());
+    action.set_source_tier(request.source_tier());
+
+    const auto path = controller_endpoint + "/api/v1/"
+                      + hestia::HsmItem::hsm_action_name + "s";
+
+    HttpRequest http_request(path, HttpRequest::Method::PUT);
+    Dictionary dict;
+    action.serialize(dict);
+
+    Map flat_dict;
+    dict.flatten(flat_dict);
+    flat_dict.add_key_prefix("hestia.hsm_action.");
+
+    http_request.get_header().set_items(flat_dict);
+    http_request.get_header().set_item(
+        "Authorisation",
+        request.object().metadata().get_item("hestia-user_token"));
+
+    const auto http_response = m_http_client->make_request(http_request);
+    if (http_response->error()) {
+        LOG_ERROR("Failed in remote put request: " << http_response->message());
+        response->on_error(
+            {HsmObjectStoreErrorCode::ERROR, http_response->message()});
+        return response;
+    }
+    LOG_INFO("Remote COPY/MOVE complete ok");
     return response;
 }
 
@@ -263,7 +329,8 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
         }
         else {
             LOG_INFO("Don't have local clients for COPY/MOVE - try remote");
-            // request move on different hsm service node
+            return do_remote_copy_or_move(
+                request, request.method() == HsmObjectStoreRequestMethod::COPY);
             return nullptr;
         }
     }

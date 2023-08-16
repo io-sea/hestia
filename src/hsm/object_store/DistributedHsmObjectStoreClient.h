@@ -39,6 +39,9 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     HsmObjectStoreResponse::Ptr do_remote_put(
         const HsmObjectStoreRequest& request, Stream* stream) const;
 
+    HsmObjectStoreResponse::Ptr do_remote_copy_or_move(
+        const HsmObjectStoreRequest& request, bool is_copy) const;
+
     HsmObjectStoreResponse::Ptr do_local_op(
         const HsmObjectStoreRequest& request,
         Stream* stream,

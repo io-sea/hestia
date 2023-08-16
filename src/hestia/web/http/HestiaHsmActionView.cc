@@ -154,7 +154,6 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     else {
         auto action_response = m_hestia_service->make_request(
             HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}));
-
         if (!action_response->ok()) {
             return HttpResponse::create(500, "Internal Server Error.");
         }

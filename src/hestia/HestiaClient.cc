@@ -284,6 +284,9 @@ OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
             + response->get_error().to_string());
         return rc::error(response->get_error());
     }
+    else {
+        action = response->get_action();
+    }
     return {};
 }
 

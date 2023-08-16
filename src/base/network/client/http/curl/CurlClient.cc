@@ -86,6 +86,7 @@ size_t CurlClient::on_read(char* buffer, size_t nmemb)
     auto handle      = m_handles[std::this_thread::get_id()];
     auto num_to_read = nmemb;
     if (handle->m_request_context.m_stream != nullptr) {
+        LOG_INFO("Reading from input stream");
         if (handle->m_request_context.m_stream->has_content()) {
             WriteableBufferView buffer_view(buffer, num_to_read);
             auto result = handle->m_request_context.m_stream->read(buffer_view);

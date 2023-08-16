@@ -16,3 +16,6 @@ object_store_backends:
     tier_names: ["0", "1", "2", "3", "4"]
     config: 
       root: hsm_object_store_controller0
+
+event_feed:
+  active: true

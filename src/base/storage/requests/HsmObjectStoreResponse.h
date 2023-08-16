@@ -33,8 +33,16 @@ class HsmObjectStoreResponse :
         const BaseObjectStoreRequest& request,
         const HsmObjectStoreResponse* response);
 
+    void set_is_handled_remote(bool handled_remote)
+    {
+        m_handled_remote = handled_remote;
+    }
+
+    bool is_handled_remote() const { return m_handled_remote; }
+
   private:
     HsmObjectStoreResponse::Ptr m_hsm_child_response;
     ObjectStoreResponse::Ptr m_child_response;
+    bool m_handled_remote{false};
 };
 }  // namespace hestia
