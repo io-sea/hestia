@@ -8,7 +8,7 @@ add_module(
         data_placement_engine/BasicDataPlacementEngine.h 
         data_placement_engine/DataPlacementEngine.h
         data_placement_engine/DataPlacementEngineFactory.h
-        distributed_hsm_service/DistributedHsmService.h
+        hsm_service/DistributedHsmService.h
         hsm_service/HsmService.h
         hsm_service/HsmServicesFactory.h
         hsm_service/model/CompositeLayer.h
@@ -24,7 +24,7 @@ add_module(
     SOURCES
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
-        distributed_hsm_service/DistributedHsmService.cc
+        hsm_service/DistributedHsmService.cc
         hsm_service/HsmService.cc
         hsm_service/HsmServicesFactory.cc
         hsm_service/model/CompositeLayer.cc
@@ -40,7 +40,6 @@ add_module(
         s3/S3ObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
-        distributed_hsm_service
         hsm_service
         hsm_service/model
         hsm_service/events
