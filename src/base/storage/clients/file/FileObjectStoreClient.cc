@@ -19,38 +19,62 @@ FileObjectStoreClient::Ptr FileObjectStoreClient::create()
     return std::make_unique<FileObjectStoreClient>();
 }
 
-FileObjectStoreClient::Ptr FileObjectStoreClient::create(
-    const std::string& id, const std::filesystem::path& root, Mode mode)
-{
-    auto instance = create();
-    instance->do_initialize(id, root, mode);
-    return instance;
-}
-
 std::string FileObjectStoreClient::get_registry_identifier()
 {
     return hestia::project_config::get_project_name()
            + "::FileObjectStoreClient";
 }
 
-void FileObjectStoreClient::do_initialize(
-    const std::string& id, const std::filesystem::path& root, Mode mode)
+void FileObjectStoreClient::initialize(
+    const std::string& id,
+    const std::string& cache_path,
+    const Dictionary& config_data)
 {
-    m_id   = id;
-    m_root = root;
-    m_mode = mode;
+    FileObjectStoreClientConfig config;
+    config.deserialize(config_data);
+    do_initialize(id, cache_path, config);
+}
+
+void FileObjectStoreClient::do_initialize(
+    const std::string& id,
+    const std::string& cache_path,
+    const FileObjectStoreClientConfig& config)
+{
+    m_id = id;
+
+    m_root = config.m_root.get_value();
+    m_mode = config.m_mode.get_value();
+
+    if (m_root.is_relative()) {
+        m_root = std::filesystem::path(cache_path) / m_root;
+    }
+
+    LOG_INFO("Initializing with root: " + m_root.string());
+
     hestia::FileUtils::create_if_not_existing(m_root);
 }
 
 void FileObjectStoreClient::remove(const StorageObject& object) const
 {
-    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+    if (needs_metadata()) {
         std::filesystem::remove(get_metadata_path(object.id()));
     }
 
-    if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+    if (needs_data()) {
         std::filesystem::remove(get_data_path(object.id()));
     }
+}
+
+bool FileObjectStoreClient::needs_metadata() const
+{
+    return m_mode == FileObjectStoreClientConfig::Mode::DATA_AND_METADATA
+           || m_mode == FileObjectStoreClientConfig::Mode::METADATA_ONLY;
+}
+
+bool FileObjectStoreClient::needs_data() const
+{
+    return m_mode == FileObjectStoreClientConfig::Mode::DATA_ONLY
+           || m_mode == FileObjectStoreClientConfig::Mode::DATA_AND_METADATA;
 }
 
 void FileObjectStoreClient::migrate(
@@ -68,23 +92,22 @@ void FileObjectStoreClient::migrate(
     const auto source_data_path     = get_data_path(object_id);
     const auto source_metadata_path = get_metadata_path(object_id);
 
-    if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+    if (needs_data()) {
         hestia::FileUtils::create_if_not_existing(target_data_path);
     }
 
-    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+    if (needs_metadata()) {
         hestia::FileUtils::create_if_not_existing(target_metadata_path);
     }
 
     if (keep_existing) {
-        if (m_mode == Mode::DATA_AND_METADATA
-            || m_mode == Mode::METADATA_ONLY) {
+        if (needs_metadata()) {
             std::filesystem::copy(
                 source_metadata_path, target_metadata_path,
                 std::filesystem::copy_options::overwrite_existing);
         }
 
-        if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+        if (needs_data()) {
             if (std::filesystem::is_regular_file(source_data_path)) {
                 std::filesystem::copy(
                     source_data_path, target_data_path,
@@ -93,12 +116,11 @@ void FileObjectStoreClient::migrate(
         }
     }
     else {
-        if (m_mode == Mode::DATA_AND_METADATA
-            || m_mode == Mode::METADATA_ONLY) {
+        if (needs_metadata()) {
             std::filesystem::rename(source_metadata_path, target_metadata_path);
         }
 
-        if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+        if (needs_data()) {
             if (std::filesystem::is_regular_file(source_data_path)) {
                 std::filesystem::rename(source_data_path, target_data_path);
             }
@@ -112,11 +134,9 @@ bool FileObjectStoreClient::exists(const StorageObject& object) const
 }
 
 void FileObjectStoreClient::put(
-    const StorageObject& object, const Extent& extent, Stream* stream) const
+    const StorageObject& object, const Extent&, Stream* stream) const
 {
-    (void)extent;
-
-    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+    if (needs_metadata()) {
         auto path = get_metadata_path(object.id());
         FileUtils::create_if_not_existing(path);
 
@@ -128,7 +148,7 @@ void FileObjectStoreClient::put(
         object.metadata().for_each_item(for_item);
     }
 
-    if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+    if (needs_data()) {
         LOG_INFO("Adding to sink: " << get_data_path(object.id()));
         if (stream != nullptr) {
             auto stream_sink =
@@ -139,10 +159,8 @@ void FileObjectStoreClient::put(
 }
 
 void FileObjectStoreClient::get(
-    StorageObject& object, const Extent& extent, Stream* stream) const
+    StorageObject& object, const Extent&, Stream* stream) const
 {
-    (void)extent;
-
     if (!exists(object)) {
         const std::string msg =
             "Requested object: " + object.id()
@@ -152,11 +170,11 @@ void FileObjectStoreClient::get(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
     }
 
-    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+    if (needs_metadata()) {
         read_metadata(object);
     }
 
-    if (m_mode == Mode::DATA_ONLY || m_mode == Mode::DATA_AND_METADATA) {
+    if (needs_data()) {
         if (stream != nullptr) {
             auto stream_source =
                 std::make_unique<FileStreamSource>(get_data_path(object.id()));
@@ -229,7 +247,7 @@ std::filesystem::path FileObjectStoreClient::get_metadata_path(
 
 bool FileObjectStoreClient::exists(const std::string& object_id) const
 {
-    if (m_mode == Mode::DATA_AND_METADATA || m_mode == Mode::METADATA_ONLY) {
+    if (needs_metadata()) {
         return std::filesystem::is_regular_file(get_metadata_path(object_id));
     }
     else {

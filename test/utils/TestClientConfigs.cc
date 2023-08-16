@@ -36,7 +36,6 @@ void TestClientConfigs::get_hsm_memory_client_config(Dictionary& config)
     object_store_config.set_tier_names(tier_names);
 
     InMemoryObjectStoreClientConfig in_memory_store_config;
-    in_memory_store_config.set_tiers(tier_names);
 
     Dictionary in_memory_store_config_dict;
     in_memory_store_config.serialize(in_memory_store_config_dict);

@@ -19,7 +19,7 @@ void DistributedHsmServiceTestWrapper::init(
     for (std::size_t idx = 0; idx < num_tiers; idx++) {
         tier_names.push_back(std::to_string(idx));
     }
-    hsm_memory_client_config.set_tiers(tier_names);
+    m_obj_store_client.set_tier_names(tier_names);
 
     hestia::Dictionary serialized_config;
     hsm_memory_client_config.serialize(serialized_config);

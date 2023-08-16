@@ -89,17 +89,20 @@ ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
         hsm_request, hsm_response.get());
 }
 
-bool HsmObjectStoreClient::exists(const StorageObject& object) const
+void HsmObjectStoreClient::set_tier_names(
+    const std::vector<std::string>& tier_names)
 {
-    (void)object;
+    m_tier_names = tier_names;
+}
+
+bool HsmObjectStoreClient::exists(const StorageObject&) const
+{
     throw std::runtime_error("Exists operation not supported for hsm objects");
 }
 
 void HsmObjectStoreClient::list(
-    const KeyValuePair& query, std::vector<StorageObject>& fetched) const
+    const KeyValuePair&, std::vector<StorageObject>&) const
 {
-    (void)query;
-    (void)fetched;
     throw std::runtime_error("List operation not supported for hsm objects");
 }
 

@@ -80,10 +80,13 @@ void Stream::set_source_size(std::size_t size)
 
 bool Stream::waiting_for_content() const
 {
-    if (bool(m_sink) && m_sink->get_state().finished()) {
+    if (!m_sink) {
         return false;
     }
-    return get_sink_size() > 0;
+    if (m_sink->get_state().finished()) {
+        return false;
+    }
+    return true;
 }
 
 bool Stream::has_content() const

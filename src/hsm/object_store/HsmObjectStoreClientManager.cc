@@ -183,6 +183,7 @@ void HsmObjectStoreClientManager::setup_clients(
                         auto hsm_client =
                             std::unique_ptr<HsmObjectStoreClient>(raw_client);
 
+                        hsm_client->set_tier_names(backend.get_tier_names());
                         hsm_client->initialize(
                             backend.get_primary_key(), cache_path,
                             backend.get_config());
@@ -196,6 +197,8 @@ void HsmObjectStoreClientManager::setup_clients(
                 else {
                     auto client_plugin =
                         m_client_factory->get_hsm_client_from_plugin(backend);
+                    client_plugin->get_client()->set_tier_names(
+                        backend.get_tier_names());
                     client_plugin->get_client()->initialize(
                         backend.get_primary_key(), cache_path,
                         backend.get_config());

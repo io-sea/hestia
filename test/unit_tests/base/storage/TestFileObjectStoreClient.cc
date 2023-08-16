@@ -19,8 +19,18 @@ class FileObjectStoreTestFixture {
         m_test_name           = test_name;
         const auto store_path = get_store_path();
         std::filesystem::remove_all(store_path);
+
         m_client = ObjectStoreTestWrapper::create(
-            hestia::FileObjectStoreClient::create("0000", store_path));
+            hestia::FileObjectStoreClient::create());
+
+        hestia::FileObjectStoreClientConfig config;
+        config.m_root = store_path;
+        config.m_mode.init_value(
+            hestia::FileObjectStoreClientConfig::Mode::DATA_AND_METADATA);
+
+        hestia::Dictionary dict;
+        config.serialize(dict);
+        m_client->m_client->initialize("0", {}, dict);
     }
 
     std::string get_store_path() const

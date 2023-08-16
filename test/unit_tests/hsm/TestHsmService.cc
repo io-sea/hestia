@@ -48,6 +48,7 @@ class HsmServiceTestFixture {
 
         hestia::InMemoryObjectStoreClientConfig object_store_config;
 
+        std::vector<std::string> tier_names;
         for (std::size_t idx = 0; idx < 5; idx++) {
             hestia::StorageTier tier(idx);
 
@@ -57,12 +58,12 @@ class HsmServiceTestFixture {
                     m_test_user.get_primary_key()});
             REQUIRE(response->ok());
 
-            object_store_config.m_tier_ids.get_container_as_writeable()
-                .push_back(std::to_string(idx));
+            tier_names.push_back(std::to_string(idx));
         }
 
         m_object_store_client =
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
+        m_object_store_client->set_tier_names(tier_names);
         m_object_store_client->do_initialize("0000", {}, object_store_config);
 
         m_hsm_service = std::make_unique<hestia::HsmService>(

@@ -2,9 +2,27 @@
 
 #include "ObjectStoreClient.h"
 
+#include "EnumUtils.h"
+
 #include <filesystem>
 
 namespace hestia {
+
+class FileObjectStoreClientConfig : public SerializeableWithFields {
+  public:
+    STRINGABLE_ENUM(Mode, DATA_AND_METADATA, DATA_ONLY, METADATA_ONLY)
+
+    FileObjectStoreClientConfig() :
+        SerializeableWithFields("file_object_store_client_config")
+    {
+        register_scalar_field(&m_root);
+        register_scalar_field(&m_mode);
+    }
+
+    EnumField<Mode, Mode_enum_string_converter> m_mode{"mode", Mode::DATA_ONLY};
+    StringField m_root{"root", "object_store"};
+};
+
 class FileObjectStoreClient : public ObjectStoreClient {
   public:
     enum class Mode { DATA_AND_METADATA, DATA_ONLY, METADATA_ONLY };
@@ -15,17 +33,17 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     static Ptr create();
 
-    static Ptr create(
-        const std::string& id,
-        const std::filesystem::path& root,
-        Mode mode = Mode::DATA_AND_METADATA);
-
     static std::string get_registry_identifier();
+
+    void initialize(
+        const std::string& id,
+        const std::string& cache_path,
+        const Dictionary& config) override;
 
     void do_initialize(
         const std::string& id,
-        const std::filesystem::path& root,
-        Mode mode = Mode::DATA_AND_METADATA);
+        const std::string& cache_path,
+        const FileObjectStoreClientConfig& config);
 
     void migrate(
         const std::string& object_id,
@@ -58,6 +76,10 @@ class FileObjectStoreClient : public ObjectStoreClient {
         const std::string& object_key,
         const std::filesystem::path& root = {}) const;
 
+    bool needs_metadata() const;
+
+    bool needs_data() const;
+
     std::string get_metadata_item(
         const std::string& object_key, const std::string& key) const;
 
@@ -65,7 +87,9 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     void read_metadata(StorageObject& object) const;
 
-    Mode m_mode{Mode::DATA_AND_METADATA};
-    std::filesystem::path m_root;
+    FileObjectStoreClientConfig m_config;
+    std::filesystem::path m_root{"object_store"};
+    FileObjectStoreClientConfig::Mode m_mode{
+        FileObjectStoreClientConfig::Mode::DATA_ONLY};
 };
 }  // namespace hestia

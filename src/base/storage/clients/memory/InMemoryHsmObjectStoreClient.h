@@ -14,12 +14,8 @@ class InMemoryObjectStoreClientConfig : public SerializeableWithFields {
     InMemoryObjectStoreClientConfig(
         const InMemoryObjectStoreClientConfig& other);
 
-    void set_tiers(const std::vector<std::string>& tiers);
-
     InMemoryObjectStoreClientConfig& operator=(
         const InMemoryObjectStoreClientConfig& other);
-
-    ScalarSequenceField<std::vector<std::string>> m_tier_ids{"tiers"};
 
   private:
     void init();

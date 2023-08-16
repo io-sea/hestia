@@ -7,9 +7,13 @@ tiers:
 
 object_store_backends:
   - backend_type: file_hsm
-    tier_names: ["0", "1", "2", "3", "4"]
+    tier_names: ["0", "1", "2", "3"]
     config: 
-      root: hsm_object_store_worker0
+      root: hsm_object_store_standalone0
+  - backend_type: file
+    tier_names: ["4"]
+    config: 
+      root: object_store_standalone0
 
 event_feed:
   active: true

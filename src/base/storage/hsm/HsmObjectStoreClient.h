@@ -5,6 +5,8 @@
 
 #include "ObjectStoreClient.h"
 
+#include <vector>
+
 namespace hestia {
 class HsmObjectStoreClient : public ObjectStoreClient {
   public:
@@ -15,6 +17,8 @@ class HsmObjectStoreClient : public ObjectStoreClient {
     [[nodiscard]] virtual HsmObjectStoreResponse::Ptr make_request(
         const HsmObjectStoreRequest& request,
         Stream* stream = nullptr) const noexcept;
+
+    void set_tier_names(const std::vector<std::string>& tier_names);
 
   protected:
     [[nodiscard]] ObjectStoreResponse::Ptr make_request(
@@ -48,6 +52,8 @@ class HsmObjectStoreClient : public ObjectStoreClient {
 
     void list(const KeyValuePair& query, std::vector<StorageObject>& fetched)
         const override;
+
+    std::vector<std::string> m_tier_names;
 
   private:
     void on_exception(

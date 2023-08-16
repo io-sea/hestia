@@ -28,22 +28,12 @@ InMemoryObjectStoreClientConfig& InMemoryObjectStoreClientConfig::operator=(
 {
     if (this != &other) {
         SerializeableWithFields::operator=(other);
-        m_tier_ids = other.m_tier_ids;
         init();
     }
     return *this;
 }
 
-void InMemoryObjectStoreClientConfig::init()
-{
-    register_sequence_field(&m_tier_ids);
-}
-
-void InMemoryObjectStoreClientConfig::set_tiers(
-    const std::vector<std::string>& tiers)
-{
-    m_tier_ids.get_container_as_writeable() = tiers;
-}
+void InMemoryObjectStoreClientConfig::init() {}
 
 InMemoryHsmObjectStoreClient::InMemoryHsmObjectStoreClient()
 {
@@ -78,11 +68,11 @@ void InMemoryHsmObjectStoreClient::initialize(
 void InMemoryHsmObjectStoreClient::do_initialize(
     const std::string& id,
     const std::string&,
-    const InMemoryObjectStoreClientConfig& config)
+    const InMemoryObjectStoreClientConfig&)
 {
     m_id = id;
 
-    for (const auto& tier_id : config.m_tier_ids.container()) {
+    for (const auto& tier_id : m_tier_names) {
         m_tiers[tier_id] = std::make_unique<InMemoryObjectStoreClient>();
     }
 }

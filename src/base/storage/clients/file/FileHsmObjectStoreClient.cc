@@ -4,9 +4,54 @@
 #include "FileUtils.h"
 #include "RequestException.h"
 
+#include <stdexcept>
+
 #include "Logger.h"
 
 namespace hestia {
+
+FileHsmObjectStoreClientConfig::FileHsmObjectStoreClientConfig() :
+    SerializeableWithFields("file_hsm_object_store_client_config")
+{
+    init();
+}
+
+FileHsmObjectStoreClientConfig::FileHsmObjectStoreClientConfig(
+    const FileHsmObjectStoreClientConfig& other) :
+    SerializeableWithFields(other)
+{
+    *this = other;
+}
+
+FileHsmObjectStoreClientConfig& FileHsmObjectStoreClientConfig::operator=(
+    const FileHsmObjectStoreClientConfig& other)
+{
+    if (this != &other) {
+        SerializeableWithFields::operator=(other);
+        m_root = other.m_root;
+        m_mode = other.m_mode;
+        init();
+    }
+    return *this;
+}
+
+void FileHsmObjectStoreClientConfig::init()
+{
+    register_scalar_field(&m_root);
+    register_scalar_field(&m_mode);
+}
+
+const std::string& FileHsmObjectStoreClientConfig::get_root() const
+{
+    return m_root.get_value();
+}
+
+FileObjectStoreClientConfig::Mode FileHsmObjectStoreClientConfig::get_mode()
+    const
+{
+    return m_mode.get_value();
+}
+
 FileHsmObjectStoreClient::FileHsmObjectStoreClient()
 {
     LOG_INFO("Created");
@@ -44,7 +89,7 @@ void FileHsmObjectStoreClient::do_initialize(
 {
     m_id = id;
 
-    m_store = config.m_root.get_value();
+    m_store = config.get_root();
 
     if (m_store.is_relative()) {
         m_store = std::filesystem::path(cache_path) / m_store;
@@ -55,38 +100,59 @@ void FileHsmObjectStoreClient::do_initialize(
     if (!std::filesystem::exists(m_store)) {
         std::filesystem::create_directories(m_store);
     }
+
+    if (config.get_mode() != FileObjectStoreClientConfig::Mode::METADATA_ONLY) {
+        for (const auto& tier_id : m_tier_names) {
+            FileObjectStoreClientConfig file_config;
+            file_config.m_mode.init_value(
+                FileObjectStoreClientConfig::Mode::DATA_ONLY);
+            file_config.m_root.init_value(
+                (m_store / ("tier" + tier_id)).string());
+
+            auto tier_client = std::make_unique<FileObjectStoreClient>();
+            tier_client->do_initialize(id, {}, file_config);
+
+            m_tier_clients[std::stoul(tier_id)] = std::move(tier_client);
+        }
+    }
+
+    if (config.get_mode() != FileObjectStoreClientConfig::Mode::DATA_ONLY) {
+        FileObjectStoreClientConfig file_config;
+        file_config.m_mode.init_value(
+            FileObjectStoreClientConfig::Mode::METADATA_ONLY);
+        file_config.m_root = (m_store / "metadata").string();
+        m_metadata_client  = std::make_unique<FileObjectStoreClient>();
+    }
 }
 
-std::filesystem::path FileHsmObjectStoreClient::get_tier_path(
-    uint8_t tier) const
+FileObjectStoreClient* FileHsmObjectStoreClient::get_client(uint8_t tier) const
 {
-    return m_store / ("tier" + std::to_string(tier));
+    if (auto iter = m_tier_clients.find(tier); iter != m_tier_clients.end()) {
+        return iter->second.get();
+    }
+    throw std::runtime_error("Unexpected tier input in file hsm client");
 }
 
 void FileHsmObjectStoreClient::put(
     const HsmObjectStoreRequest& request, Stream* stream) const
 {
-    FileObjectStoreClient md_client;
-    md_client.do_initialize(
-        m_id, m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
-    if (const auto response = md_client.make_request(
-            HsmObjectStoreRequest::to_base_request(request), stream);
-        !response->ok()) {
-        const std::string msg =
-            "Error in file client PUT: " + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
+    if (m_metadata_client) {
+        if (const auto response = m_metadata_client->make_request(
+                HsmObjectStoreRequest::to_base_request(request), stream);
+            !response->ok()) {
+            const std::string msg = "Error in file client PUT: "
+                                    + response->get_error().to_string();
+            throw RequestException<HsmObjectStoreError>(
+                {HsmObjectStoreErrorCode::ERROR, msg});
+        }
     }
 
-    if (stream == nullptr) {
+    if (stream == nullptr || m_tier_clients.empty()) {
         return;
     }
 
-    FileObjectStoreClient data_client;
-    data_client.do_initialize(
-        m_id, get_tier_path(request.target_tier()),
-        FileObjectStoreClient::Mode::DATA_ONLY);
-    if (const auto response = data_client.make_request(
+    auto tier_client = get_client(request.target_tier());
+    if (const auto response = tier_client->make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
         const std::string msg =
@@ -101,32 +167,29 @@ void FileHsmObjectStoreClient::get(
     StorageObject& object,
     Stream* stream) const
 {
-    LOG_INFO("Getting metadata");
-    FileObjectStoreClient md_client;
-    md_client.do_initialize(
-        m_id, m_store / "metadata", FileObjectStoreClient::Mode::METADATA_ONLY);
-    if (const auto response = md_client.make_request(
-            HsmObjectStoreRequest::to_base_request(request), stream);
-        !response->ok()) {
-        const std::string msg = "Error in file client metadata GET: "
-                                + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
-    }
-    else {
-        object = response->object();
+    if (m_metadata_client) {
+        LOG_INFO("Getting metadata");
+
+        if (const auto response = m_metadata_client->make_request(
+                HsmObjectStoreRequest::to_base_request(request), stream);
+            !response->ok()) {
+            const std::string msg = "Error in file client metadata GET: "
+                                    + response->get_error().to_string();
+            throw RequestException<HsmObjectStoreError>(
+                {HsmObjectStoreErrorCode::ERROR, msg});
+        }
+        else {
+            object = response->object();
+        }
     }
 
-    if (stream == nullptr) {
+    if (stream == nullptr || m_tier_clients.empty()) {
         return;
     }
 
     LOG_INFO("Getting data");
-    FileObjectStoreClient data_client;
-    data_client.do_initialize(
-        m_id, get_tier_path(request.source_tier()),
-        FileObjectStoreClient::Mode::DATA_ONLY);
-    if (const auto response = data_client.make_request(
+    auto tier_client = get_client(request.target_tier());
+    if (const auto response = tier_client->make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
         const std::string msg = "Error in file client data GET: "
@@ -139,24 +202,23 @@ void FileHsmObjectStoreClient::get(
 void FileHsmObjectStoreClient::remove(
     const HsmObjectStoreRequest& request) const
 {
-    FileObjectStoreClient md_client;
-    md_client.do_initialize(
-        m_id, get_tier_path(request.source_tier()),
-        FileObjectStoreClient::Mode::METADATA_ONLY);
-    if (const auto response = md_client.make_request(
-            HsmObjectStoreRequest::to_base_request(request));
-        !response->ok()) {
-        const std::string msg =
-            "Error in file client REMOVE: " + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
+    if (m_metadata_client) {
+        if (const auto response = m_metadata_client->make_request(
+                HsmObjectStoreRequest::to_base_request(request));
+            !response->ok()) {
+            const std::string msg = "Error in file client REMOVE: "
+                                    + response->get_error().to_string();
+            throw RequestException<HsmObjectStoreError>(
+                {HsmObjectStoreErrorCode::ERROR, msg});
+        }
     }
 
-    FileObjectStoreClient data_client;
-    data_client.do_initialize(
-        m_id, get_tier_path(request.source_tier()),
-        FileObjectStoreClient::Mode::DATA_ONLY);
-    if (const auto response = data_client.make_request(
+    if (m_tier_clients.empty()) {
+        return;
+    }
+
+    auto tier_client = get_client(request.source_tier());
+    if (const auto response = tier_client->make_request(
             HsmObjectStoreRequest::to_base_request(request));
         !response->ok()) {
         const std::string msg =
@@ -166,23 +228,31 @@ void FileHsmObjectStoreClient::remove(
     }
 }
 
+std::filesystem::path FileHsmObjectStoreClient::get_tier_path(
+    uint8_t tier) const
+{
+    return m_store / ("tier" + std::to_string(tier));
+}
+
 void FileHsmObjectStoreClient::copy(const HsmObjectStoreRequest& request) const
 {
-    FileObjectStoreClient file_client;
-    file_client.do_initialize(
-        m_id, get_tier_path(request.source_tier()),
-        FileObjectStoreClient::Mode::DATA_ONLY);
-    file_client.migrate(
+    if (m_tier_clients.empty()) {
+        return;
+    }
+
+    auto source_client = get_client(request.source_tier());
+    source_client->migrate(
         request.object().id(), get_tier_path(request.target_tier()), true);
 }
 
 void FileHsmObjectStoreClient::move(const HsmObjectStoreRequest& request) const
 {
-    FileObjectStoreClient file_client;
-    file_client.do_initialize(
-        m_id, get_tier_path(request.source_tier()),
-        FileObjectStoreClient::Mode::DATA_ONLY);
-    file_client.migrate(
+    if (m_tier_clients.empty()) {
+        return;
+    }
+
+    auto source_client = get_client(request.source_tier());
+    source_client->migrate(
         request.object().id(), get_tier_path(request.target_tier()), false);
 }
 }  // namespace hestia

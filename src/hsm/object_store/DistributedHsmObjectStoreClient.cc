@@ -4,6 +4,9 @@
 #include "HsmObjectStoreClientManager.h"
 
 #include "DistributedHsmService.h"
+#include "InMemoryStreamSink.h"
+#include "InMemoryStreamSource.h"
+
 #include "HsmService.h"
 #include "Logger.h"
 
@@ -15,10 +18,12 @@
 namespace hestia {
 DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager,
-    HttpClient* http_client) :
+    HttpClient* http_client,
+    DistributedHsmObjectStoreClientConfig config) :
     HsmObjectStoreClient(),
     m_http_client(std::move(http_client)),
-    m_client_manager(std::move(client_manager))
+    m_client_manager(std::move(client_manager)),
+    m_config(config)
 {
 }
 
@@ -263,6 +268,320 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_local_op(
     }
 }
 
+HsmObjectStoreResponse::Ptr
+DistributedHsmObjectStoreClient::do_local_copy_or_move(
+    const HsmObjectStoreRequest& request, bool is_copy) const
+{
+    Stream stream;
+
+    HsmObjectStoreRequest get_request(
+        request.object().id(), HsmObjectStoreRequestMethod::GET);
+    get_request.set_source_tier(request.source_tier());
+    get_request.set_extent(request.extent());
+
+    HsmObjectStoreRequest put_request(
+        request.object().id(), HsmObjectStoreRequestMethod::PUT);
+    put_request.set_target_tier(request.target_tier());
+    put_request.set_extent(request.extent());
+
+    HsmObjectStoreResponse::Ptr get_response;
+    if (auto hsm_client =
+            m_client_manager->get_hsm_client(request.source_tier());
+        hsm_client != nullptr) {
+        get_response = hsm_client->make_request(get_request, &stream);
+    }
+    else {
+        auto client = m_client_manager->get_client(request.source_tier());
+        assert(client != nullptr);
+        auto response = client->make_request(
+            HsmObjectStoreRequest::to_base_request(get_request), &stream);
+        get_response =
+            HsmObjectStoreResponse::create(get_request, std::move(response));
+    }
+    if (!get_response->ok()) {
+        return get_response;
+    }
+
+    HsmObjectStoreResponse::Ptr put_response;
+    if (auto hsm_client =
+            m_client_manager->get_hsm_client(request.target_tier());
+        hsm_client != nullptr) {
+        put_response = hsm_client->make_request(put_request, &stream);
+    }
+    else {
+        auto client = m_client_manager->get_client(request.target_tier());
+        assert(client != nullptr);
+        auto response = client->make_request(
+            HsmObjectStoreRequest::to_base_request(put_request), &stream);
+        put_response =
+            HsmObjectStoreResponse::create(put_request, std::move(response));
+    }
+    if (!put_response->ok()) {
+        return put_response;
+    }
+
+    auto result = HsmObjectStoreResponse::create(request, m_id);
+
+    auto stream_result = stream.flush();
+    if (!stream_result.ok()) {
+        result->on_error(
+            {HsmObjectStoreErrorCode::ERROR,
+             "Failed to flush stream copying or moving between clients"});
+        return result;
+    }
+
+    if (!is_copy) {
+        HsmObjectStoreRequest release_request(
+            request.object().id(), HsmObjectStoreRequestMethod::REMOVE);
+        release_request.set_source_tier(request.source_tier());
+        release_request.set_extent(request.extent());
+
+        HsmObjectStoreResponse::Ptr release_response;
+        if (auto hsm_client =
+                m_client_manager->get_hsm_client(request.source_tier());
+            hsm_client != nullptr) {
+            release_response = hsm_client->make_request(release_request);
+        }
+        else {
+            auto client = m_client_manager->get_client(request.source_tier());
+            assert(client != nullptr);
+            auto response = client->make_request(
+                HsmObjectStoreRequest::to_base_request(release_request));
+            release_response = HsmObjectStoreResponse::create(
+                put_request, std::move(response));
+        }
+        if (!release_response->ok()) {
+            return release_response;
+        }
+    }
+    return result;
+}
+
+HsmObjectStoreResponse::Ptr
+DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_source(
+    const HsmObjectStoreRequest& request, bool is_copy) const
+{
+    auto response = HsmObjectStoreResponse::create(request, "");
+
+    if (m_http_client == nullptr) {
+        const std::string message =
+            "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    auto controller_endpoint =
+        m_hsm_service->get_self_config().m_controller_address;
+
+    Stream stream;
+    HsmObjectStoreResponse::Ptr get_response;
+    HsmObjectStoreRequest get_request(
+        request.object().id(), HsmObjectStoreRequestMethod::GET);
+    get_request.set_source_tier(request.source_tier());
+    get_request.set_extent(request.extent());
+
+    if (auto hsm_client =
+            m_client_manager->get_hsm_client(request.source_tier());
+        hsm_client != nullptr) {
+        get_response = hsm_client->make_request(get_request, &stream);
+    }
+    else {
+        auto client = m_client_manager->get_client(request.target_tier());
+        assert(client != nullptr);
+        auto response = client->make_request(
+            HsmObjectStoreRequest::to_base_request(get_request), &stream);
+        get_response =
+            HsmObjectStoreResponse::create(get_request, std::move(response));
+    }
+    if (!get_response->ok()) {
+        return get_response;
+    }
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
+    action.set_subject_key(request.object().get_primary_key());
+    action.set_target_tier(request.target_tier());
+    action.set_size(stream.get_source_size());
+
+    const auto path = controller_endpoint + "/api/v1/"
+                      + hestia::HsmItem::hsm_action_name + "s";
+
+    HttpRequest http_request(path, HttpRequest::Method::PUT);
+    Dictionary dict;
+    action.serialize(dict);
+
+    Map flat_dict;
+    dict.flatten(flat_dict);
+    flat_dict.add_key_prefix("hestia.hsm_action.");
+
+    http_request.get_header().set_items(flat_dict);
+    http_request.get_header().set_item(
+        "Authorisation",
+        request.object().metadata().get_item("hestia-user_token"));
+
+    const auto http_response =
+        m_http_client->make_request(http_request, &stream);
+    if (http_response->error()) {
+        LOG_ERROR("Failed in remote put request: " << http_response->message());
+        response->on_error(
+            {HsmObjectStoreErrorCode::ERROR, http_response->message()});
+        return response;
+    }
+    LOG_INFO("Remote COPY/MOVE complete ok");
+
+    if (!is_copy) {
+        HsmObjectStoreRequest release_request(
+            request.object().id(), HsmObjectStoreRequestMethod::REMOVE);
+        release_request.set_source_tier(request.source_tier());
+        release_request.set_extent(request.extent());
+
+        HsmObjectStoreResponse::Ptr release_response;
+        if (auto hsm_client =
+                m_client_manager->get_hsm_client(request.source_tier());
+            hsm_client != nullptr) {
+            release_response = hsm_client->make_request(release_request);
+        }
+        else {
+            auto client = m_client_manager->get_client(request.source_tier());
+            assert(client != nullptr);
+            auto response = client->make_request(
+                HsmObjectStoreRequest::to_base_request(release_request));
+            release_response = HsmObjectStoreResponse::create(
+                get_request, std::move(response));
+        }
+        if (!release_response->ok()) {
+            return release_response;
+        }
+    }
+    return response;
+}
+
+HsmObjectStoreResponse::Ptr
+DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_target(
+    const HsmObjectStoreRequest& request, bool is_copy) const
+{
+    auto response = HsmObjectStoreResponse::create(request, m_id);
+
+    if (m_http_client == nullptr) {
+        const std::string message =
+            "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    auto controller_endpoint =
+        m_hsm_service->get_self_config().m_controller_address;
+
+    Stream stream;
+
+    HsmObjectStoreResponse::Ptr put_response;
+    HsmObjectStoreRequest put_request(
+        request.object().id(), HsmObjectStoreRequestMethod::PUT);
+    put_request.set_target_tier(request.target_tier());
+    put_request.set_extent(request.extent());
+
+    if (auto hsm_client =
+            m_client_manager->get_hsm_client(request.source_tier());
+        hsm_client != nullptr) {
+        put_response = hsm_client->make_request(put_request, &stream);
+    }
+    else {
+        auto client = m_client_manager->get_client(request.target_tier());
+        assert(client != nullptr);
+        auto response = client->make_request(
+            HsmObjectStoreRequest::to_base_request(put_request), &stream);
+        put_response =
+            HsmObjectStoreResponse::create(put_request, std::move(response));
+    }
+    if (!put_response->ok()) {
+        return put_response;
+    }
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
+    action.set_subject_key(request.object().get_primary_key());
+    action.set_source_tier(request.source_tier());
+
+    const auto path = controller_endpoint + "/api/v1/"
+                      + hestia::HsmItem::hsm_action_name + "s";
+
+    HttpRequest http_request(path, HttpRequest::Method::PUT);
+    Dictionary dict;
+    action.serialize(dict);
+
+    Map flat_dict;
+    dict.flatten(flat_dict);
+    flat_dict.add_key_prefix("hestia.hsm_action.");
+
+    http_request.get_header().set_items(flat_dict);
+    http_request.get_header().set_item(
+        "Authorisation",
+        request.object().metadata().get_item("hestia-user_token"));
+
+    const auto http_response =
+        m_http_client->make_request(http_request, &stream);
+    if (http_response->error()) {
+        LOG_ERROR("Failed in remote get request: " << http_response->message());
+        response->on_error(
+            {HsmObjectStoreErrorCode::ERROR, http_response->message()});
+        return response;
+    }
+
+    if (!is_copy) {
+        return do_remote_release(request);
+    }
+    LOG_INFO("Remote COPY/MOVE complete ok");
+    return response;
+}
+
+HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_release(
+    const HsmObjectStoreRequest& request) const
+{
+    auto response = HsmObjectStoreResponse::create(request, m_id);
+
+    if (m_http_client == nullptr) {
+        const std::string message =
+            "Object store client needs to hit remote but has no http client - possible config issue.";
+        LOG_ERROR(message);
+        response->on_error({HsmObjectStoreErrorCode::ERROR, message});
+        return response;
+    }
+
+    auto controller_endpoint =
+        m_hsm_service->get_self_config().m_controller_address;
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::RELEASE_DATA);
+    action.set_subject_key(request.object().get_primary_key());
+    action.set_source_tier(request.source_tier());
+    action.set_size(request.extent().m_length);
+    action.set_offset(request.extent().m_offset);
+
+    const auto path = controller_endpoint + "/api/v1/"
+                      + hestia::HsmItem::hsm_action_name + "s";
+
+    HttpRequest http_request(path, HttpRequest::Method::PUT);
+    Dictionary dict;
+    action.serialize(dict);
+
+    Map flat_dict;
+    dict.flatten(flat_dict);
+    flat_dict.add_key_prefix("hestia.hsm_action.");
+
+    http_request.get_header().set_items(flat_dict);
+    http_request.get_header().set_item(
+        "Authorisation",
+        request.object().metadata().get_item("hestia-user_token"));
+
+    const auto http_response = m_http_client->make_request(http_request);
+    if (http_response->error()) {
+        LOG_ERROR("Failed in remote get request: " << http_response->message());
+        response->on_error(
+            {HsmObjectStoreErrorCode::ERROR, http_response->message()});
+        return response;
+    }
+    return response;
+}
+
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
     const HsmObjectStoreRequest& request, Stream* stream) const noexcept
 {
@@ -297,6 +616,9 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 + " - creating remote put");
             return do_remote_put(request, stream);
         }
+        else if (request.method() == HsmObjectStoreRequestMethod::REMOVE) {
+            return do_remote_release(request);
+        }
     }
     else if (
         request.method() == HsmObjectStoreRequestMethod::COPY
@@ -313,25 +635,25 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
             }
             else {
                 LOG_INFO("Doing COPY/MOVE between different clients");
-                // copy between clients
-                return nullptr;
+                return do_local_copy_or_move(
+                    request,
+                    request.method() == HsmObjectStoreRequestMethod::COPY);
             }
         }
         else if (m_client_manager->has_client(request.source_tier())) {
             LOG_INFO("Only have source client for COPY/MOVE");
-            // put to target tier via dist hsm service
-            return nullptr;
+            do_remote_copy_or_move_with_local_source(
+                request, request.method() == HsmObjectStoreRequestMethod::COPY);
         }
         else if (m_client_manager->has_client(request.target_tier())) {
             LOG_INFO("Only have target client for COPY/MOVE");
-            // pull from source tier via dist hsm service
-            return nullptr;
+            do_remote_copy_or_move_with_local_target(
+                request, request.method() == HsmObjectStoreRequestMethod::COPY);
         }
         else {
             LOG_INFO("Don't have local clients for COPY/MOVE - try remote");
             return do_remote_copy_or_move(
                 request, request.method() == HsmObjectStoreRequestMethod::COPY);
-            return nullptr;
         }
     }
     LOG_INFO("Method not handled by dist object store client");

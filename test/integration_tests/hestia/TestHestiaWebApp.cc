@@ -39,7 +39,7 @@ class TestHestiaWebAppFixture {
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
 
         hestia::InMemoryObjectStoreClientConfig obj_store_config;
-        obj_store_config.set_tiers({"0", "1"});
+        m_obj_store_client->set_tier_names({"0", "1"});
         m_obj_store_client->do_initialize("0000", {}, obj_store_config);
 
         hestia::KeyValueStoreCrudServiceBackend backend(

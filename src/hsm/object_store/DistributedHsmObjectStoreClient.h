@@ -11,13 +11,19 @@ class HttpClient;
 class HsmObjectStoreClientManager;
 class DistributedHsmService;
 
+class DistributedHsmObjectStoreClientConfig {
+  public:
+    std::size_t m_buffer_size{4096};
+};
+
 class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
   public:
     using Ptr = std::unique_ptr<DistributedHsmObjectStoreClient>;
 
     DistributedHsmObjectStoreClient(
         std::unique_ptr<HsmObjectStoreClientManager> client_manager,
-        HttpClient* http_client = nullptr);
+        HttpClient* http_client                      = nullptr,
+        DistributedHsmObjectStoreClientConfig config = {});
 
     static Ptr create(
         HttpClient* http_client                                = nullptr,
@@ -42,13 +48,24 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     HsmObjectStoreResponse::Ptr do_remote_copy_or_move(
         const HsmObjectStoreRequest& request, bool is_copy) const;
 
+    HsmObjectStoreResponse::Ptr do_remote_release(
+        const HsmObjectStoreRequest& request) const;
+
     HsmObjectStoreResponse::Ptr do_local_op(
         const HsmObjectStoreRequest& request,
         Stream* stream,
         uint8_t tier) const;
 
-    bool is_controller_node() const;
+    HsmObjectStoreResponse::Ptr do_local_copy_or_move(
+        const HsmObjectStoreRequest& request, bool is_copy) const;
 
+    HsmObjectStoreResponse::Ptr do_remote_copy_or_move_with_local_source(
+        const HsmObjectStoreRequest& request, bool is_copy) const;
+
+    HsmObjectStoreResponse::Ptr do_remote_copy_or_move_with_local_target(
+        const HsmObjectStoreRequest& request, bool is_copy) const;
+
+    bool is_controller_node() const;
 
     void copy(const HsmObjectStoreRequest& request) const override
     {
@@ -84,5 +101,6 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     DistributedHsmService* m_hsm_service{nullptr};
     HttpClient* m_http_client{nullptr};
     std::unique_ptr<HsmObjectStoreClientManager> m_client_manager;
+    DistributedHsmObjectStoreClientConfig m_config;
 };
 }  // namespace hestia

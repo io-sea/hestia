@@ -320,8 +320,6 @@ class DistributedHsmObjectStoreClientTestFixture {
         dist_hsm_config.m_is_server = true;
 
         hestia::InMemoryObjectStoreClientConfig hsm_memory_client_config;
-        hsm_memory_client_config.set_tiers({"0", "1", "2", "3", "4"});
-
         hestia::Dictionary serialized_config;
         hsm_memory_client_config.serialize(serialized_config);
 

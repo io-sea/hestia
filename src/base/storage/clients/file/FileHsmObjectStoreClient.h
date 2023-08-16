@@ -1,20 +1,34 @@
 #pragma once
 
+#include "FileObjectStoreClient.h"
 #include "HsmObjectStoreClient.h"
 #include "SerializeableWithFields.h"
 
 #include <filesystem>
 
 namespace hestia {
+
 class FileHsmObjectStoreClientConfig : public SerializeableWithFields {
   public:
-    FileHsmObjectStoreClientConfig() :
-        SerializeableWithFields("file_hsm_object_store_client_config")
-    {
-        register_scalar_field(&m_root);
-    }
+    FileHsmObjectStoreClientConfig();
 
-    StringField m_root{"root", "object_store"};
+    FileHsmObjectStoreClientConfig(const FileHsmObjectStoreClientConfig& other);
+
+    FileHsmObjectStoreClientConfig& operator=(
+        const FileHsmObjectStoreClientConfig& other);
+
+    const std::string& get_root() const;
+
+    FileObjectStoreClientConfig::Mode get_mode() const;
+
+  private:
+    void init();
+
+    EnumField<
+        FileObjectStoreClientConfig::Mode,
+        FileObjectStoreClientConfig::Mode_enum_string_converter>
+        m_mode{"mode", FileObjectStoreClientConfig::Mode::DATA_ONLY};
+    StringField m_root{"root", "hsm_object_store"};
 };
 
 class FileHsmObjectStoreClient : public HsmObjectStoreClient {
@@ -55,6 +69,12 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
     void move(const HsmObjectStoreRequest& request) const override;
 
     std::filesystem::path get_tier_path(uint8_t tier) const;
+
+    FileObjectStoreClient* get_client(uint8_t tier) const;
+
     std::filesystem::path m_store{"hsm_object_store"};
+
+    FileObjectStoreClient::Ptr m_metadata_client;
+    std::unordered_map<uint8_t, FileObjectStoreClient::Ptr> m_tier_clients;
 };
 }  // namespace hestia
