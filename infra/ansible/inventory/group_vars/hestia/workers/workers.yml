@@ -1,0 +1,2 @@
+# Testing setup worker variables
+hestia_controller_address: "ansible-node-1"

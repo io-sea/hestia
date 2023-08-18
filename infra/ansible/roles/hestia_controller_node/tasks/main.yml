@@ -1,0 +1,23 @@
+---
+- name: Common Setup
+  ansible.builtin.include_role: 
+    name: hestia_common
+    public: true
+
+- name: Install Redis
+  ansible.builtin.yum:
+    name: redis
+    state: latest
+
+- name: Start Redis
+  ansible.builtin.service:
+    name: redis
+    enabled: true
+    state: started
+
+- name: Configure Hestia
+  ansible.builtin.template:
+    src: hestia-controller.yml.j2
+    dest: "{{ hestia_config_dir }}/hestiad.yml"
+  notify: 
+    - Start Hestia

@@ -1,0 +1,22 @@
+---
+- name: Add IOSEA Repo
+  ansible.builtin.yum_repository:
+    name: iosea
+    description: IOSEA YUM repo
+    baseurl: "{{ iosea_repo_url }}"
+    gpgcheck: false
+
+- name: Install Hestia
+  ansible.builtin.yum:
+    name: hestia
+    state: latest
+
+- name: Create Hestia config directiory if it does not exist
+  ansible.builtin.file:
+    path: "{{ hestia_config_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Reload systemd
+  ansible.builtin.systemd
+    daemon_reload: true # Ensure our hestia service unit is loaded

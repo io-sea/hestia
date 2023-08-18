@@ -1,0 +1,9 @@
+---
+# Worker only default variables
+
+hestia_backends:
+  - type: "file_hsm"
+    config: 
+      - hsm_root: "hsm_object_store"
+
+hestia_controller_address: "hestia-controller"

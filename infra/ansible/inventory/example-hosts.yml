@@ -1,0 +1,15 @@
+hestia:
+  children:
+    controller_group_0:
+
+controller_group_0:
+  children:
+    workers:
+    controllers:
+
+controllers:
+  hosts:
+    ansible-node-1:
+workers:
+  hosts:
+    ansible-node-2: 

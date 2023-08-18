@@ -78,12 +78,13 @@ install(TARGETS ${PROJECT_NAME} ${LINK_MODULES_FOR_EXPORT} ${STANDALONE_MODULES_
         RUNTIME DESTINATION bin
         INCLUDES DESTINATION include
         )
+set_target_properties(${PROJECT_NAME}_main PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}")
 
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}Targets.cmake
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION lib/cmake/${PROJECT_NAME}
-         )
+        )
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
@@ -101,6 +102,11 @@ install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
 configure_file(infra/cmake/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
         DESTINATION lib/pkgconfig
+        )
+
+configure_file(infra/cmake/${PROJECT_NAME}d.service.in ${PROJECT_NAME}d.service @ONLY)
+install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.service"
+        DESTINATION lib/systemd/system
         )
 
 set(CPACK_PACKAGE_VENDOR "Irish Centre for High End Computing (ICHEC)")

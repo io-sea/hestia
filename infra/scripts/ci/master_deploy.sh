@@ -25,7 +25,7 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
       "$HESTIA_API_URL/releases" \
       -H "Content-Type: application/json" \
       --data "{
-        \"name\": \"Release $HESTIA_PROJECT_VERSION",
+        \"name\": \"Release $HESTIA_PROJECT_VERSION\",
         \"tag_name\": \"v$HESTIA_PROJECT_VERSION\",
         \"ref\": \"master\",
         \"assets\": { \"links\": [

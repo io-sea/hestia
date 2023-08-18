@@ -1,0 +1,16 @@
+---
+# Deploy Hestia locally on a test cluster with controller and worker nodes
+- hosts: hestia:&controllers
+  roles:
+    - hestia_controller_node
+
+- hosts: hestia:&workers
+  roles:
+    - hestia_worker_node
+
+# Execute Basic Testing on Setup
+- name: Test Hestia
+  hosts: hestia
+
+  tasks:
+  - ansible.builtin.shell: 'curl localhost:8080/api/v1/ping'

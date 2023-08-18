@@ -1,0 +1,11 @@
+[Unit]
+Description=The Hestia HSM Server
+After=network.target
+Wants=redis.service
+
+[Service]
+Type=simple
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/hestia server --config=/etc/hestia/hestiad.yml
+
+[Install]
+WantedBy=multi-user.target

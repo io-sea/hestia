@@ -21,6 +21,7 @@ This is the `Hestia` user guide, it covers:
   - [Web Interfaces](#web-interfaces)
     - [REST API](#rest-api)
 - [S3 API](#s3-api)
+- [Ansible Deployment](#ansible-deployment)
 
 # Core Concepts
 
@@ -331,3 +332,48 @@ Stop the Hestia service
 ```python
 hestia stop
 ```
+
+# Ansible Deployment
+
+Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/infra/ansible/example-hestia-playbook.yml).  
+## Usage
+
+### Hestia Roles in your Playbook
+
+As specified in [the example playbook](/infra/ansible/example-hestia-playbook.yml), we can use the roles `hestia_controller_node` and `hestia_worker_node` given to setup a hestia cluster consisting of one or more controller nodes, each of which owns one or more worker nodes. By default, this will use the Redis key-value store on the controller node.
+
+The playbook syntax to use these roles to configure your controller and worker is as follows, assuming you have a group of hosts defined for `hestia_controllers` and `hestia_workers` in your inventory: 
+
+```yaml
+---
+- hosts: hestia_controllers
+  roles:
+    - hestia_controller_node
+
+- hosts: hestia_workers
+  roles:
+    - hestia_worker_node
+```
+
+## Configuration
+
+An example inventory for a two node test setup is provided. The following variables are supported when provided in your inventory variables and are propogated to the relevant config files on the nodes. Specifiying different values for different groups is possible as detailed in the ansible documentation and can even be set differently for individual nodes.
+
+| Variable Name | Default Value | Notes |
+|---|---|---|
+| `iosea_repo_url` | `http://www.somerepo.com/iosea` | The url of the YUM repository including the `hestia` package |
+| `hestia_server_port` | `8080` | The port used for all Hestia servers on nodes |
+| `hestia_controller_address` | `hestia-controller` | The address of the controller node for the targeted workers |
+| `hestia_hsm_tiers` | 5 File HSM backend tiers | List of tier names and their [backend types](#object-store-backend-settings) |
+| `hestia_backends` | File HSM default config | A list of configurations sent to all target workers with the listed backend |
+
+
+### Backend Types/Configurations
+
+Configuration options for all backends are given under the `config` map in the `hestia_backends` option, as in the regular configuratiion files for Hestia. For example: 
+```yaml
+  hestia_backends:
+    - type: "file_hsm"
+      config: 
+        - hsm_root: "hsm_object_store"
+``` 
