@@ -79,6 +79,8 @@ int hestia_initialize(
 ///
 int hestia_finish();
 
+int hestia_free_output(char** output);
+
 /// @brief Creates a new object in the Hestia system and returns an identifier in UUID format
 ///
 /// @param oid Buffer to hold the returned UUID in format 'ffffffff-ffff-835a-ffff-ffffffffff9c'. It should be sized to hold the uuid and null-temrinator - HESTIA_UUID_SIZE=37 bytes.

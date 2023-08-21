@@ -304,6 +304,12 @@ int hestia_create(
         response, len_response, true);
 }
 
+int hestia_free_output(char** output)
+{
+    delete *output;
+    return 0;
+}
+
 int hestia_update(
     hestia_item_t subject,
     hestia_io_format_t input_format,
