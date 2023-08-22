@@ -10,6 +10,7 @@
 #include "StringUtils.h"
 #include "UuidUtils.h"
 
+#include "FileStreamSource.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 #include "ReadableBufferView.h"
@@ -446,9 +447,6 @@ int hestia_data_put(
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     if (buf == nullptr) {
         return hestia_error_e::HESTIA_ERROR_BAD_INPUT_BUFFER;
     }
@@ -462,16 +460,28 @@ int hestia_data_put(
     HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
     action.set_offset(offset);
     action.set_target_tier(target_tier);
+    action.set_subject_key(std::string(oid));
 
     OpStatus status;
-    auto completion_cb =
-        [&status](OpStatus ret_status, const HsmAction& action) {
-            status = ret_status;
-            (void)action;
-        };
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
 
     g_client->do_data_io_action(action, &stream, completion_cb);
-    (void)stream.flush();
+
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
 
     return status.m_error_code;
 }
@@ -485,33 +495,37 @@ int hestia_data_put_descriptor(
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     ID_AND_STATE_CHECK(oid);
 
-    (void)fd;
-
     hestia::Stream stream;
-    // stream.set_source(hestia::::create(
-    // hestia::ReadableBufferView(buf, length)));
+    stream.set_source(FileStreamSource::create(fd, length));
 
     HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
     action.set_offset(offset);
     action.set_target_tier(target_tier);
     action.set_subject_key(oid);
     action.set_size(length);
-    action.set_offset(offset);
 
     OpStatus status;
-    auto completion_cb =
-        [&status](OpStatus ret_status, const HsmAction& action) {
-            status = ret_status;
-            (void)action;
-        };
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
 
     g_client->do_data_io_action(action, &stream, completion_cb);
-    (void)stream.flush();
+
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
 
     return status.m_error_code;
 }
@@ -543,7 +557,6 @@ int hestia_data_get(
     action.set_source_tier(src_tier);
     action.set_subject_key(oid);
     action.set_size(length);
-    action.set_offset(offset);
 
     OpStatus status;
     auto completion_cb =

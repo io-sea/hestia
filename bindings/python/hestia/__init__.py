@@ -17,17 +17,27 @@ class HestiaClient():
         self.lib.hestia_finish()
 
     def object_create(self) -> json:
-        json_ret = json.loads(self.lib.hestia_create().decode("utf-8"))
-        return json_ret
+        return json.loads(self.lib.hestia_create().decode("utf-8"))
+    
+    def object_read(self) -> json:
+        return json.loads(self.lib.hestia_create().decode("utf-8"))
     
     def object_put(self, id : str, 
                    buffer: bytes, 
                    offset: int = 0, 
                    tier: int = 0):
-        return self.lib.hestia_object_put(id, buffer, offset, tier)
+        return self.lib.hestia_data_put(id, buffer, offset, tier).decode("utf-8")
+    
+    def object_put_fd(self, id : str, 
+                   fd: int, 
+                   length: int,
+                   offset: int = 0, 
+                   tier: int = 0):
+        return self.lib.hestia_data_put_fd(id, fd, length, offset, tier).decode("utf-8")
 
     def object_get(self, id : str, 
                    length: int, 
                    offset: int = 0, 
                    tier: int = 0):
         return self.lib.hestia_object_get(id, length, offset, tier)
+

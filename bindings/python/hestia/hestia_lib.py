@@ -64,7 +64,7 @@ class HestiaLib():
         self.lib_handle.hestia_free_output(ctypes.byref(output_p))
 
         return output_copied
-    
+
     def hestia_read(self, subject: HestiaItemT = HestiaItemT.HESTIA_OBJECT, 
                       query_format = HestiaQueryFormatT.HESTIA_QUERY_NONE,
                       id_format: HestiaIdFormatT = HestiaIdFormatT.HESTIA_ID, 
@@ -96,10 +96,73 @@ class HestiaLib():
 
         return output_copied
     
-    def hestia_object_put(self, id: bytes, buffer: bytes, offset: int, tier: int):
-        self.lib_handle.hestia_object_put(id, buffer, offset, len(buffer), tier)
+    def hestia_data_put(self, 
+                        id: str, 
+                        buffer: bytes, 
+                        offset: int = 0, 
+                        tier: int = 0):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
 
-    def hestia_object_get(self, id: bytes, length: int, offset: int, tier: int):
-        p = ctypes.create_string_buffer(length)
-        self.lib_handle.hestia_object_get(id, p, offset, length, tier)
-        return p.value
+        rc = self.lib_handle.hestia_data_put(id, buffer, 
+                                            len(buffer), 
+                                            offset, tier,
+                                            ctypes.byref(output_p), 
+                                            ctypes.byref(output_length))
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+
+        return output_copied
+    
+    def hestia_data_put_fd(self, 
+                        id: str, 
+                        fd: int,
+                        length: int, 
+                        offset: int = 0, 
+                        tier: int = 0):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+
+        rc = self.lib_handle.hestia_data_put_descriptor(id, fd, 
+                                                length, 
+                                                offset, tier,
+                                                ctypes.byref(output_p), 
+                                                ctypes.byref(output_length))
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+
+        return output_copied
+
+    def hestia_data_get(self, 
+                          id: bytes, 
+                          length: int, 
+                          offset: int = 0, 
+                          tier: int = 0):
+        
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+
+        buffer_p = ctypes.create_string_buffer(length)
+        rc = self.lib_handle.hestia_data_get(id, buffer_p, 
+                                        length, 
+                                        offset, 
+                                        tier,
+                                        output_p,
+                                        output_length
+                                        )
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+
+        return buffer_p.value
