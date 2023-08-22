@@ -6,11 +6,15 @@ set(UNIT_TEST_SOURCES
     base/common/TestExtent.cc
     base/common/TestDictionary.cc
     base/common/TestEnumUtils.cc
+    base/common/TestErrorUtils.cc
+    base/common/TestFileUtils.cc
     base/common/TestHashUtils.cc
     base/common/TestJsonUtils.cc
     base/common/TestStream.cc
     base/common/TestStringUtils.cc
+    base/common/TestTimeUtils.cc
     base/common/TestUuidUtils.cc
+    base/common/TestXmlUtils.cc
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc

@@ -16,7 +16,7 @@ void CacheTestFixture::do_init(
     m_test_file = test_file;
 
     const auto cache_path = get_cache_path();
-    hestia::FileUtils::empty_path(cache_path);
+    hestia::FileUtils::empty_directory(cache_path);
 
     const auto base_config_path =
         TestUtils::get_test_data_dir() / "configs" / "defaults.yaml";

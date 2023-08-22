@@ -23,7 +23,7 @@ class EventFeedTestFixture {
         m_test_name = test_name;
 
         const auto output_dir = get_output_dir();
-        hestia::FileUtils::empty_path(output_dir);
+        hestia::FileUtils::empty_directory(output_dir);
     }
 
     ~EventFeedTestFixture()

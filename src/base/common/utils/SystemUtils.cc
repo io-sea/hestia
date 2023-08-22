@@ -131,14 +131,12 @@ static std::pair<OpStatus, std::string> get_mac_address_mac()
             if (ifaptr->ifa_addr == nullptr) {
                 continue;
             }
-
-            if (ifaptr->ifa_addr->sa_family == AF_LINK
-                && !((ifaptr->ifa_flags & IFF_LOOPBACK) == 0)) {
+            bool is_loopback = (ifaptr->ifa_flags & IFF_LOOPBACK) != 0;
+            if (ifaptr->ifa_addr->sa_family == AF_LINK && !is_loopback) {
                 char host[NI_MAXHOST];
                 ::getnameinfo(
                     ifaptr->ifa_addr, sizeof(struct sockaddr_dl), host,
                     NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
-
                 address = std::string(host);
                 if (!address.empty()) {
                     break;

@@ -1,4 +1,5 @@
 #include "FileUtils.h"
+#include <iostream>
 
 namespace hestia {
 bool FileUtils::is_file_with_extension(
@@ -24,10 +25,12 @@ void FileUtils::create_if_not_existing(const Path& path)
     }
 }
 
-void FileUtils::empty_path(const Path& path)
+void FileUtils::empty_directory(const Path& path)
 {
-    std::filesystem::remove_all(path);
-    std::filesystem::create_directories(path);
+    if (!std::filesystem::is_regular_file(path)) {
+        std::filesystem::remove_all(path);
+        std::filesystem::create_directories(path);
+    }
 }
 
 uintmax_t FileUtils::get_file_size(const Path& path)
