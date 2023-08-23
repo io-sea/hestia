@@ -452,7 +452,8 @@ void HsmService::get_data(
 {
     LOG_INFO(
         "Starting HSMService GET DATA: " + req.to_string() + " | "
-        + req.get_action().get_subject_key());
+        + req.get_action().get_subject_key() + " | Tier "
+        + std::to_string(req.source_tier()));
 
     HsmAction working_action = req.get_action();
     auto action_response     = get_or_create_action(req, working_action);

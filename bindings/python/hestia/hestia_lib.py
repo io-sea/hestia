@@ -218,7 +218,7 @@ class HestiaLib():
         output_p = ctypes.c_char_p()
         output_length = ctypes.c_uint64()
 
-        rc = self.lib_handle.hestia_data_get_descriptor(id, fd, 
+        rc = self.lib_handle.hestia_data_get_descriptor(id.encode('utf-8'), fd, 
                                                 length, 
                                                 offset, tier,
                                                 ctypes.byref(output_p), 
@@ -243,6 +243,64 @@ class HestiaLib():
         rc = self.lib_handle.hestia_data_get_path(id.encode('utf-8'), path.encode('utf-8'), 
                                             length,
                                             offset, tier,
+                                            ctypes.byref(output_p), 
+                                            ctypes.byref(output_length))
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+        return output_copied.decode("utf-8")
+    
+    def hestia_data_copy(self, 
+                        id: str, 
+                        source_tier: int,
+                        target_tier: int):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+
+        rc = self.lib_handle.hestia_data_copy(HestiaItemT.HESTIA_OBJECT, id.encode('utf-8'), 
+                                            source_tier, 
+                                            target_tier, 
+                                            ctypes.byref(output_p), 
+                                            ctypes.byref(output_length))
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+        return output_copied.decode("utf-8")
+    
+    def hestia_data_move(self, 
+                        id: str, 
+                        source_tier: int,
+                        target_tier: int):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+
+        rc = self.lib_handle.hestia_data_move(HestiaItemT.HESTIA_OBJECT, id.encode('utf-8'), 
+                                            source_tier, 
+                                            target_tier, 
+                                            ctypes.byref(output_p), 
+                                            ctypes.byref(output_length))
+        
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+        return output_copied.decode("utf-8")
+    
+    def hestia_data_release(self, 
+                            id: str, 
+                            tier: int):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+
+        rc = self.lib_handle.hestia_data_release(HestiaItemT.HESTIA_OBJECT, id.encode('utf-8'), 
+                                            tier, 
                                             ctypes.byref(output_p), 
                                             ctypes.byref(output_length))
         

@@ -198,8 +198,6 @@ TEST_CASE_METHOD(WebAppTestFixture, "Test s3 web app", "[s3]")
     response                   = put_data("/mybucket/myobject", obj_data);
     REQUIRE(response->code() == 200);
 
-    // std::cout << m_kv_store_client->dump() << std::endl;
-
     std::string returned_data;
     response = get_data("/mybucket/myobject", returned_data);
     REQUIRE(response->code() == 200);

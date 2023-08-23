@@ -402,7 +402,6 @@ TEST_CASE_METHOD(
         &stream, completion_db);
 
     REQUIRE(stream.reset().ok());
-    // std::cout << m_kv_store_client->dump() << std::endl;
 
     std::vector<char> returned_buffer(content.size());
     hestia::WriteableBufferView buffer_view(returned_buffer);

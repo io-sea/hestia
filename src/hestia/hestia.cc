@@ -553,9 +553,11 @@ int hestia_data_put(
 
     g_client->do_data_io_action(action, &stream, completion_cb);
 
-    auto stream_status = stream.flush();
-    if (!stream_status.ok()) {
-        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    if (stream.waiting_for_content()) {
+        auto stream_status = stream.flush();
+        if (!stream_status.ok()) {
+            return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+        }
     }
 
     return status.m_error_code;
@@ -704,12 +706,16 @@ int hestia_data_get(
 
     g_client->do_data_io_action(action, &stream, completion_cb);
 
-    auto stream_status = stream.flush();
-    if (!stream_status.ok()) {
-        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    if (stream.has_source()) {
+        auto stream_status = stream.flush();
+        if (!stream_status.ok()) {
+            return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+        }
+        *length = stream_status.get_num_transferred();
     }
-
-    *length = stream_status.get_num_transferred();
+    else {
+        *length = stream.get_num_transferred();
+    }
     return status.m_error_code;
 }
 
@@ -811,9 +817,6 @@ int hestia_data_copy(
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     ID_AND_STATE_CHECK(id);
 
     HsmAction action(
@@ -823,6 +826,11 @@ int hestia_data_copy(
     action.set_subject_key(id);
 
     const auto status = g_client->do_data_movement_action(action);
+    if (status.ok()) {
+        str_to_char(action.get_primary_key(), activity_id);
+        *len_activity_id = action.get_primary_key().size();
+    }
+
     return status.m_error_code;
 }
 
@@ -834,9 +842,6 @@ int hestia_data_move(
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     ID_AND_STATE_CHECK(id);
 
     HsmAction action(
@@ -846,6 +851,10 @@ int hestia_data_move(
     action.set_subject_key(id);
 
     const auto status = g_client->do_data_movement_action(action);
+    if (status.ok()) {
+        str_to_char(action.get_primary_key(), activity_id);
+        *len_activity_id = action.get_primary_key().size();
+    }
     return status.m_error_code;
 }
 
@@ -856,9 +865,6 @@ int hestia_data_release(
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     ID_AND_STATE_CHECK(id);
 
     HsmAction action(
@@ -867,6 +873,10 @@ int hestia_data_release(
     action.set_subject_key(id);
 
     const auto status = g_client->do_data_movement_action(action);
+    if (status.ok()) {
+        str_to_char(action.get_primary_key(), activity_id);
+        *len_activity_id = action.get_primary_key().size();
+    }
     return status.m_error_code;
 }
 }

@@ -80,8 +80,6 @@ TEST_CASE_METHOD(TestHttpCrudClientFixture, "Test HttpCrudClient", "[protocol]")
     hestia::CrudResponse response(request, hestia::mock::MockModel::get_type());
     m_client->create(request, response);
 
-    std::cout << m_http_endpoint->m_service->m_kv_store_client->dump()
-              << std::endl;
     REQUIRE(response.ok());
 
     auto created_model = response.get_item_as<hestia::mock::MockModel>();

@@ -68,6 +68,8 @@ class Stream {
      */
     std::size_t get_source_size() const;
 
+    std::size_t get_num_transferred() const;
+
     /**
      * True if a source is attached, has non-finished state, and has size bigger
      * than zero. Not all source types may be able to give a size in advance.
@@ -75,6 +77,8 @@ class Stream {
      * @return True if the source size is bigger than zero.
      */
     bool has_content() const;
+
+    bool has_source() const;
 
     /**
      * Read from an attached Source into the provided buffer

@@ -279,8 +279,8 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
     uint8_t tier1_id = 1;
     copy(obj0, tier0_id, tier1_id);
 
-    std::cout << m_kv_store_client->dump() << std::endl;
-    std::cout << m_object_store_client->dump() << std::endl;
+    // std::cout << m_kv_store_client->dump() << std::endl;
+    // std::cout << m_object_store_client->dump() << std::endl;
 
     /*
     REQUIRE(is_object_on_tier(obj0, tier1_id));

@@ -102,12 +102,22 @@ bool Stream::waiting_for_content() const
     return true;
 }
 
+std::size_t Stream::get_num_transferred() const
+{
+    return m_transfer_progress;
+}
+
 bool Stream::has_content() const
 {
     if (bool(m_source) && m_source->get_state().finished()) {
         return false;
     }
     return get_source_size() > 0;
+}
+
+bool Stream::has_source() const
+{
+    return bool(m_source);
 }
 
 StreamState Stream::flush(std::size_t block_size) noexcept

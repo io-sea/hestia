@@ -69,9 +69,6 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
     REQUIRE(attributes.has_content());
     REQUIRE(attributes.is_json());
 
-    std::cout << ids[0].get_primary_key() << std::endl;
-    std::cout << attributes.get_buffer() << std::endl;
-
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 
     hestia::Stream stream;
@@ -82,16 +79,28 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
         hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
     put_action.set_subject_key(ids[0].get_primary_key());
     put_action.set_target_tier(0);
-    auto completion_cb = [&status](
+
+    hestia::HsmAction returned_put_action;
+    auto completion_cb = [&status, &returned_put_action](
                              hestia::OpStatus ret_status,
                              const hestia::HsmAction& action) {
-        status = ret_status;
-        (void)action;
+        status              = ret_status;
+        returned_put_action = action;
     };
     m_client->do_data_io_action(put_action, &stream, completion_cb);
-    (void)stream.flush();
-
+    REQUIRE(stream.flush().ok());
     REQUIRE(status.ok());
+
+    REQUIRE_FALSE(returned_put_action.get_primary_key().empty());
+
+    hestia::VecCrudIdentifier action_ids;
+    action_ids.push_back(returned_put_action.get_primary_key());
+
+    hestia::CrudQuery action_query(
+        hestia::CrudIdentifier(returned_put_action.get_primary_key()),
+        hestia::CrudQuery::OutputFormat::ATTRIBUTES);
+    m_client->read(hestia::HsmItem::Type::ACTION, action_query);
+    REQUIRE_FALSE(action_query.get_attributes().get_buffer().empty());
 
     get_and_check(ids[0].get_primary_key(), 0, content);
 

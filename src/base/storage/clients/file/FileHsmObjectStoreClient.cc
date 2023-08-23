@@ -187,8 +187,8 @@ void FileHsmObjectStoreClient::get(
         return;
     }
 
-    LOG_INFO("Getting data");
-    auto tier_client = get_client(request.target_tier());
+    LOG_INFO("Getting data for tier: " << request.source_tier());
+    auto tier_client = get_client(request.source_tier());
     if (const auto response = tier_client->make_request(
             HsmObjectStoreRequest::to_base_request(request), stream);
         !response->ok()) {
