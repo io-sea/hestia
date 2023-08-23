@@ -15,6 +15,8 @@
 
 namespace hestia {
 
+Logger::Logger() {}
+
 Logger& Logger::get_instance()
 {
     static Logger instance;
@@ -28,6 +30,11 @@ const LoggerContext& Logger::get_context() const
 
 void Logger::initialize(const LoggerContext& context)
 {
+    if (m_initialized) {
+        return;
+    }
+    m_initialized = true;
+
     m_context.m_config = context.m_config;
 
     if (context.m_logger_impl) {
@@ -38,6 +45,11 @@ void Logger::initialize(const LoggerContext& context)
 void Logger::do_initialize(
     const std::string& cache_path, const LoggerConfig& config)
 {
+    if (m_initialized) {
+        return;
+    }
+    m_initialized = true;
+
     m_context.m_config = config;
 
     if (!m_context.m_config.is_active()) {

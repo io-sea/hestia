@@ -32,7 +32,6 @@ macro(fetch_nlohmann_json)
 endmacro()
 
 # https://github.com/gabime/spdlog
-#set(SPDLOG_BUILD_SHARED ON CACHE INTERNAL "")
 macro(fetch_spdlog)
     FetchContent_Declare(
         spdlog
@@ -46,14 +45,15 @@ endmacro()
 
 # https://github.com/jbeder/yaml-cpp
 # Note: system versions of yaml-cpp < 0.7 have a broken cmake config
-# If they are installed this will break
+# If they are installed find_package will break - so for now at least
+# always force fetching from remote.
 macro(fetch_yaml_cpp)
     FetchContent_Declare(
             yaml-cpp
             GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
-            GIT_TAG  0579ae3d976091d7d664aa9d2527e0d0cff25763
+            GIT_TAG  f7320141120f720aecc4c32be25586e7da9eb978
             SYSTEM
-            FIND_PACKAGE_ARGS
+            OVERRIDE_FIND_PACKAGE
             )
         set(YAML_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
         set(YAML_BUILD_SHARED_LIBS OFF CACHE INTERNAL "")

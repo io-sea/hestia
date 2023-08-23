@@ -60,9 +60,17 @@ struct StreamState {
      */
     static std::string to_string(State state);
 
+    void set_num_transferred(std::size_t num_transferred)
+    {
+        m_num_transferred = num_transferred;
+    }
+
+    std::size_t get_num_transferred() const { return m_num_transferred; }
+
   private:
     State m_state{State::READY};
     std::string m_message;
+    std::size_t m_num_transferred{0};
 };
 
 /**

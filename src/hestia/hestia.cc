@@ -3,6 +3,8 @@
 #include "hestia_private.h"
 
 #include "HestiaClient.h"
+#include "HestiaServer.h"
+
 #include "HsmItem.h"
 #include "JsonUtils.h"
 #include "Logger.h"
@@ -10,6 +12,7 @@
 #include "StringUtils.h"
 #include "UuidUtils.h"
 
+#include "FileStreamSink.h"
 #include "FileStreamSource.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
@@ -22,6 +25,7 @@
 namespace hestia {
 
 static std::unique_ptr<IHestiaClient> g_client;
+static std::unique_ptr<HestiaServer> g_server;
 
 void HestiaPrivate::override_client(std::unique_ptr<IHestiaClient> client)
 {
@@ -45,6 +49,8 @@ HestiaType to_subject(hestia_item_t subject)
             return HestiaType(HsmItem::Type::TIER);
         case hestia_item_e::HESTIA_DATASET:
             return HestiaType(HsmItem::Type::DATASET);
+        case hestia_item_e::HESTIA_ACTION:
+            return HestiaType(HsmItem::Type::ACTION);
         case hestia_item_e::HESTIA_USER:
             return HestiaType(HestiaType::SystemType::USER);
         case hestia_item_e::HESTIA_NODE:
@@ -108,6 +114,74 @@ CrudAttributes::Format to_crud_attr_format(hestia_io_format_t io_format)
 }
 
 extern "C" {
+
+int hestia_start_server(const char* host, int port, const char* config)
+{
+    if (g_server) {
+        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+    }
+
+    const std::string config_str =
+        config == nullptr ? std::string() : std::string(config);
+
+    const std::string host_str = host == nullptr ? std::string() : host;
+
+    Dictionary config_dict;
+    if (!config_str.empty()) {
+        try {
+            JsonUtils::from_json(config_str, config_dict);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Failed to parse extra_config json in server init(): "
+                      << e.what() << "\n"
+                      << config_str << std::endl;
+            return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+        }
+    }
+
+    try {
+        g_server = std::make_unique<HestiaServer>();
+        g_server->initialize("", "", config_dict, host_str, port);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Failed to initialize Hestia Server: " << e.what()
+                  << std::endl;
+        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+    }
+
+    OpStatus status;
+    try {
+        status = g_server->run();
+    }
+    catch (const std::exception& e) {
+        status = OpStatus(OpStatus::Status::ERROR, -1, e.what());
+    }
+    catch (...) {
+        status = OpStatus(
+            OpStatus::Status::ERROR, -1, "Unknown exception running server.");
+    }
+    return status.ok() ? 0 : -1;
+}
+
+int hestia_stop_server()
+{
+    if (!g_server) {
+        std::cerr
+            << "Called finish() but no server is set. Possibly missing initialize() call.";
+        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+    }
+
+    try {
+        g_server.reset();
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error destorying Hestia server: " << e.what()
+                  << std::endl;
+        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+    }
+    return 0;
+}
+
 int hestia_initialize(
     const char* config_path, const char* token, const char* extra_config)
 {
@@ -121,7 +195,7 @@ int hestia_initialize(
         config_path == nullptr ? std::string() : config_path;
     const std::string token_str = token == nullptr ? std::string() : token;
     const std::string extra_config_str =
-        extra_config == nullptr ? std::string() : extra_config;
+        extra_config == nullptr ? std::string() : std::string(extra_config);
 
     Dictionary extra_config_dict;
     if (!extra_config_str.empty()) {
@@ -130,7 +204,8 @@ int hestia_initialize(
         }
         catch (const std::exception& e) {
             std::cerr << "Failed to parse extra_config json in client init(): "
-                      << e.what() << std::endl;
+                      << e.what() << "\n"
+                      << extra_config_str << std::endl;
             return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
         }
     }
@@ -307,7 +382,7 @@ int hestia_create(
 
 int hestia_free_output(char** output)
 {
-    delete *output;
+    delete[] * output;
     return 0;
 }
 
@@ -486,6 +561,60 @@ int hestia_data_put(
     return status.m_error_code;
 }
 
+int hestia_data_put_path(
+    const char* oid,
+    const char* path,
+    const size_t length,
+    const size_t offset,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id)
+{
+    if (path == nullptr) {
+        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_BUFFER;
+    }
+
+    ID_AND_STATE_CHECK(oid);
+
+    hestia::Stream stream;
+    stream.set_source(FileStreamSource::create(path));
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::PUT_DATA);
+    action.set_offset(offset);
+    action.set_target_tier(tier);
+    action.set_subject_key(std::string(oid));
+
+    if (length == 0) {
+        action.set_size(stream.get_source_size());
+    }
+    else {
+        action.set_size(length);
+    }
+
+    OpStatus status;
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
+
+    g_client->do_data_io_action(action, &stream, completion_cb);
+
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
+
+    return status.m_error_code;
+}
+
 int hestia_data_put_descriptor(
     const char* oid,
     int fd,
@@ -533,22 +662,23 @@ int hestia_data_put_descriptor(
 int hestia_data_get(
     const char* oid,
     void* buf,
-    const size_t length,
+    size_t* length,
     const size_t offset,
     const uint8_t src_tier,
     char** activity_id,
     int* len_activity_id)
 {
-    (void)activity_id;
-    (void)len_activity_id;
-
     if (buf == nullptr) {
+        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_BUFFER;
+    }
+
+    if (length == nullptr) {
         return hestia_error_e::HESTIA_ERROR_BAD_INPUT_BUFFER;
     }
 
     ID_AND_STATE_CHECK(oid);
 
-    hestia::WriteableBufferView writeable_buffer(buf, length);
+    hestia::WriteableBufferView writeable_buffer(buf, *length);
     hestia::Stream stream;
     stream.set_sink(hestia::InMemoryStreamSink::create(writeable_buffer));
 
@@ -556,18 +686,120 @@ int hestia_data_get(
     action.set_offset(offset);
     action.set_source_tier(src_tier);
     action.set_subject_key(oid);
-    action.set_size(length);
+    action.set_size(*length);
 
     OpStatus status;
-    auto completion_cb =
-        [&status](OpStatus ret_status, const HsmAction& action) {
-            status = ret_status;
-            (void)action;
-        };
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
 
     g_client->do_data_io_action(action, &stream, completion_cb);
-    (void)stream.flush();
 
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
+
+    *length = stream_status.get_num_transferred();
+    return status.m_error_code;
+}
+
+int hestia_data_get_descriptor(
+    const char* oid,
+    int file_discriptor,
+    const size_t len,
+    const size_t offset,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id)
+{
+    ID_AND_STATE_CHECK(oid);
+
+    hestia::Stream stream;
+    stream.set_sink(FileStreamSink::create(file_discriptor, len));
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
+    action.set_offset(offset);
+    action.set_source_tier(tier);
+    action.set_subject_key(oid);
+    action.set_size(len);
+
+    OpStatus status;
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
+
+    g_client->do_data_io_action(action, &stream, completion_cb);
+
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
+    return status.m_error_code;
+}
+
+int hestia_data_get_path(
+    const char* oid,
+    const char* path,
+    const size_t len,
+    const size_t offset,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id)
+{
+    ID_AND_STATE_CHECK(oid);
+
+    hestia::Stream stream;
+    stream.set_sink(FileStreamSink::create(path));
+
+    HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
+    action.set_offset(offset);
+    action.set_source_tier(tier);
+    action.set_subject_key(oid);
+
+    if (len > 0) {
+        action.set_size(len);
+    }
+
+    OpStatus status;
+    auto completion_cb = [&status, activity_id, len_activity_id](
+                             OpStatus ret_status, const HsmAction& action) {
+        status = ret_status;
+        LOG_INFO("Completion cb fired");
+
+        if (ret_status.ok()) {
+            str_to_char(action.get_primary_key(), activity_id);
+            *len_activity_id = action.get_primary_key().size();
+        }
+        else {
+            *len_activity_id = 0;
+        }
+    };
+
+    g_client->do_data_io_action(action, &stream, completion_cb);
+
+    auto stream_status = stream.flush();
+    if (!stream_status.ok()) {
+        return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+    }
     return status.m_error_code;
 }
 

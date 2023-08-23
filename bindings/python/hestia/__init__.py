@@ -1,43 +1,35 @@
 import hestia.hestia_lib as hestia_lib
-
-import uuid
-import json
+import hestia.hestia_client as hestia_client
+import hestia.hestia_server as hestia_server
 
 working_lib = hestia_lib.HestiaLib()
 working_lib.load_library()
 
-class HestiaClient():
+class HestiaClient(hestia_client.HestiaClientBase):
 
-    def __init__(self):
+    def __init__(self, config_path: str = None, token: str = None, config = None):
+        super().__init__(config_path, token, config)
         self.lib = working_lib
-        self.config = None
-        self.lib.hestia_initialize(self.config)
+        rc = self.lib.hestia_initialize(self.config_path, self.token, self.config)
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
 
     def __del__(self):
-        self.lib.hestia_finish()
+        rc = self.lib.hestia_finish()
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
 
-    def object_create(self) -> json:
-        return json.loads(self.lib.hestia_create().decode("utf-8"))
-    
-    def object_read(self) -> json:
-        return json.loads(self.lib.hestia_create().decode("utf-8"))
-    
-    def object_put(self, id : str, 
-                   buffer: bytes, 
-                   offset: int = 0, 
-                   tier: int = 0):
-        return self.lib.hestia_data_put(id, buffer, offset, tier).decode("utf-8")
-    
-    def object_put_fd(self, id : str, 
-                   fd: int, 
-                   length: int,
-                   offset: int = 0, 
-                   tier: int = 0):
-        return self.lib.hestia_data_put_fd(id, fd, length, offset, tier).decode("utf-8")
+class HestiaServer(hestia_server.HestiaServerBase):
 
-    def object_get(self, id : str, 
-                   length: int, 
-                   offset: int = 0, 
-                   tier: int = 0):
-        return self.lib.hestia_object_get(id, length, offset, tier)
+    def __init__(self, host: str = "127.0.0.1", port: int = 8000, config = None):
+        super().__init__(host, port, config)
+        self.lib = working_lib
+        rc = self.lib.hestia_server_start(self.host, self.port, self.config, self.blocking)
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+    def __del__(self):
+        rc = self.lib.hestia_server_stop()
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
 

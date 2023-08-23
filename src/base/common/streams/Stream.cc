@@ -37,6 +37,13 @@ StreamState Stream::reset()
         m_source.reset();
     }
 
+    if (m_progress_func) {
+        m_last_progress_call = 0;
+        m_progress_func      = nullptr;
+    }
+    m_transfer_interval = 0;
+    m_transfer_progress = 0;
+
     if (m_completion_func) {
         m_completion_func(stream_state);
         m_completion_func = nullptr;
@@ -59,6 +66,12 @@ void Stream::seek_source_to(std::size_t offset)
 void Stream::set_completion_func(completionFunc func)
 {
     m_completion_func = func;
+}
+
+void Stream::set_progress_func(std::size_t interval, progressFunc func)
+{
+    m_transfer_interval = interval;
+    m_progress_func     = func;
 }
 
 std::size_t Stream::get_sink_size() const
@@ -126,15 +139,27 @@ StreamState Stream::flush(std::size_t block_size) noexcept
             break;
         }
 
+        m_transfer_progress += write_result.m_num_transferred;
+        if (m_progress_func
+            && m_transfer_progress
+                   >= m_transfer_interval + m_last_progress_call) {
+            m_last_progress_call = m_transfer_progress.load();
+            m_progress_func(m_transfer_progress);
+        }
+
         if (read_result.finished()) {
             state = {StreamState::State::FINISHED};
+            state.set_num_transferred(m_transfer_progress);
             break;
         }
     }
     if (auto reset_state = reset(); !reset_state.ok()) {
         state = reset_state;
     }
-    LOG_INFO("Finished stream flush with state: " << state.to_string());
+    LOG_INFO(
+        "Finished stream flush with state: " << state.to_string()
+                                             << " and num transferred: "
+                                             << state.get_num_transferred());
     return state;
 }
 
@@ -145,7 +170,19 @@ IOResult Stream::read(WriteableBufferView& buffer) noexcept
         LOG_ERROR(msg);
         return {{StreamState::State::ERROR, msg}, 0};
     }
-    return m_source->read(buffer);
+
+    const auto result = m_source->read(buffer);
+    if (!result.ok()) {
+        return result;
+    }
+
+    m_transfer_progress += result.m_num_transferred;
+    if (m_progress_func
+        && m_transfer_progress >= m_transfer_interval + m_last_progress_call) {
+        m_last_progress_call = m_transfer_progress.load();
+        m_progress_func(m_transfer_progress);
+    }
+    return result;
 }
 
 IOResult Stream::write(const ReadableBufferView& buffer) noexcept
@@ -155,7 +192,19 @@ IOResult Stream::write(const ReadableBufferView& buffer) noexcept
         LOG_ERROR(msg);
         return {{StreamState::State::ERROR, msg}, 0};
     }
-    return m_sink->write(buffer);
+
+    const auto result = m_sink->write(buffer);
+    if (!result.ok()) {
+        return result;
+    }
+
+    m_transfer_progress += result.m_num_transferred;
+    if (m_progress_func
+        && m_transfer_progress >= m_transfer_interval + m_last_progress_call) {
+        m_last_progress_call = m_transfer_progress.load();
+        m_progress_func(m_transfer_progress);
+    }
+    return result;
 }
 
 void Stream::set_source(StreamSource::Ptr source)

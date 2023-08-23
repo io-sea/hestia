@@ -29,6 +29,8 @@ class ServerConfig : public SerializeableWithFields {
 
     bool has_controller_address() const;
 
+    bool should_block_on_launch() const;
+
     void set_controller_address(const std::string& host, unsigned port)
     {
         m_controller_address.update_value(host + ":" + std::to_string(port));
@@ -56,5 +58,6 @@ class ServerConfig : public SerializeableWithFields {
     StringField m_controller_address{"controller_address"};
     BooleanField m_controller{"is_controller"};
     StringField m_tag{"tag"};
+    BooleanField m_run_blocking{"run_blocking", true};
 };
 }  // namespace hestia

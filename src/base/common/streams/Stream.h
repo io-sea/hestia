@@ -6,6 +6,7 @@
 #include "ReadableBufferView.h"
 #include "WriteableBufferView.h"
 
+#include <atomic>
 #include <memory>
 
 namespace hestia {
@@ -95,6 +96,9 @@ class Stream {
     using completionFunc = std::function<void(StreamState)>;
     void set_completion_func(completionFunc func);
 
+    using progressFunc = std::function<void(std::size_t)>;
+    void set_progress_func(std::size_t interval, progressFunc func);
+
     /**
      * Sets the source for the stream - if there already is one it will be
      * destroyed.
@@ -140,6 +144,12 @@ class Stream {
 
   protected:
     completionFunc m_completion_func;
+    progressFunc m_progress_func;
+
+    std::size_t m_transfer_interval{0};
+    std::atomic<std::size_t> m_last_progress_call{0};
+    std::atomic<std::size_t> m_transfer_progress{0};
+
     StreamSource::Ptr m_source;
     StreamSink::Ptr m_sink;
 };

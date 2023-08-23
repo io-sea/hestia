@@ -29,6 +29,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
         m_controller         = other.m_controller;
         m_tag                = other.m_tag;
         m_api_prefix         = other.m_api_prefix;
+        m_run_blocking       = other.m_run_blocking;
         init();
     }
     return *this;
@@ -48,6 +49,7 @@ void ServerConfig::init()
     register_scalar_field(&m_controller);
     register_scalar_field(&m_api_prefix);
     register_scalar_field(&m_tag);
+    register_scalar_field(&m_run_blocking);
 }
 
 const std::string& ServerConfig::get_static_resource_path() const
@@ -83,6 +85,11 @@ const std::string& ServerConfig::get_controller_address() const
 bool ServerConfig::has_controller_address() const
 {
     return !m_controller_address.get_value().empty();
+}
+
+bool ServerConfig::should_block_on_launch() const
+{
+    return m_run_blocking.get_value();
 }
 
 bool ServerConfig::is_controller() const

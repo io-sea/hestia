@@ -1,11 +1,14 @@
 #include "JsonUtils.h"
 
 #include "FileUtils.h"
+#include "Logger.h"
 
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+
 #include <nlohmann/json.hpp>
 
 namespace hestia {
@@ -143,7 +146,13 @@ void from_json_internal(
     else {
         auto scalar_dict =
             std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
-        scalar_dict->set_scalar(j);
+
+        if (j.is_boolean()) {
+            scalar_dict->set_scalar(j ? "true" : "false");
+        }
+        else {
+            scalar_dict->set_scalar(j.get<std::string>());
+        }
         if (parent_key.empty()) {
             dict.add_sequence_item(std::move(scalar_dict));
         }
@@ -161,7 +170,15 @@ void JsonUtils::from_json(
     if (str.empty()) {
         return;
     }
-    const auto json = nlohmann::json::parse(str);
+
+    nlohmann::json json;
+    try {
+        json = nlohmann::json::parse(str);
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error in json parsing: " << e.what());
+        throw e;
+    }
 
     if (json.is_array()) {
         dict.set_type(Dictionary::Type::SEQUENCE);
@@ -183,7 +200,7 @@ void JsonUtils::from_json(
     }
     else {
         dict.set_type(Dictionary::Type::SCALAR);
-        dict.set_scalar(json);
+        dict.set_scalar(json.get<std::string>());
     }
 }
 

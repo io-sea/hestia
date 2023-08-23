@@ -32,6 +32,8 @@ class LoggerContext {
 
 class Logger {
   public:
+    Logger();
+
     void initialize(const LoggerContext& context);
 
     void do_initialize(
@@ -52,5 +54,6 @@ class Logger {
 
   private:
     LoggerContext m_context;
+    bool m_initialized{false};
 };
 }  // namespace hestia

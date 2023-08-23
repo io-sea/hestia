@@ -45,6 +45,11 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     std::size_t get_size() const { return m_to_transfer.get_value(); }
 
+    std::size_t get_num_transferred() const
+    {
+        return m_transferred.get_value();
+    }
+
     bool is_crud_method() const;
 
     bool is_data_management_action() const;

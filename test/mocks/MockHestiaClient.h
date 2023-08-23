@@ -2,6 +2,7 @@
 
 #include "HestiaApplication.h"
 #include "HestiaClient.h"
+#include "Logger.h"
 
 #include <unordered_map>
 
@@ -10,7 +11,7 @@ class MockHestiaClient : public IHestiaClient {
   public:
     MockHestiaClient();
 
-    virtual ~MockHestiaClient() = default;
+    virtual ~MockHestiaClient() {}
 
     OpStatus initialize(
         const std::string& config_path = {},

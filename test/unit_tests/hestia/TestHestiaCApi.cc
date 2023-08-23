@@ -35,9 +35,13 @@ class HestiaCApiTestFixture {
         char* output{nullptr};
         int len_output{0};
 
+        LOG_INFO("starting create");
+
         const auto rc = hestia_create(
             HESTIA_OBJECT, HESTIA_IO_NONE, HESTIA_ID_NONE, nullptr, 0,
             HESTIA_IO_IDS, &output, &len_output);
+        LOG_INFO("Finished create");
+
         REQUIRE(rc == 0);
         REQUIRE(len_output > 0);
         REQUIRE(output != nullptr);
@@ -83,15 +87,17 @@ class HestiaCApiTestFixture {
         int len_activity_id{0};
 
         std::vector<char> buffer(content.length());
+        std::size_t length = content.length();
+
         const auto rc = hestia_data_get(
-            id.c_str(), buffer.data(), content.length(), 0, 0, &activity_id,
+            id.c_str(), buffer.data(), &length, 0, 0, &activity_id,
             &len_activity_id);
         REQUIRE(rc == 0);
 
         std::string activity_id_str = std::string(activity_id, len_activity_id);
-        delete[] activity_id;
+        hestia_free_output(&activity_id);
 
-        content = std::string(buffer.begin(), buffer.end());
+        content = std::string(buffer.begin(), buffer.begin() + length);
     }
 
     hestia::mock::MockHestiaClient* m_client{nullptr};

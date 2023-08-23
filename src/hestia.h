@@ -28,6 +28,7 @@ typedef enum hestia_item_e {
     HESTIA_DATASET,
     HESTIA_USER,
     HESTIA_NODE,
+    HESTIA_ACTION,
     HESTIA_ITEM_TYPE_COUNT,
 } hestia_item_t;
 
@@ -202,6 +203,25 @@ int hestia_data_put_descriptor(
     char** activity_id,
     int* len_activity_id);
 
+/// @brief Puts data to the object store via a file descriptor
+///
+/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param file_discriptor A file descriptor from an 'open()' call. It may be to a file on disk or pipe/socket etc.
+/// @param length Amount of data to read from the descriptor
+/// @param offset Offset into object to begin writing to
+/// @param tier The storage tier to write the data to
+///
+/// @return 0 on success, hestia_error_e value on failure
+
+int hestia_data_put_path(
+    const char* oid,
+    const char* path,
+    const size_t length,
+    const size_t offset,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
+
 /// @brief Retrieves data from the object store
 ///
 /// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
@@ -215,6 +235,24 @@ int hestia_data_put_descriptor(
 int hestia_data_get(
     const char* oid,
     void* buf,
+    size_t* len,
+    const size_t off,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
+
+int hestia_data_get_descriptor(
+    const char* oid,
+    int file_discriptor,
+    const size_t len,
+    const size_t off,
+    const uint8_t tier,
+    char** activity_id,
+    int* len_activity_id);
+
+int hestia_data_get_path(
+    const char* oid,
+    const char* path,
     const size_t len,
     const size_t off,
     const uint8_t tier,

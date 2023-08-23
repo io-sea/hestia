@@ -21,6 +21,8 @@
 namespace hestia {
 HestiaServer::HestiaServer() {}
 
+HestiaServer::~HestiaServer() {}
+
 OpStatus HestiaServer::run()
 {
     WebApp::Ptr web_app;
@@ -57,11 +59,20 @@ OpStatus HestiaServer::run()
     Server::Config server_config;
     server_config.m_ip        = m_config.get_server_config().get_host_address();
     server_config.m_http_port = m_config.get_server_config().get_port();
-    server_config.m_block_on_launch = true;
+    server_config.m_block_on_launch =
+        m_config.get_server_config().should_block_on_launch();
 
-    BasicHttpServer server(server_config, web_app.get());
-    server.initialize();
-    server.start();
+    m_server = std::make_unique<BasicHttpServer>(server_config, web_app.get());
+
+    m_server->initialize();
+    m_server->start();
+
+    if (!m_config.get_server_config().should_block_on_launch()) {
+        m_server->wait_until_bound();
+    }
+    else {
+        m_server.reset();
+    }
     return {};
 }
 

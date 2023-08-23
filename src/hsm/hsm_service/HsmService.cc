@@ -454,8 +454,8 @@ void HsmService::get_data(
         "Starting HSMService GET DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
-    HsmAction working_action;
-    auto action_response = get_or_create_action(req, working_action);
+    HsmAction working_action = req.get_action();
+    auto action_response     = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK(action_response, working_action, completion_func);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
@@ -502,6 +502,7 @@ void HsmService::get_data(
                     completion_func(std::move(response));
                 }
             };
+        stream->set_completion_func(stream_complete_func);
     }
     else {
         on_get_data_complete(req, working_action, completion_func);
@@ -524,8 +525,8 @@ HsmActionResponse::Ptr HsmService::move_data(
         "Starting HSMService MOVE DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
-    HsmAction working_action;
-    auto action_response = get_or_create_action(req, working_action);
+    HsmAction working_action = req.get_action();
+    auto action_response     = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
@@ -610,8 +611,8 @@ HsmActionResponse::Ptr HsmService::copy_data(
         "Starting HSMService COPY DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
-    HsmAction working_action;
-    auto action_response = get_or_create_action(req, working_action);
+    HsmAction working_action = req.get_action();
+    auto action_response     = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
@@ -694,8 +695,8 @@ HsmActionResponse::Ptr HsmService::release_data(
 {
     LOG_INFO("Starting HSMService RELEASE_DATA: " + req.to_string());
 
-    HsmAction working_action;
-    auto action_response = get_or_create_action(req, working_action);
+    HsmAction working_action = req.get_action();
+    auto action_response     = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
