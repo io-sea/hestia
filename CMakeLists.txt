@@ -20,31 +20,33 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
+option(BUILD_SHARED_LIBS "Build Shared libraries." OFF)
 option(HESTIA_BUILD_TESTS "Build Hestia tests." OFF)
 option(HESTIA_WITH_PHOBOS "Build Phobos Object Store Integration." OFF)
 option(HESTIA_WITH_MOTR "Build the Cortx Motr Integration." OFF)
 option(HESTIA_WITH_PROXYGEN "Build the Proxyen webserver." OFF)
 option(HESTIA_WITH_S3_CLIENT "Build the S3 Client." ON)
 
-if(${HESTIA_BUILD_TESTS})
-option(HESTIA_TEST_REDIS "Test the Redis key-value store backend (requires Redis server)" OFF)
-endif()
+option(HESTIA_USE_SRC_RPM_SPEC "Turn on when generating an SRPM." OFF)
 
 add_subdirectory(src)
 
 include(CTest)
-add_subdirectory(test)
+if(${HESTIA_BUILD_TESTS})
+  option(HESTIA_TEST_REDIS "Test the Redis key-value store backend (requires Redis server)" OFF)
+  add_subdirectory(test)
+endif()
 
 # This skips adding these targets if we are included by another project
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 option(HESTIA_BUILD_DOCUMENTATION "Build Documentation. Depends on Doxygen." OFF)
 if(HESTIA_BUILD_DOCUMENTATION)
-add_subdirectory(doc)
+  add_subdirectory(doc)
 endif()
 
 include(DoStaticAnalysis)
-add_clang_format()
-add_clang_tidy()
+  add_clang_format()
+  add_clang_tidy()
 endif()
 
 # Platform specific setting tweaks
@@ -56,7 +58,6 @@ if(APPLE)
 else()
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install Prefix" FORCE)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}")
   endif()
 endif()
 include(DoPackaging)

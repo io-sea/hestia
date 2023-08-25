@@ -2,11 +2,6 @@
 
 namespace hestia {
 
-const std::vector<CrudMethod> BaseCrudRequest::s_all_methods = {
-    CrudMethod::CREATE, CrudMethod::READ,     CrudMethod::UPDATE,
-    CrudMethod::REMOVE, CrudMethod::IDENTIFY, CrudMethod::LOCK,
-    CrudMethod::UNLOCK, CrudMethod::LOCKED};
-
 BaseCrudRequest::BaseCrudRequest(
     const CrudUserContext& user_context,
     const VecCrudIdentifier& ids,

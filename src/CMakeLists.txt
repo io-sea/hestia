@@ -5,7 +5,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 configure_file(ProjectConfig.h.in ${PROJECT_BINARY_DIR}/ProjectConfig.h)
-install(FILES ${PROJECT_BINARY_DIR}/ProjectConfig.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 add_library(hestia_headers INTERFACE)
 target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
@@ -23,7 +22,12 @@ if(NOT APPLE)
     target_link_libraries(hestia_main PRIVATE stdc++fs)
 endif()
 
-set_target_properties(hestia_main PROPERTIES OUTPUT_NAME "hestia")
+set_target_properties(${PROJECT_NAME}_main PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+
+install(FILES hestia.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT devel
+    )
 
 add_module(
     MODULE_NAME lib
@@ -35,5 +39,7 @@ add_module(
         hestia/hestia.cc
     INTERNAL_DEPENDENCIES 
         headers
-        app  
+    PRIVATE_DEPENDENCIES
+        ${PROJECT_NAME}_app
 )
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})

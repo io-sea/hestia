@@ -4,6 +4,8 @@
 #include "EnumUtils.h"
 #include "Request.h"
 
+#include <array>
+
 namespace hestia {
 
 STRINGABLE_ENUM(
@@ -50,10 +52,13 @@ class BaseCrudRequest : public BaseRequest {
 
     CrudLockType lock_type() const;
 
-    static const std::vector<CrudMethod> s_all_methods;
+    static constexpr std::array<CrudMethod, 8> s_all_methods{
+        CrudMethod::CREATE, CrudMethod::READ,     CrudMethod::UPDATE,
+        CrudMethod::REMOVE, CrudMethod::IDENTIFY, CrudMethod::LOCK,
+        CrudMethod::UNLOCK, CrudMethod::LOCKED};
 
   protected:
-    const CrudUserContext& m_user_context;
+    CrudUserContext m_user_context;
     CrudQuery m_query;
     VecCrudIdentifier m_ids;
     CrudLockType m_lock_type{CrudLockType::READ};

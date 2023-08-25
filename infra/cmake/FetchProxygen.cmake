@@ -1,3 +1,5 @@
+include(FetchDependencies)
+
 macro(fetch_proxygen)
     set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL YES)
 
@@ -35,7 +37,9 @@ macro(fetch_proxygen)
     #find_package(sodium REQUIRED)
     #set(LIBSODIUM_INCLUDE_DIR ${sodium_SOURCE_DIR}>)
 
-    find_package(OpenSSL REQUIRED)
+    fetch_zlib()
+    #fetch_openssl()
+    #find_package(OpenSSL REQUIRED)
 
     FetchContent_Declare(
     folly
@@ -60,6 +64,19 @@ macro(fetch_proxygen)
     include(GNUInstallDirs)
     INSTALL(TARGETS fmt EXPORT fmt DESTINATION lib)
     INSTALL(EXPORT fmt DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+    FetchContent_Declare(
+        zstd
+        OVERRIDE_FIND_PACKAGE
+        GIT_REPOSITORY https://github.com/facebook/zstd.git
+        GIT_TAG 63779c798237346c2b245c546c40b72a5a5913fe # v1.5.5
+        SOURCE_SUBDIR build/cmake
+        )
+    set(ZSTD_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(ZSTD_BUILD_PROGRAMS OFF CACHE INTERNAL "")
+    FetchContent_MakeAvailable(zstd)
+    set(ZSTD_INCLUDE_DIR $<BUILD_INTERFACE:${zstd_SOURCE_DIR}/lib> CACHE INTERNAL "")
+    set(ZSTD_LIBRARY ${zstd_BINARY_DIR}/libzstd.a CACHE INTERNAL "")
 
     FetchContent_Declare(
     fizz
@@ -113,14 +130,6 @@ macro(fetch_proxygen)
     )
     FetchContent_MakeAvailable(proxygen)
 
-    FetchContent_Declare(
-        zstd
-        OVERRIDE_FIND_PACKAGE
-        GIT_REPOSITORY https://github.com/facebook/zstd.git
-        GIT_TAG 63779c798237346c2b245c546c40b72a5a5913fe # v1.5.5
-        SOURCE_SUBDIR build/cmake
-        )
-    
-    FetchContent_MakeAvailable(zstd)
+
 
 endmacro()

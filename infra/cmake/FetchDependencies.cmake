@@ -61,6 +61,26 @@ macro(fetch_yaml_cpp)
         FetchContent_MakeAvailable(yaml-cpp)
 endmacro()
 
+# https://github.com/madler/zlib
+macro(fetch_zlib)
+    FetchContent_Declare(
+        ZLIB
+        GIT_REPOSITORY https://github.com/madler/zlib
+        GIT_TAG        04f42ceca40f73e2978b50e93806c2a18c1281fc # v1.2.13
+        SYSTEM
+        FIND_PACKAGE_ARGS
+        )
+        FetchContent_MakeAvailable(ZLIB)
+
+        if(NOT TARGET ZLIB::ZLIB)
+            add_library(ZLIB::ZLIB STATIC IMPORTED GLOBAL)
+            set_property(TARGET ZLIB::ZLIB PROPERTY IMPORTED_LOCATION ${zlib_BINARY_DIR}/libz.a)
+            set_property(TARGET ZLIB::ZLIB PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
+            add_dependencies(ZLIB::ZLIB zlibstatic)
+            set(ZLIB_LIBRARY ${zlib_BINARY_DIR}/libz.a CACHE INTERNAL "")
+        endif()     
+endmacro()
+
 # https://gitlab.gnome.org/GNOME/libxml2
 macro(fetch_libxml2)
     FetchContent_Declare(
@@ -71,7 +91,9 @@ macro(fetch_libxml2)
         FIND_PACKAGE_ARGS
         )
         set(LIBXML2_WITH_LZMA OFF CACHE INTERNAL "")
+        set(LIBXML2_WITH_ZLIB OFF CACHE INTERNAL "")
         set(LIBXML2_WITH_PYTHON OFF CACHE INTERNAL "")
+        set(LIBXML2_WITH_PROGRAMS OFF CACHE INTERNAL "")
         set(LIBXML2_WITH_TESTS OFF CACHE INTERNAL "")
         FetchContent_MakeAvailable(LibXml2)
 endmacro()
@@ -140,13 +162,16 @@ macro(build_openssl)
     file(MAKE_DIRECTORY ${OPENSSL_INSTALL_DIR}/include)
     add_library(OpenSSL::SSL STATIC IMPORTED GLOBAL)
     set_property(TARGET OpenSSL::SSL PROPERTY IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libssl.a)
-    set_property(TARGET OpenSSL::SSL PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include)
+    set_property(TARGET OpenSSL::SSL PROPERTY INTERFACE_INCLUDE_DIRECTORIES $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include>)
     add_dependencies(OpenSSL::SSL openssl)
 
     add_library(OpenSSL::Crypto STATIC IMPORTED GLOBAL)
     set_property(TARGET OpenSSL::Crypto PROPERTY IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a)
-    set_property(TARGET OpenSSL::Crypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include)
+    set_property(TARGET OpenSSL::Crypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include>)
     add_dependencies(OpenSSL::Crypto openssl)
+    set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a CACHE INTERNAL "")
+    set(OPENSSL_INCLUDE_DIR $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include> CACHE INTERNAL "")
+    set(OPENSSL_ROOT_DIR ${OPENSSL_INSTALL_DIR} CACHE INTERNAL "")
 endmacro()
 
 macro(fetch_openssl)

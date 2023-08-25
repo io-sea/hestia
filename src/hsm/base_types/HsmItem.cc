@@ -2,11 +2,6 @@
 
 namespace hestia {
 
-const std::vector<HsmItem::Type> HsmItem::s_all_items = {
-    Type::DATASET,   Type::OBJECT, Type::ACTION,
-    Type::NAMESPACE, Type::TIER,   Type::EXTENT,
-    Type::METADATA,  Type::NODE,   Type::OBJECT_STORE_BACKEND};
-
 HsmItem::HsmItem(HsmItem::Type type) : m_hsm_type(type) {}
 
 HsmItem::Type HsmItem::get_hsm_type() const
@@ -76,7 +71,7 @@ HsmItem::Type HsmItem::from_name(const std::string& type_name)
     }
 }
 
-std::vector<HsmItem::Type> HsmItem::get_all_items()
+std::array<HsmItem::Type, 9> HsmItem::get_all_items()
 {
     return s_all_items;
 }

@@ -156,6 +156,8 @@ Release:
     - *build
     - make -C "${CMAKE_BUILD_DIR}" doxygen
     - make -C "${CMAKE_BUILD_DIR}" package
+    - $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR}
+    - make -C "${CMAKE_BUILD_DIR}" package_source
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
@@ -198,7 +200,7 @@ E2E_test:
     - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR}
-      --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-Linux.rpm
+      --build_dir=${CMAKE_BUILD_DIR} --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
 
 # Scheduled Builds
 .nightly_snippets:
@@ -226,6 +228,7 @@ E2E_test:
     - *configure
     - *build
     - make -C "${CMAKE_BUILD_DIR}" package
+    - $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR}
     - make -C "${CMAKE_BUILD_DIR}" package_source
     # TODO: Build and upload docs
 
@@ -275,7 +278,7 @@ Nightly_E2E:
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
       --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
-      --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-Linux.rpm
+      --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
 
 Nightly_deploy:
   <<: *default_nightly_job

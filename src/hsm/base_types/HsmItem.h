@@ -3,6 +3,7 @@
 #include "EnumUtils.h"
 #include "Model.h"
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -43,11 +44,14 @@ class HsmItem {
 
     static Type from_name(const std::string& type_name);
 
-    static std::vector<Type> get_all_items();
+    static std::array<Type, 9> get_all_items();
 
   protected:
     Type m_hsm_type{Type::OBJECT};
-    static const std::vector<Type> s_all_items;
+    static constexpr std::array<Type, 9> s_all_items{
+        Type::DATASET,   Type::OBJECT, Type::ACTION,
+        Type::NAMESPACE, Type::TIER,   Type::EXTENT,
+        Type::METADATA,  Type::NODE,   Type::OBJECT_STORE_BACKEND};
 };
 
 class HsmItemModel : public HsmItem, public Model {};

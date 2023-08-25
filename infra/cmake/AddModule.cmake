@@ -51,5 +51,4 @@ macro(add_module)
     endif()
 
     target_compile_definitions(${TARGET_NAME} PUBLIC ${ADD_MODULE_COMPILER_DEFINITIONS})
-    install(FILES ${ADD_MODULE_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endmacro()
