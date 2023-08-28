@@ -69,7 +69,7 @@ KeyValueStoreResponse::Ptr KeyValueStoreClient::make_request(
             break;
         case KeyValueStoreRequestMethod::SET_REMOVE:
             try {
-                set_add(request.get_kv_pairs());
+                set_remove(request.get_kv_pairs());
             }
             CATCH_FLOW();
             break;

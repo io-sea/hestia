@@ -79,13 +79,13 @@ CrudService::~CrudService() {}
             break;
         case CrudMethod::REMOVE:
             try {
-                remove(request.get_ids());
+                remove(request, *response);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
         case CrudMethod::IDENTIFY:
             try {
-                identify(request.get_ids(), *response);
+                identify(request, *response);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -157,15 +157,16 @@ void CrudService::update(
     m_client->update(request, response, record_modified_attrs);
 }
 
-void CrudService::remove(const VecCrudIdentifier& ids) const
+void CrudService::remove(
+    const CrudRequest& request, CrudResponse& response) const
 {
-    m_client->remove(ids);
+    m_client->remove(request, response);
 }
 
 void CrudService::identify(
-    const VecCrudIdentifier& ids, CrudResponse& response) const
+    const CrudRequest& request, CrudResponse& response) const
 {
-    m_client->identify(ids, response);
+    m_client->identify(request, response);
 }
 
 void CrudService::lock(const CrudIdentifier& id, CrudLockType lock_type) const

@@ -22,6 +22,10 @@ This is the `Hestia` user guide, it covers:
     - [REST API](#rest-api)
 - [S3 API](#s3-api)
 - [Ansible Deployment](#ansible-deployment)
+  - [Usage](#usage)
+    - [Hestia Roles in your Playbook](#hestia-roles-in-your-playbook)
+  - [Configuration](#configuration-1)
+    - [Backend Types/Configurations](#backend-typesconfigurations)
 
 # Core Concepts
 
@@ -218,6 +222,17 @@ The C interface can be consumed via the `hestia.h` header and linking to the pro
 For similar reasons to the CLI the interface is designed to be adaptable rather than rigid due to the fluid requirements of the parent project - these is manifested by relying on strings and format specifiers as primary input and output arguments.
 
 The Python interface is a low-level wrapping of the C interface via `ctypes` - located in the `bindings` directory. It requires the `hestia_lib` to be in the system library search paths.
+
+To test your setup you can run:
+
+```bash
+cd bindings/python/hestia
+export PYTHONPATH=$PYTHONPATH:`pwd`
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/$HESTIA_BUILD_DIR/lib
+python3 test/test_binding.py
+```
+
+(on Mac set the `DYLD_LIBRARY_PATH` instead)
 
 Overall the semantics of the C interface are similar to the CLI - with a `hestia_subject_method` pattern for CRUD operations. 
 

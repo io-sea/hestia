@@ -51,6 +51,11 @@ bool EventFeedConfig::is_active() const
     return m_active.get_value();
 }
 
+void EventFeedConfig::set_is_active(bool is_active)
+{
+    m_active.update_value(is_active);
+}
+
 const std::string& EventFeedConfig::get_output_path() const
 {
     return m_output_path.get_value();

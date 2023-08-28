@@ -94,6 +94,11 @@ CrudQuery::Format CrudQuery::get_format() const
     return m_format;
 }
 
+std::string CrudQuery::get_format_as_string() const
+{
+    return Format_enum_string_converter().init().to_string(m_format);
+}
+
 std::size_t CrudQuery::get_max_items() const
 {
     return m_max_items;

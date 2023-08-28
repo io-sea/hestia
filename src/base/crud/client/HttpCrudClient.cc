@@ -185,34 +185,37 @@ void HttpCrudClient::update(
     }
 }
 
-void HttpCrudClient::remove(const VecCrudIdentifier& ids) const
+void HttpCrudClient::remove(
+    const CrudRequest& crud_request, CrudResponse& crud_response) const
 {
-    (void)ids;
-    /*
-    const auto string_response = m_client->make_request(
-        {KeyValueStoreRequestMethod::STRING_REMOVE, get_item_key(item),
-            m_config.m_endpoint});
-    if (!string_response->ok()) {
-        throw std::runtime_error(
-            "Error in kv_store STRING_REMOVE: "
-            + string_response->get_error().to_string());
-    }
+    auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
 
-    const auto set_response = m_client->make_request(
-        {KeyValueStoreRequestMethod::SET_REMOVE,
-            Metadata::Query(get_set_key(), item.id()), m_config.m_endpoint});
-    if (!set_response->ok()) {
-        throw std::runtime_error(
-            "Error in kv_store SET_REMOVE: "
-            + set_response->get_error().to_string());
+    for (const auto& id : crud_request.get_query().ids()) {
+        std::string path_suffix;
+        HttpCrudPath::from_identifier(id, path_suffix);
+        HttpRequest request(path + path_suffix, HttpRequest::Method::DELETE);
+        request.get_header().set_content_type("application/json");
+        request.get_header().set_auth_token(
+            crud_request.get_user_context().m_token);
+
+        const auto response = m_client->make_request(request);
+
+        if (response->error()) {
+            if (response->code() == 404) {
+                return;
+            }
+            throw RequestException<CrudRequestError>(
+                {CrudErrorCode::ERROR,
+                 "Error in http client DELETE: " + response->to_string()});
+        }
+        crud_response.ids().push_back(id.get_primary_key());
     }
-    */
 }
 
 void HttpCrudClient::identify(
-    const VecCrudIdentifier& ids, CrudResponse& response) const
+    const CrudRequest& request, CrudResponse& response) const
 {
-    (void)ids;
+    (void)request;
     (void)response;
 }
 

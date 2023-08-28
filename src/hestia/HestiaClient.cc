@@ -201,6 +201,14 @@ OpStatus HestiaClient::remove(
         service = m_hsm_service;
     }
     if (service != nullptr) {
+
+        if (ids.size() == 1) {
+            LOG_INFO("Doing remove with id: " << ids[0].get_primary_key());
+        }
+        else {
+            LOG_INFO("Doing remove with: " << ids.size() << " ids.");
+        }
+
         const auto response = service->make_request(
             CrudRequest{
                 CrudMethod::REMOVE, m_user_service->get_current_user_context(),
@@ -226,6 +234,18 @@ OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
     }
 
     if (service != nullptr) {
+        if (query.get_format() == CrudQuery::Format::ID) {
+            if (query.get_ids().size() == 1) {
+                LOG_INFO(
+                    "Doing query with id: "
+                    << query.get_ids()[0].get_primary_key());
+            }
+            else {
+                LOG_INFO(
+                    "Doing query with: " << query.get_ids().size() << " ids.");
+            }
+        }
+
         CrudResponsePtr response;
         response = service->make_request(
             CrudRequest{query, m_user_service->get_current_user_context()},

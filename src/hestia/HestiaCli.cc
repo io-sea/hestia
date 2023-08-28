@@ -172,6 +172,7 @@ void HestiaCli::add_crud_commands(
         commands[subject]->add_subcommand("remove", "Remove a " + subject);
     remove_cmd->add_option(
         "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+    remove_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_remove"] = remove_cmd;
 
     auto identify_cmd =

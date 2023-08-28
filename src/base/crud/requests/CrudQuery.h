@@ -55,6 +55,8 @@ class CrudQuery {
 
     Format get_format() const;
 
+    std::string get_format_as_string() const;
+
     void set_format(Format format) { m_format = format; }
 
     const CrudIdentifier& get_id() const;

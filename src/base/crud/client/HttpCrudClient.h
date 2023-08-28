@@ -28,10 +28,11 @@ class HttpCrudClient : public CrudClient {
         CrudResponse& response,
         bool record_modified_attrs = false) const override;
 
-    void remove(const VecCrudIdentifier& ids) const override;
+    void remove(
+        const CrudRequest& request, CrudResponse& response) const override;
 
     void identify(
-        const VecCrudIdentifier& ids, CrudResponse& response) const override;
+        const CrudRequest& request, CrudResponse& response) const override;
 
     void lock(const CrudIdentifier& id, CrudLockType lock_type) const override;
 

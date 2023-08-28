@@ -51,10 +51,11 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
         CrudResponse& response,
         bool record_modified_attrs) const;
 
-    virtual void remove(const VecCrudIdentifier& id) const;
+    virtual void remove(
+        const CrudRequest& request, CrudResponse& response) const;
 
     virtual void identify(
-        const VecCrudIdentifier& id, CrudResponse& response) const;
+        const CrudRequest& request, CrudResponse& response) const;
 
     virtual void lock(const CrudIdentifier& id, CrudLockType lock_type) const;
 

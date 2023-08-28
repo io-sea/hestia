@@ -221,9 +221,24 @@ std::pair<HestiaClientCommand::OutputFormat, CrudAttributes::Format>
 HestiaClientCommand::parse_read_inputs(
     CrudQuery& query, IConsoleInterface* console) const
 {
+    CrudQuery::Format input_format{CrudQuery::Format::LIST};
+    if (!m_input_format.empty()) {
+        input_format = CrudQuery::format_from_string(m_input_format);
+    }
+    else {
+        if (!m_body.empty()) {
+            input_format = CrudQuery::Format::ID;
+        }
+    }
+
     OutputFormat output_format{OutputFormat::ID};
     if (!m_output_format.empty()) {
         output_format = output_format_from_string(m_output_format);
+    }
+    else {
+        if (input_format == CrudQuery::Format::ID) {
+            output_format = OutputFormat::JSON;
+        }
     }
 
     CrudQuery::OutputFormat query_output_format{
@@ -240,11 +255,6 @@ HestiaClientCommand::parse_read_inputs(
         query.set_attributes_output_format(attribute_output_format);
     }
 
-    CrudQuery::Format input_format{CrudQuery::Format::LIST};
-    if (!m_input_format.empty()) {
-        input_format = CrudQuery::format_from_string(m_input_format);
-    }
-
     CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
     if (!m_id_format.empty()) {
         id_format = CrudIdentifier::input_format_from_string(m_id_format);
@@ -255,11 +265,10 @@ HestiaClientCommand::parse_read_inputs(
         VecCrudIdentifier ids;
         if (!m_body.empty()) {
             std::string ids_combined;
-            for (const auto& entry : m_id) {
+            for (const auto& entry : m_body) {
                 ids_combined += entry;
             }
             CrudIdentifier::parse(ids_combined, id_format, ids);
-            ;
         }
         else {
             std::string id_buffer;
@@ -301,7 +310,6 @@ void HestiaClientCommand::parse_remove_inputs(
             ids_combined += entry;
         }
         CrudIdentifier::parse(ids_combined, id_format, ids);
-        ;
     }
     else {
         std::string id_buffer;

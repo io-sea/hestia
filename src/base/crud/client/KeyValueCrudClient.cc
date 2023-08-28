@@ -538,12 +538,12 @@ bool KeyValueCrudClient::prepare_query_keys_with_filter(
          {id_request_key},
          m_config.m_endpoint});
     error_check("STRING_GET", response.get());
-    const std::string working_id = response->items()[0];
-    if (response->items().empty() || working_id.empty()) {
+    if (response->items().empty() || response->items()[0].empty()) {
         return false;
     }
-    string_get_keys.push_back(get_item_key(working_id));
-    update_foreign_proxy_keys(working_id, fields, foreign_key_proxy_keys);
+    string_get_keys.push_back(get_item_key(response->items()[0]));
+    update_foreign_proxy_keys(
+        response->items()[0], fields, foreign_key_proxy_keys);
     return true;
 }
 
@@ -741,19 +741,45 @@ void KeyValueCrudClient::read(
     }
 }
 
-void KeyValueCrudClient::remove(const VecCrudIdentifier& ids) const
+void KeyValueCrudClient::remove(
+    const CrudRequest& request, CrudResponse& crud_response) const
 {
-    std::vector<std::string> string_remove_keys;
-    std::vector<KeyValuePair> set_remove_keys;
-    for (const auto& id : ids) {
+    std::vector<std::string> primary_keys;
+    for (const auto& id : request.get_ids()) {
         if (id.has_primary_key()) {
-            string_remove_keys.push_back(get_item_key(id.get_primary_key()));
-            set_remove_keys.push_back({get_set_key(), id.get_primary_key()});
+            primary_keys.push_back(id.get_primary_key());
         }
     }
 
+    std::vector<std::string> string_keys;
+    for (const auto& id : primary_keys) {
+        string_keys.push_back(get_item_key(id));
+    }
+
+    const auto response = m_client->make_request(
+        {KeyValueStoreRequestMethod::STRING_GET, string_keys,
+         m_config.m_endpoint});
+    error_check("GET", response.get());
+    if (string_keys.empty()) {
+        LOG_INFO("Failed to find requested key - not attempting removal");
+        return;
+    }
+
+    const auto any_empty = std::any_of(
+        response->items().begin(), response->items().end(),
+        [](const std::string& entry) { return entry.empty(); });
+    if (any_empty) {
+        LOG_INFO("Failed to find requested key - not attempting removal");
+        return;
+    }
+
+    std::vector<KeyValuePair> set_remove_keys;
+    for (const auto& id : primary_keys) {
+        set_remove_keys.push_back({get_set_key(), id});
+    }
+
     const auto string_response = m_client->make_request(
-        {KeyValueStoreRequestMethod::STRING_REMOVE, string_remove_keys,
+        {KeyValueStoreRequestMethod::STRING_REMOVE, string_keys,
          m_config.m_endpoint});
     error_check("STRING_REMOVE", string_response.get());
 
@@ -761,12 +787,15 @@ void KeyValueCrudClient::remove(const VecCrudIdentifier& ids) const
         {KeyValueStoreRequestMethod::SET_REMOVE, set_remove_keys,
          m_config.m_endpoint});
     error_check("SET_REMOVE", string_response.get());
+
+    LOG_INFO("Setting " << primary_keys.size() << " removal keys");
+    crud_response.ids() = primary_keys;
 }
 
 void KeyValueCrudClient::identify(
-    const VecCrudIdentifier& ids, CrudResponse& response) const
+    const CrudRequest& request, CrudResponse& response) const
 {
-    (void)ids;
+    (void)request;
     (void)response;
 }
 
@@ -839,7 +868,7 @@ std::string KeyValueCrudClient::get_set_key() const
 }
 
 void KeyValueCrudClient::error_check(
-    const std::string& identifier, BaseResponse* response) const
+    const std::string& identifier, const BaseResponse* response) const
 {
     if (!response->ok()) {
         const std::string msg = "Error in kv_store " + identifier + ": "

@@ -16,6 +16,8 @@ class EventFeedConfig : public SerializeableWithFields {
 
     bool is_active() const;
 
+    void set_is_active(bool is_active);
+
     const std::string& get_output_path() const;
 
     EventFeedConfig& operator=(const EventFeedConfig& other);
@@ -25,7 +27,7 @@ class EventFeedConfig : public SerializeableWithFields {
 
     static constexpr const char s_type[]{"event_feed"};
     StringField m_output_path{"output_path", "event_feed.yaml"};
-    BooleanField m_active{"active", false};
+    BooleanField m_active{"active", true};
 };
 
 /// Class for logging filesystem events to librobinhood-compatible YAML

@@ -3,6 +3,7 @@
 #include "Dictionary.h"
 #include "HashUtils.h"
 #include "Logger.h"
+#include "TimeUtils.h"
 #include "YamlUtils.h"
 
 #include "HsmItem.h"
@@ -122,12 +123,27 @@ void on_object_create(
     */
 }
 
+void on_object_remove(Dictionary& dict, const std::string& id)
+{
+    dict.set_tag("remove");
+
+    // ID Field
+    set_id(dict, id);
+
+    Map xattrs;
+    xattrs.set_item(
+        "event_time", std::to_string(TimeUtils::get_current_time()));
+
+    set_xattrs(dict, xattrs);
+}
+
 bool HsmEventSink::will_handle(
     const std::string& subject_type, CrudMethod method) const
 {
-    if (subject_type == HsmItem::hsm_object_name
-        && method == CrudMethod::CREATE) {
-        return true;
+    if (subject_type == HsmItem::hsm_object_name) {
+        if (method == CrudMethod::CREATE || method == CrudMethod::REMOVE) {
+            return true;
+        }
     }
     return false;
 }
@@ -157,9 +173,27 @@ void HsmEventSink::on_event(const CrudEvent& event)
             output_file.open(m_output_file, std::ios::app);
             output_file << out;
         }
+        else if (event.get_method() == CrudMethod::REMOVE) {
+            LOG_INFO("Got hsm object remove");
+
+            std::string out;
+            for (const auto& id : event.get_ids()) {
+                LOG_INFO("Got removing id: " << id);
+                Dictionary output_dict;
+                output_dict.set_map_item("root", Dictionary::create());
+                auto root = output_dict.get_map_item("root");
+
+                on_object_remove(*root, id);
+
+                YamlUtils::dict_to_yaml(output_dict, out, sorted);
+            }
+
+            std::ofstream output_file;
+            output_file.open(m_output_file, std::ios::app);
+            output_file << out;
+        }
     }
 }
-
 
 /*
 std::string RbhEvent::type_to_string(const RbhTypes& event_type)

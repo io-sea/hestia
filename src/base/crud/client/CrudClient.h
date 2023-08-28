@@ -41,10 +41,11 @@ class CrudClient {
         CrudResponse& response,
         bool record_modified_attrs = false) const = 0;
 
-    virtual void remove(const VecCrudIdentifier& ids) const = 0;
+    virtual void remove(
+        const CrudRequest& request, CrudResponse& response) const = 0;
 
     virtual void identify(
-        const VecCrudIdentifier& ids, CrudResponse& response) const = 0;
+        const CrudRequest& request, CrudResponse& response) const = 0;
 
     virtual bool is_locked(
         const CrudIdentifier& id, CrudLockType lock_type) const = 0;
