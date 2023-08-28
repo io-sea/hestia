@@ -3,6 +3,8 @@
 .vscode
 .editorconfig
 build/
+**/dist/*
+*.egg-info/
 .cache/
 __pycache__/
 *.pyc

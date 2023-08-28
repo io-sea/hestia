@@ -76,7 +76,8 @@ macro(fetch_proxygen)
     set(ZSTD_BUILD_PROGRAMS OFF CACHE INTERNAL "")
     FetchContent_MakeAvailable(zstd)
     set(ZSTD_INCLUDE_DIR $<BUILD_INTERFACE:${zstd_SOURCE_DIR}/lib> CACHE INTERNAL "")
-    set(ZSTD_LIBRARY ${zstd_BINARY_DIR}/libzstd.a CACHE INTERNAL "")
+    message(STATUS "ZSTD BINARY DIR IS: " ${CMAKE_BINARY_DIR})
+    set(ZSTD_LIBRARY ${CMAKE_BINARY_DIR}/lib/libzstd.a CACHE INTERNAL "")
 
     FetchContent_Declare(
     fizz

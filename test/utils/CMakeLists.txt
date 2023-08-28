@@ -33,8 +33,9 @@ add_module(
 target_include_directories(hestia_test_utils PRIVATE ${PROJECT_BINARY_DIR})
 
 if(${HESTIA_WITH_PROXYGEN})
+    add_dependencies(hestia_test_utils libzstd_static)
     target_link_libraries(hestia_test_utils PRIVATE hestia_proxygen_plugin)
-    target_link_directories(hestia_test_utils PUBLIC ${zstd_BINARY_DIR})
+    target_link_directories(hestia_test_utils PUBLIC ${CMAKE_BINARY_DIR}/lib)
     target_include_directories(hestia_test_utils PUBLIC ${PROJECT_BINARY_DIR})
     target_compile_definitions(hestia_test_utils PUBLIC HAVE_PROXYGEN)
 endif()
