@@ -219,7 +219,7 @@ When running from the CLI a local `cache` will be created - with a default locat
 
 The C interface can be consumed via the `hestia.h` header and linking to the project binaries. Linking is easiest via CMake - the `find_project(hestia)` API is supported - providing the `hestia::hestia` CMake target. The header file documentation is the recommended reference for its use.
 
-For similar reasons to the CLI the interface is designed to be adaptable rather than rigid due to the fluid requirements of the parent project - these is manifested by relying on strings and format specifiers as primary input and output arguments.
+For similar reasons to the CLI, the interface is designed to be adaptable rather than rigid due to the fluid requirements of the parent project - these is manifested by relying on strings and format specifiers as primary input and output arguments.
 
 The Python interface is a low-level wrapping of the C interface via `ctypes` - located in the `bindings` directory. It requires the `hestia_lib` to be in the system library search paths.
 

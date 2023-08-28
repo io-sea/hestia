@@ -185,7 +185,7 @@ void JsonAdapter::dict_to_string(
 }
 
 void JsonAdapter::dict_from_string(
-    const std::string& input, Dictionary& dict) const
+    const std::string& input, Dictionary& dict, const std::string&) const
 {
     if (input.empty()) {
         return;
@@ -227,7 +227,9 @@ void KeyValueAdapter::dict_to_string(
 }
 
 void KeyValueAdapter::dict_from_string(
-    const std::string& input, Dictionary& dict) const
+    const std::string& input,
+    Dictionary& dict,
+    const std::string& key_prefix) const
 {
     if (input.empty()) {
         return;
@@ -247,6 +249,11 @@ void KeyValueAdapter::dict_from_string(
         count++;
     }
 
+    std::string working_prefix;
+    if (!key_prefix.empty()) {
+        working_prefix = key_prefix + ".";
+    }
+
     if (!blank_offsets.empty()) {
         dict.set_type(Dictionary::Type::SEQUENCE);
         for (const auto& [end, length] : blank_offsets) {
@@ -254,7 +261,7 @@ void KeyValueAdapter::dict_from_string(
             for (std::size_t idx = end - length; idx < end; idx++) {
                 const auto& [key, value] =
                     StringUtils::split_on_first(lines[idx], ",");
-                flat.set_item(key, value);
+                flat.set_item(working_prefix + key, value);
             }
             auto block_dict = std::make_unique<Dictionary>();
             block_dict->expand(flat);
@@ -265,7 +272,7 @@ void KeyValueAdapter::dict_from_string(
         Map flat;
         for (const auto& line : lines) {
             const auto& [key, value] = StringUtils::split_on_first(line, ",");
-            flat.set_item(key, value);
+            flat.set_item(working_prefix + key, value);
         }
         dict.expand(flat);
     }

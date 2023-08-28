@@ -176,7 +176,8 @@ HestiaClientCommand::parse_create_update_inputs(
         }
         CrudIdentifier::parse(ids_combined, id_format, ids);
     }
-    else if (input_format != CrudAttributes::Format::NONE) {
+
+    if (input_format != CrudAttributes::Format::NONE) {
         std::string attribute_buffer;
         attributes.set_format(input_format);
         std::string line;
@@ -201,7 +202,7 @@ HestiaClientCommand::parse_create_update_inputs(
                 }
             }
         }
-        attributes.set_buffer(attribute_buffer);
+        attributes.set_buffer(attribute_buffer, input_format);
     }
 
     CrudAttributes::Format attribute_output_format{

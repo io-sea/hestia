@@ -81,6 +81,12 @@ class CrudClient {
 
     void set_default_parent_id(const std::string& type, const std::string& id);
 
+    std::string get_id_from_parent_id(
+        const std::string& parent_type,
+        const std::string& child_type,
+        const std::string& id,
+        const CrudUserContext& user_context) const;
+
     IdGenerator* m_id_generator;
     TimeProvider* m_time_provider;
     std::unique_ptr<IdGenerator> m_default_id_generator;

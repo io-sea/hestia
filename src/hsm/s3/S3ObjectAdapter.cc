@@ -12,7 +12,7 @@ S3ObjectAdapter::Ptr S3ObjectAdapter::create(const std::string& metadata_prefix)
 }
 
 void S3ObjectAdapter::dict_from_string(
-    const std::string& input, Dictionary& dict) const
+    const std::string& input, Dictionary& dict, const std::string&) const
 {
     (void)input;
     (void)dict;

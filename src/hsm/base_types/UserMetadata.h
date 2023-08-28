@@ -10,13 +10,19 @@ class UserMetadata : public HsmItem, public Model {
   public:
     UserMetadata();
 
+    UserMetadata(const UserMetadata& other);
+
     static std::string get_type();
 
     const Map& data() const;
 
     const std::string& object() const;
 
+    UserMetadata& operator=(const UserMetadata& other);
+
   private:
+    void init();
+
     ScalarMapField m_data{"data"};
 
     ForeignKeyField m_object{"object", HsmItem::hsm_object_name};

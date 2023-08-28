@@ -36,6 +36,8 @@ class Model : public SerializeableWithFields {
 
     std::string get_parent_id() const;
 
+    std::string get_child_id_by_type(const std::string& type) const;
+
     void get_foreign_key_fields(VecForeignKeyContext& fields) const;
 
     void get_foreign_key_proxy_fields(VecKeyValuePair& fields) const;

@@ -367,6 +367,29 @@ void KeyValueCrudClient::create(
     crud_response.ids() = ids;
 }
 
+void KeyValueCrudClient::process_update_ids(
+    const CrudRequest& crud_request, std::vector<std::string>& ids) const
+{
+    auto item_template = m_adapters->get_model_factory()->create();
+
+    for (const auto& id : crud_request.get_ids()) {
+        if (id.has_primary_key()) {
+            ids.push_back(id.get_primary_key());
+        }
+        else if (id.has_parent_primary_key()) {
+            const auto id_from_parent = get_id_from_parent_id(
+                item_template->get_parent_type(), get_type(),
+                id.get_parent_primary_key(), crud_request.get_user_context());
+            if (id_from_parent.empty()) {
+                throw std::runtime_error(
+                    "Failed to find item id for parent id: "
+                    + id.get_parent_primary_key());
+            }
+            ids.push_back(id_from_parent);
+        }
+    }
+}
+
 void KeyValueCrudClient::update(
     const CrudRequest& crud_request,
     CrudResponse& crud_response,
@@ -379,9 +402,7 @@ void KeyValueCrudClient::update(
         }
     }
     else {
-        for (const auto& id : crud_request.get_ids()) {
-            ids.push_back(id.get_primary_key());
-        }
+        process_update_ids(crud_request, ids);
     }
 
     std::vector<std::string> string_get_keys;
@@ -399,6 +420,14 @@ void KeyValueCrudClient::update(
         [](bool v) { return !v; });
     if (any_false) {
         throw std::runtime_error("Attempted to update a non-existing resource");
+    }
+
+    Dictionary attributes_dict;
+    if (crud_request.get_attributes().has_content()) {
+        auto adapter = get_adapter(crud_request.get_attributes().get_format());
+        adapter->dict_from_string(
+            crud_request.get_attributes().get_buffer(), attributes_dict,
+            crud_request.get_attributes().get_key_prefix());
     }
 
     VecModelPtr db_items;
@@ -419,8 +448,14 @@ void KeyValueCrudClient::update(
                 modified_dict, Serializeable::Format::MODIFIED);
 
             modified_dict.merge(update_context_dict);
-
             db_item->deserialize(modified_dict);
+            count++;
+        }
+    }
+    else {
+        for (auto& db_item : db_items) {
+            update_context_dict.merge(attributes_dict);
+            db_item->deserialize(update_context_dict);
             count++;
         }
     }

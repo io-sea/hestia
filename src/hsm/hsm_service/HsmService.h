@@ -104,6 +104,15 @@ class HsmService : public CrudService {
 
     const std::string& get_tier_id(uint8_t tier) const;
 
+    void set_action_error(
+        const CrudUserContext& user_context,
+        const std::string& action_id,
+        const std::string& message);
+
+    void set_action_finished_ok(const std::string& action_id);
+
+    void set_action_progress(const std::string& action_id, std::size_t bytes);
+
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;

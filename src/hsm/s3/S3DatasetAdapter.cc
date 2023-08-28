@@ -17,7 +17,7 @@ S3DatasetAdapter::Ptr S3DatasetAdapter::create(
 }
 
 void S3DatasetAdapter::dict_from_string(
-    const std::string& input, Dictionary& dict) const
+    const std::string& input, Dictionary& dict, const std::string&) const
 {
     (void)input;
     (void)dict;

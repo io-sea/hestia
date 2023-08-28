@@ -151,6 +151,7 @@ void HestiaCli::add_crud_commands(
     update_cmd->add_option(
         "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
+    update_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_update"] = update_cmd;
 
     auto read_cmd =

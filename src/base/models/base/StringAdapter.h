@@ -54,7 +54,9 @@ class StringAdapter {
     virtual bool matches_query(const Model& item, const Map& query) const;
 
     virtual void dict_from_string(
-        const std::string& input, Dictionary& dict) const = 0;
+        const std::string& input,
+        Dictionary& dict,
+        const std::string& key_prefix = {}) const = 0;
 
     virtual void dict_to_string(
         const Dictionary& dict, std::string& output) const = 0;
@@ -77,7 +79,9 @@ class JsonAdapter : public StringAdapter {
         const Dictionary& dict, std::string& output) const override;
 
     void dict_from_string(
-        const std::string& input, Dictionary& dict) const override;
+        const std::string& input,
+        Dictionary& dict,
+        const std::string& key_prefix = {}) const override;
 };
 
 class KeyValueAdapter : public StringAdapter {
@@ -90,7 +94,9 @@ class KeyValueAdapter : public StringAdapter {
         const Dictionary& dict, std::string& output) const override;
 
     void dict_from_string(
-        const std::string& input, Dictionary& dict) const override;
+        const std::string& input,
+        Dictionary& dict,
+        const std::string& key_prefix = {}) const override;
 };
 
 class AdapterCollection {

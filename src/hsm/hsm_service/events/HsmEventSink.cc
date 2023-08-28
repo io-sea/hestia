@@ -7,6 +7,7 @@
 #include "YamlUtils.h"
 
 #include "HsmItem.h"
+#include "HsmService.h"
 
 #include <string>
 
@@ -127,7 +128,6 @@ void on_object_remove(Dictionary& dict, const std::string& id)
 {
     dict.set_tag("remove");
 
-    // ID Field
     set_id(dict, id);
 
     Map xattrs;
@@ -137,6 +137,33 @@ void on_object_remove(Dictionary& dict, const std::string& id)
     set_xattrs(dict, xattrs);
 }
 
+void HsmEventSink::on_user_metadata_update(
+    const CrudUserContext& user_context,
+    Dictionary& dict,
+    const std::string& id,
+    const Map& metadata)
+{
+    auto metadata_service = m_hsm_service->get_service(HsmItem::Type::METADATA);
+
+    CrudIdentifier crud_id(id);
+    auto response = metadata_service->make_request(
+        CrudRequest{CrudMethod::IDENTIFY, user_context, {crud_id}});
+    if (!response->found()) {
+        throw std::runtime_error(
+            "Failed to find requested item in event sink check");
+    }
+
+    if (response->parent_ids().size() != 1) {
+        throw std::runtime_error("Unexpected number of parent ids in reponse");
+    }
+
+    dict.set_tag("update");
+
+    set_id(dict, response->parent_ids()[0]);
+
+    set_xattrs(dict, metadata);
+}
+
 bool HsmEventSink::will_handle(
     const std::string& subject_type, CrudMethod method) const
 {
@@ -144,6 +171,11 @@ bool HsmEventSink::will_handle(
         if (method == CrudMethod::CREATE || method == CrudMethod::REMOVE) {
             return true;
         }
+    }
+    else if (
+        subject_type == HsmItem::user_metadata_name
+        && method == CrudMethod::UPDATE) {
+        return true;
     }
     return false;
 }
@@ -157,7 +189,6 @@ void HsmEventSink::on_event(const CrudEvent& event)
             LOG_INFO("Got hsm object create");
 
             std::string out;
-
             std::size_t count{0};
             for (const auto& id : event.get_ids()) {
                 Dictionary output_dict;
@@ -192,6 +223,30 @@ void HsmEventSink::on_event(const CrudEvent& event)
             output_file.open(m_output_file, std::ios::app);
             output_file << out;
         }
+    }
+    else if (
+        event.get_subject_type() == HsmItem::user_metadata_name
+        && event.get_method() == CrudMethod::UPDATE) {
+        LOG_INFO("Got metadata update");
+        return;
+
+        std::string out;
+        std::size_t count{0};
+        for (const auto& id : event.get_ids()) {
+            Dictionary output_dict;
+            output_dict.set_map_item("root", Dictionary::create());
+            auto root = output_dict.get_map_item("root");
+            on_user_metadata_update(
+                event.get_user_context(), *root, id,
+                event.get_modified_attrs()[count]);
+            count++;
+
+            YamlUtils::dict_to_yaml(output_dict, out, sorted);
+        }
+
+        std::ofstream output_file;
+        output_file.open(m_output_file, std::ios::app);
+        output_file << out;
     }
 }
 

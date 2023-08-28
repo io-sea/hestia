@@ -108,8 +108,11 @@ which will build an RPM and/or TGZ depending on the platform. The CMake Option `
 Hestia's source code can be packaged as a source RPM/TGZ by running: 
 
 ```bash
+cmake -DHESTIA_USE_SRC_RPM_SPEC=ON .
 make package_source
 ```
+
+The extra CMake flag is to use a custom spec file, it should be turned off again if building a binary RPM.
 
 ### Packaging on Gitlab
 

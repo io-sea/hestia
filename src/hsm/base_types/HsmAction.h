@@ -58,6 +58,10 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     bool is_data_put_action() const;
 
+    void on_error(const std::string& message);
+
+    void on_finished_ok();
+
     bool has_action() const;
 
     void set_action(Action action);
@@ -92,6 +96,7 @@ class HsmAction : public HsmItem, public OwnableModel {
     UIntegerField m_source_tier{"source_tier"};
     UIntegerField m_target_tier{"target_tier"};
     StringField m_subject_key{"subject_key"};
+    StringField m_status_message{"status_message"};
     BooleanField m_is_request{"is_request", false};
 
     static constexpr char trigger_migration_key[] = "trigger_migration";

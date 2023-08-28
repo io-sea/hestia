@@ -90,6 +90,43 @@ Dictionary::Ptr CrudClient::create_child(
         *create_response->dict()->get_sequence()[0]);
 }
 
+std::string CrudClient::get_id_from_parent_id(
+    const std::string& parent_type,
+    const std::string& child_type,
+    const std::string& id,
+    const CrudUserContext& user_context) const
+{
+    const auto parent_service_iter = m_parent_services.find(parent_type);
+    if (parent_service_iter == m_parent_services.end()) {
+        THROW_WITH_SOURCE_LOC(
+            "Attempted to find parent of type: " + parent_type
+            + " but parent service not registered.");
+    }
+
+    auto get_response = parent_service_iter->second->make_request(CrudRequest{
+        CrudQuery{id, CrudQuery::OutputFormat::ITEM}, user_context});
+    if (!get_response->ok()) {
+        throw std::runtime_error(
+            "Failed to get default parent: "
+            + get_response->get_error().to_string());
+    }
+
+    if (get_response->found()) {
+        if (get_response->items().size() == 1) {
+            return get_response->items()[0]->get_child_id_by_type(child_type);
+        }
+        else {
+            LOG_WARN(
+                "Unexpected number of return items in parent get: "
+                << get_response->items().size())
+        }
+    }
+    else {
+        LOG_WARN("Failed to find parent object");
+    }
+    return {};
+}
+
 void CrudClient::get_or_create_default_parent(
     const std::string& type, const std::string& user_id)
 {

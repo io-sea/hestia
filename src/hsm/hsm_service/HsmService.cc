@@ -519,6 +519,38 @@ void HsmService::on_get_data_complete(
     completion_func(HsmActionResponse::create(req, working_action));
 }
 
+void HsmService::set_action_error(
+    const CrudUserContext& user_context,
+    const std::string& action_id,
+    const std::string& message)
+{
+    auto action_service = get_service(HsmItem::Type::ACTION);
+
+    const auto action_read = action_service->make_request(CrudRequest{
+        CrudQuery{CrudIdentifier(action_id), CrudQuery::OutputFormat::ITEM},
+        user_context});
+    if (!action_read->ok()) {
+        throw std::runtime_error("Failed to get action for error assignment");
+    }
+
+    if (!action_read->found()) {
+        throw std::runtime_error("Failed to find action for error assignment");
+    }
+
+    auto action = *action_read->get_item_as<HsmAction>();
+    action.on_error(message);
+
+    const auto action_update = action_service->make_request(CrudRequest{
+        CrudMethod::UPDATE, user_context, {CrudIdentifier(action_id)}});
+    if (!action_update->ok()) {
+        throw std::runtime_error("Failed to get action for error assignment");
+    }
+}
+
+void HsmService::set_action_finished_ok(const std::string&) {}
+
+void HsmService::set_action_progress(const std::string&, std::size_t) {}
+
 HsmActionResponse::Ptr HsmService::move_data(
     const HsmActionRequest& req) const noexcept
 {

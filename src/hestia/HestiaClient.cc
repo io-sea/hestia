@@ -175,6 +175,18 @@ OpStatus HestiaClient::update(
         service = m_hsm_service;
     }
     if (service != nullptr) {
+        if (ids.size() == 1) {
+            LOG_INFO("Doing update with id: " << ids[0].get_primary_key());
+        }
+        else {
+            LOG_INFO("Doing update with: " << ids.size() << " ids.");
+        }
+        LOG_INFO("Attribute format is: " << attributes.get_format_as_string());
+
+        if (subject.m_hsm_type == HsmItem::Type::METADATA) {
+            attributes.set_key_prefix("data");
+        }
+
         const auto response = service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE, m_user_service->get_current_user_context(),

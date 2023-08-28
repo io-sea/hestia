@@ -16,7 +16,9 @@ class S3ObjectAdapter : public StringAdapter {
     static Ptr create(const std::string& metadata_prefix = {});
 
     void dict_from_string(
-        const std::string& input, Dictionary& dict) const override;
+        const std::string& input,
+        Dictionary& dict,
+        const std::string& key_prefix = {}) const override;
 
     void dict_to_string(
         const Dictionary& dict, std::string& output) const override;

@@ -77,7 +77,7 @@ hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --tier 1 --file my_f
 Add some user metadata to the object:
 
 ```bash
-hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 my_key=my_value
+hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< my_key0,my_value0
 ```
 
 Hestia provides several interfaces including:

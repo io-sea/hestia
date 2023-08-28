@@ -71,6 +71,9 @@ class KeyValueCrudClient : public CrudClient {
         const Dictionary& attributes,
         Dictionary& content) const;
 
+    void process_update_ids(
+        const CrudRequest& request, std::vector<std::string>& ids) const;
+
     void process_empty(
         std::vector<std::string>& ids,
         Fields& fields,
