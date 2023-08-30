@@ -9,7 +9,7 @@ add_module(
         client/CrudClient.h
         client/HttpCrudClient.h 
         client/HttpCrudPath.h 
-        client/KeyValueCrudClient.h 
+        client/key_value/KeyValueCrudClient.h 
         events/CrudEvent.h 
         events/EventFeed.h 
         events/EventSink.h
@@ -31,7 +31,12 @@ add_module(
         client/CrudClient.cc
         client/HttpCrudClient.cc 
         client/HttpCrudPath.cc
-        client/KeyValueCrudClient.cc
+        client/key_value/KeyValueCrudClient.cc
+        client/key_value/KeyValueFieldContext.cc
+        client/key_value/KeyValueCreateContext.cc
+        client/key_value/KeyValueReadContext.cc
+        client/key_value/KeyValueRemoveContext.cc
+        client/key_value/KeyValueUpdateContext.cc
         events/CrudEvent.cc 
         events/EventFeed.cc
         events/EventSink.cc
@@ -46,6 +51,7 @@ add_module(
         service/CrudServiceWithUser.cc
     INTERNAL_INCLUDE_DIRS 
         client
+        client/key_value
         events
         requests
         service

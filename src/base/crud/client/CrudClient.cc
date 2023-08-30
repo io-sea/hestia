@@ -150,7 +150,10 @@ void CrudClient::get_or_create_default_parent(
                 "Attempted to find default parent for type: " + type
                 + " but no default name set");
         }
+        LOG_INFO(
+            "Searching for default parent with name: " << parent_default_name);
         id = CrudIdentifier(parent_default_name, CrudIdentifier::Type::NAME);
+        id.set_parent_primary_key(user_id);
     }
 
     auto get_response = parent_service_iter->second->make_request(

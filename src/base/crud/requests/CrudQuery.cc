@@ -71,6 +71,12 @@ CrudAttributes& CrudQuery::attributes()
     return m_attributes;
 }
 
+bool CrudQuery::expects_single_item() const
+{
+    return (is_id() && ids().size() == 1)
+           || (is_filter() && get_format() == CrudQuery::Format::GET);
+}
+
 const VecCrudIdentifier& CrudQuery::ids() const
 {
     return m_ids;

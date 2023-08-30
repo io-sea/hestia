@@ -18,7 +18,7 @@ std::vector<std::vector<std::string>>& KeyValueStoreResponse::ids()
     return m_ids;
 }
 
-const std::vector<std::string>& KeyValueStoreResponse::items() const
+const std::vector<std::string>& KeyValueStoreResponse::get_items() const
 {
     return m_items;
 }

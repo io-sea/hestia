@@ -49,6 +49,8 @@ class CrudQuery {
 
     CrudAttributes& attributes();
 
+    bool expects_single_item() const;
+
     static Format format_from_string(const std::string& input);
 
     const Map& get_filter() const;

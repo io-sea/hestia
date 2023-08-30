@@ -199,8 +199,6 @@ TEST_CASE_METHOD(
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(create_response1->ok());
 
-    // std::cout << m_kv_store_client.dump() << std::endl;
-
     auto created_model1 =
         create_response1->get_item_as<hestia::mock::MockModel>();
     REQUIRE(created_model1->get_creation_time() == 1);
@@ -448,6 +446,8 @@ TEST_CASE_METHOD(
             {},
             hestia::CrudQuery::OutputFormat::ITEM});
     REQUIRE(child_response->ok());
+
+    std::cout << m_service->m_kv_store_client->dump() << std::endl;
 
     hestia::CrudQuery query(
         hestia::CrudIdentifier(response->get_item()->id()),

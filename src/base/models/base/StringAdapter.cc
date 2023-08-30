@@ -27,6 +27,18 @@ void StringAdapter::to_string(
 }
 
 void StringAdapter::to_dict(
+    const Model& item,
+    Dictionary& output,
+    const Dictionary& override,
+    Serializeable::Format format_in) const
+{
+    const auto format =
+        format_in == Serializeable::Format::UNSET ? m_format : format_in;
+    item.serialize(output, format);
+    output.merge(override);
+}
+
+void StringAdapter::to_dict(
     const VecModelPtr& items,
     Dictionary& output,
     const std::vector<Dictionary>& overrides,
@@ -84,19 +96,6 @@ void StringAdapter::to_string(
     Dictionary dict;
     to_dict(item, dict, override, format_in);
     dict_to_string(dict, output);
-}
-
-void StringAdapter::to_dict(
-    const Model& item,
-    Dictionary& output,
-    const Dictionary& override,
-    Serializeable::Format format_in) const
-{
-    const auto format =
-        format_in == Serializeable::Format::UNSET ? m_format : format_in;
-
-    item.serialize(output, format);
-    output.merge(override);
 }
 
 void StringAdapter::from_string(

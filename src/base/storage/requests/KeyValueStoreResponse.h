@@ -19,7 +19,7 @@ class KeyValueStoreResponse : public Response<CrudErrorCode> {
 
     std::vector<std::vector<std::string>>& ids();
 
-    const std::vector<std::string>& items() const;
+    const std::vector<std::string>& get_items() const;
 
     std::vector<std::string>& items();
 
