@@ -60,7 +60,7 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     void on_error(const std::string& message);
 
-    void on_finished_ok();
+    void on_finished_ok(std::size_t bytes_transferred);
 
     bool has_action() const;
 

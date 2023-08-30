@@ -253,8 +253,9 @@ HestiaClientCommand::parse_read_inputs(
         CrudAttributes::Format::JSON};
     if (output_format == HestiaClientCommand::OutputFormat::KEY_VALUE
         || output_format == HestiaClientCommand::OutputFormat::ID_KEY_VALUE) {
-        query.set_attributes_output_format(attribute_output_format);
+        attribute_output_format = CrudAttributes::Format::KEY_VALUE;
     }
+    query.set_attributes_output_format(attribute_output_format);
 
     CrudIdentifier::InputFormat id_format{CrudIdentifier::InputFormat::ID};
     if (!m_id_format.empty()) {

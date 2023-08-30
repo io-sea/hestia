@@ -39,7 +39,7 @@ HttpResponse::Ptr HestiaHsmActionView::on_get(
     if (path.empty() || path == "/") {
         Map action_map;
         request.get_header().get_data().copy_with_prefix(
-            "hestia.hsm_action.", action_map);
+            {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
             if (event == HttpEvent::HEADERS) {
@@ -70,7 +70,7 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
     if (path.empty() || path == "/") {
         Map action_map;
         request.get_header().get_data().copy_with_prefix(
-            "hestia.hsm_action.", action_map);
+            {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
             if (event == HttpEvent::HEADERS) {

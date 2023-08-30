@@ -8,10 +8,12 @@ KeyValueReadContext::KeyValueReadContext(
     const AdapterCollection* adapters,
     const std::string& key_prefix,
     dbGetItemFunc db_get_item_func,
-    dbGetSetsFunc db_get_sets_func) :
+    dbGetSetsFunc db_get_sets_func,
+    idFromParentIdFunc id_from_parent_id_func) :
     KeyValueFieldContext(adapters, key_prefix),
     m_db_get_item_func(db_get_item_func),
-    m_db_get_sets_func(db_get_sets_func)
+    m_db_get_sets_func(db_get_sets_func),
+    m_id_from_parent_id_func(id_from_parent_id_func)
 {
 }
 
@@ -27,7 +29,7 @@ bool KeyValueReadContext::serialize_request(const CrudRequest& request)
 
     const auto& query = request.get_query();
     if (query.is_id()) {
-        if (!serialize_ids(query)) {
+        if (!serialize_ids(query, request.get_user_context())) {
             return false;
         }
     }
@@ -44,13 +46,25 @@ bool KeyValueReadContext::serialize_request(const CrudRequest& request)
     return true;
 }
 
-bool KeyValueReadContext::serialize_ids(const CrudQuery& query)
+bool KeyValueReadContext::serialize_ids(
+    const CrudQuery& query, const CrudUserContext& user_context)
 {
+    auto item_template = m_adapters->get_model_factory()->create();
+
     for (const auto& id : query.ids()) {
-        std::string working_id = id.get_primary_key();
-        if (working_id.empty() && id.has_name()) {
+        std::string working_id;
+        if (id.has_primary_key()) {
+            working_id = id.get_primary_key();
+        }
+        else if (id.has_name()) {
             working_id = get_id_from_name(id);
         }
+        else if (id.has_parent_primary_key()) {
+            working_id = m_id_from_parent_id_func(
+                item_template->get_parent_type(), m_adapters->get_type(),
+                id.get_parent_primary_key(), user_context);
+        }
+
         if (working_id.empty()) {
             return false;
         }

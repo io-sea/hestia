@@ -160,6 +160,8 @@ void HestiaCli::add_crud_commands(
         "--query_fmt", m_client_command.m_input_format,
         "Query Format Specifier");
     read_cmd->add_option(
+        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+    read_cmd->add_option(
         "--output_fmt", m_client_command.m_output_format,
         "Output Format Specifier");
     read_cmd->add_option(

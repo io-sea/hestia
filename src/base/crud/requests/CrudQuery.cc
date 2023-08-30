@@ -5,18 +5,18 @@ namespace hestia {
 
 CrudQuery::CrudQuery(
     OutputFormat output_format, CrudAttributes::Format attributes_format) :
-    m_attributes_output_format(attributes_format),
     m_output_format(output_format)
 {
+    m_attributes.set_format(attributes_format);
 }
 
 CrudQuery::CrudQuery(
     const CrudIdentifier& identifier,
     OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    m_attributes_output_format(attributes_format),
     m_output_format(output_format)
 {
+    m_attributes.set_format(attributes_format);
     m_ids    = {identifier};
     m_format = Format::ID;
 }
@@ -25,10 +25,9 @@ CrudQuery::CrudQuery(
     const VecCrudIdentifier& identifiers,
     OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    m_attributes_output_format(attributes_format),
-    m_output_format(output_format),
-    m_ids(identifiers)
+    m_output_format(output_format), m_ids(identifiers)
 {
+    m_attributes.set_format(attributes_format);
     m_format = Format::ID;
 }
 
@@ -37,10 +36,9 @@ CrudQuery::CrudQuery(
     Format format,
     OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    m_attributes_output_format(attributes_format),
-    m_output_format(output_format),
-    m_filter(filter)
+    m_output_format(output_format), m_filter(filter)
 {
+    m_attributes.set_format(attributes_format);
     m_format = format;
 }
 
@@ -49,9 +47,9 @@ CrudQuery::CrudQuery(
     Format format,
     OutputFormat output_format,
     CrudAttributes::Format attributes_format) :
-    m_attributes_output_format(attributes_format),
     m_output_format(output_format)
 {
+    m_attributes.set_format(attributes_format);
     m_filter.set_item(filter.first, filter.second);
     m_format = format;
 }
@@ -157,7 +155,7 @@ void CrudQuery::set_output_format(OutputFormat output_format)
 
 void CrudQuery::set_attributes_output_format(CrudAttributes::Format format)
 {
-    m_attributes_output_format = format;
+    m_attributes.set_format(format);
 }
 
 void CrudQuery::set_ids(const VecCrudIdentifier& ids)

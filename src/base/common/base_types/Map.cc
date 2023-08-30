@@ -33,11 +33,26 @@ void Map::add_key_prefix(const std::string& prefix)
     }
 }
 
-void Map::copy_with_prefix(const std::string& prefix, Map& copy_to) const
+void Map::copy_with_prefix(
+    const std::vector<std::string>& prefixes,
+    Map& copy_to,
+    const std::string& replacement_prefix,
+    bool remove_prefix) const
 {
     for (const auto& [key, value] : m_data) {
-        if (StringUtils::starts_with(key, prefix)) {
-            copy_to.set_item(StringUtils::remove_prefix(key, prefix), value);
+
+        for (const auto& prefix : prefixes) {
+            if (StringUtils::starts_with(key, prefix)) {
+                if (remove_prefix) {
+                    copy_to.set_item(
+                        replacement_prefix
+                            + StringUtils::remove_prefix(key, prefix),
+                        value);
+                }
+                else {
+                    copy_to.set_item(key, value);
+                }
+            }
         }
     }
 }

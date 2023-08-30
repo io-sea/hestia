@@ -94,7 +94,7 @@ HsmService::~HsmService()
     LOG_INFO("Destroying HsmService");
 }
 
-CrudService* HsmService::get_service(HsmItem::Type type)
+CrudService* HsmService::get_service(HsmItem::Type type) const
 {
     return m_services->get_service(type);
 }
@@ -428,6 +428,10 @@ void HsmService::on_put_data_complete(
             CrudMethod::UPDATE, updated_object, user_context});
     auto response = HsmActionResponse::create(req, working_action);
 
+    set_action_finished_ok(
+        user_context, working_action.get_primary_key(),
+        working_extent.m_length);
+
     LOG_INFO(
         "Finished HSMService PUT | Action ID: "
         + working_action.get_primary_key());
@@ -547,7 +551,33 @@ void HsmService::set_action_error(
     }
 }
 
-void HsmService::set_action_finished_ok(const std::string&) {}
+void HsmService::set_action_finished_ok(
+    const CrudUserContext& user_context,
+    const std::string& action_id,
+    std::size_t bytes) const
+{
+    auto action_service = get_service(HsmItem::Type::ACTION);
+
+    const auto action_read = action_service->make_request(CrudRequest{
+        CrudQuery{CrudIdentifier(action_id), CrudQuery::OutputFormat::ITEM},
+        user_context});
+    if (!action_read->ok()) {
+        throw std::runtime_error("Failed to get action for error assignment");
+    }
+
+    if (!action_read->found()) {
+        throw std::runtime_error("Failed to find action for error assignment");
+    }
+
+    auto action = *action_read->get_item_as<HsmAction>();
+    action.on_finished_ok(bytes);
+
+    const auto action_update = action_service->make_request(CrudRequest{
+        CrudMethod::UPDATE, user_context, {CrudIdentifier(action_id)}});
+    if (!action_update->ok()) {
+        throw std::runtime_error("Failed to get action for error assignment");
+    }
+}
 
 void HsmService::set_action_progress(const std::string&, std::size_t) {}
 

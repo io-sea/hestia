@@ -40,7 +40,7 @@ class HsmService : public CrudService {
 
     virtual ~HsmService();
 
-    CrudService* get_service(HsmItem::Type type);
+    CrudService* get_service(HsmItem::Type type) const;
 
     [[nodiscard]] CrudResponse::Ptr make_request(
         const CrudRequest& request,
@@ -109,7 +109,10 @@ class HsmService : public CrudService {
         const std::string& action_id,
         const std::string& message);
 
-    void set_action_finished_ok(const std::string& action_id);
+    void set_action_finished_ok(
+        const CrudUserContext& user_context,
+        const std::string& action_id,
+        std::size_t bytes) const;
 
     void set_action_progress(const std::string& action_id, std::size_t bytes);
 

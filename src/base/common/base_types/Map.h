@@ -30,7 +30,11 @@ class Map {
 
     void add_key_prefix(const std::string& prefix);
 
-    void copy_with_prefix(const std::string& prefix, Map& copy_to) const;
+    void copy_with_prefix(
+        const std::vector<std::string>& prefixes,
+        Map& copy_to,
+        const std::string& replacement_prefix = {},
+        bool remove_prefix                    = true) const;
 
     /**
      * Return true if there are no key-value entries

@@ -87,9 +87,10 @@ void HsmAction::on_error(const std::string& message)
     m_status_message.update_value(message);
 }
 
-void HsmAction::on_finished_ok()
+void HsmAction::on_finished_ok(std::size_t bytes_transferred)
 {
     m_status.update_value(HsmAction::Status::FINISHED_OK);
+    m_transferred.update_value(bytes_transferred);
 }
 
 bool HsmAction::is_data_management_action() const

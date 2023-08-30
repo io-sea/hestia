@@ -26,6 +26,11 @@ class HsmEventSink : public EventSink {
         const std::string& id,
         const Map& metadata);
 
+    void on_user_metadata_read(
+        const CrudUserContext& user_context,
+        Dictionary& dict,
+        const std::string& id);
+
     HsmService* m_hsm_service{nullptr};
     std::string m_output_file;
 };

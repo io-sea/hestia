@@ -11,16 +11,22 @@
 namespace hestia {
 class KeyValueReadContext : public KeyValueFieldContext {
   public:
-    using dbGetItemFunc = std::function<std::string(const std::string&)>;
-    using dbGetSetsFunc = std::function<void(
+    using dbGetItemFunc      = std::function<std::string(const std::string&)>;
+    using dbGetSetsFunc      = std::function<void(
         const std::vector<std::string>&,
         std::vector<std::vector<std::string>>&)>;
+    using idFromParentIdFunc = std::function<std::string(
+        const std::string&,
+        const std::string&,
+        const std::string&,
+        const CrudUserContext&)>;
 
     KeyValueReadContext(
         const AdapterCollection* adapters,
         const std::string& key_prefix,
         dbGetItemFunc db_get_item_func,
-        dbGetSetsFunc db_get_sets_func);
+        dbGetSetsFunc db_get_sets_func,
+        idFromParentIdFunc id_from_parent_id_func);
 
     bool serialize_request(const CrudRequest& request);
 
@@ -67,7 +73,8 @@ class KeyValueReadContext : public KeyValueFieldContext {
 
     std::string get_id_from_name(const CrudIdentifier& id) const;
 
-    bool serialize_ids(const CrudQuery& query);
+    bool serialize_ids(
+        const CrudQuery& query, const CrudUserContext& user_context);
 
     bool serialize_filter(const CrudQuery& query);
 
@@ -81,5 +88,6 @@ class KeyValueReadContext : public KeyValueFieldContext {
 
     dbGetItemFunc m_db_get_item_func;
     dbGetSetsFunc m_db_get_sets_func;
+    idFromParentIdFunc m_id_from_parent_id_func;
 };
 }  // namespace hestia

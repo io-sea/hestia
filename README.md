@@ -74,10 +74,16 @@ Retrieve the content of the object on tier `1` and write it to `my_file_out.dat`
 hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --tier 1 --file my_file_out.dat 
 ```
 
-Add some user metadata to the object:
+Add some user metadata as a key-value pair (`my_key0 = my_value0`) to the object. Note the use of the `data.` prefix on the key, this is for denoting user/non-system attributes:
 
 ```bash
-hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< my_key0,my_value0
+hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< data.my_key0,my_value0
+```
+
+and read it back:
+
+```bash
+hestia metadata read --id_fmt=parent_id --query_fmt=id --output_fmt=key_value 550e8400-e29b-41d4-a716-446655440000
 ```
 
 Hestia provides several interfaces including:

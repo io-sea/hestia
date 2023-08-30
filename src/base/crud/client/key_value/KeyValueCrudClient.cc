@@ -196,6 +196,7 @@ void KeyValueCrudClient::update(
     }
 
     if (record_modified_attrs) {
+        LOG_INFO("Adding modified attrs");
         assign_modified_attributes(*updated_content, crud_response);
     }
     crud_response.ids() = update_context.get_index_ids();
@@ -215,9 +216,16 @@ void KeyValueCrudClient::read(
             std::vector<std::vector<std::string>>& response) {
             return get_db_sets(keys, response);
         };
+    auto id_from_parent_id_func = [this](
+                                      const std::string& parent_type,
+                                      const std::string& child_type,
+                                      const std::string& id,
+                                      const CrudUserContext& user_context) {
+        return get_id_from_parent_id(parent_type, child_type, id, user_context);
+    };
     KeyValueReadContext read_context(
-        m_adapters.get(), m_config.m_prefix, db_get_item_func,
-        db_get_sets_func);
+        m_adapters.get(), m_config.m_prefix, db_get_item_func, db_get_sets_func,
+        id_from_parent_id_func);
     if (!read_context.serialize_request(request)) {
         read_context.on_empty_read(request.get_query(), crud_response);
         return;
@@ -252,17 +260,22 @@ void KeyValueCrudClient::read(
     read_context.merge_foreign_key_content(foreign_key_content, *read_content);
 
     // Prepare the response
-    auto adapter       = get_adapter(CrudAttributes::Format::JSON);
     auto item_template = m_adapters->get_model_factory()->create();
     read_content->get_scalars(
         item_template->get_primary_key_name(), crud_response.ids());
 
     if (request.get_query().is_attribute_output_format()) {
-        adapter->dict_to_string(
-            *read_content, crud_response.attributes().buffer());
+        LOG_INFO(
+            "Returning attrs in format: "
+            + CrudAttributes::to_string(
+                request.get_query().get_attributes().get_format()));
+        get_adapter(request.get_query().get_attributes().get_format())
+            ->dict_to_string(
+                *read_content, crud_response.attributes().buffer());
     }
     else if (request.get_query().is_item_output_format()) {
-        adapter->from_dict(*read_content, crud_response.items());
+        get_adapter(CrudAttributes::Format::JSON)
+            ->from_dict(*read_content, crud_response.items());
     }
     else if (request.get_query().is_dict_output_format()) {
         crud_response.set_dict(std::move(read_content));
@@ -313,9 +326,16 @@ void KeyValueCrudClient::remove(
 void KeyValueCrudClient::assign_modified_attributes(
     const Dictionary& content, CrudResponse& response) const
 {
-    for (const auto& item : content.get_sequence()) {
+    if (content.get_type() == Dictionary::Type::SEQUENCE) {
+        for (const auto& item : content.get_sequence()) {
+            Map flat_attrs;
+            item->flatten(flat_attrs);
+            response.modified_attrs().push_back(flat_attrs);
+        }
+    }
+    else {
         Map flat_attrs;
-        item->flatten(flat_attrs);
+        content.flatten(flat_attrs);
         response.modified_attrs().push_back(flat_attrs);
     }
 }

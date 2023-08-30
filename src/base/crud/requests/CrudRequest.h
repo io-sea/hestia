@@ -27,7 +27,9 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
             CrudAttributes::Format::JSON);
 
     explicit CrudRequest(
-        const CrudQuery& query, const CrudUserContext& user_context);
+        const CrudQuery& query,
+        const CrudUserContext& user_context,
+        bool update_event_feed = true);
 
     explicit CrudRequest(
         CrudMethod method,
@@ -46,7 +48,10 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
 
     const VecModelPtr& items() const;
 
+    bool should_update_event_feed() const { return m_update_event_feed; }
+
   protected:
+    bool m_update_event_feed{true};
     VecModelPtr m_items;
 };
 }  // namespace hestia

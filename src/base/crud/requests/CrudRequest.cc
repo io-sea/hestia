@@ -28,8 +28,12 @@ CrudRequest::CrudRequest(
 }
 
 CrudRequest::CrudRequest(
-    const CrudQuery& query, const CrudUserContext& user_id) :
-    BaseCrudRequest(user_id, query), MethodRequest<CrudMethod>(CrudMethod::READ)
+    const CrudQuery& query,
+    const CrudUserContext& user_id,
+    bool update_event_feed) :
+    BaseCrudRequest(user_id, query),
+    MethodRequest<CrudMethod>(CrudMethod::READ),
+    m_update_event_feed(update_event_feed)
 {
 }
 

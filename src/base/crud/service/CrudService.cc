@@ -123,7 +123,7 @@ CrudService::~CrudService() {}
         "Finished Subject: " << get_type()
                              << ", Method: " << request.method_as_string());
 
-    if (m_event_feed != nullptr) {
+    if (m_event_feed != nullptr && request.should_update_event_feed()) {
         m_event_feed->on_event(
             CrudEvent(get_type(), request.method(), request, *response));
     }

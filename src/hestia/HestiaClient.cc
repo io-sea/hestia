@@ -183,10 +183,6 @@ OpStatus HestiaClient::update(
         }
         LOG_INFO("Attribute format is: " << attributes.get_format_as_string());
 
-        if (subject.m_hsm_type == HsmItem::Type::METADATA) {
-            attributes.set_key_prefix("data");
-        }
-
         const auto response = service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE, m_user_service->get_current_user_context(),

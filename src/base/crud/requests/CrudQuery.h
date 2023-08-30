@@ -105,8 +105,6 @@ class CrudQuery {
     std::size_t m_count{0};
 
     Format m_format{Format::LIST};
-    CrudAttributes::Format m_attributes_output_format{
-        CrudAttributes::Format::JSON};
     OutputFormat m_output_format{OutputFormat::ATTRIBUTES};
 
     VecCrudIdentifier m_ids;
