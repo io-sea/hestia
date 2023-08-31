@@ -20,6 +20,7 @@ LoggerConfig& LoggerConfig::operator=(const LoggerConfig& other)
         m_log_file_prefix = other.m_log_file_prefix;
         m_active          = other.m_active;
         m_console_only    = other.m_console_only;
+        m_syslog_only     = other.m_syslog_only;
         m_assert          = other.m_assert;
         m_level           = other.m_level;
         init();
@@ -33,6 +34,7 @@ void LoggerConfig::init()
     register_scalar_field(&m_log_file_prefix);
     register_scalar_field(&m_active);
     register_scalar_field(&m_console_only);
+    register_scalar_field(&m_syslog_only);
     register_scalar_field(&m_assert);
     register_scalar_field(&m_level);
 }
@@ -55,6 +57,11 @@ bool LoggerConfig::is_active() const
 bool LoggerConfig::is_console_only() const
 {
     return m_console_only.get_value();
+}
+
+bool LoggerConfig::is_syslog_only() const
+{
+    return m_syslog_only.get_value();
 }
 
 std::string LoggerConfig::get_type()

@@ -84,6 +84,17 @@ install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.service"
         COMPONENT runtime
         )
 
+install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/data/configs/"
+        DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/sample-configs"
+        COMPONENT runtime
+        )
+
+configure_file(infra/cmake/${PROJECT_NAME}d.yaml.in ${PROJECT_NAME}d.yaml @ONLY)
+install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.yaml"
+        DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}"
+        COMPONENT runtime
+        )
+
 set(CPACK_PACKAGE_VENDOR "Irish Centre for High End Computing (ICHEC)")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Hestia (Hierarchical Storage Tiers Interface for Applications)")
 set(CPACK_PACKAGE_DESCRIPTION "Hestia (Hierarchical Storage Tiers Interface for Applications)")
@@ -125,8 +136,8 @@ if(NOT APPLE)
         set(CPACK_RPM_SPEC_MORE_DEFINE "%define test_name test_body")
 
         set(CPACK_RPM_INSTALL_WITH_EXEC ON)
-        set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
-        set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
+        # set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
+        # set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
         set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON")
 
         set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})

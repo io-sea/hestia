@@ -2,6 +2,7 @@
 
 #include "TimeUtils.h"
 
+#include "spdlog/sinks/syslog_sink.h"
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -74,10 +75,17 @@ void Logger::do_initialize(
             "_" + TimeUtils::get_current_time_hr() + ".txt";
         logger_path += suffix;
 
-        auto logger = spdlog::basic_logger_mt(
-            m_context.m_config.get_log_prefix(), logger_path.string(), true);
+        std::shared_ptr<spdlog::logger> logger;
+        if (m_context.m_config.is_syslog_only()) {
+            std::string ident = "hestiad";
+            logger = spdlog::syslog_logger_mt("syslog", ident, LOG_PID);
+        }
+        else {
+            logger = spdlog::basic_logger_mt(
+                m_context.m_config.get_log_prefix(), logger_path.string(),
+                true);
+        }
         m_context.m_logger_impl = logger;
-
         spdlog::set_default_logger(logger);
     }
     switch (m_context.m_config.get_level()) {

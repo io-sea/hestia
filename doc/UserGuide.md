@@ -98,7 +98,7 @@ In all modes the application can read from a user provided `config` file on the 
 
 Internally Hestia uses a custom serialization format which is a subset of JSON to convert between C++ objects and strings. As a result, many Hestia resources can be configured in a fine-grained way by serializing user-provided configs in YAML or JSON format.
 
-The most direct way of providing a configuration is via a `yaml` file - which can be read from disk on launch.
+The most direct way of providing a configuration is via a `yaml` file - which can be read from disk on launch. When launched as a systemd service, Hestia will use the config at `/etc/hestia/hestiad.yaml`, which provides some helpful defaults. 
 
 Since the configuration schema is derived directly from the C++ code, the source code itself is the primary source of documentation for this yaml file, however some core settings are covered here as examples.
 
@@ -112,7 +112,7 @@ Hestia can interface with several Object Store backends at the same time, thus t
 
 ```yaml
 object_store_clients:
-  - identifier: hestia::FilebjectStoreClient
+  - identifier: hestia::FileObjectStoreClient
     backend_type: file
     config:
       root: object_store
@@ -348,14 +348,28 @@ Stop the Hestia service
 hestia stop
 ```
 
+# Hestia as a systemd service
+
+When installed as an RPM package, Hestia will install as service unit file for launching the server, and default configuration for this server at `/etc/hestia/hestiad.yaml`.
+
+This service can be controlled as normal using systemd for example:
+
+```bash
+systemctl enable hestiad # The hestia server will be started on login
+systemctl start hestiad # Start the server (once-off)
+systemctl status hestiad # Check the server's status
+systemctl restart hestiad # Restart the server (will reload the configuration file)
+```
+
+The server can be interfaced with as described in the various APIs above. All logs will be written to the system log, which can be viewed with `journalctl`.  
 # Ansible Deployment
 
-Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/infra/ansible/example-hestia-playbook.yml).  
+Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/examples/sample_ansible_deploy/playbook.yml).  
 ## Usage
 
 ### Hestia Roles in your Playbook
 
-As specified in [the example playbook](/infra/ansible/example-hestia-playbook.yml), we can use the roles `hestia_controller_node` and `hestia_worker_node` given to setup a hestia cluster consisting of one or more controller nodes, each of which owns one or more worker nodes. By default, this will use the Redis key-value store on the controller node.
+As specified in [the example playbook](/examples/sample_ansible_deploy/playbook.yml), we can use the roles `hestia_controller_node` and `hestia_worker_node` given to setup a hestia cluster consisting of one or more controller nodes, each of which owns one or more worker nodes. By default, this will use the Redis key-value store on the controller node.
 
 The playbook syntax to use these roles to configure your controller and worker is as follows, assuming you have a group of hosts defined for `hestia_controllers` and `hestia_workers` in your inventory: 
 
@@ -372,7 +386,7 @@ The playbook syntax to use these roles to configure your controller and worker i
 
 ## Configuration
 
-An example inventory for a two node test setup is provided. The following variables are supported when provided in your inventory variables and are propogated to the relevant config files on the nodes. Specifiying different values for different groups is possible as detailed in the ansible documentation and can even be set differently for individual nodes.
+An example inventory for a three node test setup is provided. The following variables are supported when provided in your inventory variables and are propogated to the relevant config files on the nodes. Specifiying different values for different groups is possible as detailed in the ansible documentation and can even be set differently for individual nodes.
 
 | Variable Name | Default Value | Notes |
 |---|---|---|

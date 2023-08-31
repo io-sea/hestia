@@ -10,6 +10,7 @@ from hestia_tests.utils import BaseTest, install_package, find_package
 
 from hestia_tests.cli_tests import CliTests
 from hestia_tests.sample_app_tests import SampleAppTests
+# from hestia_tests.service_tests import ServiceTests
 # from hestia_tests.server_tests import ServerTests
 # from hestia_tests.s3_tests import S3Tests
 
@@ -33,7 +34,8 @@ class E2eTests(BaseTest):
                         CliTests(self.source_dir, self.work_dir, self.system_install), 
                         SampleAppTests(self.source_dir, self.work_dir, self.system_install),
                         # ServerTests(self.source_dir, self.work_dir, self.system_install),
-                        #S3Tests(self.source_dir, self.work_dir, self.system_install)
+                        # ServiceTests(self.source_dir, self.work_dir, self.system_install),
+                        # S3Tests(self.source_dir, self.work_dir, self.system_install)
                     ]
         
         for eachTest in self.tests:
@@ -84,7 +86,7 @@ if __name__ == "__main__":
     e2e_tests = E2eTests(source_dir, work_dir, package_path)
     e2e_tests.setup_environment()
     e2e_tests.run(
-        test_names = [ "cli_tests", "sample_app_tests"]
+        test_names = [ "cli_tests", "sample_app_tests" ]
     )
 
     logging.info("Finished E2E Tests")

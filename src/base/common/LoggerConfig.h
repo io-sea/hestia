@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EnumUtils.h"
+#include "ScalarField.h"
 #include "SerializeableWithFields.h"
 
 namespace hestia {
@@ -24,6 +25,8 @@ class LoggerConfig : public SerializeableWithFields {
 
     bool is_console_only() const;
 
+    bool is_syslog_only() const;
+
     bool should_assert() const { return m_assert.get_value(); }
 
     void set_log_path(const std::string& path)
@@ -41,6 +44,11 @@ class LoggerConfig : public SerializeableWithFields {
     void set_console_only(bool console_only)
     {
         m_console_only.update_value(console_only);
+    }
+
+    void set_syslog_only(bool syslog_only)
+    {
+        m_syslog_only.update_value(syslog_only);
     }
 
     void set_should_assert_on_error(bool should_assert)
@@ -61,6 +69,7 @@ class LoggerConfig : public SerializeableWithFields {
     BooleanField m_active{"active", true};
     BooleanField m_assert{"assert", false};
     BooleanField m_console_only{"console_only", false};
+    BooleanField m_syslog_only{"syslog_only", false};
     EnumField<Level, Level_enum_string_converter> m_level{"level", Level::INFO};
 };
 }  // namespace hestia

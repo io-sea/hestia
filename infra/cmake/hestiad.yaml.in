@@ -1,0 +1,80 @@
+# Hestia Service Configuration File
+
+# MIT License
+
+# Copyright (c) 2023 Irish Centre for High End Computing (ICHEC), University of Galway, Ireland
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+logger:
+  syslog_only: true
+  active: true
+  level: warn
+
+server:
+  # host_address: 127.0.0.1
+  # host_port: 8080
+  # web_app: hestia::HsmService
+  # backend: hestia::Basic
+  controller: true
+  # tag: controller0
+
+# web_apps:
+#   - identitifier: hestia::HsmService
+#     interface: http
+#   - identitifier: hestia::HsmServiceS3
+#     interface: s3
+
+# server_backends:
+#   - identifier: hestia::Basic
+#   - identifier: hestia::Proxygen
+
+tiers:
+  - name: "0"
+  - name: "1"
+  - name: "2"
+  - name: "3"
+  - name: "4"
+
+object_store_backends:
+  - type: file_hsm
+    tier_names: ["0", "1", "2", "3", "4"]
+    config:
+      root: hsm_object_store
+  # - type: file
+  #   config:
+  #     root: object_store
+  # - type: s3
+  # - type: phobos
+  # - type: mock_phobos
+  # - type: mock_motr
+  # - type: motr
+
+key_value_store:
+  client_identifier: hestia::FileKeyValueStoreClient
+
+key_value_store_clients:
+  - identifier: hestia::FileKeyValueStoreClient
+    type: file
+    config:
+      root: key_value_store
+
+# event_feed:
+#   event_feed_path: event_feed.yaml
+#   active: true
