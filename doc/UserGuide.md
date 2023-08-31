@@ -31,7 +31,7 @@ This is the `Hestia` user guide, it covers:
 
 The Core Concepts in Hestia are derived from the [IO-SEA](https://iosea-project.eu) project.
 
-Hestia provides `Object Store` and a `Key-Value Store` abstractions. Data blobs are kept in an Object Store, addressed with a `unique identifier`. `Metadata` is maintained in a Key-Value store, referencing the identifiers of the data-blobs in the Object Store.
+Hestia provides `Object Store` and `Key-Value Store` abstractions. Data blobs are kept in an Object Store, addressed with a `unique identifier`. `Metadata` is maintained in a Key-Value store.
 
 Objects can be grouped in a `Dataset`. Object addressing in a Dataset is through `User` scoped keys or paths, which are defined via a `Namespace`. This concept has parallels with `S3` buckets and objects, but allows for more general addressing such as with POSIX filesystem semantics.
 
@@ -58,7 +58,7 @@ The figure below shows the abstractions used in Hestia and their relationships.
 * `Object` : A Storage object - it can point to a single object with data split over several storage tiers and also hold object metadata.
 * `Namespace` : An addressing scheme (e.g. POSIX path) and permissions for Objects in a Dataset.
 * `Extent` : An Object's data on a particular Storage Tier - it is a collection of block offsets and lengths, allowing random access for data put and get operations where supported by the third-party object store backend.
-* `Metadata` : A collection of key-value pairs representing metadata for Object, Datasets etc - it is split from the parent model to allow for quicker access or indexing.
+* `Metadata` : A collection of key-value pairs representing metadata for an Object it is split from the parent model to allow for quicker access or indexing.
 
 In the figure solid lines represent parent-child relationships, which are one-to-many unless explicitly specified one-to-one (x1). 
 
@@ -179,8 +179,8 @@ Hestia will optinally log resource-altering events to a YAML file specified by `
 
 ```yaml
 event_feed:
-  event_feed_path: event_feed.yaml
-  event_feed_active: y
+  path: event_feed.yaml
+  active: y
 ```
 
 For an annotated example of the output of this event logger please see [here](Markdown/event_feed_format.md).  
@@ -192,7 +192,7 @@ For an annotated example of the output of this event logger please see [here](Ma
 The `hestia` application provides a command line interface supporting:
 
 * CRUD operations on all Hestia abstractions (models)
-* A HSM Action (put, get, copy, move, release data) API for Objects and Datasets
+* A `HSM Action` (put, get, copy, move, release data) API for Objects and Datasets
 * Server and Deamon control
 
 A simple example is shown in the top-level README in the project.

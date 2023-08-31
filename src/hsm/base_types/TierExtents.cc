@@ -63,6 +63,7 @@ void TierExtents::remove_extent(const Extent& extent)
 {
     if (m_extents.container().size() == 1) {
         m_extents.get_container_as_writeable().erase(extent.m_offset);
+        m_extents.get_container_as_writeable()[0] = Extent(0, 0);
     }
 }
 

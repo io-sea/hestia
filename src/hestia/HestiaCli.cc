@@ -61,7 +61,7 @@ void HestiaCli::add_hsm_actions(
             case HsmAction::Action::RELEASE_DATA:
                 commands[tag] = command->add_subcommand(
                     action_name, "Release a " + subject + " from a tier");
-                add_move_data_options(commands[tag]);
+                add_release_data_options(commands[tag]);
                 break;
             case HsmAction::Action::CRUD:
             case HsmAction::Action::NONE:

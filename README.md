@@ -60,9 +60,22 @@ Add data from `my_file_in.dat` to this object. By default it will go to the 'fas
 
 ```bash
 hestia object put_data 550e8400-e29b-41d4-a716-446655440000 --file my_file_in.dat
+>>> 43e006fa-8ca7-d57b-6c5b-491a0881dc9f
 ```
 
-Copy the contents of the object to another Storage Tier, tier `1`:
+A unique identifier for the corresponding `HsmAction` will be returned in the shell, it can be queried to get the status and further information on the transfer:
+
+```bash
+hestia action read --output_fmt=json 43e006fa-8ca7-d57b-6c5b-491a0881dc9f
+```
+
+We can also query the object to see where the data has been written to:
+
+```bash
+hestia object read --output_fmt=json 550e8400-e29b-41d4-a716-446655440000
+```
+
+Next, copy the contents of the object to another Storage Tier, tier `1`:
 
 ```bash
 hestia object copy_data 550e8400-e29b-41d4-a716-446655440000 --source 0 --target 1
@@ -74,19 +87,21 @@ Retrieve the content of the object on tier `1` and write it to `my_file_out.dat`
 hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --tier 1 --file my_file_out.dat 
 ```
 
-Add some user metadata as a key-value pair (`my_key0 = my_value0`) to the object. Note the use of the `data.` prefix on the key, this is for denoting user/non-system attributes:
+Now, add some user metadata as a key-value pair (`my_key0 = my_value0`) to the object. Note the use of the `data.` prefix on the key, this is for denoting user/non-system attributes:
 
 ```bash
 hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< data.my_key0,my_value0
 ```
 
-and read it back:
+Here we are reading the `metadata` type, but referencing the unique identifier of its parent object with `--id_fmt=parent_id`.
+
+Finally we can read it back:
 
 ```bash
 hestia metadata read --id_fmt=parent_id --query_fmt=id --output_fmt=key_value 550e8400-e29b-41d4-a716-446655440000
 ```
 
-Hestia provides several interfaces including:
+Hestia provides several interfaces with similar functionality to the CLI, including:
 
 * `c` and `Python` APIs
 * `HTTP REST` API

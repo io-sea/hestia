@@ -1,5 +1,7 @@
 #include "KeyValueUpdateContext.h"
 
+#include <iostream>
+
 namespace hestia {
 
 KeyValueUpdateContext::KeyValueUpdateContext(
@@ -11,7 +13,8 @@ KeyValueUpdateContext::KeyValueUpdateContext(
 {
 }
 
-void KeyValueUpdateContext::serialize_request(const CrudRequest& request)
+void KeyValueUpdateContext::serialize_request(
+    const CrudRequest& request, Dictionary& output_content)
 {
     if (request.has_items()) {
         for (const auto& item : request.items()) {
@@ -35,6 +38,15 @@ void KeyValueUpdateContext::serialize_request(const CrudRequest& request)
                 }
                 m_index_ids.push_back(id_from_parent);
             }
+        }
+
+        if (request.get_attributes().has_content()) {
+            const auto adapter =
+                m_adapters->get_adapter(CrudAttributes::to_string(
+                    request.get_attributes().get_format()));
+            adapter->dict_from_string(
+                request.get_attributes().get_buffer(), output_content,
+                request.get_attributes().get_key_prefix());
         }
     }
     for (const auto& id : m_index_ids) {

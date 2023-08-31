@@ -147,22 +147,15 @@ void KeyValueCrudClient::update(
                                       const CrudUserContext& user_context) {
         return get_id_from_parent_id(parent_type, child_type, id, user_context);
     };
+
+    auto content = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
     KeyValueUpdateContext update_context(
         m_adapters.get(), m_config.m_prefix, id_from_parent_id_func);
-    update_context.serialize_request(crud_request);
+    update_context.serialize_request(crud_request, *content);
 
     // Get the queried items from the db.
     VecModelPtr db_items;
     get_db_items(update_context.get_index_keys(), db_items);
-
-    // If there are attributes in the request collect them
-    Dictionary input_attributes;
-    if (crud_request.get_attributes().has_content()) {
-        auto adapter = get_adapter(crud_request.get_attributes().get_format());
-        adapter->dict_from_string(
-            crud_request.get_attributes().get_buffer(), input_attributes,
-            crud_request.get_attributes().get_key_prefix());
-    }
 
     // Prepare overrides for update content, e.g. last modified time
     Dictionary update_overrides;
@@ -172,8 +165,8 @@ void KeyValueCrudClient::update(
     auto updated_content = std::make_unique<Dictionary>();
     std::vector<KeyValuePair> string_set_query;
     update_context.prepare_db_query(
-        crud_request, input_attributes, db_items, update_overrides,
-        *updated_content, string_set_query);
+        crud_request, *content, db_items, update_overrides, *updated_content,
+        string_set_query);
 
     // Do the db query
     const auto set_response = m_client->make_request(

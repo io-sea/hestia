@@ -19,7 +19,8 @@ class KeyValueUpdateContext : public KeyValueFieldContext {
         const std::string& key_prefix,
         idFromParentIdFunc id_from_parent_id_func);
 
-    void serialize_request(const CrudRequest& request);
+    void serialize_request(
+        const CrudRequest& request, Dictionary& output_content);
 
     void prepare_db_query(
         const CrudRequest& request,

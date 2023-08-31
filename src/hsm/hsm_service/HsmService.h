@@ -96,7 +96,9 @@ class HsmService : public CrudService {
 
     void on_get_data_complete(
         const BaseRequest& req,
+        const CrudUserContext& user_context,
         const HsmAction& working_action,
+        const Extent& extent,
         dataIoCompletionFunc completion_func) const;
 
     CrudResponsePtr get_or_create_action(
