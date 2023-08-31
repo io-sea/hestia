@@ -65,6 +65,11 @@ HttpResponse::Ptr CrudWebView::on_get(
         auto crud_response = m_service->make_request(
             CrudRequest(query, {auth.m_user_id, auth.m_user_token}),
             m_type_name);
+        if (!crud_response->ok()) {
+            return HttpResponse::create(
+                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                 crud_response->get_error().to_string()});
+        }
 
         if (has_id && !crud_response->found()) {
             return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
@@ -87,12 +92,49 @@ HttpResponse::Ptr CrudWebView::on_get(
         auto crud_response = m_service->make_request(
             CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
             m_type_name);
+        if (!crud_response->ok()) {
+            return HttpResponse::create(
+                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                 crud_response->get_error().to_string()});
+        }
         if (!crud_response->found()) {
             return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
         }
         response->set_body(crud_response->attributes().get_buffer());
     }
     return response;
+}
+
+HttpResponse::Ptr CrudWebView::on_delete(
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
+{
+    if (event != HttpEvent::EOM) {
+        return HttpResponse::create(
+            HttpResponse::CompletionStatus::AWAITING_EOM);
+    }
+
+    const auto path = get_path(request);
+    if (path.empty()) {
+        return HttpResponse::create(HttpError::Code::_400_BAD_REQUEST);
+    }
+
+    auto crud_response = m_service->make_request(
+        CrudRequest{
+            CrudMethod::REMOVE,
+            {auth.m_user_id, auth.m_user_token},
+            {CrudIdentifier(path)}},
+        m_type_name);
+    if (!crud_response->ok()) {
+        return HttpResponse::create(
+            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+             crud_response->get_error().to_string()});
+    }
+    if (!crud_response->found()) {
+        return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+    }
+    return HttpResponse::create(HttpError::Code::_204_NO_CONTENT);
 }
 
 HttpResponse::Ptr CrudWebView::on_put(
@@ -110,11 +152,12 @@ HttpResponse::Ptr CrudWebView::on_put(
     auto response = HttpResponse::create();
 
     CrudAttributes attributes;
-
     attributes.set_buffer(request.body());
 
+    const std::string parent_id = request.get_queries().get_item("parent_id");
+
     CrudResponse::Ptr crud_response;
-    if (path.empty()) {
+    if (path.empty() && parent_id.empty()) {
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::CREATE,
@@ -125,7 +168,13 @@ HttpResponse::Ptr CrudWebView::on_put(
             m_type_name);
     }
     else {
-        const CrudIdentifier id(path);
+        CrudIdentifier id;
+        if (!parent_id.empty()) {
+            id.set_parent_primary_key(parent_id);
+        }
+        else {
+            id.set_primary_key(path);
+        }
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE,

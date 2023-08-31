@@ -34,6 +34,8 @@ class CurlHandle {
 
     void prepare_get();
 
+    void prepare_delete();
+
     void prepare_headers(const HttpHeader& headers);
 
     void setup();

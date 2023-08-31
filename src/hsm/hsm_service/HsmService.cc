@@ -596,13 +596,12 @@ HsmActionResponse::Ptr HsmService::move_data(
         "Starting HSMService MOVE DATA: " + req.to_string() + " | "
         + req.get_action().get_subject_key());
 
-    HsmAction working_action = req.get_action();
-    auto action_response     = get_or_create_action(req, working_action);
+    auto working_action        = req.get_action();
+    const auto action_response = get_or_create_action(req, working_action);
     CRUD_ERROR_CHECK_RETURN(action_response, working_action);
 
-    auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
-
-    auto get_response = object_service->make_request(CrudRequest{
+    auto object_service     = m_services->get_service(HsmItem::Type::OBJECT);
+    const auto get_response = object_service->make_request(CrudRequest{
         CrudQuery(
             req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
         req.get_user_context()});
@@ -612,7 +611,6 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     HsmObjectStoreRequest copy_data_request(
         working_object->id(), HsmObjectStoreRequestMethod::COPY);
-
     auto working_extent = req.extent();
     if (working_extent.empty()) {
         working_extent = {0, working_object->size()};
@@ -620,9 +618,16 @@ HsmActionResponse::Ptr HsmService::move_data(
     copy_data_request.set_extent(working_extent);
     copy_data_request.set_source_tier(req.source_tier());
     copy_data_request.set_target_tier(req.target_tier());
-
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response, working_action);
+
+    HsmObjectStoreRequest release_data_request(
+        working_object->id(), HsmObjectStoreRequestMethod::REMOVE);
+    release_data_request.set_extent(working_extent);
+    release_data_request.set_source_tier(req.source_tier());
+    auto release_data_response =
+        m_object_store->make_request(release_data_request);
+    ERROR_CHECK(release_data_response, working_action);
 
     TierExtents source_extent;
     TierExtents target_extent;
@@ -657,8 +662,8 @@ HsmActionResponse::Ptr HsmService::move_data(
             extent_service->make_request(TypedCrudRequest<TierExtents>(
                 CrudMethod::UPDATE, target_extent, req.get_user_context()));
     }
-
     CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
+
     extent_put_response =
         extent_service->make_request(TypedCrudRequest<TierExtents>(
             CrudMethod::UPDATE, source_extent, req.get_user_context()));

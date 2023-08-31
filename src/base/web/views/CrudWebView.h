@@ -21,6 +21,11 @@ class CrudWebView : public WebView {
         HttpEvent event,
         const AuthorizationContext& auth) override;
 
+    HttpResponse::Ptr on_delete(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
+
   private:
     std::string get_path(const HttpRequest& request) const;
 

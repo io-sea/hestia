@@ -21,6 +21,7 @@ This is the `Hestia` user guide, it covers:
   - [Web Interfaces](#web-interfaces)
     - [REST API](#rest-api)
 - [S3 API](#s3-api)
+- [Hestia as a systemd service](#hestia-as-a-systemd-service)
 - [Ansible Deployment](#ansible-deployment)
   - [Usage](#usage)
     - [Hestia Roles in your Playbook](#hestia-roles-in-your-playbook)
@@ -214,6 +215,14 @@ hestia object create --input_fmt=key_value --output_fmt=json < requested_object_
 with `requested_object_ids.dat` being a new-line-separated sequence of unique identifiers.
 
 When running from the CLI a local `cache` will be created - with a default location in `$HOME/.cache/hestia`. This will contain application logs and, if configured, object and key-value store caches.
+
+When working with a remote server rather than specifying it in the config you can directly point the client to it with an address and port:
+
+```bash
+hestia object create --host=127.0.0.1 --port=8080
+```
+
+for example for a hestia server running on localhost.
 
 ## C and Python Interfaces
 

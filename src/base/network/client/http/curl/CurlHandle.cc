@@ -86,6 +86,15 @@ void CurlHandle::prepare_get()
     }
 }
 
+void CurlHandle::prepare_delete()
+{
+    auto rc = curl_easy_setopt(m_handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl to delete mode with error: " + m_error_buffer);
+    }
+}
+
 void CurlHandle::prepare_headers(const HttpHeader& headers)
 {
     auto on_item = [this](const std::string& key, const std::string& value) {

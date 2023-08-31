@@ -7,6 +7,7 @@ static std::unordered_map<HttpError::Code, HttpError::CodeAndId> errors = {
     {HttpError::Code::_100_CONTINUE, {100, "Continue"}},
     {HttpError::Code::_200_OK, {200, "OK"}},
     {HttpError::Code::_201_CREATED, {201, "Created"}},
+    {HttpError::Code::_204_NO_CONTENT, {201, "No Content"}},
     {HttpError::Code::_400_BAD_REQUEST, {400, "Bad Request"}},
     {HttpError::Code::_403_FORBIDDEN, {403, "Forbidden"}},
     {HttpError::Code::_404_NOT_FOUND, {404, "Not Found"}},

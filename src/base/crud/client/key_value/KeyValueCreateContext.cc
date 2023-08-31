@@ -154,7 +154,30 @@ void KeyValueCreateContext::serialize_empty(
     auto dict_adapter = m_adapters->get_adapter(
         CrudAttributes::to_string(CrudAttributes::Format::JSON));
 
-    output_ids.push_back(m_id_callback(""));
+    std::string working_id;
+
+    if (!input_attributes.is_empty()) {
+        if (input_attributes.get_type() == Dictionary::Type::MAP) {
+            if (input_attributes.has_map_item("id")) {
+                working_id = input_attributes.get_map_item("id")->get_scalar();
+            }
+        }
+        else if (
+            input_attributes.get_type() == Dictionary::Type::SEQUENCE
+            && !input_attributes.get_sequence().empty()) {
+            if (input_attributes.get_sequence()[0]->has_map_item("id")) {
+                working_id = input_attributes.get_sequence()[0]
+                                 ->get_map_item("id")
+                                 ->get_scalar();
+            }
+        }
+    }
+    if (working_id.empty()) {
+        output_ids.push_back(m_id_callback(""));
+    }
+    else {
+        output_ids.push_back(working_id);
+    }
 
     auto base_item = m_adapters->get_model_factory()->create();
     if (!input_attributes.is_empty()

@@ -148,7 +148,7 @@ void KeyValueCrudClient::update(
         return get_id_from_parent_id(parent_type, child_type, id, user_context);
     };
 
-    auto content = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+    auto content = std::make_unique<Dictionary>();
     KeyValueUpdateContext update_context(
         m_adapters.get(), m_config.m_prefix, id_from_parent_id_func);
     update_context.serialize_request(crud_request, *content);

@@ -10,6 +10,7 @@ class HttpError {
         _100_CONTINUE,
         _200_OK,
         _201_CREATED,
+        _204_NO_CONTENT,
         _400_BAD_REQUEST,
         _403_FORBIDDEN,
         _404_NOT_FOUND,

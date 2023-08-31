@@ -208,8 +208,8 @@ HttpResponse::Ptr CurlClient::make_request(
     else if (request.get_method() == HttpRequest::Method::PUT) {
         handle->prepare_put(request, stream);
     }
-    else if (request.get_method() == HttpRequest::Method::PUT) {
-        handle->prepare_put(request, stream);
+    else if (request.get_method() == HttpRequest::Method::DELETE) {
+        handle->prepare_delete();
     }
 
     handle->prepare_headers(request.get_header());
