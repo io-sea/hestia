@@ -99,6 +99,7 @@ class HsmService : public CrudService {
         const CrudUserContext& user_context,
         const HsmAction& working_action,
         const Extent& extent,
+        bool db_update,
         dataIoCompletionFunc completion_func) const;
 
     CrudResponsePtr get_or_create_action(

@@ -120,6 +120,12 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     HsmAction action;
     action.deserialize(action_dict);
 
+    if (action.get_subject_key().empty()) {
+        return HttpResponse::create(
+            {HttpError::Code::_400_BAD_REQUEST,
+             "Missing subject key in action header"});
+    }
+
     auto response = HttpResponse::create(
         HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
 
@@ -149,6 +155,9 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             response = HttpResponse::create(307, "Found");
             response->header().set_item(
                 "Location", "http://" + redirect_location + m_path);
+        }
+        else {
+            LOG_INFO("Responding with body chunk await");
         }
     }
     else {

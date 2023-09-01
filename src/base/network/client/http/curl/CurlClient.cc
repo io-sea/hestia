@@ -47,7 +47,8 @@ size_t CurlClient::on_write(void* buffer, size_t nmemb)
     auto handle        = m_handles[std::this_thread::get_id()];
     size_t num_written = nmemb;
 
-    if (handle->m_request_context.m_stream != nullptr) {
+    if (handle->m_request_context.m_stream != nullptr
+        && handle->m_request_context.m_stream->waiting_for_content()) {
         ReadableBufferView buffer_view(const_cast<void*>(buffer), nmemb);
         auto result = handle->m_request_context.m_stream->write(buffer_view);
         if (!result.ok()) {
@@ -93,9 +94,13 @@ size_t CurlClient::on_read(char* buffer, size_t nmemb)
             if (!result.ok()) {
                 LOG_ERROR("Error reading from stream");
             }
+            LOG_INFO(
+                "Finished reading from input stream --- "
+                << result.m_num_transferred);
             return result.m_num_transferred;
         }
         else {
+            LOG_INFO("Finished reading from input stream 0");
             return 0;
         }
     }
@@ -237,9 +242,13 @@ HttpResponse::Ptr CurlClient::make_request(
     long http_code = 0;
     curl_easy_getinfo(handle->m_handle, CURLINFO_RESPONSE_CODE, &http_code);
     if (http_code != 200 || rc == CURLE_ABORTED_BY_CALLBACK) {
-        LOG_INFO("Error in http response: " << http_code);
-        response =
-            HttpResponse::create(http_code, SOURCE_LOC() + " | Curl Error");
+        LOG_INFO(
+            "Error in http response: "
+            << http_code << " | "
+            << handle->m_request_context.m_response->body());
+        response = HttpResponse::create(
+            http_code, SOURCE_LOC() + " | Curl Error: "
+                           + handle->m_request_context.m_response->body());
     }
 
     m_handles.erase(std::this_thread::get_id());

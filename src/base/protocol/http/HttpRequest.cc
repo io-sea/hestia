@@ -5,6 +5,8 @@
 
 #include "StringUtils.h"
 
+#include <iostream>
+
 namespace hestia {
 
 HttpRequest::HttpRequest(
@@ -22,6 +24,9 @@ void HttpRequest::on_chunk(const std::string& msg)
     else {
         std::stringstream ss(msg);
         std::string buffer;
+        bool first_line = true;
+        std::size_t body_offset{0};
+
         while (std::getline(ss, buffer, '\n')) {
             if (!m_has_read_preamble) {
                 HttpParser::parse_preamble(buffer, m_preamble);
@@ -44,10 +49,15 @@ void HttpRequest::on_chunk(const std::string& msg)
                 }
             }
             else if (buffer == "\r") {
-                m_has_read_header = true;
-            }
-            else if (m_has_read_header) {
-                m_body += buffer;
+                if (first_line) {
+                    m_header.add_line(m_header_buffer + buffer);
+                    m_header_buffer.clear();
+                }
+                else {
+                    m_has_read_header = true;
+                    body_offset       = std::size_t(ss.tellg());
+                    break;
+                }
             }
             else {
                 if (StringUtils::ends_with(buffer, "\r")) {
@@ -58,6 +68,11 @@ void HttpRequest::on_chunk(const std::string& msg)
                     m_header_buffer = buffer;
                 }
             }
+            first_line = false;
+        }
+
+        if (body_offset > 0 && body_offset < msg.size()) {
+            m_body += msg.substr(body_offset, msg.size() - body_offset);
         }
     }
 }

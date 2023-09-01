@@ -99,6 +99,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
     action.set_subject_key(request.object().get_primary_key());
     action.set_size(request.object().size());
     action.set_source_tier(request.source_tier());
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -120,6 +121,18 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
             {HsmObjectStoreErrorCode::ERROR, get_response->message()});
         return response;
     }
+
+    if (auto location = get_response->header().get_item("location");
+        !location.empty()) {
+        response->object().set_location(location);
+    }
+    else {
+        response->object().set_location(controller_endpoint);
+    }
+    LOG_INFO(
+        "Remote GET complete ok from location: "
+        << response->object().get_location());
+
     return response;
 }
 
@@ -151,6 +164,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_put(
     action.set_subject_key(request.object().get_primary_key());
     action.set_size(stream->get_source_size());
     action.set_target_tier(request.target_tier());
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -224,6 +238,7 @@ DistributedHsmObjectStoreClient::do_remote_copy_or_move(
     action.set_subject_key(request.object().get_primary_key());
     action.set_target_tier(request.target_tier());
     action.set_source_tier(request.source_tier());
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -248,7 +263,17 @@ DistributedHsmObjectStoreClient::do_remote_copy_or_move(
             {HsmObjectStoreErrorCode::ERROR, http_response->message()});
         return response;
     }
-    LOG_INFO("Remote COPY/MOVE complete ok");
+
+    if (auto location = http_response->header().get_item("location");
+        !location.empty()) {
+        response->object().set_location(location);
+    }
+    else {
+        response->object().set_location(controller_endpoint);
+    }
+    LOG_INFO(
+        "Remote COP/MOVE complete ok from location: "
+        << response->object().get_location());
     return response;
 }
 
@@ -402,6 +427,7 @@ DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_source(
     action.set_subject_key(request.object().get_primary_key());
     action.set_target_tier(request.target_tier());
     action.set_size(stream.get_source_size());
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -501,6 +527,7 @@ DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_target(
     HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
     action.set_subject_key(request.object().get_primary_key());
     action.set_source_tier(request.source_tier());
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -555,6 +582,7 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_release(
     action.set_source_tier(request.source_tier());
     action.set_size(request.extent().m_length);
     action.set_offset(request.extent().m_offset);
+    action.set_primary_key(request.get_action_id());
 
     const auto path = controller_endpoint + "/api/v1/"
                       + hestia::HsmItem::hsm_action_name + "s";
@@ -579,6 +607,17 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_release(
             {HsmObjectStoreErrorCode::ERROR, http_response->message()});
         return response;
     }
+
+    if (auto location = http_response->header().get_item("location");
+        !location.empty()) {
+        response->object().set_location(location);
+    }
+    else {
+        response->object().set_location(controller_endpoint);
+    }
+    LOG_INFO(
+        "Remote remove complete ok from location: "
+        << response->object().get_location());
     return response;
 }
 

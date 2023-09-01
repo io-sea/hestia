@@ -194,6 +194,9 @@ void HsmEventSink::on_extent_changed(
 
         std::string extents_str;
         for (const auto& [offset, extent] : tier_extent.get_extents()) {
+            if (extent.empty()) {
+                continue;
+            }
             extents_str += std::to_string(extent.m_offset) + ","
                            + std::to_string(extent.m_length) + ";";
         }
@@ -262,7 +265,7 @@ std::string HsmEventSink::get_metadata_object_id(
         m_hsm_service->get_service(HsmItem::Type::METADATA);
     const auto response = metadata_service->make_request(CrudRequest{
         CrudQuery{CrudIdentifier(metadata_id), CrudQuery::OutputFormat::ITEM},
-        user_context});
+        user_context, false});
     if (!response->found()) {
         throw std::runtime_error(
             "Failed to find requested item in event sink check");
@@ -276,6 +279,10 @@ void HsmEventSink::on_user_metadata_update(
     const std::string& id,
     const Map& metadata) const
 {
+    if (metadata.empty()) {
+        return;
+    }
+
     const auto object_id = get_metadata_object_id(user_context, id);
 
     dict.set_tag("update");

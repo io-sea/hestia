@@ -6,7 +6,7 @@ void HttpCrudPath::from_identifier(const CrudIdentifier& id, std::string& path)
     if (id.has_primary_key()) {
         path += id.get_primary_key();
     }
-    else {
+    else if (id.has_name()) {
         path += "?name=" + id.get_name();
         if (id.has_parent_name()) {
             path += ",parent_name=" + id.get_parent_name();
@@ -14,6 +14,9 @@ void HttpCrudPath::from_identifier(const CrudIdentifier& id, std::string& path)
         else if (id.has_parent_primary_key()) {
             path += ",parent_id=" + id.get_parent_primary_key();
         }
+    }
+    else if (id.has_parent_primary_key()) {
+        path += "?parent_id=" + id.get_parent_primary_key();
     }
 }
 

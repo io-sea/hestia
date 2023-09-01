@@ -13,6 +13,8 @@ class HestiaWebPages {
         std::string body = "<html><body>";
         body += "<p><a href=\"" + get_url(HsmItem::hsm_object_name) + "\">"
                 + get_url(HsmItem::hsm_object_name) + "</a></p>";
+        body += "<p><a href=\"" + get_url(HsmItem::user_metadata_name) + "\">"
+                + get_url(HsmItem::user_metadata_name) + "</a></p>";
         body += "<p><a href=\"" + get_url(HsmItem::dataset_name) + "\">"
                 + get_url(HsmItem::dataset_name) + "</a></p>";
         body += "<p><a href=\"" + get_url(HsmItem::tier_name) + "\">"

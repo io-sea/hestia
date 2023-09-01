@@ -59,6 +59,7 @@ bool Stream::supports_source_seek() const
 void Stream::seek_source_to(std::size_t offset)
 {
     if (supports_source_seek()) {
+        m_transfer_progress = offset;
         m_source->seek_to(offset);
     }
 }

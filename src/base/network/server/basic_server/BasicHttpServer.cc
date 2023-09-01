@@ -88,9 +88,12 @@ bool BasicHttpServer::on_body_chunk(
     std::size_t expected_body_size,
     std::size_t& body_count) const
 {
+    LOG_INFO("On body chunk");
+
     IOResult write_result;
     if (last_event == HttpEvent::HEADERS
-        && context.get_request().body().size() >= expected_body_size) {
+        && !context.get_request().body().empty()
+        && context.get_request().body().size() <= expected_body_size) {
         write_result = context.get_stream()->write(
             ReadableBufferView(context.get_request().body()));
     }
@@ -110,6 +113,10 @@ bool BasicHttpServer::on_body_chunk(
 
     body_count += write_result.m_num_transferred;
     last_event = HttpEvent::BODY;
+
+    LOG_INFO(
+        "Body count is: " << body_count
+                          << " expected_body_size is: " << expected_body_size);
 
     if (body_count >= expected_body_size) {
         LOG_INFO("Finished with streamed body - sending eom");

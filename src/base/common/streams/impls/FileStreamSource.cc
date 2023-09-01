@@ -2,6 +2,8 @@
 
 #include "SystemUtils.h"
 
+#include <iostream>
+
 namespace hestia {
 FileStreamSource::FileStreamSource(const File::Path& path) : m_file(path)
 {
@@ -32,6 +34,7 @@ FileStreamSource::~FileStreamSource()
 void FileStreamSource::seek_to(std::size_t offset)
 {
     m_file.seek_to(offset);
+    set_state(StreamState::State::READY);
 }
 
 IOResult FileStreamSource::read(WriteableBufferView& buffer) noexcept

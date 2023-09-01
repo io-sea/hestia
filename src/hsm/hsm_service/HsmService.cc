@@ -288,6 +288,7 @@ void HsmService::put_data(
              SOURCE_LOC() + " | Object " + req.get_action().get_subject_key()
                  + " not found"});
         completion_func(std::move(response));
+        return;
     }
 
     const auto working_object = get_response->get_item_as<HsmObject>();
@@ -305,6 +306,7 @@ void HsmService::put_data(
     HsmObjectStoreRequest data_put_request(
         storage_object, HsmObjectStoreRequestMethod::PUT);
     data_put_request.set_target_tier(chosen_tier);
+    data_put_request.set_action_id(working_action.get_primary_key());
 
     auto working_extent = req.extent();
     if (working_extent.empty()) {
@@ -415,6 +417,7 @@ void HsmService::on_put_data_complete(
              extent_put_response->get_error().to_string()});
 
         completion_func(std::move(response));
+        return;
     }
 
     auto updated_object = working_object;
@@ -487,20 +490,27 @@ void HsmService::get_data(
         }
     }
     data_request.set_extent(working_extent);
+    data_request.set_action_id(working_action.get_primary_key());
 
     auto data_response = m_object_store->make_request(data_request, stream);
-    // ERROR_CHECK(data_response);
+    CRUD_ERROR_CHECK(data_response, working_action, completion_func);
+
+    const auto requires_db_update = !data_response->object_is_remote();
+    if (requires_db_update) {
+        LOG_INFO("Will update db from this node");
+    }
 
     const auto user_context = req.get_user_context();
 
     if (stream->waiting_for_content()) {
         auto stream_complete_func =
             [this, base_req = BaseRequest(req), user_context, working_extent,
-             working_action, completion_func](StreamState stream_state) {
+             working_action, requires_db_update,
+             completion_func](StreamState stream_state) {
                 if (stream_state.ok()) {
                     this->on_get_data_complete(
                         base_req, user_context, working_action, working_extent,
-                        completion_func);
+                        requires_db_update, completion_func);
                 }
                 else {
                     auto response =
@@ -514,7 +524,8 @@ void HsmService::get_data(
     }
     else {
         on_get_data_complete(
-            req, user_context, working_action, working_extent, completion_func);
+            req, user_context, working_action, working_extent,
+            requires_db_update, completion_func);
     }
 }
 
@@ -523,10 +534,14 @@ void HsmService::on_get_data_complete(
     const CrudUserContext& user_context,
     const HsmAction& working_action,
     const Extent& extent,
+    bool db_update,
     dataIoCompletionFunc completion_func) const
 {
-    set_action_finished_ok(
-        user_context, working_action.get_primary_key(), extent.m_length);
+    if (db_update) {
+        set_action_finished_ok(
+            user_context, working_action.get_primary_key(), extent.m_length);
+    }
+
     LOG_INFO("Finished HSMService GET");
     completion_func(HsmActionResponse::create(req, working_action));
 }
@@ -618,6 +633,7 @@ HsmActionResponse::Ptr HsmService::move_data(
     copy_data_request.set_extent(working_extent);
     copy_data_request.set_source_tier(req.source_tier());
     copy_data_request.set_target_tier(req.target_tier());
+    copy_data_request.set_action_id(working_action.get_primary_key());
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response, working_action);
 
@@ -625,9 +641,16 @@ HsmActionResponse::Ptr HsmService::move_data(
         working_object->id(), HsmObjectStoreRequestMethod::REMOVE);
     release_data_request.set_extent(working_extent);
     release_data_request.set_source_tier(req.source_tier());
+    release_data_request.set_action_id(working_action.get_primary_key());
     auto release_data_response =
         m_object_store->make_request(release_data_request);
     ERROR_CHECK(release_data_response, working_action);
+
+    if (copy_data_response->is_handled_remote()) {
+        auto response = HsmActionResponse::create(req, working_action);
+        LOG_INFO("Finished HSMService MOVE DATA - Handled on remote");
+        return response;
+    }
 
     TierExtents source_extent;
     TierExtents target_extent;
@@ -715,6 +738,7 @@ HsmActionResponse::Ptr HsmService::copy_data(
     copy_data_request.set_extent(working_extent);
     copy_data_request.set_source_tier(req.source_tier());
     copy_data_request.set_target_tier(req.target_tier());
+    copy_data_request.set_action_id(working_action.get_primary_key());
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
     ERROR_CHECK(copy_data_response, working_action);
@@ -804,9 +828,18 @@ HsmActionResponse::Ptr HsmService::release_data(
     }
     remove_data_request.set_extent(working_extent);
     remove_data_request.set_source_tier(req.source_tier());
+    remove_data_request.set_action_id(working_action.get_primary_key());
     auto remove_data_response =
         m_object_store->make_request(remove_data_request);
     ERROR_CHECK(remove_data_response, working_action);
+
+    const auto requires_db_update = !remove_data_response->object_is_remote();
+    if (requires_db_update) {
+        LOG_INFO("Will update db from this node");
+    }
+    else {
+        return HsmActionResponse::create(req, working_action);
+    }
 
     TierExtents extent;
     const auto source_tier_id = get_tier_id(req.source_tier());
