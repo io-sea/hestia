@@ -1,4 +1,4 @@
-#include "hestia/hestia.h"
+#include "hestia.h"
 
 
 int main(int argc, char** argv)

@@ -1,10 +1,10 @@
 prefix="@CMAKE_INSTALL_PREFIX@"
 exec_prefix="${prefix}/bin"
 libdir="${prefix}/lib/@PROJECT_NAME@"
-includedir="${prefix}/include"
+includedir="${prefix}/include/@PROJECT_NAME@"
 
 Name: @PROJECT_NAME@
 Description: @CMAKE_PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 Cflags: -std=c++11 -I${includedir}
-Libs: -L${libdir} -lhestia_lib
+Libs: -L${libdir} -l@PROJECT_NAME@

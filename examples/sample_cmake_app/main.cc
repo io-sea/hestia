@@ -1,4 +1,4 @@
-#include "hestia/hestia.h"
+#include "hestia.h"
 
 #include <iostream>
 #include <string>

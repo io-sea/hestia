@@ -1,15 +1,18 @@
 # Hestia Sample App
 
-This is a sample app demonstrating the Hestia C++ API use with CMake. To build do:
+This is a sample app demonstrating the Hestia C++ API use with Autoconf
 
 ```bash
-cmake $PATH_TO_SOURCE
+cd $PATH_TO_SOURCE
+./autogen.sh
+./configure
 make
 ```
 
-If Hestia is installed to a non-standard location do:
+If hestia is in a non-standard location do:
 
 ```bash
-cmake -Dhestia_DIR=$HESTIA_INSTALL_DIR/lib/cmake/hestia $PATH_TO_SOURCE
-make
+export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
 ```
+
+and make sure `$INSTALL_DIR/lib` is in the library runpath at runtime.

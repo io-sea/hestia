@@ -24,11 +24,6 @@ endif()
 
 set_target_properties(${PROJECT_NAME}_main PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
-install(FILES hestia.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT devel
-    )
-
 add_module(
     MODULE_NAME lib
     SHARED
@@ -37,9 +32,12 @@ add_module(
         hestia.h
     SOURCES
         hestia/hestia.cc
-    INTERNAL_DEPENDENCIES 
-        headers
     PRIVATE_DEPENDENCIES
         ${PROJECT_NAME}_app
 )
+
+target_sources(${PROJECT_NAME}_lib PUBLIC FILE_SET 
+    HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/hestia.h)
+
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})

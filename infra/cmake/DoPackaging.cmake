@@ -41,15 +41,13 @@ endif()
 
 install(TARGETS 
         ${PROJECT_NAME}_lib 
-        ${PROJECT_NAME}_headers 
         ${LINK_MODULES_FOR_EXPORT}
         EXPORT ${PROJECT_NAME}-targets
-        LIBRARY DESTINATION lib/${PROJECT_NAME}
-        INCLUDES DESTINATION include
-        COMPONENT devel
+        FILE_SET HEADERS
         LIBRARY
                 COMPONENT runtime
-                NAMELINK_COMPONENT devel  
+                NAMELINK_COMPONENT devel
+                DESTINATION lib/${PROJECT_NAME}
 )
 
 install(EXPORT ${PROJECT_NAME}-targets
