@@ -14,15 +14,15 @@ On Mac do:
 brew install llvm lcov
 ```
 
-`llvm` is installed to `/opt/homebrew/opt/llvm/`, the `bin` and `lib` directories need to be in the `PATH`.
+The `bin` and `lib` directories need to be in the `PATH`.
 
 ### Building
 
 Set the C and C++ compiler paths.
 
 ```bash
-export CC=/opt/homebrew/opt/llvm@15/bin/clang
-export CXX=/opt/homebrew/opt/llvm@15/bin/clang++
+export CC=/path/to/llvm/source/bin/clang
+export CXX=/path/to/llvm/source/bin/clang++
 ```
 
 Run cmake in with `-DHESTIA_BUILD_TESTS=ON -DCODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug`.
