@@ -5,6 +5,7 @@ gcc-c++
 git
 glibc-devel
 glib2-devel
+graphviz
 libcurl-devel 
 libxml2-devel
 jansson-devel
