@@ -1,13 +1,14 @@
 ---
 # Handlers for Hestia
-- name: Start Hestia
+- name: "Start Hestia"
   ansible.builtin.service:
-    name: hestia.service
+    name: hestiad
     enabled: true
-    status: started
+    state: started
+  listen: "start_hestia"
 
-- name: Restart Hestia
+- name: "Restart Hestia"
   ansible.builtin.service:
-    name: hestia
+    name: hestiad
     status: restarted
-  listen: "Restart IOSEA"
+  listen: "restart_hestia"

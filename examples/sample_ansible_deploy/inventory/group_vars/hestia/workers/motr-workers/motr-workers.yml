@@ -1,0 +1,3 @@
+hestia_backends:
+  - type: "motr"
+    config:

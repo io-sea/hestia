@@ -1,11 +1,10 @@
 ---
-- include_role: 
+- import_role: 
     name: hestia_common
-    public: true
 
 - name: Configure Hestia
   ansible.builtin.template:
-    src: hestia-worker.yml.j2
-    dest: "{{ hestia_config_dir }}/hestiad.yml"
+    src: hestia-worker.yaml.j2
+    dest: "{{ hestia_config_dir }}/hestiad.yaml"
   notify: 
-    - Start Hestia
+    - "start_hestia"

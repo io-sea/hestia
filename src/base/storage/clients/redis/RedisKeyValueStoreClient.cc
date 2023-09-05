@@ -32,11 +32,12 @@ class RedisReplyWrapper {
         if (m_reply->type == REDIS_REPLY_STRING) {
             return std::string(m_reply->str, m_reply->len);
         }
-        else if (m_reply->type == REDIS_REPLY_STRING) {
+        else if (m_reply->type == REDIS_REPLY_NIL) {
             return std::nullopt;
         }
         else {
-            LOG_ERROR("Error making GET request");
+            LOG_ERROR(
+                "Error making GET request, response code: " << m_reply->type);
             throw std::runtime_error("Error making GET request");
         }
     }

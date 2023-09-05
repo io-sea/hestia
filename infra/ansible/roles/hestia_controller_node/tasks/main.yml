@@ -1,8 +1,7 @@
 ---
 - name: Common Setup
-  ansible.builtin.include_role: 
+  ansible.builtin.import_role: 
     name: hestia_common
-    public: true
 
 - name: Install Redis
   ansible.builtin.yum:
@@ -17,7 +16,7 @@
 
 - name: Configure Hestia
   ansible.builtin.template:
-    src: hestia-controller.yml.j2
-    dest: "{{ hestia_config_dir }}/hestiad.yml"
+    src: hestia-controller.yaml.j2
+    dest: "{{ hestia_config_dir }}/hestiad.yaml"
   notify: 
-    - Start Hestia
+    - 'start_hestia'

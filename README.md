@@ -42,7 +42,7 @@ Subcommands:
   stop                        Stop the Hestia Daemon
 ```
 
-Each `Subcommand` supports `--help` recursively.
+Each `Subcommand` supports `--help` recursively. To connect to a remote Hestia server for a command which supports it, use the `--host HOSTNAME` option.
 
 Create a new object:
 

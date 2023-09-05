@@ -8,10 +8,6 @@ hestia_hsm_tiers:
   - name: "0"
     backend_type: phobos
   - name: "1"
-    backend_type: file_hsm
+    backend_type: motr
   - name: "2"
-    backend_type: file_hsm
-  - name: "3"
-    backend_type: file_hsm
-  - name: "4"
     backend_type: file_hsm

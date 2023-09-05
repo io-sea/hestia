@@ -1,3 +1,8 @@
+logger:
+  syslog_only: true
+  active: true
+  level: warn
+
 server:
   host: {{ inventory_hostname }}
   port: {{ hestia_server_port }}
@@ -19,7 +24,7 @@ object_store_backends:
   - backend_type: {{ backend.type }}
     tier_names:
 {% for tier in hestia_hsm_tiers %}{% if tier.backend_type == backend.type %}
-      - name: {{tier.name}}
+      - "{{tier.name}}"
 {% endif %}{% endfor %}
     config: 
       {{ backend.config | to_nice_yaml(indent=2) }}

@@ -1,0 +1,21 @@
+logger:
+  syslog_only: true
+  active: true
+  level: warn
+
+server:
+  host_address: {{ inventory_hostname }}
+  host_port: {{ hestia_server_port }}
+  controller: true
+  tag: controller_{{ inventory_hostname_short }}
+
+tiers:
+{% for tier in hestia_hsm_tiers%}
+  - name: "{{ tier.name }}" 
+{% endfor %}
+
+key_value_store_client:
+    client_type: redis
+    config:
+      backend_address: localhost
+      backend_port: 6379
