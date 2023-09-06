@@ -43,11 +43,13 @@ install(TARGETS
         ${PROJECT_NAME}_lib 
         ${LINK_MODULES_FOR_EXPORT}
         EXPORT ${PROJECT_NAME}-targets
-        FILE_SET HEADERS
         LIBRARY
                 COMPONENT runtime
                 NAMELINK_COMPONENT devel
                 DESTINATION lib/${PROJECT_NAME}
+        PUBLIC_HEADER
+                COMPONENT devel
+                DESTINATION include/
 )
 
 install(EXPORT ${PROJECT_NAME}-targets
@@ -134,8 +136,8 @@ if(NOT APPLE)
         set(CPACK_RPM_SPEC_MORE_DEFINE "%define test_name test_body")
 
         set(CPACK_RPM_INSTALL_WITH_EXEC ON)
-        # set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
-        # set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
+        set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
+        set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
         set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON")
 
         set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})

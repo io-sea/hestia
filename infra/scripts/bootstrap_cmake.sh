@@ -14,7 +14,6 @@ if [[ -f "${CMAKE_PREFIX}/bin/cmake" ]]; then
         echo "Local CMake v$LOCAL_CMAKE_VERSION is installed at $CMAKE_PREFIX, exiting."
         exit
     fi
-    rm -rf $CMAKE_PREFIX
 fi 
 
 # Checks if system version is sufficient

@@ -93,15 +93,15 @@ def find_package(work_dir: Path) -> Path:
         search_extensions = [".tar.gz"]
     else:
         search_extensions = [".rpm", ".deb", ".tar.gz"]
-
+    package_paths = []
     for entry in work_dir.iterdir():
         if entry.is_file():
             for ext in search_extensions:
                 if str(entry).endswith(ext):
-                    return entry
-    return None
+                    package_paths.append(entry)
+    return package_paths
 
-def install_package(work_dir: Path, package_path: Path, project_name: str) -> bool:
+def install_package(work_dir: Path, package_path: Path, devel_package_path: Path, project_name: str) -> bool:
     system_install = False
     if str(package_path).endswith(".tar.gz"):
         logging.info(f"Extracting: {package_path} to {work_dir}")
@@ -119,9 +119,9 @@ def install_package(work_dir: Path, package_path: Path, project_name: str) -> bo
         extracted_path.rename(work_dir / project_name)
 
     elif str(package_path).endswith(".rpm"):
-        logging.info(f"Installing RPM: {package_path}")
+        logging.info(f"Installing RPMs: {package_path}, {devel_package_path}")
 
-        cmd = f"yum install -y {package_path}"
+        cmd = f"yum install -y {package_path} {devel_package_path}"
         subprocess.run(cmd, shell=True)
         logging.info(f"RPM installed")
         system_install = True
