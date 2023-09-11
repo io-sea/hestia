@@ -67,7 +67,7 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
     REQUIRE(status.ok());
     REQUIRE(ids.size() == 1);
     REQUIRE(attributes.has_content());
-    REQUIRE(attributes.is_json());
+    REQUIRE(attributes.is_json_input());
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 

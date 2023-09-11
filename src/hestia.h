@@ -29,6 +29,7 @@ typedef enum hestia_item_e {
     HESTIA_USER,
     HESTIA_NODE,
     HESTIA_ACTION,
+    HESTIA_USER_METADATA,
     HESTIA_ITEM_TYPE_COUNT,
 } hestia_item_t;
 

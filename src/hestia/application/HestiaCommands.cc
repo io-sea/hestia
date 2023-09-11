@@ -179,7 +179,7 @@ HestiaClientCommand::parse_create_update_inputs(
 
     if (input_format != CrudAttributes::Format::NONE) {
         std::string attribute_buffer;
-        attributes.set_format(input_format);
+        attributes.set_input_format(input_format);
         std::string line;
         if (input_format == CrudAttributes::Format::JSON) {
             while (console->console_read(line)) {

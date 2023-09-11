@@ -595,6 +595,8 @@ void HsmService::set_action_finished_ok(
     auto action = *action_read->get_item_as<HsmAction>();
     action.on_finished_ok(bytes);
 
+    LOG_INFO("Updating Action");
+
     const auto action_update = action_service->make_request(
         TypedCrudRequest<HsmAction>{CrudMethod::UPDATE, action, user_context});
     if (!action_update->ok()) {

@@ -11,7 +11,6 @@ class BaseTestFixture():
     def __init__(self) -> None:
         self.cache_path = os.getcwd() + "/.cache"
         self.clean_cache()
-        
         self.client = None
 
     def clean_cache(self):
@@ -19,43 +18,80 @@ class BaseTestFixture():
             shutil.rmtree(self.cache_path)
 
     def do_in_memory_object_ops(self):
-        object_json = self.client.object_create()
-        object_id = object_json[0]["id"]
-        print("Created object: ", object_id)
+        object_id = "1234"
 
+        # Create object with specified id
+        object_json = self.client.object_create(object_id)
+        if (object_json[0]["id"] != object_id):
+            raise ValueError('Expected object id: ' + object_id + '  in Create but got ' + object_json[0]["id"])
+        
+        # Check that we can read it back ok
         object_read_json = self.client.object_read_ids([object_id])
+        if (object_read_json["id"] != object_id):
+            raise ValueError('Expected object id: ' + object_id + '  in Read but got ' + object_read_json["id"])
+        
+        # Update an attribute and check that it is updated ok
+        object_read_json["name"] = "my_object"
+        object_updated_json = self.client.object_update(object_read_json)
+        if (object_updated_json["name"] != "my_object"):
+            raise ValueError('Failed to update object name attr')
+        return
+        
+        # Remove the object
+        self.client.object_remove(object_id)
 
+        # Check that we get an empty read
+        object_read_json = self.client.object_read_ids([object_id])
+        if (len(object_read_json) > 0):
+            raise ValueError('Expected no remaining object post delete - but found some')
+        
+        # Recreate the object
+        object_json = self.client.object_create(object_id)
+
+        # Set some user attributes
+        object_attrs = "data.my_key0,my_value0\ndata.my_key1,my_value1"
+        user_attrs = self.client.object_attrs_put(object_id, object_attrs)
+
+        # Read the attributes back
+        user_attrs_read = self.client.object_attrs_get(object_id)
+        
+        # Add some data
         content = b"The quick brown fox jumps over the lazy dog."
         action_id = self.client.object_put(object_id, content)
 
-        return
-
+        # Read the action back to check the status
         action = self.client.action_read_ids([action_id])
-        print("Put action: " + str(action))
+        if (action["status"] != "finished_ok"):
+            raise ValueError('Put action did not complete ok')
 
-        return
+        # Get the content back
+        retrieved_content = self.client.object_get(object_id, len(content))
+        if (retrieved_content != content):
+            raise ValueError('Retrieved content does not match original')
 
-        retrieved = self.client.object_get(object_id, len(content))
-        print(retrieved)
+        # Copy between tiers
+        copied_action_id = self.client.object_copy(object_id, 0, 1)
+        copied_action = self.client.action_read_ids([copied_action_id])
+        if (copied_action["status"] != "finished_ok"):
+            raise ValueError('Copy action did not complete ok')
 
-        copied = self.client.object_copy(object_id, 0, 1)
-        print(copied)
+        # Move between tiers
+        moved_action_id = self.client.object_move(object_id, 1, 2)
+        moved_action = self.client.action_read_ids([moved_action_id])
+        if (moved_action["status"] != "finished_ok"):
+            raise ValueError('Copy action did not complete ok')
+        
+        # Release a tier
+        released_action_id = self.client.object_release(object_id, 0)
+        release_action = self.client.action_read_ids([released_action_id])
+        if (release_action["status"] != "finished_ok"):
+            raise ValueError('Copy action did not complete ok')
 
-        moved = self.client.object_move(object_id, 1, 2)
-        print(moved)
-
-        released = self.client.object_release(object_id, 0)
-        print(released)
-
-        retrieved = self.client.object_get(object_id, len(content), 0, 2)
-        print(retrieved)
 
     def do_fd_object_ops(self, path):
         object_json = self.client.object_create()
         object_id = object_json[0]["id"]
         print("Created object: ", object_id)
-
-        object_read_json = self.client.object_read()
 
         file_size = os.path.getsize(path)
 
@@ -127,6 +163,7 @@ def signal_handler(sig, frame):
 def do_standalone_fixture_tests():
     fixture = StandaloneClientFixture()
     fixture.do_in_memory_object_ops()
+
     #fixture.do_path_object_ops(path)
     #fixture.do_fd_object_ops(path)
 
@@ -145,7 +182,9 @@ if __name__ == "__main__":
 
     path = os.getcwd() + "/compile_commands.json"
 
-    do_controller_with_worker_tests()
+    #do_standalone_fixture_tests()
+    do_controller_with_storage_tests()
+    #do_controller_with_worker_tests()
 
 
 

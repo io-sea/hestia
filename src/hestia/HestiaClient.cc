@@ -181,7 +181,8 @@ OpStatus HestiaClient::update(
         else {
             LOG_INFO("Doing update with: " << ids.size() << " ids.");
         }
-        LOG_INFO("Attribute format is: " << attributes.get_format_as_string());
+        LOG_INFO(
+            "Attribute format is: " << attributes.get_input_format_as_string());
 
         const auto response = service->make_request(
             CrudRequest{

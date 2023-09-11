@@ -51,6 +51,8 @@ HestiaType to_subject(hestia_item_t subject)
             return HestiaType(HsmItem::Type::DATASET);
         case hestia_item_e::HESTIA_ACTION:
             return HestiaType(HsmItem::Type::ACTION);
+        case hestia_item_e::HESTIA_USER_METADATA:
+            return HestiaType(HsmItem::Type::METADATA);
         case hestia_item_e::HESTIA_USER:
             return HestiaType(HestiaType::SystemType::USER);
         case hestia_item_e::HESTIA_NODE:
@@ -96,6 +98,9 @@ CrudIdentifier::InputFormat to_crud_id_format(hestia_id_format_t id_format)
         == (hestia_id_format_t::HESTIA_NAME
             | hestia_id_format_t::HESTIA_PARENT_ID)) {
         return CrudIdentifier::InputFormat::NAME_PARENT_ID;
+    }
+    else if (id_format == hestia_id_format_t::HESTIA_PARENT_ID) {
+        return CrudIdentifier::InputFormat::PARENT_ID;
     }
     return CrudIdentifier::InputFormat::NONE;
 }
@@ -333,7 +338,6 @@ int create_or_update(
 
         std::string body(input, len_input);
         std::size_t offset = 0;
-
         if ((input_format & HESTIA_IO_IDS) != 0
             && crud_id_format != CrudIdentifier::InputFormat::NONE) {
             offset = CrudIdentifier::parse(body, crud_id_format, ids);
@@ -542,6 +546,7 @@ int hestia_data_put(
                              OpStatus ret_status, const HsmAction& action) {
         status = ret_status;
 
+        LOG_INFO("Put action completed");
         if (ret_status.ok()) {
             str_to_char(action.get_primary_key(), activity_id);
             *len_activity_id = action.get_primary_key().size();
@@ -555,6 +560,12 @@ int hestia_data_put(
 
     if (stream.waiting_for_content()) {
         auto stream_status = stream.flush();
+        if (!stream_status.ok()) {
+            return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
+        }
+    }
+    else {
+        auto stream_status = stream.reset();
         if (!stream_status.ok()) {
             return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
         }

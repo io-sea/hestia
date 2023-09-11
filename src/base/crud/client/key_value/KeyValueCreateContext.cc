@@ -29,7 +29,7 @@ void KeyValueCreateContext::serialize_request(
     Dictionary attributes;
     if (request.get_attributes().has_content()) {
         const auto adapter = m_adapters->get_adapter(
-            request.get_attributes().get_format_as_string());
+            request.get_attributes().get_input_format_as_string());
         adapter->dict_from_string(
             request.get_attributes().get_buffer(), attributes);
     }

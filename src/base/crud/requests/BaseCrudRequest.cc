@@ -12,6 +12,7 @@ BaseCrudRequest::BaseCrudRequest(
 {
     m_query.attributes() = attributes;
     m_query.set_output_format(output_format);
+
     m_query.set_attributes_output_format(attributes_format);
 }
 

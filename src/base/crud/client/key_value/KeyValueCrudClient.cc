@@ -261,8 +261,8 @@ void KeyValueCrudClient::read(
         LOG_INFO(
             "Returning attrs in format: "
             + CrudAttributes::to_string(
-                request.get_query().get_attributes().get_format()));
-        get_adapter(request.get_query().get_attributes().get_format())
+                request.get_query().get_attributes().get_output_format()));
+        get_adapter(request.get_query().get_attributes().get_output_format())
             ->dict_to_string(
                 *read_content, crud_response.attributes().buffer());
     }

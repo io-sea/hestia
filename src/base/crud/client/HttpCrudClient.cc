@@ -117,7 +117,7 @@ void HttpCrudClient::update(
         if (crud_request.get_attributes().has_content()) {
             const auto typed_adapter =
                 m_adapters->get_adapter(CrudAttributes::to_string(
-                    crud_request.get_attributes().get_format()));
+                    crud_request.get_attributes().get_input_format()));
             typed_adapter->dict_from_string(
                 crud_request.get_attributes().get_buffer(), attrs_dict,
                 crud_request.get_attributes().get_key_prefix());

@@ -467,15 +467,6 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
                     return {OpStatus::Status::ERROR, -1, msg};
                 }
             }
-            else {
-                auto result = stream.reset();
-                if (!result.ok()) {
-                    const auto msg =
-                        "Failed to reset stream with: " + result.to_string();
-                    LOG_ERROR(msg);
-                    return {OpStatus::Status::ERROR, -1, msg};
-                }
-            }
         }
         return status;
     }

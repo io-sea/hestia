@@ -10,6 +10,7 @@ class HestiaItemT(IntEnum):
     HESTIA_USER = 3
     HESTIA_NODE = 4
     HESTIA_ACTION = 5
+    HESTIA_USER_METADATA = 6
 
 class HestiaIoFormatT(IntEnum):
     HESTIA_IO_NONE = 0
@@ -35,7 +36,7 @@ class HestiaLib():
         self.lib_handle = None 
 
     def load_library(self):
-        self.lib_handle = ctypes.cdll.LoadLibrary("libhestia_lib.dylib")
+        self.lib_handle = ctypes.cdll.LoadLibrary("libhestia.dylib")
 
     def hestia_initialize(self, config_path: str = None, token: str = None, extra_config = None) -> int:
         config_str = json.dumps(extra_config).encode('utf-8') if extra_config is not None else None
@@ -71,7 +72,31 @@ class HestiaLib():
         rc = self.lib_handle.hestia_create(subject, 
                                            input_format, 
                                            id_format, 
-                                           input, 
+                                           input.encode("utf-8"), 
+                                           len(input), 
+                                           output_format, 
+                                           ctypes.byref(output_p), 
+                                           ctypes.byref(output_length))
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
+
+        output_copied = output_p.value
+        self.lib_handle.hestia_free_output(ctypes.byref(output_p))
+
+        return output_copied.decode("utf-8")
+    
+    def hestia_update(self, subject: HestiaItemT = HestiaItemT.HESTIA_OBJECT, 
+                      input_format: HestiaIoFormatT = HestiaIoFormatT.HESTIA_IO_JSON, 
+                      id_format: HestiaIdFormatT = HestiaIdFormatT.HESTIA_ID, 
+                      input: str = "", 
+                      output_format: HestiaIoFormatT = HestiaIoFormatT.HESTIA_IO_JSON):
+        output_p = ctypes.c_char_p()
+        output_length = ctypes.c_uint64()
+        
+        rc = self.lib_handle.hestia_update(subject, 
+                                           input_format, 
+                                           id_format, 
+                                           input.encode("utf-8"), 
                                            len(input), 
                                            output_format, 
                                            ctypes.byref(output_p), 
@@ -113,7 +138,21 @@ class HestiaLib():
         output_copied = output_p.value
         self.lib_handle.hestia_free_output(ctypes.byref(output_p))
 
-        return output_copied.decode("utf-8")
+        if output_copied is not None:
+            return output_copied.decode("utf-8")
+        else:
+            return json.dumps([])
+    
+    def hestia_remove(self, subject: HestiaItemT = HestiaItemT.HESTIA_OBJECT, 
+                      id_format: HestiaIdFormatT = HestiaIdFormatT.HESTIA_ID, 
+                      input: str = ""):
+
+        rc = self.lib_handle.hestia_remove(subject, 
+                                           id_format, 
+                                           input.encode("utf-8"), 
+                                           len(input))
+        if rc != 0:
+            raise ValueError('Error code: ' + str(rc))
     
     def hestia_data_put(self, 
                         id: str, 
@@ -169,7 +208,7 @@ class HestiaLib():
         output_p = ctypes.c_char_p()
         output_length = ctypes.c_uint64()
 
-        rc = self.lib_handle.hestia_data_put_descriptor(id, fd, 
+        rc = self.lib_handle.hestia_data_put_descriptor(id.encode("utf-8"), fd, 
                                                 length, 
                                                 offset, tier,
                                                 ctypes.byref(output_p), 

@@ -1,5 +1,6 @@
 #include "KeyValueUpdateContext.h"
 
+#include "Logger.h"
 #include <iostream>
 
 namespace hestia {
@@ -22,7 +23,8 @@ void KeyValueUpdateContext::serialize_request(
         }
     }
     else {
-        auto item_template = m_adapters->get_model_factory()->create();
+        auto item_template   = m_adapters->get_model_factory()->create();
+        bool request_has_ids = !request.get_ids().empty();
         for (const auto& id : request.get_ids()) {
             if (id.has_primary_key()) {
                 m_index_ids.push_back(id.get_primary_key());
@@ -41,12 +43,33 @@ void KeyValueUpdateContext::serialize_request(
         }
 
         if (request.get_attributes().has_content()) {
+            LOG_INFO(
+                "Parsing update info with format: "
+                + CrudAttributes::to_string(
+                    request.get_attributes().get_input_format()));
             const auto adapter =
                 m_adapters->get_adapter(CrudAttributes::to_string(
-                    request.get_attributes().get_format()));
+                    request.get_attributes().get_input_format()));
             adapter->dict_from_string(
                 request.get_attributes().get_buffer(), output_content,
                 request.get_attributes().get_key_prefix());
+
+            if (!request_has_ids) {
+                if (output_content.get_type() == Dictionary::Type::SEQUENCE) {
+                    for (const auto& item : output_content.get_sequence()) {
+                        if (item->has_map_item("id")) {
+                            m_index_ids.push_back(
+                                item->get_map_item("id")->get_scalar());
+                        }
+                    }
+                }
+                else {
+                    if (output_content.has_map_item("id")) {
+                        m_index_ids.push_back(
+                            output_content.get_map_item("id")->get_scalar());
+                    }
+                }
+            }
         }
     }
     for (const auto& id : m_index_ids) {

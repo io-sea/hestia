@@ -20,9 +20,6 @@ class HestiaClientBase():
             id_str = id_str[0:len(id_str)-1]
         return id_str
 
-    def object_create(self) -> json:
-        return json.loads(self.lib.hestia_create())
-    
     def action_read(self, id: str):
         return json.loads(self.lib.hestia_read(hestia_lib.HestiaItemT.HESTIA_ACTION))
         
@@ -35,6 +32,41 @@ class HestiaClientBase():
             0,
             self.flatten_ids(ids)
         ))
+    
+    def object_attrs_get(self, id: str) -> json:
+        return self.lib.hestia_read(
+            hestia_lib.HestiaItemT.HESTIA_USER_METADATA,
+            hestia_lib.HestiaQueryFormatT.HESTIA_QUERY_IDS,
+            hestia_lib.HestiaIdFormatT.HESTIA_PARENT_ID,
+            input=id, output_format=hestia_lib.HestiaIoFormatT.HESTIA_IO_KEY_VALUE
+        )
+    
+    def object_create(self, id: str = None) -> json:
+        if id is None:
+            return json.loads(self.lib.hestia_create())
+        else:
+            return json.loads(self.lib.hestia_create(
+                hestia_lib.HestiaItemT.HESTIA_OBJECT,
+                hestia_lib.HestiaIoFormatT.HESTIA_IO_IDS,
+                hestia_lib.HestiaIdFormatT.HESTIA_ID,
+                id
+            ))
+        
+    def object_update(self, object) -> json:
+        return json.loads(self.lib.hestia_update(input=json.dumps(object)))
+    
+    def object_attrs_put(self, id: str, attrs: str) -> json:
+        payload = id + "\n\n" + attrs
+
+        return json.loads(self.lib.hestia_update(
+            hestia_lib.HestiaItemT.HESTIA_USER_METADATA,
+            hestia_lib.HestiaIoFormatT.HESTIA_IO_IDS | hestia_lib.HestiaIoFormatT.HESTIA_IO_KEY_VALUE,
+            hestia_lib.HestiaIdFormatT.HESTIA_PARENT_ID,
+            payload
+        ))
+    
+    def object_remove(self, id: str):
+        self.lib.hestia_remove(input=id)
     
     def object_read(self) -> json:
         return json.loads(self.lib.hestia_read())
