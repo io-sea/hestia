@@ -681,12 +681,12 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
         }
         else if (m_client_manager->has_client(request.source_tier())) {
             LOG_INFO("Only have source client for COPY/MOVE");
-            do_remote_copy_or_move_with_local_source(
+            return do_remote_copy_or_move_with_local_source(
                 request, request.method() == HsmObjectStoreRequestMethod::COPY);
         }
         else if (m_client_manager->has_client(request.target_tier())) {
             LOG_INFO("Only have target client for COPY/MOVE");
-            do_remote_copy_or_move_with_local_target(
+            return do_remote_copy_or_move_with_local_target(
                 request, request.method() == HsmObjectStoreRequestMethod::COPY);
         }
         else {
