@@ -129,9 +129,8 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     auto response = HttpResponse::create(
         HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
 
+    std::string redirect_location;
     if (action.is_data_io_action()) {
-        std::string redirect_location;
-
         auto completion_cb = [&response, &redirect_location](
                                  HsmActionResponse::Ptr response_ret) {
             if (response_ret->ok()) {
@@ -165,6 +164,13 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}));
         if (!action_response->ok()) {
             return HttpResponse::create(500, "Internal Server Error.");
+        }
+
+        redirect_location = action_response->get_redirect_location();
+        if (!redirect_location.empty()) {
+            response = HttpResponse::create(307, "Found");
+            response->header().set_item(
+                "Location", "http://" + redirect_location + m_path);
         }
     }
 

@@ -103,7 +103,55 @@ CrudResponse::Ptr DistributedHsmService::make_request(
 HsmActionResponse::Ptr DistributedHsmService::make_request(
     const HsmActionRequest& request) const noexcept
 {
-    return m_hsm_service->make_request(request);
+    if (m_config.m_self.is_controller()) {
+        std::string source_tier;
+        std::string target_tier;
+        if (request.get_action().get_action()
+            == HsmAction::Action::RELEASE_DATA) {
+            source_tier = std::to_string(request.source_tier());
+        }
+        else {
+            source_tier = std::to_string(request.source_tier());
+            target_tier = std::to_string(request.target_tier());
+        }
+
+        for (const auto& backend : get_backends()) {
+            if (backend.has_tier_name(source_tier)) {
+                LOG_INFO("Controller has source backend locally - using that.");
+                return m_hsm_service->make_request(request);
+            }
+        }
+
+        if (!target_tier.empty()) {
+            for (const auto& backend : get_backends()) {
+                if (backend.has_tier_name(target_tier)) {
+                    LOG_INFO(
+                        "Controller has target backend locally - using that.");
+                    return m_hsm_service->make_request(request);
+                }
+            }
+        }
+
+        auto response =
+            HsmActionResponse::create(request, request.get_action());
+
+        auto node_address = get_backend_address(request.source_tier());
+        if (node_address.empty()) {
+            const std::string message = "No backend found for source tier: "
+                                        + std::to_string(request.source_tier());
+            LOG_ERROR(message);
+            response->on_error({HsmActionErrorCode::ITEM_NOT_FOUND, message});
+            return response;
+        }
+        else {
+            LOG_INFO("Redirecting to: " + node_address);
+            response->set_redirect_location(node_address);
+            return response;
+        }
+    }
+    else {
+        return m_hsm_service->make_request(request);
+    }
 }
 
 void DistributedHsmService::do_data_io_action(
@@ -111,9 +159,7 @@ void DistributedHsmService::do_data_io_action(
     Stream* stream,
     dataIoCompletionFunc completion_func) const
 {
-
     if (m_config.m_self.is_controller()) {
-
         std::string tier_name;
         if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
             tier_name = std::to_string(request.target_tier());
