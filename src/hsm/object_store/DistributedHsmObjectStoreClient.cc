@@ -628,7 +628,8 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
         m_hsm_service->get_user_service()->get_current_user().get_primary_key();
 
     if (request.method() == HsmObjectStoreRequestMethod::GET
-        || request.method() == HsmObjectStoreRequestMethod::EXISTS) {
+        || request.method() == HsmObjectStoreRequestMethod::EXISTS
+        || request.method() == HsmObjectStoreRequestMethod::REMOVE) {
         if (m_client_manager->has_client(request.source_tier())) {
             LOG_INFO("Found local client for source tier");
             return do_local_op(request, stream, request.source_tier());
@@ -640,10 +641,15 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 + "- creating remote get");
             return do_remote_get(request, stream);
         }
+        else if (request.method() == HsmObjectStoreRequestMethod::REMOVE) {
+            LOG_INFO(
+                "Did not find client for source tier "
+                + std::to_string(request.source_tier())
+                + "- creating remote release");
+            return do_remote_release(request);
+        }
     }
-    else if (
-        request.method() == HsmObjectStoreRequestMethod::PUT
-        || request.method() == HsmObjectStoreRequestMethod::REMOVE) {
+    else if (request.method() == HsmObjectStoreRequestMethod::PUT) {
         if (m_client_manager->has_client(request.target_tier())) {
             LOG_INFO("Found local client for target tier");
             return do_local_op(request, stream, request.target_tier());
@@ -654,9 +660,6 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::make_request(
                 + std::to_string(request.target_tier())
                 + " - creating remote put");
             return do_remote_put(request, stream);
-        }
-        else if (request.method() == HsmObjectStoreRequestMethod::REMOVE) {
-            return do_remote_release(request);
         }
     }
     else if (
