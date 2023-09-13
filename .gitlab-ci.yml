@@ -302,8 +302,6 @@ Nightly_code_coverage:
   variables:
     <<: *nightly_variables
     CMAKE_BUILD_TYPE: "Debug"
-    CXX: "clang++"
-    CC: "clang"
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_CODE_COVERAGE: "ON"
     HESTIA_TEST_REDIS: "ON"
