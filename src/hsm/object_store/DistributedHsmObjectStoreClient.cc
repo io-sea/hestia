@@ -386,7 +386,7 @@ HsmObjectStoreResponse::Ptr
 DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_source(
     const HsmObjectStoreRequest& request, bool is_copy) const
 {
-    auto response = HsmObjectStoreResponse::create(request, "");
+    auto response = HsmObjectStoreResponse::create(request, m_id);
 
     if (m_http_client == nullptr) {
         const std::string message =
@@ -412,7 +412,7 @@ DistributedHsmObjectStoreClient::do_remote_copy_or_move_with_local_source(
         get_response = hsm_client->make_request(get_request, &stream);
     }
     else {
-        auto client = m_client_manager->get_client(request.target_tier());
+        auto client = m_client_manager->get_client(request.source_tier());
         assert(client != nullptr);
         auto response = client->make_request(
             HsmObjectStoreRequest::to_base_request(get_request), &stream);
