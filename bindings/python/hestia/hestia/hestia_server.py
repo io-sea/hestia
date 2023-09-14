@@ -78,7 +78,7 @@ class HestiaServerWrapper():
         self.controller_proc = None
 
         self.worker_host = "127.0.0.1"
-        self.worker_port = "8080"
+        self.worker_port = 8080
         self.worker_proc = None
 
     def start_controller_with_storage(self):
@@ -91,10 +91,10 @@ class HestiaServerWrapper():
         self.controller_proc.start()
         self.wait_for_connection(self.controller_host + ":" + str(self.controller_port))
 
-    def start_worker(self, port):
-        self.worker_proc = multiprocessing.Process(target=internal_start_worker, args=(self.worker_host, port))
+    def start_worker(self):
+        self.worker_proc = multiprocessing.Process(target=internal_start_worker, args=(self.worker_host, self.worker_port))
         self.worker_proc.start()
-        self.wait_for_connection(self.worker_host + ":" + str(port))
+        self.wait_for_connection(self.worker_host + ":" + str(self.worker_port))
 
     def wait_for_connection(self, address):
         connected = False

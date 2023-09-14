@@ -81,9 +81,9 @@ void HttpCrudClient::update(
         auto seq_dict =
             std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
         for (const auto& item : crud_request.items()) {
-            path += "/" + item->get_primary_key();
+            const auto working_path = path + "/" + item->get_primary_key();
 
-            HttpRequest request(path, HttpRequest::Method::PUT);
+            HttpRequest request(working_path, HttpRequest::Method::PUT);
             request.get_header().set_content_type("application/json");
             request.get_header().set_auth_token(
                 crud_request.get_user_context().m_token);
@@ -123,16 +123,38 @@ void HttpCrudClient::update(
                 crud_request.get_attributes().get_key_prefix());
         }
 
-        std::size_t count{0};
+        std::vector<std::string> request_paths;
         for (const auto& id : crud_request.get_ids()) {
             if (id.has_primary_key()) {
-                path += "/" + id.get_primary_key();
+                request_paths.push_back("/" + id.get_primary_key());
             }
             else if (id.has_parent_primary_key()) {
-                path += "/?parent_id=" + id.get_parent_primary_key();
+                request_paths.push_back(
+                    "/?parent_id=" + id.get_parent_primary_key());
             }
+        }
+        if (request_paths.empty() && !attrs_dict.is_empty()) {
+            if (attrs_dict.get_type() == Dictionary::Type::SEQUENCE) {
+                for (const auto& item : attrs_dict.get_sequence()) {
+                    if (item->has_map_item("id")) {
+                        request_paths.push_back(
+                            "/" + item->get_map_item("id")->get_scalar());
+                    }
+                }
+            }
+            else {
+                if (attrs_dict.has_map_item("id")) {
+                    request_paths.push_back(
+                        "/" + attrs_dict.get_map_item("id")->get_scalar());
+                }
+            }
+        }
 
-            HttpRequest request(path, HttpRequest::Method::PUT);
+        std::size_t count{0};
+        for (const auto& item_path : request_paths) {
+            const auto working_path = path + item_path;
+
+            HttpRequest request(working_path, HttpRequest::Method::PUT);
             request.get_header().set_content_type("application/json");
             request.get_header().set_auth_token(
                 crud_request.get_user_context().m_token);
@@ -154,7 +176,7 @@ void HttpCrudClient::update(
                      "Error in http client PUT: " + response->to_string()});
             }
 
-            if (crud_request.items().size() == 1) {
+            if (request_paths.size() == 1) {
                 adapter->from_string({response->body()}, crud_response.items());
             }
             else {
@@ -162,12 +184,31 @@ void HttpCrudClient::update(
                 adapter->dict_from_string(response->body(), *item_dict);
                 seq_dict->add_sequence_item(std::move(item_dict));
             }
+            count++;
         }
-        if (crud_request.items().size() > 1) {
+
+        if (!seq_dict->is_empty()) {
+            LOG_INFO("Setting response items")
             adapter->from_dict(*seq_dict, crud_response.items());
         }
 
-        count++;
+        std::vector<std::string> ids;
+        for (const auto& item : crud_response.items()) {
+            ids.push_back({item->get_primary_key()});
+        }
+        crud_response.ids() = ids;
+
+        if (crud_request.get_query().is_attribute_output_format()) {
+            auto typed_adatper =
+                get_adapter(crud_request.get_attributes().get_output_format());
+            typed_adatper->to_string(
+                crud_response.items(), crud_response.attributes().buffer());
+        }
+        else if (crud_request.get_query().is_dict_output_format()) {
+            auto content = std::make_unique<Dictionary>();
+            adapter->to_dict(crud_response.items(), *content);
+            crud_response.set_dict(std::move(content));
+        }
     }
 }
 

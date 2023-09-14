@@ -22,6 +22,10 @@ class InMemoryStreamSource : public StreamSource {
 
     IOResult read(WriteableBufferView& buffer) noexcept override;
 
+    bool supports_seek() const override { return true; };
+
+    void seek_to(std::size_t offset) override;
+
   private:
     IOResult read_from_buffer(WriteableBufferView& buffer);
     IOResult read_from_source_func(WriteableBufferView& buffer);

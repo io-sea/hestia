@@ -84,6 +84,12 @@ install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.service"
         COMPONENT runtime
         )
 
+install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia"
+        DESTINATION lib/python/hestia
+        COMPONENT runtime
+        PATTERN "__pycache__/*" EXCLUDE
+)
+
 install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/data/configs/"
         DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/sample-configs"
         COMPONENT runtime

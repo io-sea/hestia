@@ -35,7 +35,6 @@ class BaseTestFixture():
         object_updated_json = self.client.object_update(object_read_json)
         if (object_updated_json["name"] != "my_object"):
             raise ValueError('Failed to update object name attr')
-        return
         
         # Remove the object
         self.client.object_remove(object_id)
@@ -54,7 +53,7 @@ class BaseTestFixture():
 
         # Read the attributes back
         user_attrs_read = self.client.object_attrs_get(object_id)
-        
+
         # Add some data
         content = b"The quick brown fox jumps over the lazy dog."
         action_id = self.client.object_put(object_id, content)
@@ -63,12 +62,12 @@ class BaseTestFixture():
         action = self.client.action_read_ids([action_id])
         if (action["status"] != "finished_ok"):
             raise ValueError('Put action did not complete ok')
-
+        
         # Get the content back
         retrieved_content = self.client.object_get(object_id, len(content))
         if (retrieved_content != content):
             raise ValueError('Retrieved content does not match original')
-
+        
         # Copy between tiers
         copied_action_id = self.client.object_copy(object_id, 0, 1)
         copied_action = self.client.action_read_ids([copied_action_id])
@@ -86,7 +85,8 @@ class BaseTestFixture():
         release_action = self.client.action_read_ids([released_action_id])
         if (release_action["status"] != "finished_ok"):
             raise ValueError('Copy action did not complete ok')
-
+        
+        return
 
     def do_fd_object_ops(self, path):
         object_json = self.client.object_create()
@@ -140,7 +140,7 @@ class ControllerWithWorkerFixture(BaseTestFixture):
         super().__init__()
         self.server = hestia.hestia_server.HestiaServerWrapper()
         self.server.start_controller()
-        self.server.start_worker(8080)
+        self.server.start_worker()
 
         self.client = hestia.HestiaClient(None, None, hestia.hestia_client._CLIENT_FULL_CONFIG)
 
@@ -182,8 +182,8 @@ if __name__ == "__main__":
 
     path = os.getcwd() + "/compile_commands.json"
 
-    #do_standalone_fixture_tests()
-    do_controller_with_storage_tests()
+    do_standalone_fixture_tests()
+    #do_controller_with_storage_tests()
     #do_controller_with_worker_tests()
 
 

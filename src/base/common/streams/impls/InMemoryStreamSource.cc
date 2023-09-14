@@ -56,6 +56,12 @@ IOResult InMemoryStreamSource::read_from_buffer(
     return {get_state(), writeable_buffer.length()};
 }
 
+void InMemoryStreamSource::seek_to(std::size_t offset)
+{
+    m_read_buffer_offset = offset;
+    set_state(StreamState::State::READY);
+}
+
 IOResult InMemoryStreamSource::read_from_source_func(
     WriteableBufferView& writeable_buffer)
 {
