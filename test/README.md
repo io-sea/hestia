@@ -27,7 +27,7 @@ export CXX=/path/to/llvm/source/bin/clang++
 
 Run cmake in with `-DHESTIA_BUILD_TESTS=ON -DCODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug`.
 
-Note: You can also comppile with gcc and produce code coverage report with lcov which is default in CI.
+Note: You can also compile with gcc and produce code coverage report with lcov. This is default in CI.
 
 ### Running
 

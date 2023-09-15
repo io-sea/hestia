@@ -271,7 +271,7 @@ curl -X PUT -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8="  $H
 ```
 
 ```json
-{"creation_time":"1694686359645111","dataset":{"id":"17ab0a87-cb5f-343b-a1c2-7d0cce08ddf4"},"id":"550e8400-e29b-41d4-a716-446655440000","last_modified_time":"1694686359645111","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"object","user_metadata":{"creation_time":"1694686359641160","data":{},"id":"bb160846-4928-555f-c0dd-944cc1504d29","last_modified_time":"1694686359641160","object":{"id":"a485acab-5ef1-8486-3413-f035db69f4f9"},"type":"metadata"},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
+{"creation_time":"1694686359645111","dataset":{"id":"17ab0a87-cb5f-343b-a1c2-7d0cce08ddf4"},"id":"550e8400-e29b-41d4-a716-446655440000","last_modified_time":"1694686359645111","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"object","user_metadata":{"creation_time":"1694686359641160","data":{},"id":"bb160846-4928-555f-c0dd-944cc1504d29","last_modified_time":"1694686359641160","object":{"id":"550e8400-e29b-41d4-a716-446655440000"},"type":"metadata"},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
 ```
 
 The object id will be returned in the `id` field in the response `json`. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` we create a HSM action:
