@@ -18,7 +18,7 @@ The `bin` and `lib` directories need to be in the `PATH`.
 
 ### Building
 
-Set the C and C++ compiler paths.
+Set the C and C++ compiler paths. 
 
 ```bash
 export CC=/path/to/llvm/source/bin/clang
@@ -26,6 +26,8 @@ export CXX=/path/to/llvm/source/bin/clang++
 ```
 
 Run cmake in with `-DHESTIA_BUILD_TESTS=ON -DCODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug`.
+
+Note: You can also comppile with gcc and produce code coverage report with lcov which is default in CI.
 
 ### Running
 

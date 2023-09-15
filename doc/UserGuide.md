@@ -262,14 +262,16 @@ export HESTIA_ENDPOINT=127.0.0.1:8080
 hestia start
 ```
 
+Requests for creating resources need to include information about the User making the request.  A simple version to handle this currently is to pass a token identifying the user in the authorization header. You can find the token for the default user by going to http://localhost:8080/api/v1/users in a web browser when the hestia server is running. You need to set this as a curl header in the request.
+
 Create a new object
 
 ```bash
-curl -X PUT $HESTIA_ENDPOINT/api/v1/objects
+curl -X PUT -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8="  $HESTIA_ENDPOINT/api/v1/objects
 ```
 
 ```json
-{"acl":{"group":[],"user":[]},"created_by":{"id":"00000000-0000-0000-0000-000000000000"},"creation_time":"1687957204420770","dataset_id":"00000000-0000-0000-0000-000000000000","id":"550e8400-e29b-41d4-a716-446655440000","last_modified_time":"1687957204420770","name":"","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"hsm_object","user_metadata":{},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
+{"creation_time":"1694686359645111","dataset":{"id":"17ab0a87-cb5f-343b-a1c2-7d0cce08ddf4"},"id":"550e8400-e29b-41d4-a716-446655440000","last_modified_time":"1694686359645111","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"object","user_metadata":{"creation_time":"1694686359641160","data":{},"id":"bb160846-4928-555f-c0dd-944cc1504d29","last_modified_time":"1694686359641160","object":{"id":"a485acab-5ef1-8486-3413-f035db69f4f9"},"type":"metadata"},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
 ```
 
 The object id will be returned in the `id` field in the response `json`. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` we create a HSM action:
