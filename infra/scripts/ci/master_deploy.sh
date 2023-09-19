@@ -2,19 +2,34 @@
 
 # Upload packages to registry
 registry_url="$HESTIA_API_URL/packages/generic/hestia/$HESTIA_PROJECT_VERSION/hestia-$HESTIA_PROJECT_VERSION"
+
+# RPMs: main, devel, tests, source
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url.rpm" \
-    --upload-file $CMAKE_BUILD_DIR/*Linux.rpm
+    --upload-file $CMAKE_BUILD_DIR/hestia-$HESTIA_PROJECT_VERSION-1.x86_64.rpm
 do echo "will retry in 2 seconds"; sleep 2; done
+
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url-devel.rpm" \
+    --upload-file $CMAKE_BUILD_DIR/hestia-devel-$HESTIA_PROJECT_VERSION-1.x86_64.rpm
+do echo "will retry in 2 seconds"; sleep 2; done
+
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url-tests.rpm" \
+    --upload-file $CMAKE_BUILD_DIR/hestia-tests-$HESTIA_PROJECT_VERSION-1.x86_64.rpm
+do echo "will retry in 2 seconds"; sleep 2; done
+
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url.src.rpm" \
+    --upload-file $CMAKE_BUILD_DIR/hestia-$HESTIA_PROJECT_VERSION-1.x86_64..src.rpm
+do echo "will retry in 2 seconds"; sleep 2; done
+
+# TARs: main, source
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url.tar.gz" \
     --upload-file $CMAKE_BUILD_DIR/*Linux.tar.gz
 do echo "will retry in 2 seconds"; sleep 2; done
 
-while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
-    "$registry_url.src.rpm" \
-    --upload-file $CMAKE_BUILD_DIR/*.src.rpm
-do echo "will retry in 2 seconds"; sleep 2; done
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url-Source.tar.gz" \
     --upload-file $CMAKE_BUILD_DIR/*Source.tar.gz
@@ -36,6 +51,12 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
             \"link_type\": \"package\"
           },
           {
+            \"name\": \"Hestia Development Headers RPM\",
+            \"url\": \"$registry_url-devel.rpm\",
+            \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION-devel.rpm\",
+            \"link_type\": \"package\"
+          },
+          {
             \"name\": \"Hestia tarball\",
             \"url\": \"$registry_url.tar.gz\",
             \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION.tar.gz\",
@@ -45,6 +66,12 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
             \"name\": \"Hestia SRC RPM\",
             \"url\": \"$registry_url.src.rpm\",
             \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION.src.rpm\",
+            \"link_type\": \"package\"
+          },
+          {
+            \"name\": \"Hestia Tests RPM\",
+            \"url\": \"$registry_url-tests.rpm\",
+            \"direct_asset_path\": \"/binaries/hestia-$HESTIA_PROJECT_VERSION-tests.rpm\",
             \"link_type\": \"package\"
           },
         ]}

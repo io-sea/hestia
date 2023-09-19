@@ -11,4 +11,9 @@ namespace hestia::project_config
     {
         return "@PROJECT_VERSION@";
     }
+
+    [[maybe_unused]] static std::string get_hestia_plugin_path()
+    {
+        return "@CMAKE_INSTALL_PREFIX@/lib/@PROJECT_NAME@";
+    }
 }

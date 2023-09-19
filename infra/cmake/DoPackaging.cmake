@@ -1,4 +1,4 @@
-set(STANDALONE_MODULES_FOR_EXPORT)
+set(STANDALONE_MODULES_FOR_EXPORT "")
 
 if(HESTIA_WITH_S3_CLIENT)
         list(APPEND STANDALONE_MODULES_FOR_EXPORT ${PROJECT_NAME}_s3_plugin)
@@ -29,10 +29,45 @@ if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 install(TARGETS 
         ${PROJECT_NAME}_main 
         ${STANDALONE_MODULES_FOR_EXPORT}
-        LIBRARY DESTINATION lib/${PROJECT_NAME}
-        RUNTIME DESTINATION bin
-        COMPONENT runtime
+        LIBRARY 
+                COMPONENT runtime
+                DESTINATION lib/${PROJECT_NAME}
+        RUNTIME 
+                COMPONENT runtime
+                DESTINATION bin
         )
+
+if(HESTIA_BUILD_TESTS)
+set(TEST_MODULES_FOR_EXPORT
+        ${PROJECT_NAME}_unit_tests
+        ${PROJECT_NAME}_integration_tests
+        ${PROJECT_NAME}_mock_phobos_plugin
+        ${PROJECT_NAME}_mock_motr_plugin
+        )
+
+install(TARGETS 
+        ${TEST_MODULES_FOR_EXPORT}
+        LIBRARY 
+                COMPONENT tests
+                DESTINATION lib/${PROJECT_NAME}
+        RUNTIME 
+                COMPONENT tests
+                DESTINATION opt/${PROJECT_NAME}/bin
+        )
+        
+install(DIRECTORY    "${CMAKE_CURRENT_BINARY_DIR}/test_data/"
+        DESTINATION opt/${PROJECT_NAME}/test_data
+        COMPONENT tests
+        )
+
+install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/"
+        DESTINATION opt/${PROJECT_NAME}/src
+        COMPONENT tests
+        PATTERN "data" EXCLUDE
+        PATTERN "*.txt" EXCLUDE
+        )
+
+endif()
 
 set(LINK_MODULES_FOR_EXPORT "")
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -50,7 +85,7 @@ install(TARGETS
         PUBLIC_HEADER
                 COMPONENT devel
                 DESTINATION include/
-)
+        )
 
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}Targets.cmake
@@ -63,7 +98,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake
     VERSION ${CMAKE_PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
-)
+        )
 
 configure_file(infra/cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
@@ -88,7 +123,7 @@ install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia"
         DESTINATION lib/python/hestia
         COMPONENT runtime
         PATTERN "__pycache__/*" EXCLUDE
-)
+        )
 
 install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/data/configs/"
         DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/sample-configs"
@@ -110,6 +145,7 @@ set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://git.ichec.ie/io-sea-internal/hestia")
+set(CPACK_THREADS ${CMAKE_BUILD_PARALLEL_LEVEL})
 
 set(HESTIA_CPACK_GENERATORS TGZ)
 set(HESTIA_SOURCE_GENERATORS TGZ)
@@ -126,12 +162,20 @@ if(NOT APPLE)
                 set(CPACK_RPM_USER_BINARY_SPECFILE ${CMAKE_SOURCE_DIR}/infra/cmake/hestia.spec.in)
         endif()
 
+        set(HESTIA_COMPONENTS runtime devel)
         cpack_add_component(runtime DESCRIPTION "Hestia Runtime Package")
         cpack_add_component(devel 
                 DESCRIPTION "Hestia Development Package"
                 DEPENDS runtime)
-
-        set(CPACK_COMPONENTS_ALL runtime devel)
+        
+        if(HESTIA_BUILD_TESTS)
+        cpack_add_component(tests
+                DESCRIPTION "Hestia Unit Tests & Mock Interfaces Package"
+                DEPENDS runtime)
+        list(APPEND HESTIA_COMPONENTS tests)
+        endif()
+        
+        set(CPACK_COMPONENTS_ALL ${HESTIA_COMPONENTS})
         set(CPACK_RPM_COMPONENT_INSTALL ON)
         set(CPACK_RPM_MAIN_COMPONENT runtime) 
         set(CPACK_RPM_BUILDREQUIRES "wget, git, make, cmake, gcc-c++, binutils, elfutils, doxygen")

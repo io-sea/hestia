@@ -302,7 +302,10 @@ void HestiaApplication::setup_http_client()
 
 void HestiaApplication::setup_object_store()
 {
-    std::vector<std::filesystem::path> search_paths;
+    std::vector<std::filesystem::path> search_paths = {
+        project_config::get_hestia_plugin_path(), "/usr/lib/hestia",
+        "/usr/lib64/hestia", "/usr/local/lib/hestia",
+        "/usr/local/lib64/hestia"};
     m_object_store_client = DistributedHsmObjectStoreClient::create(
         m_http_client.get(), search_paths);
 }
