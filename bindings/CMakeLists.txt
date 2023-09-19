@@ -1,0 +1,1 @@
+file(COPY python/hestia DESTINATION ${CMAKE_BINARY_DIR}/lib/python)

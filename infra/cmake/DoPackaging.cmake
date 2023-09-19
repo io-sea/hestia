@@ -78,14 +78,15 @@ install(TARGETS
         ${PROJECT_NAME}_lib 
         ${LINK_MODULES_FOR_EXPORT}
         EXPORT ${PROJECT_NAME}-targets
+        FILE_SET HEADERS
+                COMPONENT devel
         LIBRARY
                 COMPONENT runtime
                 NAMELINK_COMPONENT devel
                 DESTINATION lib/${PROJECT_NAME}
-        PUBLIC_HEADER
-                COMPONENT devel
-                DESTINATION include/
-        )
+        INCLUDES 
+                DESTINATION include/${PROJECT_NAME}
+)
 
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}Targets.cmake
@@ -99,6 +100,12 @@ write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake
     VERSION ${CMAKE_PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
         )
+
+install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia"
+        DESTINATION lib/${PROJECT_NAME}/python/hestia
+        COMPONENT runtime
+        PATTERN "__pycache__/*" EXCLUDE
+)
 
 configure_file(infra/cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"

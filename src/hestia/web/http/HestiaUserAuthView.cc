@@ -37,7 +37,10 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
     }
 
     if (username.empty() || password.empty()) {
-        return HttpResponse::create(400, "Bad Request");
+        const auto msg = "Couldn't parse username or password from request";
+        LOG_ERROR(msg);
+        return HttpResponse::create(
+            HttpError{HttpError::Code::_400_BAD_REQUEST, msg});
     }
 
     CrudResponse::Ptr response;
@@ -51,6 +54,7 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
     if (!response->ok()) {
         return HttpResponse::create(500, "Server Error");
     }
+    LOG_INFO("Found user ok - responding with user body");
 
     auto http_response = HttpResponse::create();
     std::string body;

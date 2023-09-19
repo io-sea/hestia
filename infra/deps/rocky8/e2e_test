@@ -5,8 +5,8 @@ cmake
 gcc
 gcc-c++
 libtool
-libcurl-devel 
-libxml2-devel
-openssl-devel
 make
 python3
+wget
+rpm-build
+python3-devel

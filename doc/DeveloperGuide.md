@@ -71,16 +71,18 @@ brew install llvm@15
 If you want to use this as your default compiler add the following to your `.zshrc`.
 
 ```bash
-echo 'export PATH="/path/to/llvm/source/bin:$PATH"' >> ~/.zshrc
-echo 'export LDFLAGS="-L/path/to/llvm/source/lib"' >> ~/.zshrc
-echo 'export CPPFLAGS="-I/path/to//llvm/source//include"' >> ~/.zshrc
+echo 'export PATH=$LLVM_PATH/bin:$PATH' >> ~/.zshrc
+echo 'export LDFLAGS=-L$LLVM_PATH/lib' >> ~/.zshrc
+echo 'export CPPFLAGS=-I$LLVM_PATH/include' >> ~/.zshrc
 ```
+
+A typical value on Mac is `LLVM_PATH=/opt/homebrew/opt/llvm@15`;
 
 Before running CMake, the compiler should be explicitly set to this one also:
 
 ```bash
-export CC=/path/to/llvm/source/bin/clang
-export CXX=/path/to/llvm/source/bin/clang++
+export CC=$LLVM_PATH/bin/clang
+export CXX=$LLVM_PATH/bin/clang++
 ```
 
 To do formatting you can run:

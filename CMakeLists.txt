@@ -30,6 +30,7 @@ option(HESTIA_WITH_S3_CLIENT "Build the S3 Client." ON)
 option(HESTIA_USE_SRC_RPM_SPEC "Turn on when generating an SRPM." OFF)
 
 add_subdirectory(src)
+add_subdirectory(bindings)
 
 include(CTest)
 if(${HESTIA_BUILD_TESTS})

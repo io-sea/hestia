@@ -17,7 +17,8 @@ This is the `Hestia` user guide, it covers:
   - [Event Feed](#event-feed)
 - [APIs](#apis)
   - [Command Line Interface](#command-line-interface)
-  - [C and Python Interfaces](#c-and-python-interfaces)
+  - [C Interface](#c-interface)
+  - [Python Interface](#python-interface)
   - [Web Interfaces](#web-interfaces)
     - [REST API](#rest-api)
 - [S3 API](#s3-api)
@@ -59,7 +60,7 @@ The figure below shows the abstractions used in Hestia and their relationships.
 * `Object` : A Storage object - it can point to a single object with data split over several storage tiers and also hold object metadata.
 * `Namespace` : An addressing scheme (e.g. POSIX path) and permissions for Objects in a Dataset.
 * `Extent` : An Object's data on a particular Storage Tier - it is a collection of block offsets and lengths, allowing random access for data put and get operations where supported by the third-party object store backend.
-* `Metadata` : A collection of key-value pairs representing metadata for an Object it is split from the parent model to allow for quicker access or indexing.
+* `Metadata` : A collection of key-value pairs representing metadata for an Object. It is split from the parent Object model to allow for quicker access or indexing.
 
 In the figure solid lines represent parent-child relationships, which are one-to-many unless explicitly specified one-to-one (x1). 
 
@@ -113,18 +114,17 @@ Hestia can interface with several Object Store backends at the same time, thus t
 
 ```yaml
 object_store_clients:
-  - identifier: hestia::FileObjectStoreClient
-    backend_type: file
-    config:
+  - backend_type: file_hsm
+    tier_names: ["0", "1", "2", "3"]
+    config: 
+      root: hsm_object_store
+  - backend_type: file
+    tier_names: ["4"]
+    config: 
       root: object_store
-  - identifier: hestia::S3Client
-    backend_type: s3
-    plugin_path: libhestia_s3_plugin
-    config:
-      host: 127.0.0.1:8000
 ```
 
-Here we have configured two clients, one to a simple built-in Object Store which uses the local file-system and the other to a remote store with an S3 interface. We provide an arbitary `identifier` to address the clients at runtime, a `backend_type` to give a hint on the nature of the client, and a client-specific `config`. For clients provided as a plugin (shared library) we can provide an optional `plugin_path` search hint.
+Here we have configured two clients, the first is a HSM enabled client which uses the local filesystem and the second is simple filesystem-based object store with one tier. We specify a `backend_type`, give the list of unique tier identifiers to be handled by the client in `tier_names` and any client-specific config as a sub-object of the `config` key.
 
 The following backends are currently supported:
 
@@ -142,19 +142,18 @@ When working with HSM systems we want to match a `Storage Tier` with an Object S
 
 ```yaml
 tiers:
-  - identifier: 0
-    client_identifier: hestia::FileHsmObjectStoreClient
-  - identifier: 1
-    client_identifier: hestia::FileHsmObjectStoreClient
-  - identifier: 2
-    client_identifier: hestia::S3Client
+  - name: "0"
+  - name: "1"
+  - name: "2"
+  - name: "3"
+  - name: "4"
 ```
 
-This maps a `Storage Tier` with a system `identifier` (0-255) to a `client_identifier` specified when defining the `object_store_clients` entries. Note that a single HSM enabled object store client can be mapped to from multiple Storage Tiers.
+Where the tier `name` is a unique identifier corresponding to the entires in the `object_store_clients` config. Each tier entry can have further configuration options than shown above (capacity, bandwith etc), a unique name is the minimum required config.
 
 ## Server Settings
 
-Hestia can be used via a `Command Line Interface`, `C++ API` or over a network. The network API is available as `Http` or `S3`. The `yaml` file allows specification of server configuration as follows:
+Hestia can be used via a `Command Line Interface`, `c/Python APIs` or over a network. The network API is available as `Http` or `S3`. The `yaml` file allows specification of server configuration as follows:
 
 ```yaml
 server:
@@ -224,26 +223,60 @@ hestia object create --host=127.0.0.1 --port=8080
 
 for example for a hestia server running on localhost.
 
-## C and Python Interfaces
+## C Interface
+The C interface can be consumed via the `hestia.h` header and linking to the Hestia shared library `libhestia`. The header file documentation is the recommended reference for its use.
 
-The C interface can be consumed via the `hestia.h` header and linking to the project binaries. Linking is easiest via CMake - the `find_project(hestia)` API is supported - providing the `hestia::hestia` CMake target. The header file documentation is the recommended reference for its use.
+No special dependencies, compiler flags or definitions are needed by default, but CMake and Autotools examples are included in the [examples](/examples/) directory for convenience.
 
-For similar reasons to the CLI, the interface is designed to be adaptable rather than rigid due to the fluid requirements of the parent project - these is manifested by relying on strings and format specifiers as primary input and output arguments.
+For similar reasons to the CLI, the interface is designed to be adaptable to meet the fluid requirements of the parent project - this is manifested by relying on strings and format specifiers as primary input and output arguments. The semantics are similar to the CLI - with a `hestia_subject_method` pattern for CRUD operations. 
 
-The Python interface is a low-level wrapping of the C interface via `ctypes` - located in the `bindings` directory. It requires the `hestia_lib` to be in the system library search paths.
+## Python Interface
+The Python interface includes both a low-level wrapper over the C interface (`hestia.HestiaLib`) and a high-level `hestia.HestiaClient` class, which is easier to use and more closely follows IO-SEA API conventions. The low-level wrapper can serve as a fall-back for anything missing in the client.
 
-To test your setup you can run:
+If you built Hestia from source you can add the `hestia` package to the `PYTHONPATH` with:
 
 ```bash
-cd bindings/python/hestia
-export PYTHONPATH=$PYTHONPATH:`pwd`
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/$HESTIA_BUILD_DIR/lib
-python3 test/test_binding.py
+export PYTHONPATH=$PYTHONPATH:$HESTIA_BUILD_DIR/lib/python/hestia
 ```
 
-(on Mac set the `DYLD_LIBRARY_PATH` instead)
+or if you installed a binary package it will look something like:
 
-Overall the semantics of the C interface are similar to the CLI - with a `hestia_subject_method` pattern for CRUD operations. 
+```bash
+export PYTHONPATH=$PYTHONPATH:/usr/lib/hestia/python/hestia
+```
+
+`libhestia` should be found automatically, but if there are issues finding it you can manually add its location to your `LD_LIBRARY_PATH`.
+
+As an example of using the Python interface, we can do something like:
+
+```python
+import hestia
+
+# Setup some data
+my_object_id = "1234"
+my_attributes = {"key0" : "val0", "key1" : "val1"}
+my_content = "content for storage"
+
+# Create the client - this will initialize it too
+client = hestia.HestiaClient()
+
+# Create an object with the requested id
+client.object_create(my_object_id)
+
+# Add USER attributes to the object
+client.object_attrs_put(my_object_id, my_attributes)
+
+# Add data to the object
+client.object_data_put(my_object_id, my_content)
+
+# Get the USER attributes back
+attributes_returned = client.object_attrs_get(my_object_id)
+
+# Get the data back
+data_returned = client.object_data_get(my_object_id)
+```
+
+Many other operations are supported, see `bindings/python/hestia/test/test_binding.py` for detailed examples.
 
 ## Web Interfaces
 
@@ -251,8 +284,7 @@ Hestia provides two primary web-interfaces (S3 and generic REST) through which a
 
 The web-apps are run on a Proxygen web-server (with a basic custom-built server provided for testing).
 
-The server can be run blocking or as a daemon depending on the supplied command line flags - with the loaded app controlled by the supplied `yaml`
- config.
+The server can be run blocking or as a daemon depending on the supplied command line flags - with the loaded app controlled by the supplied `yaml` config.
 
 ### REST API
 As an example of a REST API, start the Hestia service
@@ -372,10 +404,12 @@ systemctl status hestiad # Check the server's status
 systemctl restart hestiad # Restart the server (will reload the configuration file)
 ```
 
-The server can be interfaced with as described in the various APIs above. All logs will be written to the system log, which can be viewed with `journalctl`.  
+The server can be interfaced as described in the various APIs above. All logs will be written to the system log, which can be viewed with `journalctl`.  
+
 # Ansible Deployment
 
 Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/examples/sample_ansible_deploy/playbook.yml).  
+
 ## Usage
 
 ### Hestia Roles in your Playbook

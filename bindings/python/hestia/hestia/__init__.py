@@ -7,6 +7,16 @@ working_lib.load_library()
 
 class HestiaClient(hestia_client.HestiaClientBase):
 
+    """This class allows interaction with Hestia as a client. Most methods of interest
+    are defined in the base class :class:`hestia.hestia_client.HestiaClientBase`.
+
+    This class just manages the client lifecycle via RAII.
+    
+    :param config_path: Optional path to a config yaml file
+    :param token: A token identifying the current user. If user-management is off it is optional
+    :param config: Extra config in json format - this overrides any config in an external file
+    """
+
     def __init__(self, config_path: str = None, token: str = None, config = None):
         super().__init__(config_path, token, config)
         self.lib = working_lib
@@ -21,6 +31,15 @@ class HestiaClient(hestia_client.HestiaClientBase):
 
 class HestiaServer(hestia_server.HestiaServerBase):
 
+    """This class is for running a Hestia server. Most methods of interest
+    are defined in the base class :class:`hestia.hestia_server.HestiaServerBase`.
+
+    This class just manages the server lifecycle via RAII.
+    
+    :param host: Host address to run at
+    :param port: Host port to run at
+    :param config: Extra config in json format - this overrides any config in an external file
+    """
     def __init__(self, host: str = "127.0.0.1", port: int = 8000, config = None):
         super().__init__(host, port, config)
         self.lib = working_lib

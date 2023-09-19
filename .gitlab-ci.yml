@@ -207,9 +207,7 @@ E2E_test:
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py 
       --source_dir=${CI_PROJECT_DIR}
-      --build_dir=${CMAKE_BUILD_DIR} 
-      --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
-      --devel_package_name=${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      --build_dir=${CMAKE_BUILD_DIR}
 
 # Scheduled Builds
 .nightly_snippets:
@@ -290,9 +288,7 @@ Nightly_E2E:
   script:
     - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
       --source_dir=${CI_PROJECT_DIR}
-      --build_dir=${CMAKE_BUILD_DIR} 
-      --package_name=${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
-      --devel_package_name=${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      --build_dir=${CMAKE_BUILD_DIR}
 
 Nightly_code_coverage:
   <<: *default_nightly_job

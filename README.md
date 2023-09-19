@@ -6,7 +6,7 @@ It is being developed in the context of the [IO-SEA](https://iosea-project.eu) p
 
 It adds HSM features, Object grouping and general Object adressing capabilities to third-party Object Stores.
 
-Currently the software is an `alpha` state - interfaces are being designed for use in the IO-SEA project and basic implementations added.
+Currently the software is in an `alpha` state - interfaces are being designed for use in the IO-SEA project and basic implementations added.
 
 # Hello World Example
 
@@ -93,13 +93,15 @@ Now, add some user metadata as a key-value pair (`my_key0 = my_value0`) to the o
 hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< data.my_key0,my_value0
 ```
 
-Here we are reading the `metadata` type, but referencing the unique identifier of its parent object with `--id_fmt=parent_id`.
+Here we are reading the `metadata` type, but referencing the unique identifier of its parent object with `--id_fmt=parent_id`. We use the `heredoc <<<` functionality of the shell for the example, put typically you would pipe in the content of a file.
 
 Finally we can read it back:
 
 ```bash
 hestia metadata read --id_fmt=parent_id --query_fmt=id --output_fmt=key_value 550e8400-e29b-41d4-a716-446655440000
 ```
+
+Here we use `--query_fmt=id` to specify that we want to do a search using 'ids' and `--id_fmt=parent_id` to specify that we are searching using the id of the metadata item's parent object. Parent-child relationships for Hestia types are covered in the [Hestia User Guide](./doc/UserGuide.md).
 
 Hestia provides several interfaces with similar functionality to the CLI, including:
 

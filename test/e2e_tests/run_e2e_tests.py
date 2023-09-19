@@ -1,97 +1,96 @@
 import os
-import sys
 import argparse
 import logging
 import shutil
 from pathlib import Path
-import subprocess
 
-from hestia_tests.utils import BaseTest, install_package, find_package
+import hestia_tests.utils
+from hestia_tests.package import Package
 
 from hestia_tests.cli_tests import CliTests
 from hestia_tests.sample_app_tests import SampleAppTests
-# from hestia_tests.service_tests import ServiceTests
-# from hestia_tests.server_tests import ServerTests
-# from hestia_tests.s3_tests import S3Tests
+from hestia_tests.s3_api_tests import S3ApiTestFixture
+from hestia_tests.service_tests import ServiceTests
+from hestia_tests.rest_api_tests import RestApiTestFixture
 
-class E2eTests(BaseTest):
-    def __init__(self, source_dir: Path, work_dir: Path, package_path: Path, devel_package_path: Path):
-        super().__init__(source_dir, work_dir)
-        self.package_path = package_path
-        self.devel_package_path = devel_package_path
+class E2eTests():
+    def __init__(self, source_dir: Path, project_dir: Path):
+        self.source_dir = source_dir
+        self.project_dir = project_dir
+        self.project_name = "hestia"
+
+        self.work_dir = self.project_dir / "e2e_tests"
+        print("E2E Tests work dir is: " + str(self.work_dir))
+        Path.mkdir(self.work_dir, parents=True, exist_ok=True)
+
+        hestia_tests.utils.setup_default_logging(self.work_dir / 'e2e_tests.log')
 
     def setup_environment(self):
         test_data_src = self.source_dir / "test" / "data"
         test_data_dest = self.work_dir / "test_data"
-
         logging.info(f"Copying test data from: {test_data_src} to {test_data_dest}")
+
+        if test_data_dest.exists():
+            shutil.rmtree(test_data_dest)
         shutil.copytree(test_data_src, test_data_dest)
 
-    def run(self, test_names = []):
-        logging.info("Installing package")
-        self.system_install = install_package(self.work_dir, self.package_path, self.devel_package_path, self.project_name)
+    def run(self):
+        self.setup_environment()
 
-        self.tests = [
-                        CliTests(self.source_dir, self.work_dir, self.system_install), 
-                        SampleAppTests(self.source_dir, self.work_dir, self.system_install),
-                        # ServerTests(self.source_dir, self.work_dir, self.system_install),
-                        # ServiceTests(self.source_dir, self.work_dir, self.system_install),
-                        # S3Tests(self.source_dir, self.work_dir, self.system_install)
-                    ]
-        
-        for eachTest in self.tests:
-            if (not test_names) or (eachTest.name in test_names):
-                eachTest.setup_environment()
-                eachTest.run()
+        logging.info(f"Installing packages, searching in: {self.project_dir}")
+
+        package = Package(self.project_dir, self.work_dir, self.project_name)
+        archive_installed, system_installed = package.install()
+
+        logging.info("Creating tests")
+        self.archive_tests = []
+        self.system_tests = []
+
+        if archive_installed:
+            installation_dir = self.work_dir / self.project_name
+            self.archive_tests = [
+                            CliTests(installation_dir, self.work_dir, False), 
+                            SampleAppTests(self.source_dir, installation_dir, self.work_dir, False),
+                            RestApiTestFixture(installation_dir, self.work_dir, False),
+                            # S3ApiTestFixture(installation_dir, self.work_dir, False),
+                            # ServiceTests(installation_dir, self.work_dir, False),
+                        ]
+
+        logging.info(f"Running {len(self.archive_tests)} archive tests")
+        for eachTest in self.archive_tests:
+            eachTest.run()
+
+        if system_installed:
+            self.system_tests = [
+                            CliTests(self.project_dir, self.work_dir, True), 
+                            SampleAppTests(self.source_dir, self.project_dir, self.work_dir, True),
+                            RestApiTestFixture(self.project_dir, self.work_dir, True),
+                            #S3ApiTestFixture(self.project_dir, self.work_dir, system_install),
+                            #ServiceTests(self.project_dir, self.work_dir, system_install),
+                        ]
+
+        logging.info(f"Running {len(self.system_tests)} system tests")
+        for eachTest in self.system_tests:
+            eachTest.run()
+
+        logging.info("Finished E2E Tests")
+
+def get_absolute_path(path: str):
+    dir = Path(path)
+    if not dir.is_absolute():
+        dir = os.getcwd() / dir
+    return dir
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--source_dir', type=str, default=os.getcwd())
     parser.add_argument('--build_dir', type=str, default=os.getcwd())
-    parser.add_argument('--package_name', type=str)
-    parser.add_argument('--devel_package_name', type=str)
 
     args = parser.parse_args()
 
-    source_dir = Path(args.source_dir)
-    if not source_dir.is_absolute():
-        source_dir = os.getcwd() / source_dir
+    source_dir = get_absolute_path(args.source_dir)
+    build_dir = get_absolute_path(args.build_dir)
 
-    build_dir = Path(args.build_dir)
-    if not build_dir.is_absolute():
-        build_dir = os.getcwd() / build_dir
-
-    work_dir = build_dir / "e2e_tests"
-    if (Path.exists(work_dir)):
-        print(f"E2E Tests: clearing {work_dir}")
-        shutil.rmtree(work_dir)
-    
-    Path.mkdir(work_dir)
-
-    logging.basicConfig(filename=work_dir / 'e2e_tests.log', filemode='w', 
-                        format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
-                        level=logging.INFO)
-    
-    logging.info("Starting E2E Tests")
-    
-    if args.package_name is not None and args.devel_package_name is not None:
-        package_path = build_dir / args.package_name
-        devel_package_path = build_dir / args.devel_package_name
-    else:
-        logging.info(f"Package name not given, searching in: {build_dir}")
-        [package_path, devel_package_path] = find_package(build_dir)
-        if package_path is None:
-            raise ValueError("Failed to find supported package")
-        elif devel_package_path is None:
-            raise ValueError("Failed to find header package")
-        else:
-            logging.info(f"Found packages: {package_path}, {devel_package_path}")
-
-    e2e_tests = E2eTests(source_dir, work_dir, package_path, devel_package_path)
-    e2e_tests.setup_environment()
-    e2e_tests.run(
-        test_names = [ "cli_tests", "sample_app_tests" ]
-    )
-
-    logging.info("Finished E2E Tests")
+    e2e_tests = E2eTests(source_dir, build_dir)
+    e2e_tests.run()

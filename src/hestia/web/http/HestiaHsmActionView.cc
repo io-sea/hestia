@@ -155,9 +155,6 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             response->header().set_item(
                 "Location", "http://" + redirect_location + m_path);
         }
-        else {
-            LOG_INFO("Responding with body chunk await");
-        }
     }
     else {
         auto action_response = m_hestia_service->make_request(
@@ -171,6 +168,13 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             response = HttpResponse::create(307, "Found");
             response->header().set_item(
                 "Location", "http://" + redirect_location + m_path);
+        }
+        else {
+            auto action_factory =
+                std::make_unique<TypedModelFactory<HsmAction>>();
+            JsonAdapter json_adapter(action_factory.get());
+            json_adapter.to_string(
+                action_response->get_action(), response->body());
         }
     }
 

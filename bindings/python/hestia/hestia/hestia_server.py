@@ -72,6 +72,12 @@ def internal_start_worker(host, port):
 
 class HestiaServerWrapper():
 
+    """This is a helper class mostly for testing.
+
+    It allows running clients and multiple servers (controller/worker) via a single Python script
+    invocation via multiprocessing.
+    """
+
     def __init__(self) -> None:
         self.controller_host = "127.0.0.1"
         self.controller_port = 8000

@@ -1,6 +1,5 @@
 #include "HttpParser.h"
 
-#include "HttpParser.h"
 #include "StringUtils.h"
 
 namespace hestia {

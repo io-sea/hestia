@@ -15,4 +15,4 @@ If hestia is in a non-standard location do:
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
 ```
 
-and make sure `$INSTALL_DIR/lib` is in the library runpath at runtime.
+If there are issues loading libraries at runtime try adding `$INSTALL_DIR/lib` to the system library search paths.

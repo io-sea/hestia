@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "HttpParser.h"
 #include "HttpRequest.h"
 
 TEST_CASE("Test HttpRequest", "[protocol]")
@@ -49,4 +50,15 @@ TEST_CASE("Test HttpRequest - split headers", "[protocol]")
     REQUIRE(request.get_path() == "/my_path");
     REQUIRE(request.get_queries().get_item("list-type") == "2");
     REQUIRE(request.get_queries().get_item("encoding-type") == "url");
+}
+
+TEST_CASE("Test form data parsing", "[protocol]")
+{
+    std::string body{"user=hestia_default_user&password=default_password"};
+
+    hestia::Map result;
+    hestia::HttpParser::parse_form_data(body, result);
+
+    REQUIRE(result.get_item("user") == "hestia_default_user");
+    REQUIRE(result.get_item("password") == "default_password");
 }

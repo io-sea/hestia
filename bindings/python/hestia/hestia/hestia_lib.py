@@ -2,6 +2,9 @@ import ctypes
 
 from enum import IntEnum
 import json
+import sys
+import pathlib
+import os
 
 class HestiaItemT(IntEnum):
     HESTIA_OBJECT = 0
@@ -32,11 +35,43 @@ class HestiaQueryFormatT(IntEnum):
 
 class HestiaLib():
 
+    """This class is a low-level wrapper of the Hestia c-api (hestia.h)
+
+    It closely matches the c-api, with type conversion and memory management via ctypes
+
+    If the :class:`hestia.HestiaClient` doesn't have required functionality then this class can
+    be use directly as a lower-level alternative. It can be accessed as an attribute of 
+    :class:`hestia.HestiaClient`.
+    """
+
     def __init__(self) -> None:
         self.lib_handle = None 
 
     def load_library(self):
-        self.lib_handle = ctypes.cdll.LoadLibrary("libhestia.dylib")
+
+        """
+        Load the hestia library, if it fails try a hard-coded path relative to the
+        default source location.
+        """
+
+        try:
+            self.lib_handle = ctypes.cdll.LoadLibrary(self.get_library_name())
+        except OSError as e:
+            self.load_library_fallback(e)
+
+    def load_library_fallback(self, original_exception):
+        source_file_path = pathlib.Path(__file__)
+        build_path = source_file_path.parent / "../../.." / self.get_library_name()
+        if build_path.is_file():
+            self.lib_handle = ctypes.cdll.LoadLibrary(build_path.resolve())
+        else: 
+            raise original_exception
+
+    def get_library_name(self):
+        extension = ".so"
+        if sys.platform == "darwin":
+            extension = ".dylib"
+        return "libhestia" + extension
 
     def hestia_initialize(self, config_path: str = None, token: str = None, extra_config = None) -> int:
         config_str = json.dumps(extra_config).encode('utf-8') if extra_config is not None else None

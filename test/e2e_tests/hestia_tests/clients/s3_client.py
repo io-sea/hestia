@@ -4,10 +4,11 @@ import uuid
 import sys
 
 class S3Client:
-    def __init__(self, server_url):
+    def __init__(self, server_url, user_id, user_key):
         self.session = boto3.session.Session(
-            aws_access_key_id="OPEN_KEY", aws_secret_access_key="SECRET_KEY")
-        self.client = self.session.client(service_name='s3', endpoint_url=server_url, config=Config(s3={'addressing_style': 'path'}))
+            aws_access_key_id=user_id, aws_secret_access_key=user_key)
+        self.client = self.session.client(service_name='s3', endpoint_url=server_url, config=Config(s3={'addressing_style': 'path',
+                                                                                                        'payload_signing_enabled' : False}))
 
     def put(self, filename, bucket_name, key, meta_data={}):
         self.client.upload_file(Filename=filename,
@@ -34,26 +35,5 @@ class S3Client:
 
     def delete_object(self, bucket_name, key):
         return self.client.delete_object(Bucket=bucket_name, Key=key)
-    
-if __name__ == "__main__":
-
-    client = S3Client("http://127.0.0.1:8080")
-
-    buckets = client.list_buckets()
-    print("Got: " + str(len(buckets)) + " buckets")
-
-    client.create_bucket("my_bucket")
-
-    buckets = client.list_buckets()
-    print("Got: " + str(len(buckets)) + " buckets")
-
-    objects = client.list_objects("my_bucket")
-
-
-
-    # client.put('test_data/EmperorWu.txt', "my_bucket", "my_obj")
-
-
-
 
 

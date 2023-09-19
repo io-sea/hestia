@@ -36,6 +36,8 @@ add_module(
         ${PROJECT_NAME}_app
 )
 
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/hestia.h)
+target_sources(${PROJECT_NAME}_lib PUBLIC FILE_SET 
+    HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/hestia.h)
 
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})

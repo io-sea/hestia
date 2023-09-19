@@ -9,13 +9,12 @@ extern "C" {
 #endif
 
 typedef enum hestia_error_e {
-    /// No error
     HESTIA_ERROR_OK = 0,               // Operation successful
     HESTIA_ERROR_NOT_FOUND,            // The requested resource wasn't found
     HESTIA_ERROR_ATTEMPTED_OVERWRITE,  // Attempted to overwrite a resource
                                        // while not permitted
     HESTIA_ERROR_BAD_STREAM,        // Failed to pass data through an I/O stream
-    HESTIA_ERROR_BAD_INPUT_ID,      // Invalid input UUID format.
+    HESTIA_ERROR_BAD_INPUT_ID,      // Invalid input id format.
     HESTIA_ERROR_BAD_INPUT_BUFFER,  // Invalid input buffer.
     HESTIA_ERROR_CLIENT_STATE,      // Hestia client in unexpected state
     HESTIA_ERROR_UNKNOWN,           // Catch-all for unspecified errors
@@ -34,30 +33,33 @@ typedef enum hestia_item_e {
 } hestia_item_t;
 
 typedef enum hestia_id_format_e {
-    HESTIA_ID_NONE     = 0,
-    HESTIA_ID          = 1 << 0,
-    HESTIA_NAME        = 1 << 1,
-    HESTIA_PARENT_ID   = 1 << 2,
-    HESTIA_PARENT_NAME = 1 << 3
+    HESTIA_ID_NONE = 0,
+    HESTIA_ID      = 1 << 0,  // The unique ID for the item is given
+    HESTIA_NAME = 1 << 1,  // A reader-friendly name for the item is given, e.g.
+                           // my_object_123
+    HESTIA_PARENT_ID = 1 << 2,  // The unique ID for the parent item is given
+    HESTIA_PARENT_NAME =
+        1 << 3  // A reader-friendly name for the parent item is given
 } hestia_id_format_t;
 
 typedef enum hestia_io_format_e {
-    HESTIA_IO_NONE      = 0,
-    HESTIA_IO_IDS       = 1 << 0,
-    HESTIA_IO_JSON      = 1 << 1,
-    HESTIA_IO_KEY_VALUE = 1 << 2,
+    HESTIA_IO_NONE = 0,
+    HESTIA_IO_IDS  = 1 << 0,  // IDs will be provided in I/O - does not combine
+                              // with JSON option
+    HESTIA_IO_JSON = 1 << 1,  // I/O will be in JSON format - does not combine
+                              // with other options
+    HESTIA_IO_KEY_VALUE =
+        1 << 2,  // I/O will be in Key-Value
+                 // (my_key0,my_value0\nmy_key1,my_value1) format
 } hestia_io_format_t;
 
 typedef enum hestia_query_format_e {
     HESTIA_QUERY_NONE = 0,
-    HESTIA_QUERY_IDS,
-    HESTIA_QUERY_FILTER,
+    HESTIA_QUERY_IDS,     // The query will be a sequence of unique item ids
+    HESTIA_QUERY_FILTER,  // The query will be a key-value sequence to be
+                          // matched by specific items
     HESTIA_QUERY_TYPE_COUNT,
 } hestia_query_format_t;
-
-#define HESTIA_UUID_SIZE 37
-#define HESTIA_MAX_ITEMS 1000
-#define HESTIA_MAX_ATTRS 1000
 
 /// @brief Start the Hestia client
 ///
@@ -81,14 +83,28 @@ int hestia_initialize(
 ///
 int hestia_finish();
 
+/// @brief Free a Hestia provided output buffer
+///
+/// Free a Hestia provided output buffer, this just calls 'delete[] * output;'
+/// in practice.
+/// @return 0 on success, hestia_error_e value on failure
 int hestia_free_output(char** output);
 
-/// @brief Creates a new object in the Hestia system and returns an identifier in UUID format
+/// @brief Creates a new item in the Hestia system and returns its ID
 ///
-/// @param oid Buffer to hold the returned UUID in format 'ffffffff-ffff-835a-ffff-ffffffffff9c'. It should be sized to hold the uuid and null-temrinator - HESTIA_UUID_SIZE=37 bytes.
+/// @param subject The type of item to be created, for example a Storage Object (HESTIA_OBJECT)
+/// @param input_format A format specifier for the content of the 'input' buffer
+/// @param id_format A format specifier for provided IDs - this allows a range of ways to address items
+/// @param input An optional input buffer - content is formatted according to 'input_format', for example it
+/// might be a JSON string, or a sequence of ID strings followed by Key-Value
+/// pairs. It can be empty for a default created object.
+/// @param len_input Size of the provided input buffer
+/// @param output_format Format specifier for requested output - for example you can request just an ID for the created
+/// item or its full JSON representation. The buffer will be allocated by Hestia
+/// and should be free'd when finished with 'hestia_finish()'
+/// @param len_output Length of the output buffer - will be returned by Hestia.
 ///
 /// @return 0 on success, hestia_error_e value on failure
-
 int hestia_create(
     hestia_item_t subject,
     hestia_io_format_t input_format,
@@ -99,15 +115,19 @@ int hestia_create(
     char** output,
     int* len_output);
 
-/// @brief Set or update attributes for an object.
+/// @brief Updates an existing item in Hestia
 ///
-/// Attributes are provided as a pair of key-value arrays of the same size with
-/// null-terminated entries.
-///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-/// @param keys An array of key entries of size num_attrs, each should be null-terminated
-/// @param values An array of corresponding value entries of size num_attrs, each should be null-terminated.
-/// @param num_attrs Number of attributes to set
+/// @param subject The type of item to be updated, for example a Storage Object (HESTIA_OBJECT)
+/// @param input_format A format specifier for the content of the 'input' buffer
+/// @param id_format A format specifier for provided IDs - this allows a range of ways to address items
+/// @param input An input buffer - content is formatted according to 'input_format', for example it
+/// might be a JSON string, or a sequence of ID strings followed by Key-Value
+/// pairs.
+/// @param len_input Size of the provided input buffer
+/// @param output_format Format specifier for requested output - for example you can request just an ID for the updated
+/// item or its full JSON representation. The buffer will be allocated by Hestia
+/// and should be free'd when finished with 'hestia_finish()'
+/// @param len_output Length of the output buffer - will be returned by Hestia.
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_update(
@@ -120,12 +140,20 @@ int hestia_update(
     char** output,
     int* len_output);
 
-/// @brief Get the attributes of the object as key-value pairs
+/// @brief Read the content of an item if it exists
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-/// @param keys An array of fetched key entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
-/// @param values An array of fetched value entries of size num_attrs, each will be null-terminated. Should be pre-allocated to HESTIA_MAX_ATTRS and free'd when finished.
-/// @param num_attrs Number of attributes to get - size of the key entries array
+/// @param subject The type of item to be read, for example a Storage Object (HESTIA_OBJECT)
+/// @param query_format A format specifier for the type of query, e.g. searching with an id or by attributes
+/// @param id_format A format specifier for provided IDs - this allows a range of ways to address items
+/// @param offset Intended for paging but not currently implemented
+/// @param count Intended for paging but not currently implemented
+/// @param input An input buffer for the query, formatted according to query_format
+/// @param len_input Size of the provided input buffer
+/// @param output_format Format specifier for requested output - for example you can request just an ID for the updated
+/// item or its full JSON representation. The buffer will be allocated by Hestia
+/// and should be free'd when finished with 'hestia_finish()'
+/// @param len_output Length of the output buffer - will be returned by Hestia.
+/// @param total_count Intended for paging but not currently implemented
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_read(
@@ -141,10 +169,13 @@ int hestia_read(
     int* len_output,
     int* total_count);
 
-/// @brief remove an object entirely from the system
+/// @brief remove an item entirely from the system
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-///
+/// @param subject The type of item to be remove, for example a Storage Object (HESTIA_OBJECT)
+/// @param id_format A format specifier for provided IDs - this allows a range of ways to address items
+/// @param input An input buffer for the addressing query
+/// @param len_input Size of the provided input buffer
+
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_remove(
     hestia_item_t subject,
@@ -152,11 +183,7 @@ int hestia_remove(
     const char* input,
     int len_input);
 
-/// @brief Identify an object, if it exists
-///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-///
-/// @return 0 on success, hestia_error_e value on failure
+/// @brief Intended to check object existence - not currently implemented
 int hestia_identify(
     hestia_item_t subject,
     hestia_id_format_t id_format,
@@ -168,11 +195,14 @@ int hestia_identify(
 
 /// @brief Puts data to the object store
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param oid ID of the object, should be null-terminated.
 /// @param buf Buffer to with the data being sent to the object store
 /// @param length Size of the buffer in bytes
 /// @param offset Offset into the object to begin writing to.
 /// @param tier The storage tier to write the data to
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 
@@ -187,11 +217,14 @@ int hestia_data_put(
 
 /// @brief Puts data to the object store via a file descriptor
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param oid ID of the object, should be null-terminated.
 /// @param file_discriptor A file descriptor from an 'open()' call. It may be to a file on disk or pipe/socket etc.
 /// @param length Amount of data to read from the descriptor
 /// @param offset Offset into object to begin writing to
 /// @param tier The storage tier to write the data to
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 
@@ -204,13 +237,16 @@ int hestia_data_put_descriptor(
     char** activity_id,
     int* len_activity_id);
 
-/// @brief Puts data to the object store via a file descriptor
+/// @brief Puts data to the object store via a path to file on the system
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
-/// @param file_discriptor A file descriptor from an 'open()' call. It may be to a file on disk or pipe/socket etc.
+/// @param oid ID of the object, should be null-terminated.
+/// @param path Path to the file to be added, path should be null-terminated.
 /// @param length Amount of data to read from the descriptor
 /// @param offset Offset into object to begin writing to
 /// @param tier The storage tier to write the data to
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 
@@ -225,11 +261,14 @@ int hestia_data_put_path(
 
 /// @brief Retrieves data from the object store
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param oid ID of the object, should be null-terminated.
 /// @param buf Buffer to store the retrieved data
 /// @param len Amount of data being retrieved in bytes
 /// @param off Start offset into the object for the data being read
 /// @param tier Tier where the data is being read from
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 
@@ -242,6 +281,18 @@ int hestia_data_get(
     char** activity_id,
     int* len_activity_id);
 
+/// @brief Retrieves data from the object store and writes to an open fd
+///
+/// @param oid ID of the object, should be null-terminated.
+/// @param file_discriptor Open file descriptor to write data to
+/// @param len Amount of data being retrieved in bytes
+/// @param off Start offset into the object for the data being read
+/// @param tier Tier where the data is being read from
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
+///
+/// @return 0 on success, hestia_error_e value on failure
 int hestia_data_get_descriptor(
     const char* oid,
     int file_discriptor,
@@ -251,6 +302,18 @@ int hestia_data_get_descriptor(
     char** activity_id,
     int* len_activity_id);
 
+/// @brief Retrieves data from the object store and writes to a path
+///
+/// @param oid ID of the object, should be null-terminated.
+/// @param path A path to write data to
+/// @param len Amount of data being retrieved in bytes
+/// @param off Start offset into the object for the data being read
+/// @param tier Tier where the data is being read from
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
+///
+/// @return 0 on success, hestia_error_e value on failure
 int hestia_data_get_path(
     const char* oid,
     const char* path,
@@ -262,9 +325,13 @@ int hestia_data_get_path(
 
 /// @brief Copy an object from one tier to another
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param subject The type of item to be copied, for example a Storage Object (HESTIA_OBJECT)
+/// @param oid ID of the object, should be null-terminated.
 /// @param src_tier Tier the object is to be copies from
 /// @param tgt_tier Tier the object will be copied to
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_data_copy(
@@ -277,9 +344,13 @@ int hestia_data_copy(
 
 /// @brief Move an object from one tier to another
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param subject The type of item to be moved, for example a Storage Object (HESTIA_OBJECT)
+/// @param oid ID of the object, should be null-terminated.
 /// @param src_tier Tier the object is to be moved from
 /// @param tgt_tier Tier the object will be moved to
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_data_move(
@@ -292,8 +363,12 @@ int hestia_data_move(
 
 /// @brief Remove an objects data from a given tier
 ///
-/// @param oid ID of the object. Should be in UUID format 'ffffffff-ffff-835a-ffff-ffffffffff9c' with a null-terminator.
+/// @param subject The type of item to be released, for example a Storage Object (HESTIA_OBJECT)
+/// @param oid ID of the object, should be null-terminated.
 /// @param tier Tier the object is to be removed from
+/// @param activity_id Will be populated with an activity id, which can be queried for status and progress.
+/// It will be allocated by Hestia and should be free'd with: 'hestia_finish()'.
+/// @param len_activity_id Size of the buffer allocated by Hestia for the activity Id
 ///
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_data_release(
