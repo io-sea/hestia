@@ -127,7 +127,7 @@ install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.service"
         )
 
 install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia"
-        DESTINATION lib/python/hestia
+        DESTINATION lib/python
         COMPONENT runtime
         PATTERN "__pycache__/*" EXCLUDE
         )
@@ -193,8 +193,16 @@ if(NOT APPLE)
         set(CPACK_RPM_SPEC_MORE_DEFINE "%define test_name test_body")
 
         set(CPACK_RPM_INSTALL_WITH_EXEC ON)
-        set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
+
+        # Only build debuginfo if we have set RelWithDebInfo - it is not useful otherwise
+        if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+                set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
+        else()
+                set(CPACK_RPM_DEBUGINFO_PACKAGE OFF)
+        endif()
+        
         set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
+
         set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON")
 
         set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})

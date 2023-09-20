@@ -8,7 +8,7 @@ stages:
 .variables:
   default_variables: &default_variables
     CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
-    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
+    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build_dir_with_a_long_name_needed_for_cmake"
     CMAKE_BUILD_TYPE: "Release"
     CXX: "g++"
     CC: "gcc"
@@ -50,11 +50,13 @@ stages:
     ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
   - &configure
-    mkdir -p "${CMAKE_BUILD_DIR}"
+    mkdir -p "${CMAKE_BUILD_DIR}";
+    export HESTIA_SOURCE_DIR=${CI_PROJECT_DIR}/hestia_source_dir_with_a_long_path_for_cmake;
+    ln -s ${CI_PROJECT_DIR} ${HESTIA_SOURCE_DIR}
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR}
+      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${HESTIA_SOURCE_DIR}
       -DBUILD_SHARED_LIBS=OFF
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"

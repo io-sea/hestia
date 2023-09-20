@@ -18,6 +18,10 @@ This document covers more detailed Local Build and Test options for Hestia, as w
   - [Object Store Plugins](#object-store-plugins)
     - [Cortx-Motr](#cortx-motr)
     - [Phobos](#phobos)
+- [CI](#ci)
+  - [Merge Requests](#merge-requests)
+  - [Nightly Builds](#nightly-builds)
+  - [Version Bump and Release](#version-bump-and-release)
 - [System Integration Testing](#system-integration-testing)
   - [S3](#s3)
     - [Minio](#minio)
@@ -177,6 +181,41 @@ infra/scripts/build_phobos.sh infra/cmake/patches
 ``` 
 
 to apply our patches and build Phobos. 
+
+# CI
+
+We use Gitlab for our CI https://git.ichec.ie/io-sea-internal/hestia
+
+Our Gitlab configuration `.gitlab-ci.yml` is at the top level of the repo.
+
+## Merge Requests
+Contributions are via Gitlab Merge Request (MR) targeting the `devel` branch. Creating a MR will trigger the following build and test stages:
+
+* `Format` - checks code formatting with `clang-format`
+* `Lint` - static analysis with `clang-tidy`
+* `Release` - do a Hestia build in Release configuration, including building an RPM
+* `Unit Test` - build Hestia with static analyser and run unit and integration tests
+* `E2E Test` - install Hestia as 1) a relocatable package (tar.gz) and 2) as a system package in a clean environment and run tests on our APIs
+
+If the CI passes and you are happy with the change you can merge to devel. Reviews are encourage for larger changes or if you are unsure on anything.
+
+## Nightly Builds
+There is a collection of `Nightly` tests that run on the `devel` branch HEAD, if there have been any changes since the last run.
+
+The have the following stages:
+
+* `Build` - do the build, with some expensive dependencies (Phobos, Proxygen, Motr)
+* `Unit Test` - run unit tests with the extra dependencies
+* `E2E Test` - run e2e tests with the extra dependencies
+* `Code Coverage` - run a code coverage job and store the results
+* `Deploy` - Archive build outputs, bump the patch version and merge to `master`
+* `Cleanup` - Clean up the build outputs
+
+## Version Bump and Release
+
+There are a collection of Deploy jobs that create a release from the `master` branch, with naming `Master_deploy_xxx`. They allow releasing while optionally incrementing major or minor version numbers.
+
+They can be manually triggered through the Gitlab 'Build->Pipeline schedules' panel.
 
 # System Integration Testing
 

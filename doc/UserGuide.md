@@ -261,7 +261,7 @@ import hestia
 # Setup some data
 my_object_id = "1234"
 my_attributes = {"key0" : "val0", "key1" : "val1"}
-my_content = "content for storage"
+my_content = b"content for storage"
 
 # Create the client - this will initialize it too
 client = hestia.HestiaClient()
@@ -276,7 +276,7 @@ client.object_attrs_put(my_object_id, my_attributes)
 client.object_data_put(my_object_id, my_content)
 
 # Get the USER attributes back
-attributes_returned = client.object_attrs_get(my_object_id)
+attributes_returned = client.object_attrs_get(my_object_id, len(my_content))
 
 # Get the data back
 data_returned = client.object_data_get(my_object_id)
@@ -403,7 +403,8 @@ to start the server.
 This example uses Amazon's `boto` Python S3 client library: `pip install boto3`.
 
 ```python
-import boto
+import boto3
+from botocore.client import Config
 
 # Add the user name and token obtained from the rest interface - described above
 session = boto3.session.Session(aws_access_key_id="MY_USER_NAME", aws_secret_access_key="MY_USER_TOKEN")
