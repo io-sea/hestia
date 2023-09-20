@@ -42,7 +42,7 @@ Subcommands:
   stop                        Stop the Hestia Daemon
 ```
 
-Each `Subcommand` supports `--help` recursively. To connect to a remote Hestia server for a command which supports it, use the `--host HOSTNAME` option.
+Each `Subcommand` supports `--help` recursively. 
 
 Create a new object:
 
@@ -105,9 +105,9 @@ Here we use `--query_fmt=id` to specify that we want to do a search using 'ids' 
 
 Hestia provides several interfaces with similar functionality to the CLI, including:
 
-* `c` and `Python` APIs
-* `HTTP REST` API
-* `S3` API
+* [c and Python APIs](/doc/UserGuide.md#c-interface)
+* [HTTP REST API](/doc/UserGuide.md#rest-api)
+* [S3 API](/doc/UserGuide.md#s3-api)
 
 For more details and sample applications see the [Hestia User Guide](./doc/UserGuide.md).
 
@@ -119,7 +119,7 @@ RPM and tarball binary packages for `RHEL 8` are available in the [Hestia repo t
 
 ## Building from Source
 
-Hestia is supported on Linux (`RHEL 8` is the primary development platform) and Mac. 
+Linux (`RHEL 8` is the primary development platform) and MacOS are supported.
 
 ### Dependencies
 

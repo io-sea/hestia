@@ -3,22 +3,28 @@
 This document covers more detailed Local Build and Test options for Hestia, as well as information on the CI.
 
 - [Developer Guide](#developer-guide)
-- [Local build guide](#local-build-guide)
+- [Local Build](#local-build)
   - [Testing](#testing)
-  - [Linting and Static Analysis](#linting-and-static-analysis)
+    - [Unit and Integration Tests](#unit-and-integration-tests)
+    - [E2E Tests](#e2e-tests)
+    - [Linting and Static Analysis](#linting-and-static-analysis)
+      - [Address Sanitizer](#address-sanitizer)
+      - [Clang Format and Tidy](#clang-format-and-tidy)
+        - [Mac Specifics](#mac-specifics)
+    - [Code Coverage](#code-coverage)
   - [Packaging](#packaging)
+    - [Packaging Debug Symbols](#packaging-debug-symbols)
     - [Packaging on Gitlab](#packaging-on-gitlab)
   - [Object Store Plugins](#object-store-plugins)
     - [Cortx-Motr](#cortx-motr)
     - [Phobos](#phobos)
-- [Integration Testing](#integration-testing)
+- [System Integration Testing](#system-integration-testing)
   - [S3](#s3)
     - [Minio](#minio)
 
-# Local build guide
+# Local Build
 
 Hestia is built with a recent version of CMake (>=3.24). If you system provided package is too old CMake can be downloaded as a standalone executable, we have a script [here](/infra/scripts/bootstrap_cmake.sh) to help.
-
 
 ```bash
 # Make a directory to hold the build files and change to it
@@ -53,16 +59,43 @@ Optional dependencies for Plugins are:
 * CEA Phobos
 * Cortx Motr
 
-
 ## Testing
 
-Units test can be run with `make test`, assuming `HESTIA_BUILD_TESTS` was set to `ON` during the build process. To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be set to `ON`, described further [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
+Tests are enabled with the `HESTIA_BUILD_TESTS` CMake option.
 
-## Linting and Static Analysis
+### Unit and Integration Tests
+Unit and integration tests can be run with `make test`. 
+
+### E2E Tests
+E2E tests are driven with Python. They can be run with `make hestia_e2e_tests` and require the content of `test/e2e_tests/requirements.txt` to be installed as Python packages.
+
+### Linting and Static Analysis
+
+#### Address Sanitizer
+
+The CMake option `HESTIA_ENABLE_SANITIZERS` will control whether gcc or clang address sanitizers (and similar tooling) is enabled. This is for Debug builds only.
+
+#### Clang Format and Tidy
 
 We use `clang-format` and `clang-tidy` for linting. To enable linting we need to build with a compile-commands database, the CMake option `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` provides this.
 
-On Mac `brew` currently packages `clang-format` and `llvm` as version 16, which are newer than the CI version. This can lead to compatibility issues. For us, version 15 works:
+To do formatting you will need the `clang` compilers in your `PATH` and can then run:
+
+```bash
+infra/scripts/run_format.sh
+```
+
+and linting:
+
+```bash
+infra/scripts/run_lint.sh /path/to/build/dir
+```
+
+##### Mac Specifics
+
+On Mac `brew` currently packages `clang-format` and `llvm` as version 16, which are newer than the CI version. This can lead to compatibility issues. 
+
+For us, version 15 works:
 
 ```bash
 brew install llvm@15
@@ -85,17 +118,9 @@ export CC=$LLVM_PATH/bin/clang
 export CXX=$LLVM_PATH/bin/clang++
 ```
 
-To do formatting you can run:
+### Code Coverage
 
-```bash
-infra/scripts/run_format.sh
-```
-
-and linting:
-
-```bash
-infra/scripts/run_lint.sh /path/to/build/dir
-```
+To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be set to `ON`, described further [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
 
 ## Packaging
 
@@ -116,6 +141,10 @@ make package_source
 
 The extra CMake flag is to use a custom spec file, it should be turned off again if building a binary RPM.
 
+### Packaging Debug Symbols
+
+To package Debug symbols Hestia needs to be built with the `RelWithDebInfo` option and also in a build directory with a long path (longer than the eventual installation path). The reason for the latter is a limitation in CMake's path substitution approach when splitting symbols from the built binaries.
+
 ### Packaging on Gitlab
 
 On the [Pipeline Schedules](https://git.ichec.ie/io-sea-internal/hestia/-/pipeline_schedules), there are three pipelines available that will create a release from the most recent tagged version on master.
@@ -132,24 +161,24 @@ To build the Cortx-Motr plugin, you will need `motr` installed. For convenience 
 
 ### Phobos
 
-Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON`. Note, this will silently fail on a Mac and not look for phobos. 
+Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON` on Linux. 
 
-To build Phobos, you need to install the following dependencies. 
+If an installation is not found CMake will attempt to build it automatically. To do so it needs the following dependencies. 
 
 ```bash
-yum install -y autoconf automake libtool openssl-devel gcc-c++ git wget doxygen rpm-build python3-devel libxml2-devel libcurl-devel \
+dnf install -y autoconf automake libtool gcc-c++ git wget doxygen rpm-build python3-devel \
     make glib2-devel which jansson-devel libini_config-devel libattr-devel sg3_utils-devel protobuf-c-devel libpq-devel
 ```
 
-Then you can run the [following script](/infra/scripts/build_phobos.sh) as follows:
+Alternatively to CMake doing the build you can run the [following script](/infra/scripts/build_phobos.sh):
 
 ```bash
 infra/scripts/build_phobos.sh infra/cmake/patches
 ``` 
 
-to apply our patches and build Phobos.
+to apply our patches and build Phobos. 
 
-# Integration Testing
+# System Integration Testing
 
 This section documents some setup to help with testing Hestia against third-party applications.
 
