@@ -157,7 +157,7 @@ Hestia provides interfaces to some object stores via Plugin - to support buildin
 
 ### Cortx-Motr
 
-To build the Cortx-Motr plugin, you will need `motr` installed. For convenience we provide RPMs for RHEL 8 in our [Gitlab package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33), with further build instructions [here](/doc/Markdown/motr_use.md).
+To build the Cortx-Motr plugin, you will need `motr` installed. For convenience we provide RPMs for RHEL 8 in our [Gitlab package repository](https://git.ichec.ie/io-sea-internal/hestia/-/packages/33), with further build instructions [here](./plugins/Plugins.md).
 
 ### Phobos
 

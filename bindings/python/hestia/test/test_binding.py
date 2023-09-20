@@ -48,15 +48,18 @@ class BaseTestFixture():
         object_json = self.client.object_create(object_id)
 
         # Set some user attributes
-        object_attrs = "data.my_key0,my_value0\ndata.my_key1,my_value1"
+        object_attrs = {"my_key0" : "my_value0",
+                        "my_key1" : "my_value1"}
         user_attrs = self.client.object_attrs_put(object_id, object_attrs)
 
         # Read the attributes back
         user_attrs_read = self.client.object_attrs_get(object_id)
+        if user_attrs_read["my_key0"] != object_attrs["my_key0"]:
+            raise ValueError('Returned attrs do not match: ' + str(user_attrs_read))
 
         # Add some data
         content = b"The quick brown fox jumps over the lazy dog."
-        action_id = self.client.object_put(object_id, content)
+        action_id = self.client.object_data_put(object_id, content)
 
         # Read the action back to check the status
         action = self.client.action_read_ids([action_id])
@@ -64,24 +67,24 @@ class BaseTestFixture():
             raise ValueError('Put action did not complete ok')
         
         # Get the content back
-        retrieved_content = self.client.object_get(object_id, len(content))
+        retrieved_content = self.client.object_data_get(object_id, len(content))
         if (retrieved_content != content):
             raise ValueError('Retrieved content does not match original')
         
         # Copy between tiers
-        copied_action_id = self.client.object_copy(object_id, 0, 1)
+        copied_action_id = self.client.object_data_copy(object_id, 0, 1)
         copied_action = self.client.action_read_ids([copied_action_id])
         if (copied_action["status"] != "finished_ok"):
             raise ValueError('Copy action did not complete ok')
 
         # Move between tiers
-        moved_action_id = self.client.object_move(object_id, 1, 2)
+        moved_action_id = self.client.object_data_move(object_id, 1, 2)
         moved_action = self.client.action_read_ids([moved_action_id])
         if (moved_action["status"] != "finished_ok"):
             raise ValueError('Copy action did not complete ok')
         
         # Release a tier
-        released_action_id = self.client.object_release(object_id, 0)
+        released_action_id = self.client.object_data_release(object_id, 0)
         release_action = self.client.action_read_ids([released_action_id])
         if (release_action["status"] != "finished_ok"):
             raise ValueError('Copy action did not complete ok')
@@ -96,10 +99,10 @@ class BaseTestFixture():
         file_size = os.path.getsize(path)
 
         with open(path, 'r') as f:
-            action_id = self.client.object_put_fd(object_id, f.fileno(), file_size)
+            action_id = self.client.object_data_put_fd(object_id, f.fileno(), file_size)
 
         with open(path + ".copied", 'w') as f:
-            action_id = self.client.object_get_fd(object_id, f.fileno(), file_size)
+            action_id = self.client.object_data_get_fd(object_id, f.fileno(), file_size)
 
         print("Action id: " + action_id)
 
@@ -112,11 +115,11 @@ class BaseTestFixture():
 
         file_size = os.path.getsize(path)
 
-        action_id = self.client.object_put_path(object_id, path)
+        action_id = self.client.object_data_put_path(object_id, path)
         print("Put action:" + action_id)
 
         output_path = path + ".copied"
-        action_id = self.client.object_get_path(object_id, output_path)
+        action_id = self.client.object_data_get_path(object_id, output_path)
         print("Get Action id: " + action_id)
 
 

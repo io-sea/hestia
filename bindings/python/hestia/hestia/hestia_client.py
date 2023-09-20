@@ -49,11 +49,15 @@ class HestiaClientBase():
     """ Update the USER attributes of an object
 
     :param id: The object identifier
-    :param attrs: User specified attributes as key-value pairs. Format is 'key0,val0/nkey1,val1'.
+    :param attrs: User specified attributes as key-value pairs
     :return: An updated JSON representation of the object
     """   
-    def object_attrs_put(self, id: str, attrs: str) -> json:
-        payload = id + "\n\n" + attrs
+    def object_attrs_put(self, id: str, attrs: dict) -> json:
+        attr_str = ""
+        for key, value in attrs.items():
+            attr_str += f"data.{key},{value}\n"
+
+        payload = id + "\n\n" + attr_str
 
         return json.loads(self.lib.hestia_update(
             hestia_lib.HestiaItemT.HESTIA_USER_METADATA,
@@ -87,15 +91,16 @@ class HestiaClientBase():
     """ Get USER attributes of an object
 
     :param id: the id of the object to query
-    :return: The object Metadata (attributes). Format is 'key0,val0/nkey1,val1'.
+    :return: The object Metadata (attributes)
     """ 
-    def object_attrs_get(self, id: str) -> str:
-        return self.lib.hestia_read(
+    def object_attrs_get(self, id: str) -> dict:
+        md_item = json.loads(self.lib.hestia_read(
             hestia_lib.HestiaItemT.HESTIA_USER_METADATA,
             hestia_lib.HestiaQueryFormatT.HESTIA_QUERY_IDS,
             hestia_lib.HestiaIdFormatT.HESTIA_PARENT_ID,
-            input=id, output_format=hestia_lib.HestiaIoFormatT.HESTIA_IO_KEY_VALUE
-        )
+            input=id, output_format=hestia_lib.HestiaIoFormatT.HESTIA_IO_JSON
+        ))
+        return md_item["data"]
 
     """ Remove and object entirely from the system. This releases the object data on all tiers also.
 
@@ -112,7 +117,7 @@ class HestiaClientBase():
     :param tier: the storage tier to add the data to.
     :return: an ID for the HSM activity. Can be queried for completion status.
     """ 
-    def object_put(self, id : str, 
+    def object_data_put(self, id : str, 
                    buffer: bytes, 
                    offset: int = 0, 
                    tier: int = 0):
@@ -127,7 +132,7 @@ class HestiaClientBase():
     :param tier: the storage tier to add the data to.
     :return: an ID for the HSM activity. Can be queried for completion status.
     """   
-    def object_put_fd(self, id : str, 
+    def object_data_put_fd(self, id : str, 
                    fd: int, 
                    length: int,
                    offset: int = 0, 
@@ -143,7 +148,7 @@ class HestiaClientBase():
     :param tier: the storage tier to add the data to.
     :return: an ID for the HSM activity. Can be queried for completion status.
     """   
-    def object_put_path(self, id : str, 
+    def object_data_put_path(self, id : str, 
                    path: str, 
                    length: int = 0,
                    offset: int = 0, 
@@ -158,7 +163,7 @@ class HestiaClientBase():
     :param tier: the storage tier to get the data from
     :return: the data as bytes
     """   
-    def object_get(self, id : str, 
+    def object_data_get(self, id : str, 
                    length: int, 
                    offset: int = 0, 
                    tier: int = 0):
@@ -173,7 +178,7 @@ class HestiaClientBase():
     :param tier: the storage tier to get the data from
     :return: an activity id for the get operation
     """   
-    def object_get_fd(self, id : str, 
+    def object_data_get_fd(self, id : str, 
                    fd: int, 
                    length: int,
                    offset: int = 0, 
@@ -189,7 +194,7 @@ class HestiaClientBase():
     :param tier: the storage tier to get the data from
     :return: an activity id for the get operation
     """  
-    def object_get_path(self, id : str, 
+    def object_data_get_path(self, id : str, 
                    path: str, 
                    length: int = 0,
                    offset: int = 0, 
@@ -203,7 +208,7 @@ class HestiaClientBase():
     :param target_tier: the tier to copy to
     :return: an activity id for the copy operation
     """  
-    def object_copy(self, id : str, 
+    def object_data_copy(self, id : str, 
                     source_tier: int,
                     target_tier: int):
         return self.lib.hestia_data_copy(id, source_tier, target_tier)
@@ -215,7 +220,7 @@ class HestiaClientBase():
     :param target_tier: the tier to move to
     :return: an activity id for the move operation
     """  
-    def object_move(self, id : str, 
+    def object_data_move(self, id : str, 
                     source_tier: int,
                     target_tier: int):
         return self.lib.hestia_data_move(id, source_tier, target_tier)
@@ -226,7 +231,7 @@ class HestiaClientBase():
     :param tier: the tier to release from
     :return: an activity id for the release operation
     """  
-    def object_release(self, id : str, tier: int):
+    def object_data_release(self, id : str, tier: int):
         return self.lib.hestia_data_release(id, tier)
     
     """ Read an activity using its id, the activity will be returned as json

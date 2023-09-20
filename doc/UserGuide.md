@@ -189,6 +189,8 @@ event_feed:
   active: y
 ```
 
+For details see the [event feed](./internals/EventFeed.md) documentation.
+
 # APIs
 
 ## Command Line Interface

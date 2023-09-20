@@ -35,6 +35,11 @@ HttpResponse* RequestContext::get_response() const
     return m_response.get();
 }
 
+bool RequestContext::has_response() const
+{
+    return bool(m_response);
+}
+
 const HttpRequest& RequestContext::get_request() const
 {
     return m_request;

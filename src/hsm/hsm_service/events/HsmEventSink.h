@@ -48,6 +48,8 @@ class HsmEventSink : public EventSink {
 
     void on_object_create(const CrudEvent& event) const;
 
+    void on_object_read(const CrudEvent& event) const;
+
     void on_object_create(
         Dictionary& dict, const std::string& id, const Map& metadata) const;
 

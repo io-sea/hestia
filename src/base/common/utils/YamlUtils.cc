@@ -149,7 +149,12 @@ void on_map_item(
                 on_sequence(*value, emitter, sorted);
                 break;
             case Dictionary::Type::SCALAR:
-                emitter << value->get_scalar();
+                if (value->should_quote_scalar()) {
+                    emitter << YAML::DoubleQuoted << value->get_scalar();
+                }
+                else {
+                    emitter << value->get_scalar();
+                }
         }
     }
 }
@@ -194,7 +199,12 @@ void on_sequence(
             on_map(*value, emitter, sorted);
         }
         if (value->get_type() == Dictionary::Type::SCALAR) {
-            emitter << value->get_scalar();
+            if (value->should_quote_scalar()) {
+                emitter << YAML::DoubleQuoted << value->get_scalar();
+            }
+            else {
+                emitter << value->get_scalar();
+            }
         }
     }
     emitter << YAML::EndSeq;

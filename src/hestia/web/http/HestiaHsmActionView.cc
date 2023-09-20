@@ -77,7 +77,13 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
                 return do_hsm_action(request, action_map, auth);
             }
             else {
-                return HttpResponse::create();
+                if (request.get_context()->has_response()) {
+                    return std::make_unique<HttpResponse>(
+                        *request.get_context()->get_response());
+                }
+                else {
+                    return HttpResponse::create();
+                }
             }
         }
         else {
@@ -131,19 +137,30 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
 
     std::string redirect_location;
     if (action.is_data_io_action()) {
-        auto completion_cb = [&response, &redirect_location](
+        auto completion_cb = [request_context = request.get_context(),
+                              &redirect_location](
                                  HsmActionResponse::Ptr response_ret) {
             if (response_ret->ok()) {
                 LOG_INFO("Data action completed sucessfully");
                 if (!response_ret->get_redirect_location().empty()) {
                     redirect_location = response_ret->get_redirect_location();
                 }
+                else {
+                    auto response = HttpResponse::create();
+                    auto action_factory =
+                        std::make_unique<TypedModelFactory<HsmAction>>();
+                    JsonAdapter json_adapter(action_factory.get());
+                    json_adapter.to_string(
+                        response_ret->get_action(), response->body());
+                    request_context->set_response(std::move(response));
+                }
             }
             else {
                 LOG_ERROR(
                     "Error in data action \n"
                     << response_ret->get_error().to_string());
-                response = HttpResponse::create(500, "Internal Server Error.");
+                request_context->set_response(
+                    HttpResponse::create(500, "Internal Server Error."));
             }
         };
         m_hestia_service->do_data_io_action(

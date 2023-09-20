@@ -15,11 +15,11 @@
 
 namespace hestia {
 class HsmObjectStoreClient;
+class HsmEventSink;
 class KeyValueStoreClient;
 
 class DataPlacementEngine;
 class UserService;
-class EventFeed;
 
 class HsmService : public CrudService {
   public:
@@ -29,7 +29,8 @@ class HsmService : public CrudService {
         const ServiceConfig& config,
         HsmServiceCollection::Ptr service_collection,
         HsmObjectStoreClient* object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine = {});
+        std::unique_ptr<DataPlacementEngine> placement_engine = {},
+        EventFeed* event_feed                                 = nullptr);
 
     static Ptr create(
         const ServiceConfig& config,
@@ -123,5 +124,6 @@ class HsmService : public CrudService {
     HsmObjectStoreClient* m_object_store;
     std::unique_ptr<DataPlacementEngine> m_placement_engine;
     std::unordered_map<uint8_t, std::string> m_tier_cache;
+    EventFeed* m_event_feed{nullptr};
 };
 }  // namespace hestia

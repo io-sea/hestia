@@ -232,7 +232,7 @@ void HestiaApplication::setup_hsm_service(
     ServiceConfig hsm_service_config;
     auto hsm_service = std::make_unique<HsmService>(
         hsm_service_config, std::move(hsm_services),
-        m_object_store_client.get(), std::move(dpe));
+        m_object_store_client.get(), std::move(dpe), m_event_feed.get());
     m_hsm_service = hsm_service.get();
     m_hsm_service->update_tiers(current_user_id);
 

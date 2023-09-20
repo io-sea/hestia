@@ -87,7 +87,23 @@ class Dictionary {
 
     void set_map_item(const std::string& key, std::unique_ptr<Dictionary> item);
 
-    void set_scalar(const std::string& scalar);
+    /**
+     * Set the node to be of scalar type and its value
+     *
+     * The class is agnostic to the scalar type, but does take a 'should_quote'
+     * hint for conversion to other forms, for example yaml.
+     * @param scalar The value of the scalar
+     * @param should_quote A hint for converts on whether this value should be quoted, e.g. as "my_scalar_value".
+     */
+    void set_scalar(const std::string& scalar, bool should_quote = false);
+
+    /**
+     * Return true if this scalar type should be quoted - useful for string
+     * types with possible special characters
+     *
+     * @return true if this scalar type should be quoted
+     */
+    bool should_quote_scalar() const;
 
     void set_map(const std::unordered_map<std::string, std::string>& items);
 
@@ -108,6 +124,7 @@ class Dictionary {
     Type m_type{Type::MAP};
     std::pair<std::string, std::string> m_tag;
     std::string m_scalar;
+    bool m_should_quote{false};
     std::vector<std::unique_ptr<Dictionary>> m_sequence;
     std::unordered_map<std::string, std::unique_ptr<Dictionary>> m_map;
 };

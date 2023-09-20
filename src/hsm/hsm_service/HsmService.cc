@@ -60,11 +60,13 @@ HsmService::HsmService(
     const ServiceConfig& config,
     HsmServiceCollection::Ptr service_collection,
     HsmObjectStoreClient* object_store,
-    std::unique_ptr<DataPlacementEngine> placement_engine) :
+    std::unique_ptr<DataPlacementEngine> placement_engine,
+    EventFeed* event_feed) :
     CrudService(config),
     m_services(std::move(service_collection)),
     m_object_store(object_store),
-    m_placement_engine(std::move(placement_engine))
+    m_placement_engine(std::move(placement_engine)),
+    m_event_feed(event_feed)
 {
     LOG_INFO("Creating HsmService");
 }
@@ -86,7 +88,8 @@ HsmService::Ptr HsmService::create(
         services->get_service(HsmItem::Type::TIER));
 
     return std::make_unique<HsmService>(
-        config, std::move(services), object_store, std::move(placement_engine));
+        config, std::move(services), object_store, std::move(placement_engine),
+        event_feed);
 }
 
 HsmService::~HsmService()
@@ -540,6 +543,17 @@ void HsmService::on_get_data_complete(
     if (db_update) {
         set_action_finished_ok(
             user_context, working_action.get_primary_key(), extent.m_length);
+    }
+
+    if (m_event_feed != nullptr) {
+        CrudRequest crud_req{CrudMethod::READ, user_context};
+        CrudResponse crud_response{req, HsmItem::hsm_object_name};
+        crud_response.ids().push_back(working_action.get_subject_key());
+
+        CrudEvent read_event(
+            HsmItem::hsm_object_name, CrudMethod::READ, crud_req, crud_response,
+            "HsmService");
+        m_event_feed->on_event(read_event);
     }
 
     LOG_INFO("Finished HSMService GET");

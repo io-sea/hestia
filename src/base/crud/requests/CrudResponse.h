@@ -41,9 +41,13 @@ class CrudResponse : public Response<CrudErrorCode> {
 
     std::vector<std::string>& ids() { return m_ids; }
 
+    const std::vector<std::string>& ids() const { return m_ids; }
+
     std::vector<std::string>& parent_ids() { return m_parent_ids; }
 
     std::vector<Map>& modified_attrs() { return m_modified_attrs; };
+
+    const std::vector<Map>& modified_attrs() const { return m_modified_attrs; };
 
     bool found() const;
 

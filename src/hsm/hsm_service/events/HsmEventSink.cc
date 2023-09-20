@@ -49,6 +49,11 @@ void HsmEventSink::on_event(const CrudEvent& event)
         if (event.get_method() == CrudMethod::CREATE) {
             on_object_create(event);
         }
+        else if (
+            event.get_method() == CrudMethod::READ
+            && event.get_source() == "HsmService") {
+            on_object_read(event);
+        }
         else if (event.get_method() == CrudMethod::REMOVE) {
             on_object_remove(event);
         }
@@ -87,8 +92,8 @@ void add_scalar(
     Dictionary& dict,
     const std::string& key,
     const std::string& value,
-    const std::string& tag    = "",
-    const std::string& prefix = "")
+    const std::string& tag = "",
+    bool should_quote      = false)
 {
     if (value.empty()) {
         return;
@@ -98,14 +103,20 @@ void add_scalar(
         return;
     }
     dict.set_map_item(key, Dictionary::create(Dictionary::Type::SCALAR));
-    dict.get_map_item(key)->set_scalar(value);
-    dict.get_map_item(key)->set_tag(tag, prefix);
+    dict.get_map_item(key)->set_scalar(value, should_quote);
+    dict.get_map_item(key)->set_tag(tag);
 }
 
 void set_string(
     Dictionary& dict, const std::string& key, const std::string& value)
 {
-    add_scalar(dict, key, value, "str");
+    add_scalar(dict, key, value, "", true);
+}
+
+void set_literal(
+    Dictionary& dict, const std::string& key, const std::string& value)
+{
+    add_scalar(dict, key, value);
 }
 
 void set_xattrs(Dictionary& dict, const Map& meta)
@@ -113,7 +124,7 @@ void set_xattrs(Dictionary& dict, const Map& meta)
     dict.set_map_item("attrs", Dictionary::create(Dictionary::Type::MAP));
     auto xattrs = dict.get_map_item("attrs");
     for (const auto& [key, value] : meta.data()) {
-        add_scalar(*xattrs, key, value, "str");
+        add_scalar(*xattrs, key, value, "", true);
     }
 }
 
@@ -161,7 +172,7 @@ void HsmEventSink::on_extent_changed(
 
     dict.set_tag("update");
     set_string(dict, "id", object_id);
-    set_string(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 
     std::set<std::string> tier_ids;
     for (const auto& extent : object->tiers()) {
@@ -187,7 +198,6 @@ void HsmEventSink::on_extent_changed(
     }
 
     Map xattrs;
-    xattrs.set_item("size", std::to_string(object->size()));
     for (const auto& tier_extent : object->tiers()) {
         const auto tier_name = tier_names[tier_extent.get_tier_id()];
         assert(!tier_name.empty());
@@ -224,17 +234,35 @@ void HsmEventSink::on_object_create(const CrudEvent& event) const
     write(out);
 }
 
+void HsmEventSink::on_object_read(const CrudEvent& event) const
+{
+    LOG_INFO("Object read");
+    assert(!event.get_ids().empty());
+
+    Dictionary dict;
+    auto root_dict = add_root(dict);
+
+    root_dict->set_tag("read");
+
+    set_string(*root_dict, "id", event.get_ids()[0]);
+    set_literal(
+        *root_dict, "time", std::to_string(TimeUtils::get_current_time()));
+
+    std::string out;
+    YamlUtils::dict_to_yaml(dict, out);
+    write(out);
+}
+
 void HsmEventSink::on_object_create(
     Dictionary& dict, const std::string& id, const Map& metadata) const
 {
     dict.set_tag("create");
 
     set_string(dict, "id", id);
-    set_string(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 
     Map xattrs;
-    metadata.copy_with_prefix(
-        {"dataset.id", "creation_time", "size"}, xattrs, {}, false);
+    metadata.copy_with_prefix({"dataset.id", "name"}, xattrs, {}, false);
     set_xattrs(dict, xattrs);
 }
 
@@ -255,7 +283,7 @@ void HsmEventSink::on_object_remove(
 {
     dict.set_tag("remove");
     set_string(dict, "id", id);
-    set_string(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 }
 
 std::string HsmEventSink::get_metadata_object_id(
@@ -287,7 +315,7 @@ void HsmEventSink::on_user_metadata_update(
 
     dict.set_tag("update");
     set_string(dict, "id", object_id);
-    set_string(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 
     Map xattrs;
     metadata.copy_with_prefix({"data."}, xattrs, "user_metadata.");
@@ -303,7 +331,7 @@ void HsmEventSink::on_user_metadata_read(
 
     dict.set_tag("read");
     set_string(dict, "id", object_id);
-    set_string(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 }
 
 void HsmEventSink::on_user_metadata_update(const CrudEvent& event) const

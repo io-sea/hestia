@@ -30,6 +30,8 @@ class RequestContext {
 
     HttpRequest& get_writeable_request();
 
+    bool has_response() const;
+
     void set_request(const HttpRequest& req);
 
     void on_input_complete();

@@ -21,8 +21,9 @@ CrudEvent::CrudEvent(
     const std::string& subject_type,
     CrudMethod method,
     const CrudRequest& request,
-    CrudResponse& response) :
-    Model(s_type)
+    const CrudResponse& response,
+    const std::string& source) :
+    Model(s_type), m_source(source)
 {
     init();
 
@@ -38,6 +39,11 @@ CrudEvent::CrudEvent(
 const CrudUserContext& CrudEvent::get_user_context() const
 {
     return m_user_context;
+}
+
+const std::string& CrudEvent::get_source() const
+{
+    return m_source;
 }
 
 const std::vector<std::string>& CrudEvent::get_ids() const

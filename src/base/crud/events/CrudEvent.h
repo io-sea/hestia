@@ -12,7 +12,8 @@ class CrudEvent : public Model {
         const std::string& subject_type,
         CrudMethod method,
         const CrudRequest& request,
-        CrudResponse& response);
+        const CrudResponse& response,
+        const std::string& source = {});
 
     static std::string get_type() { return s_type; }
 
@@ -26,6 +27,8 @@ class CrudEvent : public Model {
 
     const std::vector<Map>& get_modified_attrs() const;
 
+    const std::string& get_source() const;
+
   private:
     void init();
 
@@ -37,5 +40,6 @@ class CrudEvent : public Model {
     EnumField<CrudMethod, CrudMethod_enum_string_converter> m_method{"method"};
     std::vector<Map> m_modified_attrs;
     CrudUserContext m_user_context;
+    std::string m_source;
 };
 }  // namespace hestia

@@ -333,11 +333,16 @@ void Dictionary::set_map(
     }
 }
 
-void Dictionary::set_scalar(const std::string& scalar)
+void Dictionary::set_scalar(const std::string& scalar, bool should_quote)
 {
-    m_scalar = scalar;
+    m_scalar       = scalar;
+    m_should_quote = should_quote;
 }
 
+bool Dictionary::should_quote_scalar() const
+{
+    return m_should_quote;
+}
 
 bool Dictionary::has_tag() const
 {
