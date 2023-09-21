@@ -7,7 +7,7 @@ registry_url="$HESTIA_API_URL/packages/generic/hestia/$HESTIA_PROJECT_VERSION"
 main_rpm=hestia-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 devel_rpm=hestia-devel-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 debuginfo_rpm=hestia-debuginfo-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
-src_rpm=hestia-$HESTIA_PROJECT_VERSION-1.$ARCH.src.rpm
+src_rpm=hestia-$HESTIA_PROJECT_VERSION-1.src.rpm
 
 main_tar=hestia-$HESTIA_PROJECT_VERSION-Linux.tar.gz
 src_tar=hestia-$HESTIA_PROJECT_VERSION-Source.tar.gz
