@@ -1,0 +1,23 @@
+[
+    {
+        "name" : "$PROJECT-$VERSION-1.$ARCH",
+        "type" : "rpm",
+        "description" : "Project Binary RPM."
+    },
+    {
+        "name" : "$PROJECT-devel-$VERSION-1.$ARCH",
+        "type" : "rpm",
+        "description" : "Project Development RPM - includes headers and build tool configs."
+    },
+    {
+        "name" : "$PROJECT-tests-$VERSION-1.$ARCH",
+        "optional" : true,
+        "type" : "rpm",
+        "description" : "Project Tests RPM - includes tests soruces and binaries."
+    },
+    {
+        "name" : "$PROJECT-$VERSION-1.$ARCH",
+        "type" : "src.rpm",
+        "description" : "Project Source RPM - SRPM."
+    }
+]
