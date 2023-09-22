@@ -493,7 +493,7 @@ An example inventory for a three node test setup is provided. The following vari
 
 ### Backend Types/Configurations
 
-Configuration options for all backends are given under the `config` map in the `hestia_backends` option, as in the regular configuratiion files for Hestia. For example: 
+Configuration options for all backends are given under the `config` map in the `hestia_backends` option, as in the regular configuration files for Hestia. For example: 
 ```yaml
   hestia_backends:
     - type: "file_hsm"

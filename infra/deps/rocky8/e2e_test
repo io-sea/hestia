@@ -1,12 +1,11 @@
-git
 autoconf
 automake
 cmake
 gcc
 gcc-c++
+git
 libtool
 make
 python3
-wget
-rpm-build
 python3-devel
+wget

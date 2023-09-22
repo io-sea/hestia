@@ -53,7 +53,7 @@ if [ -f cmake/bin/cmake ]; then
 fi
 
 cmake --version
-cmake @CPACK_RPM_SOURCE_PKG_BUILD_PARAMS@ -DCPACK_PACKAGING_INSTALL_PREFIX=/ ../@CPACK_PACKAGE_FILE_NAME@
+cmake @CPACK_RPM_SOURCE_PKG_BUILD_PARAMS@ -DCPACK_PACKAGING_INSTALL_PREFIX=/usr ../@CPACK_PACKAGE_FILE_NAME@
 make %{?_smp_mflags} 
 #p build
 

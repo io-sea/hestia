@@ -5,7 +5,7 @@ Thist is a Hestia Quick Start guide with a focus on the needs of the IO-SEA proj
 Install the Hestia RPM on a RHEL 8 compatible system:
 
 ```bash
-sudo dnf install hestia.rpm
+sudo dnf install hestia-$VERSION.rpm
 ```
 
 Add the Python package to your `PYTHONPATH`:

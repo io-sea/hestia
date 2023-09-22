@@ -38,35 +38,34 @@ install(TARGETS
         )
 
 if(HESTIA_BUILD_TESTS)
-set(TEST_MODULES_FOR_EXPORT
-        ${PROJECT_NAME}_unit_tests
-        ${PROJECT_NAME}_integration_tests
-        ${PROJECT_NAME}_mock_phobos_plugin
-        ${PROJECT_NAME}_mock_motr_plugin
-        )
+        set(TEST_MODULES_FOR_EXPORT
+                ${PROJECT_NAME}_unit_tests
+                ${PROJECT_NAME}_integration_tests
+                ${PROJECT_NAME}_mock_phobos_plugin
+                ${PROJECT_NAME}_mock_motr_plugin
+                )
 
-install(TARGETS 
-        ${TEST_MODULES_FOR_EXPORT}
-        LIBRARY 
+        install(TARGETS 
+                ${TEST_MODULES_FOR_EXPORT}
+                LIBRARY 
+                        COMPONENT tests
+                        DESTINATION lib/${PROJECT_NAME}
+                RUNTIME 
+                        COMPONENT tests
+                        DESTINATION opt/${PROJECT_NAME}/bin
+                )
+                
+        install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_data/"
+                DESTINATION opt/${PROJECT_NAME}/test_data
                 COMPONENT tests
-                DESTINATION lib/${PROJECT_NAME}
-        RUNTIME 
+                )
+
+        install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test/"
+                DESTINATION opt/${PROJECT_NAME}/src
                 COMPONENT tests
-                DESTINATION opt/${PROJECT_NAME}/bin
-        )
-        
-install(DIRECTORY    "${CMAKE_CURRENT_BINARY_DIR}/test_data/"
-        DESTINATION opt/${PROJECT_NAME}/test_data
-        COMPONENT tests
-        )
-
-install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/"
-        DESTINATION opt/${PROJECT_NAME}/src
-        COMPONENT tests
-        PATTERN "data" EXCLUDE
-        PATTERN "*.txt" EXCLUDE
-        )
-
+                PATTERN "data" EXCLUDE
+                PATTERN "*.txt" EXCLUDE
+                )
 endif()
 
 set(LINK_MODULES_FOR_EXPORT "")
@@ -149,7 +148,6 @@ set(CPACK_PACKAGE_HOMEPAGE_URL "https://git.ichec.ie/io-sea-internal/hestia")
 set(CPACK_THREADS ${CMAKE_BUILD_PARALLEL_LEVEL})
 
 set(HESTIA_CPACK_GENERATORS TGZ)
-set(HESTIA_SOURCE_GENERATORS TGZ)
 if(NOT APPLE)
         set(HESTIA_PACKAGE_TYPE RPM CACHE STRING "Linux package type: DEB or RPM")
         set(CPACK_RPM_PACKAGE_NAME ${PROJECT_NAME})
@@ -184,8 +182,6 @@ if(NOT APPLE)
         set(PHOBOS_BUILD_REQUIRES "autoconf, automake, libtool, which, openssl-devel, python3-devel, jansson-devel, libini_config-devel, libattr-devel, sg3_utils-devel, protobuf-c-devel, glib2-devel, libpq-devel, postgresql, postgresql-contrib, postgresql-server")
         #set(CPACK_RPM_BUILDREQUIRES "${CPACK_RPM_BUILDREQUIRES}, ${PHOBOS_BUILD_REQUIRES}")
 
-        set(CPACK_RPM_SPEC_MORE_DEFINE "%define test_name test_body")
-
         set(CPACK_RPM_INSTALL_WITH_EXEC ON)
 
         # Only build debuginfo if we have set RelWithDebInfo - it is not useful otherwise
@@ -197,13 +193,15 @@ if(NOT APPLE)
         
         set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
 
-        set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON")
+        set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON -DCMAKE_PROJECT_VERSION=${CMAKE_PROJECT_VERSION}")
 
         set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
         set(CPACK_DEBIAN_PACKAGE_MAINTAINER "support@ichec.ie")
 
         list(APPEND HESTIA_CPACK_GENERATORS ${HESTIA_PACKAGE_TYPE})
         list(APPEND HESTIA_SOURCE_GENERATORS ${HESTIA_PACKAGE_TYPE})
+else()
+        list(APPEND HESTIA_SOURCE_GENERATORS TGZ)
 endif()
 
 set(CPACK_GENERATOR ${HESTIA_CPACK_GENERATORS})
@@ -213,12 +211,12 @@ set(CPACK_SOURCE_IGNORE_FILES
     /.clang*
     /.vscode
     /dist
-    /test
     /examples
     /infra/containers
     /infra/ansible
     /infra/deps
-    /.*build.*
+    build/
+    .cache/
     /\\\\.DS_Store
 )
 

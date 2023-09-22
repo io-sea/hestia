@@ -10,8 +10,7 @@ debuginfo_rpm=hestia-debuginfo-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 src_rpm=hestia-$HESTIA_PROJECT_VERSION-1.src.rpm
 
 main_tar=hestia-$HESTIA_PROJECT_VERSION-Linux.tar.gz
-src_tar=hestia-$HESTIA_PROJECT_VERSION-Source.tar.gz
-docs_tar=docs.tar.gz
+docs_tar=hestia-docs-$HESTIA_PROJECT_VERSION.tar.gz
 
 # RPMs: main, devel, tests, source
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
@@ -38,11 +37,6 @@ do echo "will retry in 2 seconds"; sleep 2; done
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url/$main_tar" \
     --upload-file "$CMAKE_BUILD_DIR/$main_tar"
-do echo "will retry in 2 seconds"; sleep 2; done
-
-while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
-    "$registry_url/$src_tar" \
-    --upload-file "$CMAKE_BUILD_DIR/$src_tar"
 do echo "will retry in 2 seconds"; sleep 2; done
 
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
@@ -75,12 +69,6 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
             \"name\": \"Hestia Debug Information RPM\",
             \"url\": \"$registry_url/$debuginfo_rpm\",
             \"direct_asset_path\": \"/binaries/$debuginfo_rpm\",
-            \"link_type\": \"package\"
-          },
-          {
-            \"name\": \"Hestia SRC RPM\",
-            \"url\": \"$registry_url/$src_rpm\",
-            \"direct_asset_path\": \"/binaries/$src_rpm\",
             \"link_type\": \"package\"
           },
           {

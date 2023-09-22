@@ -7,8 +7,8 @@ stages:
 # CI variables
 .variables:
   default_variables: &default_variables
-    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache"
-    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build_dir_with_a_long_name_needed_for_cmake"
+    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/cmake"
+    CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: "Release"
     CXX: "g++"
     CC: "gcc"
@@ -42,7 +42,11 @@ stages:
     yum config-manager -q --set-enabled powertools;
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
+    yum install -y libxml2-devel || true;
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
+  - &install_e2e_dependencies
+    yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
+    pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
   - &install_phobos
     yum install -qy $(cat ${HESTIA_DEPS}/phobos);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/phobos_requirements.txt;
@@ -50,13 +54,11 @@ stages:
     ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
   - &configure
-    mkdir -p "${CMAKE_BUILD_DIR}";
-    export HESTIA_SOURCE_DIR=${CI_PROJECT_DIR}/hestia_source_dir_with_a_long_path_for_cmake;
-    ln -s ${CI_PROJECT_DIR} ${HESTIA_SOURCE_DIR}
+    mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${HESTIA_SOURCE_DIR}
+      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR}
       -DBUILD_SHARED_LIBS=OFF
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
@@ -78,10 +80,20 @@ stages:
     make -C "${CMAKE_BUILD_DIR}" -j$(nproc)
   - &test
     make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
+  - &e2e_test 
+    python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
+  - &create_source_package 
+    ${CMAKE_INSTALL_CACHE_DIR}/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
+    make -C "${CMAKE_BUILD_DIR}" package_source
+  - &build_from_source_package
+    rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
+    cp /root/rpmbuild/RPMS/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
+    cp /root/rpmbuild/RPMS/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR}
   - &generate_docs
-    tar -czvf ${CMAKE_BUILD_DIR}/docs.tar.gz --directory=${CMAKE_BUILD_DIR}/doc html
+    make -C "${CMAKE_BUILD_DIR}" doxygen;
+    tar -czvf ${CMAKE_BUILD_DIR}/hestia-docs-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/doc html
   - &zip_coverage
-    tar -czvf ${CMAKE_BUILD_DIR}/Code_coverage_report.tar.gz --directory=${CMAKE_BUILD_DIR}/ccov all-merged
+    tar -czvf ${CMAKE_BUILD_DIR}/hestia-coverage-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/ccov all-merged
 
 .cache:
   cmake_install_cache: &cmake_install_cache
@@ -162,17 +174,15 @@ Release:
     HESTIA_BUILD_DOCUMENTATION: "ON"
   script:
     - *configure
-    - *build
-    - make -C "${CMAKE_BUILD_DIR}" doxygen
-    - make -C "${CMAKE_BUILD_DIR}" package
-    - $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR}
-    - make -C "${CMAKE_BUILD_DIR}" package_source
+    - *create_source_package
+    - *build_from_source_package
     - *generate_docs
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
-      - ${CMAKE_BUILD_DIR}/*.rpm
-      - ${CMAKE_BUILD_DIR}/*.tar.gz
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 day
 
 Unit_test:
@@ -204,12 +214,9 @@ E2E_test:
     - Release
   before_script:
     - *update_distro
-    - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
-    - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
+    - *install_e2e_dependencies
   script:
-    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py 
-      --source_dir=${CI_PROJECT_DIR}
-      --build_dir=${CMAKE_BUILD_DIR}
+    - *e2e_test
 
 # Scheduled Builds
 .nightly_snippets:
@@ -217,7 +224,6 @@ E2E_test:
     ${CI_PROJECT_DIR}/infra/scripts/ci/install_motr.sh
   - &install_proxygen
     yum install -qy $(cat ${HESTIA_DEPS}/proxygen);
-
 
 .default_nightly_job: &default_nightly_job
   <<: *default_job
@@ -228,6 +234,10 @@ E2E_test:
         && $CI_COMMIT_SHA != $CI_LAST_NIGHTLY_COMMIT_SHA
         && $CI_SCHEDULE_TYPE == "NIGHTLY"
       when: on_success
+
+Nightly_build:
+  <<: *default_nightly_job
+  stage: build
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -238,20 +248,14 @@ E2E_test:
     - *configure
     - *build
     - make -C "${CMAKE_BUILD_DIR}" package
-    - $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR}
-    - make -C "${CMAKE_BUILD_DIR}" package_source
-    - make -C "${CMAKE_BUILD_DIR}" doxygen
+    - *create_source_package
     - *generate_docs
-    # TODO: Build and upload docs
-
-Nightly_build:
-  <<: *default_nightly_job
-  stage: build
   artifacts:
-    name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
-      - ${CMAKE_BUILD_DIR}/*.rpm
-      - ${CMAKE_BUILD_DIR}/*.tar.gz
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 hour
 
 Nightly_unit_test:
@@ -276,21 +280,17 @@ Nightly_unit_test:
     - ${CI_PROJECT_DIR}/test/data/start_phobos_db.sh
     - *test
 
-
 Nightly_E2E:
   <<: *default_nightly_job
   stage: test
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     - *install_phobos
     - *install_proxygen
-    - pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt;
+    - *install_e2e_dependencies
   script:
-    - python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py
-      --source_dir=${CI_PROJECT_DIR}
-      --build_dir=${CMAKE_BUILD_DIR}
+    - *e2e_test
 
 Nightly_code_coverage:
   <<: *default_nightly_job
@@ -335,7 +335,9 @@ Nightly_deploy:
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
-      - ${CMAKE_BUILD_DIR}/*.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 day
 
@@ -365,6 +367,14 @@ Nightly_cleanup:
   variables:
     <<: *nightly_variables
     HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
+  before_script:
+    - *update_distro
+    - *install_base_dependencies
+  script:
+    - *configure
+    - *build
+    - *build_from_source_package
+    - *generate_docs
   after_script:
     - ${CI_PROJECT_DIR}/infra/scripts/ci/master_deploy.sh
 
@@ -375,7 +385,9 @@ Master_build:
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
-      - ${CMAKE_BUILD_DIR}/*.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 week
     
