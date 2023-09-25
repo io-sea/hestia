@@ -83,7 +83,7 @@ macro(fetch_proxygen)
     fizz
     OVERRIDE_FIND_PACKAGE
     GIT_REPOSITORY https://github.com/facebookincubator/fizz.git
-    GIT_TAG 555161037025db59658ae5d0277c4c3e1e49817e # v2023.07.24.00
+    GIT_TAG 54f0dfddf1e56b37d7fa04b7f26cf1dcdc8b2fe4 #  v2023.09.25.00
     SYSTEM
     SOURCE_SUBDIR fizz
     )
