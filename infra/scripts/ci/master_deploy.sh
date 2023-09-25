@@ -54,31 +54,37 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
         \"ref\": \"master\",
         \"assets\": { \"links\": [
           {
-            \"name\": \"Hestia RPM\",
+            \"name\": \"$main_rpm\",
             \"url\": \"$registry_url/$main_rpm\",
             \"direct_asset_path\": \"/binaries/$main_rpm\",
             \"link_type\": \"package\"
           },
           {
-            \"name\": \"Hestia Development Headers RPM\",
+            \"name\": \"$devel_rpm\",
             \"url\": \"$registry_url/$devel_rpm\",
             \"direct_asset_path\": \"/binaries/$devel_rpm\",
             \"link_type\": \"package\"
           },
           {
-            \"name\": \"Hestia Debug Information RPM\",
+            \"name\": \"$debuginfo_rpm\",
             \"url\": \"$registry_url/$debuginfo_rpm\",
             \"direct_asset_path\": \"/binaries/$debuginfo_rpm\",
             \"link_type\": \"package\"
           },
           {
-            \"name\": \"Hestia Executable tarball\",
+            \"name\": \"$src_rpm\",
+            \"url\": \"$registry_url/$src_rpm\",
+            \"direct_asset_path\": \"/binaries/$src_rpm\",
+            \"link_type\": \"package\"
+          },
+          {
+            \"name\": \"$main_tar\",
             \"url\": \"$registry_url/$main_tar\",
             \"direct_asset_path\": \"/binaries/$main_tar\",
             \"link_type\": \"package\"
           },
           {
-            \"name\": \"Hestia Documentation Tarball\",
+            \"name\": \"$docs_tar\",
             \"url\": \"$registry_url/$docs_tar\",
             \"direct_asset_path\": \"/binaries/$docs_tar\",
             \"link_type\": \"package\"

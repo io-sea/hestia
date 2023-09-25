@@ -82,13 +82,16 @@ stages:
     make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
   - &e2e_test 
     python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
+  - &create_tgz_package
+    cd ${CMAKE_BUILD_DIR}; $CMAKE_INSTALL_CACHE_DIR/bin/cpack -G TGZ
   - &create_source_package 
     ${CMAKE_INSTALL_CACHE_DIR}/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
   - &build_from_source_package
     rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
     cp /root/rpmbuild/RPMS/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
-    cp /root/rpmbuild/RPMS/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR}
+    cp /root/rpmbuild/RPMS/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
+    cp /root/rpmbuild/RPMS/hestia-debuginfo-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR}
   - &generate_docs
     make -C "${CMAKE_BUILD_DIR}" doxygen;
     tar -czvf ${CMAKE_BUILD_DIR}/hestia-docs-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/doc html
@@ -238,17 +241,20 @@ E2E_test:
 Nightly_build:
   <<: *default_nightly_job
   stage: build
+  variables:
+    <<: *nightly_variables
+    HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PHOBOS: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - *install_phobos
-    - *install_motr # dev only
-    - *install_proxygen
   script:
     - *configure
     - *build
-    - make -C "${CMAKE_BUILD_DIR}" package
+    - *create_tgz_package
     - *create_source_package
+    - *build_from_source_package
     - *generate_docs
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
@@ -266,12 +272,12 @@ Nightly_unit_test:
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_TEST_REDIS: "ON"
     HESTIA_BUILD_DOCUMENTATION: "OFF"
-    HESTIA_WITH_MOTR: "OFF" # No real motr tests present at this time
   before_script:
     - *update_distro
     - *install_base_dependencies
     - *install_proxygen
     - *install_phobos
+    - *install_motr
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
@@ -367,12 +373,17 @@ Nightly_cleanup:
   variables:
     <<: *nightly_variables
     HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
+    HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PHOBOS: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
   before_script:
     - *update_distro
     - *install_base_dependencies
   script:
     - *configure
     - *build
+    - *create_tgz_package
+    - *create_source_package
     - *build_from_source_package
     - *generate_docs
   after_script:
@@ -401,6 +412,9 @@ Master_deploy_current_build:
       when: on_success
   variables:
     <<: *nightly_variables
+    HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PHOBOS: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_PATCH_RELEASE_VERSION}"
 
 Master_deploy_minor_build:
@@ -412,6 +426,9 @@ Master_deploy_minor_build:
       when: on_success
   variables:
     <<: *nightly_variables
+    HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PHOBOS: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_MINOR_RELEASE_VERSION}"
 
 Master_deploy_major_build:
@@ -423,4 +440,7 @@ Master_deploy_major_build:
       when: on_success
   variables:
     <<: *nightly_variables
+    HESTIA_WITH_MOTR: "OFF"
+    HESTIA_WITH_PHOBOS: "OFF"
+    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_MAJOR_RELEASE_VERSION}"

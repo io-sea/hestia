@@ -190,6 +190,7 @@ if(NOT APPLE)
         else()
                 set(CPACK_RPM_DEBUGINFO_PACKAGE OFF)
         endif()
+        message(STATUS "Will do debuginfo: " ${CPACK_RPM_DEBUGINFO_PACKAGE})
         
         set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
 
