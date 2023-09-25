@@ -1,15 +1,11 @@
 ca-certificates 
 cmake
+curl
 doxygen
 gcc
 gcc-c++
 git
-glibc-devel
-glib2-devel
 graphviz
-hiredis-devel
-libcurl-devel 
-jansson-devel
 libasan
 libubsan
 make

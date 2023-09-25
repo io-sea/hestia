@@ -76,6 +76,12 @@ ObjectStoreBackend::Type ObjectStoreBackend::get_backend() const
     return m_backend_type.get_value();
 }
 
+std::string ObjectStoreBackend::get_backend_as_string() const
+{
+    return Type_enum_string_converter().init().to_string(
+        m_backend_type.get_value());
+}
+
 void ObjectStoreBackend::set_tier_names(
     const std::vector<std::string>& tier_names)
 {

@@ -31,11 +31,12 @@ std::unique_ptr<PluginResource> PluginLoader::load_plugin_resource(
 
         OpStatus status;
         void* handle{nullptr};
+        std::filesystem::path load_path;
         for (const auto& dir : plugin_dirs) {
-            const auto path =
+            load_path =
                 dir / (plugin_factory.get_name() + get_plugin_extension());
             auto [op_status, op_handle] =
-                SystemUtils::load_module(path.string());
+                SystemUtils::load_module(load_path.string());
             if (op_status.ok()) {
                 status = op_status;
                 handle = op_handle;
@@ -44,9 +45,8 @@ std::unique_ptr<PluginResource> PluginLoader::load_plugin_resource(
         }
 
         if (handle == nullptr) {
-            const auto path =
-                plugin_factory.get_name() + get_plugin_extension();
-            auto [op_status, op_handle] = SystemUtils::load_module(path);
+            load_path = plugin_factory.get_name() + get_plugin_extension();
+            auto [op_status, op_handle] = SystemUtils::load_module(load_path);
             status                      = op_status;
             handle                      = op_handle;
         }
@@ -55,6 +55,8 @@ std::unique_ptr<PluginResource> PluginLoader::load_plugin_resource(
             LOG_ERROR(status.message());
             return nullptr;
         }
+
+        LOG_INFO("Loaded plugin from: " << load_path);
 
         auto plugin_handle     = plugin_factory.create_handle(handle);
         auto plugin_handle_ptr = plugin_handle.get();

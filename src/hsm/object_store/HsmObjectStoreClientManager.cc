@@ -132,14 +132,15 @@ void HsmObjectStoreClientManager::setup_clients(
 
     if (node_id.empty()) {
         LOG_INFO("Setting up clients in standalone mode");
-        // Standlone client - use 'hardcoded' tiers and backends straight from
-        // config
         for (const auto& backend : local_backends) {
             for (const auto& tier : tiers) {
                 LOG_INFO("Tier id is: " << tier.get_primary_key());
                 for (const auto& id : backend.get_tier_ids()) {
                     LOG_INFO("Backend tier id is: " << id);
                     if (id == tier.get_primary_key()) {
+                        LOG_INFO(
+                            "Registering backend type: "
+                            << backend.get_backend_as_string());
                         m_tier_backends[tier.id_uint()] = backend.get_backend();
                         break;
                     }
@@ -222,6 +223,7 @@ void HsmObjectStoreClientManager::setup_clients(
             else {
                 auto client_plugin =
                     m_client_factory->get_client_from_plugin(backend);
+                LOG_INFO("Intializing plugin");
                 client_plugin->get_client()->initialize(
                     backend.get_primary_key(), cache_path,
                     backend.get_config());

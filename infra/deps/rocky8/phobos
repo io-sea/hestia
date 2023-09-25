@@ -3,6 +3,8 @@ autoconf
 automake
 libtool
 which
+glibc-devel
+glib2-devel
 python3-devel
 jansson-devel
 libini_config-devel

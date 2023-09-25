@@ -1,2 +1,8 @@
 object_store_backends:
   - backend_type: s3
+    tier_names: ["0"]
+    config:
+      default_host: "http://127.0.0.1:9000"
+
+tiers:
+  - name: "0"

@@ -11,6 +11,7 @@
 #include "S3ObjectAdapter.h"
 
 #include "Logger.h"
+#include <stdexcept>
 
 namespace hestia {
 S3Client::S3Client(IS3InterfaceImpl::Ptr impl) : m_impl(std::move(impl))

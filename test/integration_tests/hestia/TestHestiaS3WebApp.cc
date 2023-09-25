@@ -57,27 +57,23 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
 
     const auto id = "0000";
     hestia::StorageObject obj(id);
-    obj.get_metadata_as_writeable().set_item("my_key", "my_value");
-    obj.get_metadata_as_writeable().set_item("hestia-bucket_name", "my_bucket");
-    obj.get_metadata_as_writeable().set_item("hestia-user_id", user_id);
-    obj.get_metadata_as_writeable().set_item("hestia-user_token", user_key);
+    obj.set_metadata("my_key", "my_value");
+    obj.set_metadata("hestia-bucket_name", "my_bucket");
+    obj.set_metadata("hestia-user_id", user_id);
+    obj.set_metadata("hestia-user_token", user_key);
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 
     hestia::ReadableBufferView read_buffer(content);
-    auto source = hestia::InMemoryStreamSource::create(read_buffer);
-
     hestia::Stream stream;
-    stream.set_source(std::move(source));
+    stream.set_source(hestia::InMemoryStreamSource::create(read_buffer));
 
     put(obj, &stream);
     REQUIRE(stream.reset().ok());
 
     std::vector<char> returned_buffer(content.length());
     hestia::WriteableBufferView write_buffer(returned_buffer);
-
-    auto sink = hestia::InMemoryStreamSink::create(write_buffer);
-    stream.set_sink(std::move(sink));
+    stream.set_sink(hestia::InMemoryStreamSink::create(write_buffer));
 
     get(obj, &stream);
     REQUIRE(stream.reset().ok());
