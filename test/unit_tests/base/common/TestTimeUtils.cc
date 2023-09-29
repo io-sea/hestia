@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "TimeUtils.h"
+#include "TimedLock.cc"
 
 #include <ctime>
 #include <iomanip>
@@ -16,4 +17,16 @@ TEST_CASE("Test TimeUtils - get current time", "[common]")
     std::string localtime_str = localtime.str();
 
     REQUIRE(hestialocaltime_str == localtime_str);
+}
+
+TEST_CASE("Test Timed Lock - lock/unlock", "[common]")
+{
+    std::size_t timeout{5};
+    hestia::TimedLock lock(timeout);
+
+    lock.lock();
+    REQUIRE(lock.m_active);
+
+    lock.unlock();
+    REQUIRE(!lock.m_active);
 }

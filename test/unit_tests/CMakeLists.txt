@@ -10,8 +10,10 @@ set(UNIT_TEST_SOURCES
     base/common/TestFileUtils.cc
     base/common/TestHashUtils.cc
     base/common/TestJsonUtils.cc
+    base/common/TestLogger.cc
     base/common/TestStream.cc
     base/common/TestStringUtils.cc
+    base/common/TestThreadUtils.cc
     base/common/TestTimeUtils.cc
     base/common/TestUuidUtils.cc
     base/common/TestXmlUtils.cc
@@ -61,6 +63,7 @@ if(NOT APPLE)
 endif()
 
 target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
+    hestia_common
     hestia_app
     hestia_lib
     hestia_server

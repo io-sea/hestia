@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "Uuid.h"
 #include "UuidUtils.h"
 #include <stdint.h>
 
@@ -63,4 +64,10 @@ TEST_CASE("Test Uuid - from string", "[uuid]")
     REQUIRE(
         hestia::UuidUtils::from_string("ffffffff-ffff-ffff-ffff-ffffffffffff")
         == hestia::Uuid(UINT64_MAX, UINT64_MAX));
+}
+
+TEST_CASE("Test Uuid - set or unset", "[uuid]")
+{
+    REQUIRE(hestia::Uuid().is_unset());
+    REQUIRE(!hestia::Uuid(0).is_unset());
 }
