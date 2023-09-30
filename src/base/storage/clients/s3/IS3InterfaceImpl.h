@@ -2,6 +2,7 @@
 
 #include "SerializeableWithFields.h"
 
+#include "S3Config.h"
 #include "S3Container.h"
 #include "S3Object.h"
 
@@ -12,25 +13,6 @@
 #include <memory>
 
 namespace hestia {
-class S3Config : public SerializeableWithFields {
-
-  public:
-    STRINGABLE_ENUM(UriStyle, PATH, VIRTUAL)
-
-    S3Config() : SerializeableWithFields("s3_object_store_client_config")
-    {
-        register_scalar_field(&m_metadataprefix);
-        register_scalar_field(&m_user_agent);
-        register_scalar_field(&m_default_host);
-        register_scalar_field(&m_uri_style);
-    }
-
-    StringField m_metadataprefix{"metadata_prefix"};
-    StringField m_user_agent{"user_agent"};
-    StringField m_default_host{"default_host", "127.0.0.1:8000"};
-    EnumField<UriStyle, UriStyle_enum_string_converter> m_uri_style{
-        "uri_style", UriStyle::PATH};
-};
 
 class IS3InterfaceImpl {
   public:

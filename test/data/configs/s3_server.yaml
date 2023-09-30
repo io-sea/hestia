@@ -1,3 +1,16 @@
 server:
+  host: 127.0.0.1
+  port: 8090
+  controller: true
+  tag: s3_controller0
   web_app: 
     interface: s3
+
+tiers:
+  - name: "0"
+
+object_store_backends:
+  - backend_type: file
+    tier_names: ["0"]
+    config: 
+      root: s3_server_object_store

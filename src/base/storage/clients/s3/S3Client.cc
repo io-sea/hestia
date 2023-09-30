@@ -61,9 +61,8 @@ void S3Client::do_initialize(
     m_impl->initialize(config);
 
     m_container_adapter =
-        S3ContainerAdapter::create(config.m_metadataprefix.get_value());
-    m_object_adapter =
-        S3ObjectAdapter::create(config.m_metadataprefix.get_value());
+        S3ContainerAdapter::create(config.get_metadata_prefix());
+    m_object_adapter = S3ObjectAdapter::create(config.get_metadata_prefix());
 }
 
 void S3Client::put(

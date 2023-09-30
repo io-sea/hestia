@@ -19,8 +19,20 @@ class LibS3InterfaceImpl : public IS3InterfaceImpl {
     int remove(const S3Object& obj) override;
 
   private:
-    void get_bucket(
-        const std::string& name, S3BucketContext* bucket_context) const;
+    bool test_bucket(const std::string& name, const S3Object& obj) const;
+
+    void create_bucket(const std::string& name, const S3Object& obj) const;
+
+    std::string get_bucket_name(const S3Object& obj) const;
+
+    void prepare_bucket_context(
+        S3BucketContext& bucket_context,
+        const std::string& name,
+        const std::string& access_id,
+        const std::string& access_token,
+        const S3Object& obj) const;
+
+    void validate_bucket_name(const std::string& name) const;
 
     S3Config m_config;
 };

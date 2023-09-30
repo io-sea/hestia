@@ -5,9 +5,11 @@ add_module(
     MODULE_NAME s3_backend
     HEADERS
         S3Client.h
+        S3Config.h
         IS3InterfaceImpl.h
     SOURCES
         S3Client.cc
+        S3Config.cc
     INTERNAL_DEPENDENCIES 
         storage
 )

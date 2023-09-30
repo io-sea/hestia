@@ -1,6 +1,6 @@
 server:
-  host_address: 127.0.0.1
-  host_port: 8080
+  host: 127.0.0.1
+  port: 8080
   static_resource_path: web_content
   cache_static_resources: false
   web_app: hestia::HsmService

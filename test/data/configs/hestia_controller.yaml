@@ -1,6 +1,6 @@
 server:
-  host_address: 127.0.0.1
-  host_port: 8088
+  host: 127.0.0.1
+  port: 8088
   controller: true
   tag: controller0
 

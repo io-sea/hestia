@@ -15,8 +15,8 @@ void MockLibS3InterfaceImpl::initialize(const S3Config& config)
 {
     int flags{0};
     m_lib_s3.s3_initialize(
-        config.m_user_agent.get_value().c_str(), flags,
-        config.m_default_host.get_value().c_str());
+        config.get_user_agent().c_str(), flags,
+        config.get_default_host().c_str());
 }
 
 int MockLibS3InterfaceImpl::put(
