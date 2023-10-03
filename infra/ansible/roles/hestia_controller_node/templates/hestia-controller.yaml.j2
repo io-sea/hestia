@@ -1,7 +1,7 @@
 logger:
-  syslog_only: true
+  syslog_only: {{ hestia_as_service }}
   active: true
-  level: warn
+  level: {{ hestia_verbosity }}
 
 server:
   host_address: {{ inventory_hostname }}
@@ -11,11 +11,11 @@ server:
 
 tiers:
 {% for tier in hestia_hsm_tiers%}
-  - name: "{{ tier.name }}" 
+  - name: "{{ tier }}" 
 {% endfor %}
 
 key_value_store_client:
-    client_type: redis
-    config:
-      backend_address: localhost
-      backend_port: 6379
+  client_type: redis
+  config:
+    backend_address: localhost
+    backend_port: 6379

@@ -1,7 +1,7 @@
 logger:
-  syslog_only: true
+  syslog_only: {{ hestia_as_service }}
   active: true
-  level: warn
+  level: {{ hestia_verbosity }}
 
 server:
   host: {{ inventory_hostname }}
@@ -10,7 +10,7 @@ server:
   backend: hestia::Basic
   controller: false
   controller_address: {{ hestia_controller_address }}:{{ hestia_server_port }}
-  tag: worker_{{ inventory_hostname_short }}
+  tag: {{ inventory_hostname_short }}
 
 web_apps:
   - identitifier: hestia::HsmService
@@ -20,12 +20,4 @@ server_backends:
   - identifier: hestia::Basic
 
 object_store_backends:
-{% for backend in hestia_backends %}
-  - backend_type: {{ backend.type }}
-    tier_names:
-{% for tier in hestia_hsm_tiers %}{% if tier.backend_type == backend.type %}
-      - "{{tier.name}}"
-{% endif %}{% endfor %}
-    config: 
-      {{ backend.config | to_nice_yaml(indent=2) }}
-{% endfor %}
+  {{ hestia_object_store_backends | to_nice_yaml(indent=2) | indent(width=2) }}

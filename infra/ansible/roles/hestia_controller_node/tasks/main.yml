@@ -7,12 +7,23 @@
   ansible.builtin.yum:
     name: redis
     state: latest
+  become: true
 
 - name: Start Redis
   ansible.builtin.service:
     name: redis
     enabled: true
     state: started
+  become: true
+  when: hestia_as_service | bool
+
+- name: Start Redis (non-service)
+  ansible.builtin.shell:
+    cmd: redis-server --daemonize yes & disown
+  async: 10
+  poll: 0
+  become: true
+  when: not hestia_as_service | bool
 
 - name: Configure Hestia
   ansible.builtin.template:
@@ -20,3 +31,4 @@
     dest: "{{ hestia_config_dir }}/hestiad.yaml"
   notify: 
     - 'start_hestia'
+  become: true

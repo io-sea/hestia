@@ -129,6 +129,7 @@ std::unique_ptr<RedisReplyWrapper> RedisKeyValueStoreClient::make_request(
     const std::string& request, const std::string& binary_string) const
 {
     redisReply* reply;
+    std::unique_lock<std::mutex> lck(m_redis_context_mutex);
     if (binary_string.empty()) {
         reply = reinterpret_cast<redisReply*>(
             redisCommand(m_context->m_context, request.c_str()));

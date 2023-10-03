@@ -5,12 +5,16 @@
     description: IOSEA YUM repo
     baseurl: "{{ iosea_repo_url }}"
     gpgcheck: false
+  become: true
 
 - name: Install Hestia
   ansible.builtin.yum:
     name: hestia
     state: latest
+  become: true
 
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true # Ensure our hestia service unit is loaded
+  become: true
+  when: hestia_as_service | bool

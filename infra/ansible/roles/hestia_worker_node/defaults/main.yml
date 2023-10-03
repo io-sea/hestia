@@ -1,9 +1,8 @@
 ---
 # Worker only default variables
+hestia_controller_address: "hestia_controller"
 
-hestia_backends:
-  - type: "file_hsm"
-    config: 
-      - hsm_root: "hsm_object_store"
-
-hestia_controller_address: "hestia-controller"
+# For a one-node setup
+hestia_object_store_backends:
+  - backend_type: "file_hsm"
+    tier_names: ["0", "1", "2", "3", "4"]

@@ -457,7 +457,7 @@ Logs will be written to the system log, which can be viewed with `journalctl`.
 
 # Ansible Deployment
 
-Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/examples/sample_ansible_deploy/playbook.yml).  
+Ansible roles featuring scripts and configuration templates for Hestia's deployment on a multi-node cluster are demonstrated [here](/examples/sample_ansible_deploy/README.md).  
 
 ## Usage
 
@@ -487,16 +487,16 @@ An example inventory for a three node test setup is provided. The following vari
 | `iosea_repo_url` | `http://www.somerepo.com/iosea` | The url of the YUM repository including the `hestia` package |
 | `hestia_server_port` | `8080` | The port used for all Hestia servers on nodes |
 | `hestia_controller_address` | `hestia-controller` | The address of the controller node for the targeted workers |
-| `hestia_hsm_tiers` | 5 File HSM backend tiers | List of tier names and their [backend types](#object-store-backend-settings) |
-| `hestia_backends` | File HSM default config | A list of configurations sent to all target workers with the listed backend |
+| `hestia_hsm_tiers` | 5 tiers | List of tier names |
 
+### Backend Configuration
 
-### Backend Types/Configurations
+On each worker (normally set as host variables), configuration options for Hestia backends are given under the `hestia_object_store` map in the `hestia_object_store_backends` option, as in the regular configuration files for Hestia. For example: 
 
-Configuration options for all backends are given under the `config` map in the `hestia_backends` option, as in the regular configuration files for Hestia. For example: 
 ```yaml
-  hestia_backends:
-    - type: "file_hsm"
-      config: 
-        - hsm_root: "hsm_object_store"
+  hestia_object_store_backends:
+    - backend_type: "file_hsm"
+      tier_names: ["0"]
+      config:
+        hsm_root: "custom_hsm_object_store_root"
 ``` 

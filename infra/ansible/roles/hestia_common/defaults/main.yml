@@ -10,15 +10,11 @@ hestia_config_dir: '/etc/hestia'
 # Port Hestia servers run on
 hestia_server_port: 8080
 
-# Default tiers and backends
-hestia_hsm_tiers:
-  - name: "0"
-    backend_type: file_hsm
-  - name: "1"
-    backend_type: file_hsm
-  - name: "2"
-    backend_type: file_hsm
-  - name: "3"
-    backend_type: file_hsm
-  - name: "4"
-    backend_type: file_hsm
+# Default tiers
+hestia_hsm_tiers: ["0", "1", "2", "3", "4"] 
+
+# Set logging verbosity (info, warn, error)
+hestia_verbosity: warn
+
+# Run/Enable Hestia as a service at startup?
+hestia_as_service: true  

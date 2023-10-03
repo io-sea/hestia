@@ -4,6 +4,7 @@
 #include "SerializeableWithFields.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace hestia {
@@ -64,5 +65,6 @@ class RedisKeyValueStoreClient : public KeyValueStoreClient {
 
     RedisKeyValueStoreClientConfig m_config;
     std::unique_ptr<RedisContextWrapper> m_context;
+    mutable std::mutex m_redis_context_mutex;
 };
 }  // namespace hestia

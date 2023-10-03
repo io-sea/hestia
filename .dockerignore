@@ -1,0 +1,6 @@
+**/Dockerfile
+
+# Ansible Example exclusions
+examples/sample_ansible_deploy/**
+!examples/sample_ansible_deploy/inventory
+!examples/sample_ansible_deploy/playbook.yml

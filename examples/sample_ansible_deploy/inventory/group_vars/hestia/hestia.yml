@@ -1,13 +1,19 @@
 # Testing setup Hestia variables
 
 # URL of IOSEA repository
-iosea_repo_url: 'http://hestia-repo/repo'
+iosea_repo_url: 'http://hestia_repo'
 
-# Tiers and backends
-hestia_hsm_tiers:
-  - name: "0"
-    backend_type: phobos
-  - name: "1"
-    backend_type: motr
-  - name: "2"
-    backend_type: file_hsm
+# Hestia Configuration Directory
+hestia_config_dir: '/etc/hestia'
+
+# Port Hestia servers run on
+hestia_server_port: 8080
+
+# Tiers
+hestia_hsm_tiers: ["0", "1", "2", "3", "4"]
+
+# To allow to run on non-systemd environments
+hestia_as_service: false
+
+# Give more debug information
+hestia_verbosity: info

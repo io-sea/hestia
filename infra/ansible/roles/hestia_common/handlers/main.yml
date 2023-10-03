@@ -6,9 +6,25 @@
     enabled: true
     state: started
   listen: "start_hestia"
+  when: hestia_as_service | bool
+
+- name: "Start Hestia (non-service)"
+  ansible.builtin.shell:
+    cmd: /usr/bin/hestia start --config {{ hestia_config_dir }}/hestiad.yaml & disown
+  poll: 0
+  listen: "start_hestia"
+  when: not hestia_as_service | bool
 
 - name: "Restart Hestia"
   ansible.builtin.service:
     name: hestiad
     status: restarted
   listen: "restart_hestia"
+  when: hestia_as_service | bool
+
+
+- name: "Restart Hestia (non-service)"
+  ansible.builtin.shell:
+    cmd: /usr/bin/hestia stop && /usr/bin/hestia start --config {{ hestia_config_dir }}/hestiad.yaml & disown
+  listen: "restart_hestia"
+  when: not hestia_as_service | bool

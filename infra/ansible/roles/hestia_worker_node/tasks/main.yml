@@ -6,5 +6,6 @@
   ansible.builtin.template:
     src: hestia-worker.yaml.j2
     dest: "{{ hestia_config_dir }}/hestiad.yaml"
+  become: true
   notify: 
     - "start_hestia"

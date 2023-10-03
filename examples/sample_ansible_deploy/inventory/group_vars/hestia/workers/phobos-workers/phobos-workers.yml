@@ -1,3 +1,0 @@
-hestia_backends:
-  - type: "phobos"
-    config:
