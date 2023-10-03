@@ -16,6 +16,16 @@ HttpRequest::HttpRequest(
     m_preamble.m_path = path;
 }
 
+void HttpRequest::set_tracking_id(const std::string& id)
+{
+    m_tracking_id = id;
+}
+
+const std::string& HttpRequest::get_tracking_id() const
+{
+    return m_tracking_id;
+}
+
 void HttpRequest::on_chunk(const std::string& msg)
 {
     if (m_has_read_header) {

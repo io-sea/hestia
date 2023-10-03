@@ -149,12 +149,14 @@ endmacro()
 
 # https://github.com/bji/libs3
 set(LIBS3_PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/infra/cmake/libs3_wrapper/ <SOURCE_DIR>)
+#set(LIBS3_PATCH0_COMMAND patch < ${PROJECT_SOURCE_DIR}/infra/cmake/libs3_wrapper/libs3_low_speed_limit.patch)
 macro(fetch_libs3)
     FetchContent_Declare(
         libs3
         GIT_REPOSITORY https://github.com/bji/libs3
         GIT_TAG        287e4bee6fd430ffb52604049de80a27a77ff6b4 # master
         PATCH_COMMAND ${LIBS3_PATCH_COMMAND}
+        COMMAND ${LIBS3_PATCH0_COMMAND}
         SYSTEM
         FIND_PACKAGE_ARGS
         )

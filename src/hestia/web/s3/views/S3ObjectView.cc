@@ -14,7 +14,6 @@
 
 #include "Logger.h"
 
-#include <iostream>
 #include <sstream>
 
 namespace hestia {

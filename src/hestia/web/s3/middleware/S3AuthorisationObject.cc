@@ -5,13 +5,17 @@
 
 #include "Logger.h"
 
-#include <iostream>
 #include <sstream>
 
 namespace hestia {
 bool S3AuthorisationObject::is_initialized() const
 {
     return m_status != Status::UNSET;
+}
+
+const S3Error& S3AuthorisationObject::get_error() const
+{
+    return m_error;
 }
 
 bool S3AuthorisationObject::is_valid() const

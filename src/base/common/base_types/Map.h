@@ -57,6 +57,8 @@ class Map {
      */
     std::string get_item(const std::string& key) const;
 
+    bool has_item(const std::string& key) const;
+
     /**
      * Return whether the Query (key-value pair) is contained in the map
      * @param query A key-value pair for searching in the container

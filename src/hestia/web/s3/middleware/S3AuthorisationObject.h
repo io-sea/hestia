@@ -20,6 +20,8 @@ class S3AuthorisationObject {
 
     std::string get_signature(const HttpRequest& req) const;
 
+    const S3Error& get_error() const;
+
     bool is_initialized() const;
 
     bool is_valid() const;

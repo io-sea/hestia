@@ -79,6 +79,11 @@ S3Error::S3Error(Code code, const std::string& request) :
     }
 }
 
+void S3Error::add_field(const std::string& key, const std::string& value)
+{
+    m_fields.push_back({key, value});
+}
+
 std::string S3Error::to_string() const
 {
     // const auto& [code, _] = getCodeAndId();
@@ -89,6 +94,10 @@ std::string S3Error::to_string() const
     sstr << "<Code>" << m_identifier << "</Code>\n";
     sstr << "<Message>" << m_message << "</Message>\n";
     sstr << "<Resource>/" << m_request << "</Resource>\n";
+    for (const auto& [key, value] : m_fields) {
+        sstr << "<" + key + ">" + value + "</" + key + ">\n";
+    }
+
     sstr << "</Error>";
 
     return sstr.str();

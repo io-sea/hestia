@@ -22,6 +22,11 @@ HttpResponse::Ptr S3AuthenticationMiddleware::call(
     }
     else {
         LOG_INFO("Did not authenticate user: " + status.to_string());
+
+        const auto& [code, id] = status.get_error().get_code_and_id();
+        auto response          = HttpResponse::create(code, id);
+        response->set_body(status.get_error().to_string());
+        return response;
     }
     return func(request);
 }

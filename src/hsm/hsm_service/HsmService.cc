@@ -479,8 +479,12 @@ void HsmService::get_data(
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
+    StorageObject storage_object(working_object->id());
+    storage_object.get_metadata_as_writeable().set_item(
+        "hestia-user_token", req.get_user_context().m_token);
+
     HsmObjectStoreRequest data_request(
-        working_object->id(), HsmObjectStoreRequestMethod::GET);
+        storage_object, HsmObjectStoreRequestMethod::GET);
     data_request.set_source_tier(req.source_tier());
 
     auto working_extent = req.extent();

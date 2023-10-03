@@ -20,38 +20,54 @@ S3Path::S3Path(const std::string& path)
     from_path_only(path);
 }
 
+enum class LineState {
+    AWAITING_FIRST_NON_SLASH,
+    AWAITING_CONTAINER_END,
+    AWAITING_OBJECT_END,
+    AWAITING_QUERY_END
+};
+
 void S3Path::from_path_only(const std::string& path)
 {
     if (path.empty() || path == "/") {
         return;
     }
 
-    auto non_slash_index = 0;
+    auto line_state = LineState::AWAITING_FIRST_NON_SLASH;
     for (const auto c : path) {
         if (c == '/') {
-            non_slash_index++;
+            if (line_state == LineState::AWAITING_FIRST_NON_SLASH) {
+                continue;
+            }
+            else if (line_state == LineState::AWAITING_CONTAINER_END) {
+                line_state = LineState::AWAITING_OBJECT_END;
+            }
         }
         else {
-            break;
+            if (line_state == LineState::AWAITING_FIRST_NON_SLASH) {
+                line_state = LineState::AWAITING_CONTAINER_END;
+                m_container_name += c;
+            }
+            else if (line_state == LineState::AWAITING_CONTAINER_END) {
+                if (c == '?') {
+                    line_state = LineState::AWAITING_QUERY_END;
+                }
+                else {
+                    m_container_name += c;
+                }
+            }
+            else if (line_state == LineState::AWAITING_OBJECT_END) {
+                if (m_object_id.empty() && c == '?') {
+                    line_state = LineState::AWAITING_QUERY_END;
+                }
+                else {
+                    m_object_id += c;
+                }
+            }
+            else if (line_state == LineState::AWAITING_QUERY_END) {
+                m_queries += c;
+            }
         }
-    }
-    const auto path_no_slash =
-        path.substr(non_slash_index, path.size() - non_slash_index);
-
-    if (auto slash_index = path_no_slash.find('/');
-        slash_index == path_no_slash.npos) {
-        m_container_name = path_no_slash;
-    }
-    else {
-        m_container_name = path_no_slash.substr(0, slash_index);
-        m_object_id =
-            path_no_slash.substr(slash_index + 1, path_no_slash.size());
-    }
-
-    if (!m_container_name.empty()
-        && m_container_name[m_container_name.size() - 1] == '/') {
-        m_container_name =
-            m_container_name.substr(0, m_container_name.size() - 1);
     }
 }
 

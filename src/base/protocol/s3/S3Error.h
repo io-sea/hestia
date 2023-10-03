@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "HttpError.h"
 
@@ -29,10 +30,13 @@ class S3Error : public HttpError {
 
     S3Error(Code code, const std::string& request);
 
+    void add_field(const std::string& key, const std::string& value);
+
     std::string to_string() const override;
 
   private:
     std::string m_identifier;
     std::string m_request;
+    std::vector<std::pair<std::string, std::string>> m_fields;
 };
 }  // namespace hestia

@@ -77,4 +77,15 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
         REQUIRE(path.m_object_id.empty());
         REQUIRE(path.m_container_name.empty());
     }
+
+    WHEN("A bucket and query are given")
+    {
+        hestia::HttpRequest request(
+            "/my_bucket/?location", hestia::HttpRequest::Method::GET);
+        hestia::S3Path path(request.get_path());
+
+        REQUIRE(path.m_object_id.empty());
+        REQUIRE(path.m_container_name == "my_bucket");
+        REQUIRE(path.m_queries == "location");
+    }
 }

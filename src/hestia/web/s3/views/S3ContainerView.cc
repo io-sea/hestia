@@ -2,6 +2,7 @@
 
 #include "DistributedHsmService.h"
 #include "S3DatasetAdapter.h"
+#include "S3Error.h"
 #include "S3Path.h"
 #include "S3ViewUtils.h"
 
@@ -30,6 +31,8 @@ HttpResponse::Ptr S3ContainerView::on_get(
     id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery query(id, CrudQuery::OutputFormat::ITEM);
+    auto response = HttpResponse::create();
+
     const auto get_response = m_service->make_request(
         CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
         HsmItem::dataset_name);
@@ -40,15 +43,20 @@ HttpResponse::Ptr S3ContainerView::on_get(
     }
 
     if (!get_response->found()) {
-        return HttpResponse::create(404, "Not Found");
+        response = HttpResponse::create(404, "Not Found");
+        S3Error s3_error(
+            S3Error::Code::_404_NO_SUCH_BUCKET, request.get_tracking_id());
+        response->set_body(s3_error.to_string());
+    }
+    else {
+        auto dataset = get_response->get_item_as<Dataset>();
+        m_dataset_adatper->on_list(*dataset, response->body());
     }
 
-    auto dataset = get_response->get_item_as<Dataset>();
 
-    auto response = HttpResponse::create();
-    m_dataset_adatper->on_list(*dataset, response->body());
     response->header().set_item(
         "Content-Length", std::to_string(response->body().size()));
+    response->header().set_content_type("application/xml");
 
     return response;
 }

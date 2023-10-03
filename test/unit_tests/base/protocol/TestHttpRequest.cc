@@ -25,7 +25,6 @@ TEST_CASE("Test HttpRequest", "[protocol]")
     REQUIRE(request.get_queries().get_item("encoding-type") == "url");
 }
 
-
 TEST_CASE("Test HttpRequest - split headers", "[protocol]")
 {
     const std::string msg0 =
@@ -61,4 +60,20 @@ TEST_CASE("Test form data parsing", "[protocol]")
 
     REQUIRE(result.get_item("user") == "hestia_default_user");
     REQUIRE(result.get_item("password") == "default_password");
+}
+
+TEST_CASE("Test HttpRequest - slash and value-less query", "[protocol]")
+{
+    const std::string msg = "PUT /my_path/?location HTTP/1.1\r\n"
+                            "Host: localhost:8000\r\n"
+                            "\r\n"
+                            "key=value";
+
+    hestia::HttpRequest request;
+    request.on_chunk(msg);
+
+    REQUIRE(request.get_method_as_string() == "PUT");
+    REQUIRE(request.body() == "key=value");
+    REQUIRE(request.get_path() == "/my_path/");
+    REQUIRE(request.get_queries().has_item("location"));
 }

@@ -47,6 +47,10 @@ class HttpRequest {
 
     void set_context(RequestContext* context);
 
+    void set_tracking_id(const std::string& id);
+
+    const std::string& get_tracking_id() const;
+
   private:
     RequestContext* m_context{nullptr};
     Method m_method{Method::UNSET};
@@ -57,6 +61,7 @@ class HttpRequest {
     bool m_has_read_header{false};
     bool m_has_read_preamble{false};
 
+    std::string m_tracking_id;
     std::string m_header_buffer;
 };
 

@@ -19,6 +19,11 @@ bool Map::has_key_and_value(const KeyValuePair& query) const
     return get_item(query.first) == query.second;
 }
 
+bool Map::has_item(const std::string& key) const
+{
+    return m_data.find(key) != m_data.end();
+}
+
 void Map::add_key_prefix(const std::string& prefix)
 {
     std::vector<std::string> keys;
