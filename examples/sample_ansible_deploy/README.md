@@ -40,7 +40,7 @@ To setup, start, and provision the example nodes via Ansible, will need the Hest
 
 ```sh
 python3 hestia_ansible.py setup
---hestia_rpm_dir=PATH_TO_HESTIA_RPMS --hestia_source_dir=PATH_TO_HESTIA_SRC
+--hestia_rpm_dir=PATH_TO_HESTIA_RPMS --hestia_src_dir=PATH_TO_HESTIA_SRC
 ```
 
 This will create containers in a Docker network cluster named "hestia_network" as follows:

@@ -22,29 +22,45 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Configuration settings for Hestia's logging behaviour
 logger:
-  syslog_only: true
-  active: true
-  level: warn
+  active: true 
+  syslog_only: true # Disable for file-based logging rather than system journal
+  level: warn # Possible values [debug, info, warn, error]
+  # console_only: true # Use for in-console server debugging  
 
+# How this node's server will behave
 server:
-  # host_address: 127.0.0.1
-  # host_port: 8080
-  # web_app: hestia::HsmService
-  # backend: hestia::Basic
-  controller: true
-  # tag: controller0
+  controller: true # For Hestia controllers and standalone servers
+  tag: controller0
+  
+  # For Hestia worker nodes
+  # controller: false
+  # controller_address: hestia_controller:8080
+  # tag: worker0
 
-# web_apps:
-#   - identitifier: hestia::HsmService
-#     interface: http
-#   - identitifier: hestia::HsmServiceS3
-#     interface: s3
+  host_address: 127.0.0.1
+  host_port: 8080
+  
+  web_app: hestia::HsmService
 
-# server_backends:
-#   - identifier: hestia::Basic
+  backend: hestia::Basic # Http server backend used by node
+  # backend: hestia::Proxygen for production (not fully tested yet)
+
+# Web interfaces provided by node
+web_apps:
+  - identitifier: hestia::HsmService
+    interface: http
+  # S3 Interface
+  # - identitifier: hestia::HsmServiceS3
+  #   interface: s3
+
+# Http servers available on node
+server_backends:
+  - identifier: hestia::Basic
 #   - identifier: hestia::Proxygen
 
+# Tier specification (how many tiers to register, not all need to be used for proper function)
 tiers:
   - name: "0"
   - name: "1"
@@ -52,29 +68,33 @@ tiers:
   - name: "3"
   - name: "4"
 
+# Tier backend specification (for standalone servers and worker nodes)
 object_store_backends:
-  - type: file_hsm
-    tier_names: ["0", "1", "2", "3", "4"]
-    config:
-      root: hsm_object_store
-  # - type: file
+  - type: file_hsm # Type of backend (Hestia's HSM POSIX backend)
+    tier_names: ["0", "1", "2", "3", "4"] # Tiers to register the backend with
+    config: # Backend-Specific configuration 
+      root: hsm_object_store # Object store root on filesystem
+  # - type: file # Similar to hsm but one tier
   #   config:
   #     root: object_store
-  # - type: s3
-  # - type: phobos
-  # - type: mock_phobos
-  # - type: mock_motr
-  # - type: motr
+  # - type: s3 # An S3 bucket-based backend
+  # - type: phobos # CEA's Phobos backend (tape storage) 
+  # - type: motr # Seagate's Motr backend (heterogeneous hsm object store)
 
-key_value_store:
-  client_identifier: hestia::FileKeyValueStoreClient
+# The key-value store this node will use (if the controller/standalone server)
+key_value_store_client:
+  client_type: file # [file, memory, kvsal, redis]
 
-key_value_store_clients:
-  - identifier: hestia::FileKeyValueStoreClient
-    type: file
-    config:
-      root: key_value_store
+# Redis KV store options
+#   - Needs a running redis instance at backend_address:backend_port
+# key_value_store_client:
+#   client_type: redis
+#   config:
+#     backend_address: localhost
+#     backend_port: 6379
 
-# event_feed:
-#   event_feed_path: event_feed.yaml
-#   active: true
+# Hestia event feed configuration options (for interoperability with CEA's Robinhood)
+#   - Worker nodes use the controller node's event feed
+event_feed:
+  event_feed_path: event_feed.yaml # Output path
+  active: true
