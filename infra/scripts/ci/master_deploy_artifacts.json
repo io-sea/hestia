@@ -2,22 +2,46 @@
     {
         "name" : "$PROJECT-$VERSION-1.$ARCH",
         "type" : "rpm",
+        "link_type": "package",
         "description" : "Project Binary RPM."
     },
     {
         "name" : "$PROJECT-devel-$VERSION-1.$ARCH",
         "type" : "rpm",
+        "link_type": "package",
         "description" : "Project Development RPM - includes headers and build tool configs."
+    },
+    {
+        "name" : "$PROJECT-debuginfo-$VERSION-1.$ARCH",
+        "optional": true,
+        "type" : "rpm",
+        "link_type": "package",
+        "description" : "Project Binary debuginfo RPM - includes debugger symbols."
     },
     {
         "name" : "$PROJECT-tests-$VERSION-1.$ARCH",
         "optional" : true,
         "type" : "rpm",
+        "link_type": "package",
         "description" : "Project Tests RPM - includes tests soruces and binaries."
     },
     {
         "name" : "$PROJECT-$VERSION-1.$ARCH",
         "type" : "src.rpm",
+        "link_type": "package",
         "description" : "Project Source RPM - SRPM."
+    },
+    {
+        "name" : "$PROJECT-$VERSION-Linux",
+        "type" : "tar.gz",
+        "link_type": "package",
+        "description" : "Project Binaries Tarball."
+    },
+    {
+        "name" : "$PROJECT-docs-$VERSION",
+        "optional": true,
+        "type" : "tar.gz",
+        "link_type": "other",
+        "description" : "Project Documentation."
     }
 ]

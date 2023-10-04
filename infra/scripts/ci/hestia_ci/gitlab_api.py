@@ -32,11 +32,38 @@ class GitlabAPI(hestia_ci.API):
 
     def upload_file(self, source: Path):
         """
-        Uploads a file to the Gitlab project's package registry.
+        Uploads a file to the GitLab project's package registry.
         """
-        self.gl_job.generic_packages.upload(
-                package_name=self.build_info.project_name, 
-                package_version=self.build_info.version,
-                file_name=source.name,
-                path=source
-            )
+        return self.gl_job.generic_packages.upload(
+            package_name=self.build_info.project_name,
+            package_version=self.build_info.version,
+            file_name=source.name,
+            path=source
+        ).encoded_id()
+
+    def create_release(self, branch_ref: str = "master"):
+        """
+        Creates a Gitlab release page, linking assets of the 
+        corresponding version from the package repository.
+        """
+
+        release = self.gl_bot.releases.create({
+            "tag_name": f"v{self.build_info.version}",
+            "ref": branch_ref,
+        })
+
+        artifact_url = f"""{self.self.gl_job.generic_packages.path()}
+                            /{self.build_info.project_name}
+                            /{self.build_info.version}"""
+
+        for artifact in self.artifacts.artifacts:
+            release.links.create({
+                "url": f"{artifact_url}/{artifact.get_path()}",
+                "name": artifact.name,
+                "link_type": artifact.link_type,
+                "direct_asset_path": ""
+            })
+
+    def update_variable(self, key:str, val:str):
+        self.gl_bot.variables.update(key, val)
+

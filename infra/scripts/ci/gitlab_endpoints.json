@@ -1,5 +1,0 @@
-{
-    "upload": "$API_URL/packages/generic/$PROJECT/$VERSION",
-    "release": "$API_URL/releases",
-    "variable": "$API_URL/variables"
-}
