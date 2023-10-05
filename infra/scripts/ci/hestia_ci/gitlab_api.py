@@ -3,12 +3,12 @@ from pathlib import Path
 
 import gitlab
 
-import hestia_ci
+from hestia_ci import *
+from hestia_ci.generic_api import GenericAPI
 
-
-class GitlabAPI(hestia_ci.API):
+class GitlabAPI(GenericAPI):
     def __init__(self,
-                 build_info: hestia_ci.BuildInfo,
+                 build_info: BuildInfo = None,
                  api_url: str = os.environ['CI_API_V4_URL'],
                  project_id: str = os.environ['CI_PROJECT_ID'],
                  job_token: str = os.environ['CI_JOB_TOKEN'],
@@ -30,10 +30,15 @@ class GitlabAPI(hestia_ci.API):
         else:
             self.gl_bot = None
 
+    def check_build_info(self) -> None:
+        if self.build_info is None:
+            raise HestiaConfigurationError("Missing Build Information")
+        
     def upload_file(self, source: Path):
         """
         Uploads a file to the GitLab project's package registry.
         """
+        self.check_build_info()
         return self.gl_job.generic_packages.upload(
             package_name=self.build_info.project_name,
             package_version=self.build_info.version,
@@ -41,29 +46,34 @@ class GitlabAPI(hestia_ci.API):
             path=source
         ).encoded_id()
 
+    def get_generic_package_link(self, file_name: str) -> str:
+        return f"""{self.self.gl_job.generic_packages.path()}
+                    /{self.build_info.project_name}
+                    /{self.build_info.version}
+                    /{file_name}"""
+
     def create_release(self, branch_ref: str = "master"):
         """
         Creates a Gitlab release page, linking assets of the 
         corresponding version from the package repository.
         """
-
+        self.check_build_info()
+        
         release = self.gl_bot.releases.create({
             "tag_name": f"v{self.build_info.version}",
             "ref": branch_ref,
         })
 
-        artifact_url = f"""{self.self.gl_job.generic_packages.path()}
-                            /{self.build_info.project_name}
-                            /{self.build_info.version}"""
-
         for artifact in self.artifacts.artifacts:
             release.links.create({
-                "url": f"{artifact_url}/{artifact.get_path()}",
+                "url": self.get_generic_package_link(artifact.get_path()),
                 "name": artifact.name,
                 "link_type": artifact.link_type,
-                "direct_asset_path": ""
+                "direct_asset_path": f"{artifact.link_type}/{artifact.get_path()}"
             })
 
-    def update_variable(self, key:str, val:str):
+    def update_variable(self, key: str, val: str):
+        """
+        Updates a persistent CI variable, for future runs of the CI
+        """
         self.gl_bot.variables.update(key, val)
-
