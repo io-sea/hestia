@@ -2,10 +2,10 @@ import string
 import json
 from pathlib import Path
 
+from hestia_ci.utils import Version
 
-class BuildInfo():
-
-    def __init__(self, project_name: str, version: str, arch: str) -> None:
+class BuildInfo():    
+    def __init__(self, project_name: str, version: str | Version, arch: str) -> None:
         self.project_name = project_name
         self.version = version
         self.arch = arch
@@ -32,13 +32,13 @@ class BuildArtifacts():
         self.artifacts = []
         self.build_info = build_info
 
-    def load(self, artifact_file: Path):
+    def load(self, artifact_file: Path) -> None:
         with open(artifact_file, 'r') as f:
             artifact_file_content = string.Template(f.read())
 
         artifact_file_content.substitute({
             "PROJECT", self.build_info.project_name,
-            "VERSION", self.build_info.version,
+            "VERSION", str(self.build_info.version),
             "ARCH", self.build_info.arch,
         })
 

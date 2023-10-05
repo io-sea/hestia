@@ -1,7 +1,8 @@
 from pathlib import Path
 from abc import ABC, abstractmethod
 
-from build_objects import *
+from hestia_ci.build_objects import *
+
 
 class GenericAPI(ABC):
 
@@ -17,11 +18,17 @@ class GenericAPI(ABC):
     def create_release(self):
         pass
 
-    def create_release(self, artifacts_file: Path):
-        self.artifacts = BuildArtifacts(self.build_info)
-        self.artifacts.load(artifacts_file)
+    @abstractmethod
+    def update_variable(self, key: str, val: str):
+        pass
 
-        self.create_release()
+    @abstractmethod
+    def create_merge_request(self, merge_json: Path):
+        pass
+
+    @abstractmethod
+    def create_tag(self, tag_name: str, ref_branch: str = "master"):
+        pass
 
     def upload_artifacts(self, artifacts_dir: Path, artifacts_file: Path):
         self.artifacts = BuildArtifacts(self.build_info)

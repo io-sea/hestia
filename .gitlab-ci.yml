@@ -40,6 +40,8 @@ stages:
     yum update -qy;
     yum install -qy epel-release;
     yum config-manager -q --set-enabled powertools;
+  - &install_script_dependencies
+    pip3 install -r ${CI_PROJECT_DIR}/infra/scripts/ci/hestia_ci/requirements.txt; 
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     yum install -y libxml2-devel || true;
@@ -335,17 +337,15 @@ Nightly_deploy:
   image: alpine:latest
   stage: deploy
   before_script:
-    - apk add curl jq
+    - apk add py3-pip
+    - *install_script_dependencies
   script:
-    - ${CI_PROJECT_DIR}/infra/scripts/ci/nightly_deploy.sh
-  artifacts:
-    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-    paths:
-      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
-      - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
-      - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
-      - ${CMAKE_BUILD_DIR}/*.tar.gz
-    expire_in: 1 day
+    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/nightly_deploy.py
+      --project_name=hestia
+      --arch=$(arch)
+      --version=$HESTIA_PROJECT_VERSION
+      --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
+      --merge_json=${CI_PROJECT_DIR}/infra/scripts/ci/nightly_merge.json
 
 Nightly_cleanup:
   <<: *default_nightly_job
@@ -357,12 +357,14 @@ Nightly_cleanup:
         && $CI_SCHEDULE_TYPE == "NIGHTLY"
       when: on_failure
   before_script:
-    - apk add jq curl
+    - apk add py3-pip
+    - *install_script_dependencies
   script: # Stops repeat runs
-    - 'curl --request PUT -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)"
-      "$HESTIA_API_URL/variables/CI_LAST_NIGHTLY_COMMIT_SHA"
-      --form "value=$CI_COMMIT_SHA"'
-
+    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/update_var.py 
+      --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
+      --key=CI_LAST_NIGHTLY_COMMIT_SHA
+      --value=$CI_COMMIT_SHA
+  
 .master_build: &master_build
   <<: *default_nightly_job
   rules:
@@ -379,6 +381,7 @@ Nightly_cleanup:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_script_dependencies
   script:
     - *configure
     - *build
@@ -387,12 +390,24 @@ Nightly_cleanup:
     - *build_from_source_package
     - *generate_docs
   after_script:
-    - ${CI_PROJECT_DIR}/infra/scripts/ci/master_deploy.sh
+    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/master_deploy.py
+      --schedule_type=$CI_SCHEDULE_TYPE
+      --artifacts_file=${CI_PROJECT_DIR}/infra/scripts/ci/master_deploy_artifacts.json
+      --artifacts_dir=$CMAKE_BUILD_DIR
+      --project_name=hestia
+      --arch=$(arch)
+      --version=$HESTIA_PROJECT_VERSION
+      --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
+      
 
 Master_build:
   <<: *master_build
   after_script:
-    - ${CI_PROJECT_DIR}/infra/scripts/ci/master_post_build.sh
+    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/update_var.py 
+      --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
+      --key=CI_NIGHTLY_VERSION
+      --value=$CI_NIGHTLY_VERSION
+      --version_increment_patch
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:

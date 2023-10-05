@@ -1,17 +1,20 @@
 import os
+import json
 from pathlib import Path
 
 import gitlab
 
-from hestia_ci import *
+from hestia_ci.build_objects import BuildInfo
 from hestia_ci.generic_api import GenericAPI
+from hestia_ci.exceptions import HestiaConfigurationError
+
 
 class GitlabAPI(GenericAPI):
     def __init__(self,
                  build_info: BuildInfo = None,
-                 api_url: str = os.environ['CI_API_V4_URL'],
-                 project_id: str = os.environ['CI_PROJECT_ID'],
-                 job_token: str = os.environ['CI_JOB_TOKEN'],
+                 api_url: str = None,
+                 project_id: str = None,
+                 job_token: str = None,
                  bot_token: str = None
                  ) -> None:
         """
@@ -21,6 +24,13 @@ class GitlabAPI(GenericAPI):
         except for the 'bot_token' which you will need to provide manually for elevated API access
         """
         super().__init__(build_info)
+
+        if api_url is None:
+            api_url = os.environ['CI_API_V4_URL'],
+        if project_id is None:
+            project_id = os.environ['CI_PROJECT_ID'],
+        if job_token is None:
+            job_token = os.environ['CI_JOB_TOKEN'],
 
         self.gl_job = gitlab.Gitlab(
             url=api_url, job_token=job_token).projects.get(project_id, lazy=True)
@@ -33,7 +43,7 @@ class GitlabAPI(GenericAPI):
     def check_build_info(self) -> None:
         if self.build_info is None:
             raise HestiaConfigurationError("Missing Build Information")
-        
+
     def upload_file(self, source: Path):
         """
         Uploads a file to the GitLab project's package registry.
@@ -41,7 +51,7 @@ class GitlabAPI(GenericAPI):
         self.check_build_info()
         return self.gl_job.generic_packages.upload(
             package_name=self.build_info.project_name,
-            package_version=self.build_info.version,
+            package_version=str(self.build_info.version),
             file_name=source.name,
             path=source
         ).encoded_id()
@@ -58,7 +68,7 @@ class GitlabAPI(GenericAPI):
         corresponding version from the package repository.
         """
         self.check_build_info()
-        
+
         release = self.gl_bot.releases.create({
             "tag_name": f"v{self.build_info.version}",
             "ref": branch_ref,
@@ -76,4 +86,27 @@ class GitlabAPI(GenericAPI):
         """
         Updates a persistent CI variable, for future runs of the CI
         """
-        self.gl_bot.variables.update(key, val)
+        self.gl_bot.variables.update(str(key), str(val))
+
+    def create_merge_request(self, merge_json: Path, auto_merge: bool = True):
+        """
+        Create a merge request with given parameter file, specified here:
+        https://docs.gitlab.com/ee/api/merge_requests.html#create-mr
+        Merge it immediately if auto_merge is True
+        """
+        with open(merge_json, 'r') as f:
+            mr = self.gl_bot.mergerequests.create(json.load(f))
+            if auto_merge:
+                mr.merge()
+
+    def create_tag(self, tag_name: str, ref_branch: str = "master"):
+        """
+        Create a tag with name `tag_name`, assigned to the most recent 
+        commit on `ref_brach`
+        """
+        self.gl_bot.tags.create(
+            {
+                "tag_name": tag_name,
+                "ref": ref_branch
+            }
+        )

@@ -1,0 +1,8 @@
+{
+    "source_branch": "devel",
+    "target_branch": "master",
+    "title": "Nightly CI Merge",
+    "description": "Merge from successful nightly CI",
+    "remove_source_branch": false,
+    "squash_on_merge": false
+}

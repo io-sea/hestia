@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 
 from hestia_ci import GitlabAPI, BuildInfo
+from hestia_ci.utils import Version
 
 
 if __name__ == "__main__":
@@ -23,6 +24,8 @@ if __name__ == "__main__":
                             "DEPLOY_MASTER_MAJOR"
                         ])
 
+    parser.add_argument('--nightly_var', type=str,
+                        default="CI_NIGHTLY_VERSION")
     parser.add_argument('--patch_var', type=str,
                         default="CI_PATCH_RELEASE_VERSION")
     parser.add_argument('--minor_var', type=str,
@@ -42,28 +45,28 @@ if __name__ == "__main__":
     api.upload_artifacts(artifacts_dir=args.artifacts_dir,
                          artifacts_file=args.artifacts_file)
 
-    # Create a release of the requested version, linked to the artifacts uploaded
+    # Create a tagged release of the requested version, linked to the artifacts uploaded
     api.create_release(branch_ref=args.release_branch)
 
     # Increment release version numbers to be next release of that type
-    patch_ver = int(os.environ[args.patch_var].split(".", 3)[2])
-    minor_ver = int(os.environ[args.minor_var].split(".", 2)[1])
-    major_ver = int(os.environ[args.major_var].split(".", 1)[0])
+    patch_ver = Version.from_string(os.environ[args.patch_var]) # *.*.*
+    minor_ver = Version.from_string(os.environ[args.minor_var]) # *.*.0
+    major_ver = Version.from_string(os.environ[args.major_var]) # *.0.0
 
     if args.schedule_type == "DEPLOY_MASTER_PATCH":
-        patch_ver += 1
+        patch_ver = patch_ver.incr_patch()
 
     elif args.schedule_type == "DEPLOY_MASTER_MINOR":
-        minor_ver += 1
-        patch_ver = 1
-
+        patch_ver = minor_ver.incr_patch()
+        minor_ver = minor_ver.incr_minor()
+        
     elif args.schedule_type == "DEPLOY_MASTER_MAJOR":
-        major_ver += 1
-        minor_ver = 1
-        patch_ver = 1
+        minor_ver = major_ver.incr_minor()
+        patch_ver = major_ver.incr_patch()
+        major_ver = major_ver.incr_major()
 
     # Persist release version number variables to CI
-    api.update_variable(key=args.patch_var,
-                        val=f"{major_ver-1}.{minor_ver-1}.{patch_ver}")
-    api.update_variable(key=args.minor_var, val=f"{major_ver-1}.{minor_ver}.0")
-    api.update_variable(key=args.major_var, val=f"{major_ver}.0.0")
+    api.update_variable(key=args.nightly_var, val=patch_ver)
+    api.update_variable(key=args.patch_var, val=patch_ver)
+    api.update_variable(key=args.minor_var, val=minor_ver)
+    api.update_variable(key=args.major_var, val=major_ver)
