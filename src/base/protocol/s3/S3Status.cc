@@ -1,4 +1,4 @@
-#include "S3Error.h"
+#include "S3Status.h"
 
 #include "XmlDocument.h"
 #include "XmlParser.h"
@@ -9,69 +9,69 @@
 namespace hestia {
 
 static std::unordered_map<
-    S3Error::Code,
-    std::pair<HttpError::Code, std::pair<std::string, std::string>>>
+    S3Status::Code,
+    std::pair<HttpStatus::Code, std::pair<std::string, std::string>>>
     errors = {
-        {S3Error::Code::_400_INCOMPLETE_BODY,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_400_INCOMPLETE_BODY,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"IncompleteBody",
            "You did not provide the number of bytes specified by the Content-Length HTTP header."}}},
-        {S3Error::Code::_400_INVALID_ARGUMENT,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_400_INVALID_ARGUMENT,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"InvalidArgument", "Invalid Argument."}}},
-        {S3Error::Code::_400_INVALID_BUCKET_NAME,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_400_INVALID_BUCKET_NAME,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"InvalidBucketName", "The specified bucket is not valid."}}},
-        {S3Error::Code::_400_INVALID_SIGNATURE_TYPE,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_400_INVALID_SIGNATURE_TYPE,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"InvalidRequest", "Please use AWS4-HMAC-SHA256."}}},
-        {S3Error::Code::_400_AUTHORIZATION_HEADER_MALFORMED,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_400_AUTHORIZATION_HEADER_MALFORMED,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"AuthorizationHeaderMalformed",
            "The authorization header you provided is invalid."}}},
-        {S3Error::Code::_403_INVALID_KEY_ID,
-         {HttpError::Code::_403_FORBIDDEN,
+        {S3Status::Code::_403_INVALID_KEY_ID,
+         {HttpStatus::Code::_403_FORBIDDEN,
           {"InvalidAccessKeyId", "The given key is not valid."}}},
-        {S3Error::Code::_403_ACCESS_DENIED,
-         {HttpError::Code::_403_FORBIDDEN, {"AccessDenied", "Access Denied"}}},
-        {S3Error::Code::_403_SIGNATURE_DOES_NOT_MATCH,
-         {HttpError::Code::_403_FORBIDDEN,
+        {S3Status::Code::_403_ACCESS_DENIED,
+         {HttpStatus::Code::_403_FORBIDDEN, {"AccessDenied", "Access Denied"}}},
+        {S3Status::Code::_403_SIGNATURE_DOES_NOT_MATCH,
+         {HttpStatus::Code::_403_FORBIDDEN,
           {"SignatureDoesNotMatch",
            "The request signature we calculated does not match the signature you provided."}}},
-        {S3Error::Code::_404_NO_SUCH_BUCKET,
-         {HttpError::Code::_404_NOT_FOUND,
+        {S3Status::Code::_404_NO_SUCH_BUCKET,
+         {HttpStatus::Code::_404_NOT_FOUND,
           {"NoSuchBucket", "The specified bucket does not exist."}}},
-        {S3Error::Code::_404_NO_SUCH_KEY,
-         {HttpError::Code::_404_NOT_FOUND,
+        {S3Status::Code::_404_NO_SUCH_KEY,
+         {HttpStatus::Code::_404_NOT_FOUND,
           {"NoSuchKey", "The specified key does not exist."}}},
-        {S3Error::Code::_404_NO_SUCH_VERSION,
-         {HttpError::Code::_404_NOT_FOUND,
+        {S3Status::Code::_404_NO_SUCH_VERSION,
+         {HttpStatus::Code::_404_NOT_FOUND,
           {"NoSuchVersion",
            "The version ID specified in the request does not match any existing version."}}},
-        {S3Error::Code::_404_NOT_IMPLEMENTED,
-         {HttpError::Code::_404_NOT_FOUND,
+        {S3Status::Code::_404_NOT_IMPLEMENTED,
+         {HttpStatus::Code::_404_NOT_FOUND,
           {"NotImplemented",
            "A header you provided implies functionality that is not implemented."}}},
-        {S3Error::Code::_409_BUCKET_EXISTS,
-         {HttpError::Code::_409_CONFLICT,
+        {S3Status::Code::_409_BUCKET_EXISTS,
+         {HttpStatus::Code::_409_CONFLICT,
           {"BucketAlreadyExists",
            "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."}}},
-        {S3Error::Code::_409_BUCKET_NOT_EMPTY,
-         {HttpError::Code::_409_CONFLICT,
+        {S3Status::Code::_409_BUCKET_NOT_EMPTY,
+         {HttpStatus::Code::_409_CONFLICT,
           {"BucketNotEmpty", "The bucket you tried to delete is not empty."}}},
-        {S3Error::Code::_411_MISSING_CONTENT_LENGTH,
-         {HttpError::Code::_411_LENGTH_REQURED,
+        {S3Status::Code::_411_MISSING_CONTENT_LENGTH,
+         {HttpStatus::Code::_411_LENGTH_REQURED,
           {"MissingContentLength",
            "You must provide the Content-Length HTTP header."}}},
-        {S3Error::Code::_500_INTERNAL_SERVER_ERROR,
-         {HttpError::Code::_400_BAD_REQUEST,
+        {S3Status::Code::_500_INTERNAL_SERVER_ERROR,
+         {HttpStatus::Code::_400_BAD_REQUEST,
           {"InternalError",
            "We encountered an internal error. Please try again."}}},
 };
 
-S3Error::S3Error(
+S3Status::S3Status(
     Code code, const S3Request& request, const std::string& message_details) :
-    HttpError(),
+    HttpStatus(),
     m_s3_code(code),
     m_request_id(request.m_tracking_id),
     m_path(request.m_path),
@@ -83,11 +83,11 @@ S3Error::S3Error(
         m_message  = iter->second.second.second;
     }
     else {
-        m_code = HttpError::Code::_500_INTERNAL_SERVER_ERROR;
+        m_code = HttpStatus::Code::_500_INTERNAL_SERVER_ERROR;
     }
 }
 
-void S3Error::from_xml(const XmlElement& element)
+void S3Status::from_xml(const XmlElement& element)
 {
     for (const auto& child : element.get_children()) {
         if (child->get_tag_name() == "Code") {
@@ -108,7 +108,7 @@ void S3Error::from_xml(const XmlElement& element)
     }
 }
 
-S3Error::S3Error(const HttpResponse& http_response)
+S3Status::S3Status(const HttpResponse& http_response)
 {
     if (!http_response.body().empty()) {
         XmlParser parser;
@@ -123,7 +123,7 @@ S3Error::S3Error(const HttpResponse& http_response)
     }
 
     if (m_code_str.empty()) {
-        m_code = HttpError::get_code_from_numeric(http_response.code());
+        m_code = HttpStatus::get_code_from_numeric(http_response.code());
     }
     else {
         for (const auto& error : errors) {
@@ -135,27 +135,27 @@ S3Error::S3Error(const HttpResponse& http_response)
     }
 }
 
-void S3Error::add_field(const std::string& key, const std::string& value)
+void S3Status::add_field(const std::string& key, const std::string& value)
 {
     m_fields.push_back({key, value});
 }
 
-bool S3Error::is_ok() const
+bool S3Status::is_ok() const
 {
     return get_code_and_id().first < 400;
 }
 
-void S3Error::add_message_details(const std::string& details)
+void S3Status::add_message_details(const std::string& details)
 {
     m_message_details = details;
 }
 
-S3Error::Code S3Error::get_s3_code() const
+S3Status::Code S3Status::get_s3_code() const
 {
     return m_s3_code;
 }
 
-XmlElementPtr S3Error::to_xml() const
+XmlElementPtr S3Status::to_xml() const
 {
     auto root = XmlElement::create("Error");
 
@@ -188,7 +188,7 @@ XmlElementPtr S3Error::to_xml() const
     return root;
 }
 
-std::string S3Error::to_string() const
+std::string S3Status::to_string() const
 {
     XmlDocument xml_doc;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "HttpError.h"
 #include "HttpHeader.h"
+#include "HttpStatus.h"
 
 #include <memory>
 #include <sstream>
@@ -16,14 +16,14 @@ class HttpResponse {
     HttpResponse() = default;
     HttpResponse(
         int code, const std::string& message, const std::string& body = {});
-    HttpResponse(const HttpError& err);
+    HttpResponse(const HttpStatus& status);
     HttpResponse(CompletionStatus status);
 
     static Ptr create();
     static Ptr create(
         int code, const std::string& message, const std::string& body = {});
 
-    static Ptr create(const HttpError& err);
+    static Ptr create(const HttpStatus& status);
     static Ptr create(CompletionStatus status);
 
     bool error() const { return m_code >= 400; }

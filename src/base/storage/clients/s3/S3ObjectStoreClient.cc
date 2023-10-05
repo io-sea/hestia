@@ -82,7 +82,8 @@ void S3ObjectStoreClient::put(
 
     const auto bucket_status = m_s3_client->head_bucket(s3_bucket, s3_request);
     if (!bucket_status.is_ok()) {
-        if (bucket_status.get_s3_code() == S3Error::Code::_404_NO_SUCH_BUCKET) {
+        if (bucket_status.get_s3_code()
+            == S3Status::Code::_404_NO_SUCH_BUCKET) {
             const auto bucket_create_status =
                 m_s3_client->create_bucket(s3_bucket, s3_request);
             if (!bucket_create_status.is_ok()) {

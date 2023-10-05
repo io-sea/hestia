@@ -67,12 +67,12 @@ HttpResponse::Ptr CrudWebView::on_get(
             m_type_name);
         if (!crud_response->ok()) {
             return HttpResponse::create(
-                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
                  crud_response->get_error().to_string()});
         }
 
         if (has_id && !crud_response->found()) {
-            return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+            return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND});
         }
 
         if (request.get_header().has_html_accept_type()) {
@@ -94,11 +94,11 @@ HttpResponse::Ptr CrudWebView::on_get(
             m_type_name);
         if (!crud_response->ok()) {
             return HttpResponse::create(
-                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
                  crud_response->get_error().to_string()});
         }
         if (!crud_response->found()) {
-            return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+            return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND});
         }
         response->set_body(crud_response->attributes().get_buffer());
     }
@@ -117,7 +117,7 @@ HttpResponse::Ptr CrudWebView::on_delete(
 
     const auto path = get_path(request);
     if (path.empty()) {
-        return HttpResponse::create(HttpError::Code::_400_BAD_REQUEST);
+        return HttpResponse::create(HttpStatus::Code::_400_BAD_REQUEST);
     }
 
     auto crud_response = m_service->make_request(
@@ -128,13 +128,13 @@ HttpResponse::Ptr CrudWebView::on_delete(
         m_type_name);
     if (!crud_response->ok()) {
         return HttpResponse::create(
-            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              crud_response->get_error().to_string()});
     }
     if (!crud_response->found()) {
-        return HttpResponse::create({HttpError::Code::_404_NOT_FOUND});
+        return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND});
     }
-    return HttpResponse::create(HttpError::Code::_204_NO_CONTENT);
+    return HttpResponse::create(HttpStatus::Code::_204_NO_CONTENT);
 }
 
 HttpResponse::Ptr CrudWebView::on_put(
@@ -186,7 +186,7 @@ HttpResponse::Ptr CrudWebView::on_put(
     }
     if (!crud_response->ok()) {
         return HttpResponse::create(
-            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              crud_response->get_error().to_string()});
     }
 

@@ -62,14 +62,14 @@ bool S3AuthorisationSession::search_for_user(const HttpRequest& request)
 
     if (!response->ok()) {
         m_object.on_error(
-            {S3Error::Code::_403_ACCESS_DENIED, S3Request(request)});
+            {S3Status::Code::_403_ACCESS_DENIED, S3Request(request)});
         LOG_ERROR(m_object.to_string())
         return false;
     }
 
     if (!response->found()) {
         m_object.on_error(
-            {S3Error::Code::_403_INVALID_KEY_ID, S3Request(request)});
+            {S3Status::Code::_403_INVALID_KEY_ID, S3Request(request)});
         LOG_ERROR(m_object.to_string())
         return false;
     }
@@ -105,7 +105,7 @@ void S3AuthorisationSession::check(const HttpRequest& request)
     }
     else {
         m_object.on_error(
-            {S3Error::Code::_403_ACCESS_DENIED, S3Request(request)});
+            {S3Status::Code::_403_ACCESS_DENIED, S3Request(request)});
         LOG_ERROR(
             "Signatures do not match: " << m_object.m_signature << " | "
                                         << signature << "\n"

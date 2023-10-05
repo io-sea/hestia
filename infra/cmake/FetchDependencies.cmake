@@ -66,7 +66,7 @@ macro(fetch_zlib)
     FetchContent_Declare(
         ZLIB
         GIT_REPOSITORY https://github.com/madler/zlib
-        GIT_TAG        04f42ceca40f73e2978b50e93806c2a18c1281fc # v1.2.13
+        GIT_TAG        09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851 # v1.3
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -86,7 +86,7 @@ macro(fetch_libxml2)
     FetchContent_Declare(
         LibXml2
         GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
-        GIT_TAG        2e9f7860a9cb8be29eca90b7409ef0278d30ef10 # v2.11.4
+        GIT_TAG        2b998a4ffbdfea04fc6a620721abc690a15743af # v2.11.5
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -111,7 +111,7 @@ macro(fetch_curl)
     FetchContent_Declare(
         CURL
         GIT_REPOSITORY https://github.com/curl/curl/
-        GIT_TAG 50490c0679fcd0e50bb3a8fbf2d9244845652cf0 # V8.2.1
+        GIT_TAG 6fa1d817e5b1a00d7d0c8168091877476b499317 # V8.3.0
         SYSTEM
         FIND_PACKAGE_ARGS
     )
@@ -149,8 +149,8 @@ endmacro()
 
 macro(build_openssl)
     ExternalProject_Add(openssl
-    URL https://www.openssl.org/source/openssl-1.1.1u.tar.gz
-    URL_HASH          SHA256=e2f8d84b523eecd06c7be7626830370300fbcc15386bf5142d72758f6963ebc6
+    URL https://www.openssl.org/source/openssl-1.1.1w.tar.gz
+    URL_HASH          SHA256=cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8
     CONFIGURE_COMMAND <SOURCE_DIR>/config --prefix=<INSTALL_DIR> --libdir=lib
     INSTALL_COMMAND make install_sw
     )

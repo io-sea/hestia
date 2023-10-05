@@ -1,7 +1,7 @@
 #pragma once
 
 #include "HttpRequest.h"
-#include "S3Error.h"
+#include "S3Status.h"
 
 #include <vector>
 
@@ -20,7 +20,7 @@ class S3AuthorisationObject {
 
     std::string get_signature(const HttpRequest& req) const;
 
-    const S3Error& get_error() const;
+    const S3Status& get_error() const;
 
     bool is_initialized() const;
 
@@ -28,7 +28,7 @@ class S3AuthorisationObject {
 
     bool is_waiting_for_payload() const;
 
-    void on_error(const hestia::S3Error& error);
+    void on_error(const hestia::S3Status& error);
 
     void on_waiting_for_payload();
 
@@ -82,7 +82,7 @@ class S3AuthorisationObject {
     std::vector<Query> m_queries;
 
     Status m_status = Status::UNSET;
-    S3Error m_error{S3Error::Code::_403_ACCESS_DENIED, {}};
+    S3Status m_error{S3Status::Code::_403_ACCESS_DENIED, {}};
 
     std::string m_service{"s3"};
     std::string m_scope_suffix{"aws4_request"};

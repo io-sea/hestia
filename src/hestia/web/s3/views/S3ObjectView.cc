@@ -42,13 +42,13 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     if (!container_get_response->ok()) {
         LOG_ERROR(container_get_response->get_error().to_string());
         return HttpResponse::create(
-            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              "Server error checking bucket."});
     }
 
     if (!container_get_response->found()) {
         return HttpResponse::create(
-            {HttpError::Code::_404_NOT_FOUND, "Container not found."});
+            {HttpStatus::Code::_404_NOT_FOUND, "Container not found."});
     }
 
     CrudIdentifier object_id;
@@ -69,13 +69,13 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     if (!obj_get_response->ok()) {
         LOG_ERROR(obj_get_response->get_error().to_string());
         return HttpResponse::create(
-            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              "Server error checking object."});
     }
     if (!obj_get_response->found()) {
         LOG_INFO("Object not found");
         return HttpResponse::create(
-            {HttpError::Code::_404_NOT_FOUND, "Object not found."});
+            {HttpStatus::Code::_404_NOT_FOUND, "Object not found."});
     }
 
     auto object = obj_get_response->get_item_as<HsmObject>();
@@ -180,7 +180,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
     if (!container_get_response->ok()) {
         LOG_ERROR(container_get_response->get_error().to_string());
         return HttpResponse::create(
-            {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              "Server error checking bucket."});
     }
 
@@ -203,7 +203,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
         if (!obj_get_response->ok()) {
             LOG_ERROR(obj_get_response->get_error().to_string());
             return HttpResponse::create(
-                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
                  "Server error checking object."});
         }
         if (obj_get_response->found()) {
@@ -225,7 +225,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
         if (!container_create_response->ok()) {
             LOG_ERROR(container_create_response->get_error().to_string());
             return HttpResponse::create(
-                {HttpError::Code::_500_INTERNAL_SERVER_ERROR,
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
                  "Server error creating container for object."});
         }
         container_key = container_create_response->ids()[0];

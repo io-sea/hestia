@@ -2,10 +2,10 @@
 
 #include "HttpClient.h"
 #include "S3Bucket.h"
-#include "S3Error.h"
 #include "S3Object.h"
 #include "S3Path.h"
 #include "S3Responses.h"
+#include "S3Status.h"
 
 #include "HttpRequest.h"
 #include "S3Request.h"
@@ -19,20 +19,21 @@ class S3Client {
 
     ~S3Client();
 
-    S3Error create_bucket(
+    S3Status create_bucket(
         const S3Bucket& bucket, const S3Request& request) const;
 
-    S3Error delete_bucket(
+    S3Status delete_bucket(
         const S3Bucket& bucket, const S3Request& request) const;
 
-    S3Error head_bucket(const S3Bucket& bucket, const S3Request& request) const;
+    S3Status head_bucket(
+        const S3Bucket& bucket, const S3Request& request) const;
 
-    S3Error delete_object(
+    S3Status delete_object(
         const S3Object& object,
         const S3Bucket& bucket,
         const S3Request& request) const;
 
-    S3Error get_object(
+    S3Status get_object(
         const S3Object& object,
         const S3Bucket& bucket,
         const S3Request& request,
@@ -40,7 +41,7 @@ class S3Client {
 
     S3ListBucketResponse::Ptr list_buckets(const S3Request& request) const;
 
-    S3Error put_object(
+    S3Status put_object(
         const S3Object& object,
         const S3Bucket& bucket,
         const S3Request& request,

@@ -40,7 +40,7 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
         const auto msg = "Couldn't parse username or password from request";
         LOG_ERROR(msg);
         return HttpResponse::create(
-            HttpError{HttpError::Code::_400_BAD_REQUEST, msg});
+            HttpStatus{HttpStatus::Code::_400_BAD_REQUEST, msg});
     }
 
     CrudResponse::Ptr response;

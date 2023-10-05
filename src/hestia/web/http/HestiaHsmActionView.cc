@@ -128,7 +128,7 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
 
     if (action.get_subject_key().empty()) {
         return HttpResponse::create(
-            {HttpError::Code::_400_BAD_REQUEST,
+            {HttpStatus::Code::_400_BAD_REQUEST,
              "Missing subject key in action header"});
     }
 

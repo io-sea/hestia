@@ -7,9 +7,10 @@ HttpResponse::HttpResponse(
 {
 }
 
-HttpResponse::HttpResponse(const HttpError& err) : m_body(err.get_message())
+HttpResponse::HttpResponse(const HttpStatus& status) :
+    m_body(status.get_message())
 {
-    auto code_and_id = err.get_code_and_id();
+    auto code_and_id = status.get_code_and_id();
     m_code           = code_and_id.first;
     m_message        = code_and_id.second;
 }
@@ -30,9 +31,9 @@ HttpResponse::Ptr HttpResponse::create(
     return std::make_unique<HttpResponse>(code, message, body);
 }
 
-HttpResponse::Ptr HttpResponse::create(const HttpError& err)
+HttpResponse::Ptr HttpResponse::create(const HttpStatus& status)
 {
-    return std::make_unique<HttpResponse>(err);
+    return std::make_unique<HttpResponse>(status);
 }
 
 HttpResponse::Ptr HttpResponse::create(CompletionStatus status)

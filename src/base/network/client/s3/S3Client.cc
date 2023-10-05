@@ -10,7 +10,7 @@ S3Client::S3Client(HttpClient* http_client) : m_http_client(http_client) {}
 
 S3Client::~S3Client() {}
 
-S3Error S3Client::create_bucket(
+S3Status S3Client::create_bucket(
     const S3Bucket& bucket, const S3Request& request) const
 {
     const auto status = bucket.validate_name(request.m_tracking_id);
@@ -47,7 +47,7 @@ S3Error S3Client::create_bucket(
     return do_request(http_request)->m_status;
 }
 
-S3Error S3Client::head_bucket(
+S3Status S3Client::head_bucket(
     const S3Bucket& bucket, const S3Request& request) const
 {
     std::string path = request.m_endpoint;
@@ -63,7 +63,7 @@ S3Error S3Client::head_bucket(
     return do_request(http_request)->m_status;
 }
 
-S3Error S3Client::put_object(
+S3Status S3Client::put_object(
     const S3Object& object,
     const S3Bucket& bucket,
     const S3Request& request,
@@ -88,7 +88,7 @@ S3Error S3Client::put_object(
     return response->m_status;
 }
 
-S3Error S3Client::delete_object(
+S3Status S3Client::delete_object(
     const S3Object& object,
     const S3Bucket& bucket,
     const S3Request& request) const
@@ -107,7 +107,7 @@ S3Error S3Client::delete_object(
     return do_request(http_request)->m_status;
 }
 
-S3Error S3Client::get_object(
+S3Status S3Client::get_object(
     const S3Object& object,
     const S3Bucket& bucket,
     const S3Request& request,
@@ -162,7 +162,7 @@ S3ListObjectsResponse::Ptr S3Client::list_objects(
     return list_response;
 }
 
-S3Error S3Client::delete_bucket(
+S3Status S3Client::delete_bucket(
     const S3Bucket& bucket, const S3Request& request) const
 {
     std::string path = request.m_endpoint;

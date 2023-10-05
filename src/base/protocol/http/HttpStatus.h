@@ -4,7 +4,7 @@
 #include <string>
 
 namespace hestia {
-class HttpError {
+class HttpStatus {
   public:
     enum class Code {
         _100_CONTINUE,
@@ -20,9 +20,9 @@ class HttpError {
         CUSTOM
     };
 
-    HttpError(Code code = Code::_200_OK, const std::string& message = {});
+    HttpStatus(Code code = Code::_200_OK, const std::string& message = {});
 
-    bool equals(const HttpError& other) const;
+    bool equals(const HttpStatus& other) const;
 
     using CodeAndId = std::pair<unsigned short, std::string>;
     CodeAndId get_code_and_id() const;
@@ -33,11 +33,11 @@ class HttpError {
 
     static Code get_code_from_numeric(unsigned code);
 
-    bool operator==(const HttpError& other) const { return equals(other); }
+    bool operator==(const HttpStatus& other) const { return equals(other); }
 
-    bool operator!=(const HttpError& other) const { return !(*this == other); }
+    bool operator!=(const HttpStatus& other) const { return !(*this == other); }
 
-    friend std::ostream& operator<<(std::ostream& os, HttpError const& value)
+    friend std::ostream& operator<<(std::ostream& os, HttpStatus const& value)
     {
         os << value.to_string();
         return os;

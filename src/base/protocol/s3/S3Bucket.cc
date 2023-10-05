@@ -19,7 +19,7 @@ S3Bucket::S3Bucket(const XmlElement& element)
 }
 
 // https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
-S3Error S3Bucket::validate_name(const std::string& tracking_id) const
+S3Status S3Bucket::validate_name(const std::string& tracking_id) const
 {
     std::size_t max_length = 63;
 
@@ -103,7 +103,8 @@ S3Error S3Bucket::validate_name(const std::string& tracking_id) const
         s3_request.m_path.m_bucket_name = m_name;
         s3_request.m_tracking_id        = tracking_id;
         return {
-            S3Error::Code::_400_INVALID_BUCKET_NAME, s3_request, error_message};
+            S3Status::Code::_400_INVALID_BUCKET_NAME, s3_request,
+            error_message};
     }
 }
 

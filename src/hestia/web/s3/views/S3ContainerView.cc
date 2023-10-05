@@ -2,8 +2,8 @@
 
 #include "DistributedHsmService.h"
 #include "S3DatasetAdapter.h"
-#include "S3Error.h"
 #include "S3Request.h"
+#include "S3Status.h"
 #include "S3ViewUtils.h"
 
 #include "HsmService.h"
@@ -44,7 +44,7 @@ HttpResponse::Ptr S3ContainerView::on_get(
 
     if (!get_response->found()) {
         response = HttpResponse::create(404, "Not Found");
-        S3Error s3_error(S3Error::Code::_404_NO_SUCH_BUCKET, s3_request);
+        S3Status s3_error(S3Status::Code::_404_NO_SUCH_BUCKET, s3_request);
         response->set_body(s3_error.to_string());
     }
     else {

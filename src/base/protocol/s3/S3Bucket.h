@@ -1,7 +1,7 @@
 #pragma once
 
-#include "S3Error.h"
 #include "S3Owner.h"
+#include "S3Status.h"
 
 #include <memory>
 #include <string>
@@ -25,7 +25,7 @@ class S3Bucket {
 
     const std::string& name() const { return m_name; }
 
-    S3Error validate_name(const std::string& tracking_id) const;
+    S3Status validate_name(const std::string& tracking_id) const;
 
     const std::string& get_location_constraint() const;
 

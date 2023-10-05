@@ -7,7 +7,7 @@ add_module(
         http/HttpRequest.h
         http/HttpResponse.h
         http/HttpHeader.h
-        http/HttpError.h
+        http/HttpStatus.h
         http/HttpPreamble.h
         request/RequestContext.h 
         request/Request.h 
@@ -15,7 +15,7 @@ add_module(
         request/RequestError.h
         request/RequestException.h
         request/Service.h
-        s3/S3Error.h
+        s3/S3Status.h
         s3/S3Path.h
         s3/S3Object.h
         s3/S3Owner.h
@@ -26,9 +26,9 @@ add_module(
         http/HttpResponse.cc 
         http/HttpHeader.cc
         http/HttpParser.cc
-        http/HttpError.cc
+        http/HttpStatus.cc
         request/RequestContext.cc
-        s3/S3Error.cc
+        s3/S3Status.cc
         s3/S3Path.cc
         s3/S3Object.cc
         s3/S3Owner.cc

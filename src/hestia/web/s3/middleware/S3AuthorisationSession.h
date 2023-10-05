@@ -3,7 +3,7 @@
 #include "S3AuthorisationObject.h"
 
 #include "HttpRequest.h"
-#include "S3Error.h"
+#include "S3Status.h"
 #include "UserService.h"
 
 #include <string>

@@ -75,7 +75,7 @@ bool BasicHttpServer::on_head(
     else if (request_context.get_request().get_header().has_expect_continue()) {
         LOG_INFO("Info responding to expect continue");
         socket->respond(
-            HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE))
+            HttpResponse::create(HttpStatus(HttpStatus::Code::_100_CONTINUE))
                 ->to_string());
     }
     return false;
@@ -106,7 +106,7 @@ bool BasicHttpServer::on_body_chunk(
         LOG_ERROR("Failed to write to stream ");
         socket->respond(
             HttpResponse::create(
-                HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR))
+                HttpStatus(HttpStatus::Code::_500_INTERNAL_SERVER_ERROR))
                 ->to_string());
         return true;
     }
@@ -129,7 +129,7 @@ bool BasicHttpServer::on_body_chunk(
             LOG_ERROR("Error resetting stream: " << reset_state.to_string());
             socket->respond(
                 HttpResponse::create(
-                    HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR))
+                    HttpStatus(HttpStatus::Code::_500_INTERNAL_SERVER_ERROR))
                     ->to_string());
             return true;
         }
@@ -216,8 +216,8 @@ void BasicHttpServer::on_connection(Socket* socket)
                                 << reset_state.to_string());
                             socket->respond(
                                 HttpResponse::create(
-                                    HttpError(HttpError::Code::
-                                                  _500_INTERNAL_SERVER_ERROR))
+                                    HttpStatus(HttpStatus::Code::
+                                                   _500_INTERNAL_SERVER_ERROR))
                                     ->to_string());
                             break;
                         }

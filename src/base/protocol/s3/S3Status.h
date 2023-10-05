@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "HttpError.h"
 #include "HttpResponse.h"
+#include "HttpStatus.h"
 #include "S3Request.h"
 
 namespace hestia {
@@ -12,7 +12,7 @@ namespace hestia {
 class XmlElement;
 using XmlElementPtr = std::unique_ptr<XmlElement>;
 
-class S3Error : public HttpError {
+class S3Status : public HttpStatus {
   public:
     enum class Code {
         _400_INCOMPLETE_BODY,
@@ -34,14 +34,14 @@ class S3Error : public HttpError {
         CUSTOM
     };
 
-    S3Error() = default;
+    S3Status() = default;
 
-    S3Error(
+    S3Status(
         Code code,
         const S3Request& request,
         const std::string& message_details = {});
 
-    S3Error(const HttpResponse& http_response);
+    S3Status(const HttpResponse& http_response);
 
     Code get_s3_code() const;
 
