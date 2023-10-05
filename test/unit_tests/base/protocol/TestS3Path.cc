@@ -12,8 +12,8 @@ TEST_CASE("Test S3 Path - virtual host version", "[s3]")
 
         hestia::S3Path path(request);
 
-        REQUIRE(path.m_object_id == "my_object");
-        REQUIRE(path.m_container_name == "container.123.com");
+        REQUIRE(path.m_object_key == "my_object");
+        REQUIRE(path.m_bucket_name == "container.123.com");
     }
 
     WHEN("Just a bucket is given")
@@ -23,8 +23,8 @@ TEST_CASE("Test S3 Path - virtual host version", "[s3]")
 
         hestia::S3Path path(request);
 
-        REQUIRE(path.m_object_id.empty());
-        REQUIRE(path.m_container_name == "container.123.com");
+        REQUIRE(path.m_object_key.empty());
+        REQUIRE(path.m_bucket_name == "container.123.com");
     }
 
     WHEN("Nothing is given")
@@ -32,8 +32,8 @@ TEST_CASE("Test S3 Path - virtual host version", "[s3]")
         hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request);
 
-        REQUIRE(path.m_object_id.empty());
-        REQUIRE(path.m_container_name.empty());
+        REQUIRE(path.m_object_key.empty());
+        REQUIRE(path.m_bucket_name.empty());
     }
 }
 
@@ -45,8 +45,8 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
             "/my_bucket/my_object", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request.get_path());
 
-        REQUIRE(path.m_object_id == "my_object");
-        REQUIRE(path.m_container_name == "my_bucket");
+        REQUIRE(path.m_object_key == "my_object");
+        REQUIRE(path.m_bucket_name == "my_bucket");
     }
 
     WHEN("The path is explicitly given in the request")
@@ -55,8 +55,8 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
             "/my_bucket/my_object", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request);
 
-        REQUIRE(path.m_object_id == "my_object");
-        REQUIRE(path.m_container_name == "my_bucket");
+        REQUIRE(path.m_object_key == "my_object");
+        REQUIRE(path.m_bucket_name == "my_bucket");
     }
 
     WHEN("Just a bucket is given")
@@ -65,8 +65,8 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
             "/my_bucket", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request.get_path());
 
-        REQUIRE(path.m_object_id.empty());
-        REQUIRE(path.m_container_name == "my_bucket");
+        REQUIRE(path.m_object_key.empty());
+        REQUIRE(path.m_bucket_name == "my_bucket");
     }
 
     WHEN("Nothing is given")
@@ -74,8 +74,8 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
         hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request.get_path());
 
-        REQUIRE(path.m_object_id.empty());
-        REQUIRE(path.m_container_name.empty());
+        REQUIRE(path.m_object_key.empty());
+        REQUIRE(path.m_bucket_name.empty());
     }
 
     WHEN("A bucket and query are given")
@@ -84,8 +84,8 @@ TEST_CASE("Test S3 Path - path version", "[s3]")
             "/my_bucket/?location", hestia::HttpRequest::Method::GET);
         hestia::S3Path path(request.get_path());
 
-        REQUIRE(path.m_object_id.empty());
-        REQUIRE(path.m_container_name == "my_bucket");
+        REQUIRE(path.m_object_key.empty());
+        REQUIRE(path.m_bucket_name == "my_bucket");
         REQUIRE(path.m_queries == "location");
     }
 }

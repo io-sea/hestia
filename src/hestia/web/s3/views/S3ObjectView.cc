@@ -32,7 +32,7 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     const auto s3_path = S3Path(request.get_path());
 
     CrudIdentifier container_id;
-    container_id.set_name(s3_path.m_container_name);
+    container_id.set_name(s3_path.m_bucket_name);
     container_id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery container_query(container_id, CrudQuery::OutputFormat::ITEM);
@@ -52,13 +52,13 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     }
 
     CrudIdentifier object_id;
-    object_id.set_name(s3_path.m_object_id);
+    object_id.set_name(s3_path.m_object_key);
     object_id.set_parent_primary_key(
         container_get_response->get_item()->get_primary_key());
 
     LOG_INFO(
         "Looking for object with key: "
-        << s3_path.m_object_id << " and container id: "
+        << s3_path.m_object_key << " and container id: "
         << container_get_response->get_item()->get_primary_key());
 
     auto obj_get_response = m_service->make_request(
@@ -170,7 +170,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
     const auto s3_path = S3Path(request.get_path());
 
     CrudIdentifier container_id;
-    container_id.set_name(s3_path.m_container_name);
+    container_id.set_name(s3_path.m_bucket_name);
     container_id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery container_query(container_id, CrudQuery::OutputFormat::ITEM);
@@ -192,7 +192,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
         container_key = container_get_response->get_item()->get_primary_key();
 
         CrudIdentifier object_id;
-        object_id.set_name(s3_path.m_object_id);
+        object_id.set_name(s3_path.m_object_key);
         object_id.set_parent_primary_key(container_key);
 
         auto obj_get_response = m_service->make_request(
@@ -213,7 +213,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
     else {
         // Create container
         Dataset dataset;
-        dataset.set_name(s3_path.m_container_name);
+        dataset.set_name(s3_path.m_bucket_name);
 
         auto container_create_response = m_service->make_request(
             TypedCrudRequest<Dataset>{
@@ -244,7 +244,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
     }
     else {
         CrudIdentifier object_id;
-        object_id.set_name(s3_path.m_object_id);
+        object_id.set_name(s3_path.m_object_key);
         object_id.set_parent_primary_key(container_key);
 
         LOG_INFO("Creating object with parent primary key: " << container_key);

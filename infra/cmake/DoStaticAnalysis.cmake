@@ -33,10 +33,6 @@ function(add_clang_tidy)
     add_custom_target(${PROJECT_NAME}_fetch_lint_dependencies)
     add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies nlohmann_json spdlog yaml-cpp hiredis)
 
-    if(${HESTIA_WITH_S3_CLIENT})
-        add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies libs3::s3)
-    endif()
-
     if(${HESTIA_BUILD_TESTS})
         fetch_catch2()
         add_dependencies(${PROJECT_NAME}_fetch_lint_dependencies Catch2::Catch2)

@@ -80,7 +80,7 @@ std::string S3AuthorisationObject::create_canonical_request(
     sstr << request.get_method_as_string() << '\n';
 
     S3Path s3_path(request);
-    sstr << '/' << HashUtils::uri_encode(s3_path.m_object_id, false) << '\n';
+    sstr << '/' << HashUtils::uri_encode(s3_path.m_object_key, false) << '\n';
     sstr << serialize_queries();
     sstr << serialize_headers(request);
     sstr << '\n';
@@ -201,7 +201,7 @@ bool S3AuthorisationObject::parse_authorisation_info(const HttpRequest& request)
 
     if (auth_item.rfind("AWS4-HMAC-SHA256", 0) != 0) {
         on_error(
-            {S3Error::Code::_400_INVALID_SIGNATURE_TYPE, request.get_path()});
+            {S3Error::Code::_400_INVALID_SIGNATURE_TYPE, S3Request(request)});
         LOG_ERROR("Bad signature: " << to_string());
         LOG_ERROR(to_string());
         return false;
@@ -215,7 +215,7 @@ bool S3AuthorisationObject::parse_authorisation_info(const HttpRequest& request)
     if (credentials.empty() || signed_headers.empty() || signature.empty()) {
         on_error(
             {S3Error::Code::_400_AUTHORIZATION_HEADER_MALFORMED,
-             request.get_path()});
+             S3Request(request)});
         LOG_ERROR("Bad auth header: " << to_string());
         return false;
     }

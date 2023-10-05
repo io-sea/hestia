@@ -13,15 +13,18 @@
 #include "ErrorUtils.h"
 
 #include "HttpClient.h"
+#include "S3Client.h"
 #include <cassert>
 
 namespace hestia {
 DistributedHsmObjectStoreClient::DistributedHsmObjectStoreClient(
     std::unique_ptr<HsmObjectStoreClientManager> client_manager,
     HttpClient* http_client,
+    S3Client* s3_client,
     DistributedHsmObjectStoreClientConfig config) :
     HsmObjectStoreClient(),
-    m_http_client(std::move(http_client)),
+    m_http_client(http_client),
+    m_s3_client(s3_client),
     m_client_manager(std::move(client_manager)),
     m_config(config)
 {
@@ -31,6 +34,7 @@ DistributedHsmObjectStoreClient::~DistributedHsmObjectStoreClient() {}
 
 DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
     HttpClient* http_client,
+    S3Client* s3_client,
     const std::vector<std::filesystem::path>& plugin_paths)
 {
     auto plugin_handler =
@@ -40,7 +44,7 @@ DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
     auto client_manager = std::make_unique<HsmObjectStoreClientManager>(
         std::move(client_factory));
     return std::make_unique<DistributedHsmObjectStoreClient>(
-        std::move(client_manager), std::move(http_client));
+        std::move(client_manager), http_client, s3_client);
 }
 
 void DistributedHsmObjectStoreClient::do_initialize(
@@ -68,7 +72,7 @@ void DistributedHsmObjectStoreClient::do_initialize(
 
     m_client_manager->setup_clients(
         cache_path, m_hsm_service->get_self_config().m_self.get_primary_key(),
-        tiers, m_hsm_service->get_backends());
+        m_s3_client, tiers, m_hsm_service->get_backends());
 }
 
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(

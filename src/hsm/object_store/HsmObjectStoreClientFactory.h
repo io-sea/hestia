@@ -14,6 +14,8 @@
 
 namespace hestia {
 
+class S3Client;
+
 class ObjectStorePluginHandler {
   public:
     using Ptr = std::unique_ptr<ObjectStorePluginHandler>;
@@ -42,7 +44,7 @@ class HsmObjectStoreClientFactory {
     bool is_client_type_available(const ObjectStoreBackend& client_spec) const;
 
     ObjectStoreClient::Ptr get_client(
-        const ObjectStoreBackend& client_spec) const;
+        const ObjectStoreBackend& client_spec, S3Client* s3_client) const;
 
     ObjectStoreClientPlugin::Ptr get_client_from_plugin(
         const ObjectStoreBackend& client_spec) const;

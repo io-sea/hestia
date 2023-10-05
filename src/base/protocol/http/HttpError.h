@@ -31,6 +31,8 @@ class HttpError {
 
     virtual std::string to_string() const;
 
+    static Code get_code_from_numeric(unsigned code);
+
     bool operator==(const HttpError& other) const { return equals(other); }
 
     bool operator!=(const HttpError& other) const { return !(*this == other); }

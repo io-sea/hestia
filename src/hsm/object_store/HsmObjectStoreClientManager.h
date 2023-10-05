@@ -6,6 +6,8 @@
 #include <unordered_map>
 
 namespace hestia {
+class S3Client;
+
 class HsmObjectStoreClientManager {
   public:
     using Ptr = std::unique_ptr<HsmObjectStoreClientManager>;
@@ -33,6 +35,7 @@ class HsmObjectStoreClientManager {
     void setup_clients(
         const std::string& cache_path,
         const std::string& node_id,
+        S3Client* s3_client,
         const std::vector<StorageTier>& tiers,
         const std::vector<ObjectStoreBackend>& backends = {});
 

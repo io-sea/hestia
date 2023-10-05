@@ -1,29 +1,32 @@
 #pragma once
 
-#include "IS3InterfaceImpl.h"
+#include "S3Bucket.h"
+#include "S3Client.h"
+#include "S3Config.h"
+#include "S3Object.h"
+
+#include "S3BucketAdapter.h"
+#include "S3ObjectAdapter.h"
+#include "StorageObject.h"
+
 #include "ObjectStoreClient.h"
 
 #include <memory>
 
 namespace hestia {
 
-class S3ContainerAdapter;
-class S3ObjectAdapter;
-
-class S3Client : public ObjectStoreClient {
+class S3ObjectStoreClient : public ObjectStoreClient {
   public:
-    using Ptr = std::unique_ptr<S3Client>;
+    using Ptr = std::unique_ptr<S3ObjectStoreClient>;
 
-    S3Client(IS3InterfaceImpl::Ptr impl = nullptr);
+    S3ObjectStoreClient(S3Client* s3_client);
 
-    virtual ~S3Client() = default;
+    virtual ~S3ObjectStoreClient() = default;
 
-    static Ptr create(IS3InterfaceImpl::Ptr impl = nullptr);
+    static Ptr create(S3Client* s3_client);
 
     static Ptr create(
-        const std::string& id,
-        const S3Config& config,
-        IS3InterfaceImpl::Ptr impl = nullptr);
+        const std::string& id, const S3Config& config, S3Client* s3_client);
 
     static std::string get_registry_identifier();
 
@@ -51,8 +54,9 @@ class S3Client : public ObjectStoreClient {
     void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
 
-    IS3InterfaceImpl::Ptr m_impl;
-    std::unique_ptr<S3ContainerAdapter> m_container_adapter;
+    S3Config m_config;
+    S3Client* m_s3_client{nullptr};
+    std::unique_ptr<S3BucketAdapter> m_container_adapter;
     std::unique_ptr<S3ObjectAdapter> m_object_adapter;
 };
 }  // namespace hestia

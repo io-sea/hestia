@@ -7,6 +7,7 @@
 #include "TypedCrudRequest.h"
 
 #include "TestUtils.h"
+#include <iostream>
 
 void DistributedHsmServiceTestWrapper::init(
     const std::string& user_name,
@@ -37,8 +38,10 @@ void DistributedHsmServiceTestWrapper::init(
 
     m_user_service = hestia::UserService::create(
         {}, &crud_backend, nullptr, nullptr, std::move(token_generator));
+
     auto register_response =
         m_user_service->register_user(user_name, user_pass);
+
     REQUIRE(register_response->ok());
 
     auto auth_response =

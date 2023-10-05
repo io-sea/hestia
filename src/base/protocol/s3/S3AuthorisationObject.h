@@ -82,7 +82,7 @@ class S3AuthorisationObject {
     std::vector<Query> m_queries;
 
     Status m_status = Status::UNSET;
-    S3Error m_error{S3Error::Code::_403_ACCESS_DENIED, ""};
+    S3Error m_error{S3Error::Code::_403_ACCESS_DENIED, {}};
 
     std::string m_service{"s3"};
     std::string m_scope_suffix{"aws4_request"};

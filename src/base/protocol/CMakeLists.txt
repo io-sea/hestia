@@ -18,7 +18,9 @@ add_module(
         s3/S3Error.h
         s3/S3Path.h
         s3/S3Object.h
-        s3/S3Container.h
+        s3/S3Owner.h
+        s3/S3Bucket.h
+        s3/S3AuthorisationObject.h
     SOURCES
         http/HttpRequest.cc 
         http/HttpResponse.cc 
@@ -29,6 +31,10 @@ add_module(
         s3/S3Error.cc
         s3/S3Path.cc
         s3/S3Object.cc
+        s3/S3Owner.cc
+        s3/S3Bucket.cc
+        s3/S3Request.cc
+        s3/S3AuthorisationObject.cc
     INTERNAL_INCLUDE_DIRS 
         http
         request

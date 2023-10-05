@@ -28,10 +28,10 @@ void S3UrlRouter::set_container_list_view(
 WebView* S3UrlRouter::get_view(const std::string& path)
 {
     const auto s3_path = S3Path(path);
-    if (!s3_path.m_object_id.empty()) {
+    if (!s3_path.m_object_key.empty()) {
         return m_object_view.get();
     }
-    if (!s3_path.m_container_name.empty()) {
+    if (!s3_path.m_bucket_name.empty()) {
         return m_container_view.get();
     }
     return m_container_list_view.get();

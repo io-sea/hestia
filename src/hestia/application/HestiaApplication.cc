@@ -14,6 +14,7 @@
 #include "HsmObjectStoreClient.h"
 #include "HttpClient.h"
 #include "KeyValueStoreClient.h"
+#include "S3Client.h"
 #include "TypedCrudRequest.h"
 
 #include "ProjectConfig.h"
@@ -58,9 +59,7 @@ OpStatus HestiaApplication::initialize(
 
     set_app_mode(server_host, server_port);
 
-    if (uses_http_client()) {
-        setup_http_client();
-    }
+    setup_http_clients();
 
     setup_object_store();
 
@@ -121,11 +120,6 @@ bool HestiaApplication::uses_local_storage() const
 {
     return m_app_mode == ApplicationMode::CLIENT_STANDALONE
            || m_app_mode == ApplicationMode::SERVER_CONTROLLER;
-}
-
-bool HestiaApplication::uses_http_client() const
-{
-    return m_app_mode != ApplicationMode::CLIENT_STANDALONE;
 }
 
 void setup_tiers(
@@ -294,10 +288,11 @@ void HestiaApplication::setup_user_service(
         << m_user_service->get_current_user().get_primary_key());
 }
 
-void HestiaApplication::setup_http_client()
+void HestiaApplication::setup_http_clients()
 {
     CurlClientConfig http_client_config;
     m_http_client = std::make_unique<CurlClient>(http_client_config);
+    m_s3_client   = std::make_unique<S3Client>(m_http_client.get());
 }
 
 void HestiaApplication::setup_object_store()
@@ -307,7 +302,7 @@ void HestiaApplication::setup_object_store()
         "/usr/lib64/hestia", "/usr/local/lib/hestia",
         "/usr/local/lib64/hestia"};
     m_object_store_client = DistributedHsmObjectStoreClient::create(
-        m_http_client.get(), search_paths);
+        m_http_client.get(), m_s3_client.get(), search_paths);
 }
 
 void HestiaApplication::setup_key_value_store()

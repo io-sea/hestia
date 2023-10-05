@@ -18,7 +18,6 @@ class ObjectStoreBackend : public HsmItem, public Model {
         MEMORY_HSM,
         MOCK_PHOBOS,
         MOCK_MOTR,
-        MOCK_S3,
         CUSTOM,
         CUSTOM_HSM,
         UNKNOWN)

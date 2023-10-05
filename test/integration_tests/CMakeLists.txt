@@ -37,7 +37,6 @@ target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
     hestia_server
     hestia_web
     hestia_mocks
-    hestia_s3_backend
     hestia_test_utils
     Catch2::Catch2
     ${PLATFORM_LIBS})
@@ -59,7 +58,7 @@ if(${HESTIA_WITH_PROXYGEN})
     target_compile_definitions(${INTEGRATION_TEST_MODULE} PUBLIC HAVE_PROXYGEN)
 endif()
 
-add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin hestia_mock_s3_plugin)
+add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin)
 
 target_code_coverage(${INTEGRATION_TEST_MODULE} ALL)
 

@@ -122,6 +122,7 @@ bool HsmObjectStoreClientManager::have_same_client_types(
 void HsmObjectStoreClientManager::setup_clients(
     const std::string& cache_path,
     const std::string& node_id,
+    S3Client* s3_client,
     const std::vector<StorageTier>& tiers,
     const std::vector<ObjectStoreBackend>& local_backends)
 {
@@ -176,7 +177,8 @@ void HsmObjectStoreClientManager::setup_clients(
             if (get_hsm_client(identifier) == nullptr) {
                 if (backend.is_built_in()) {
                     HsmObjectStoreClient::Ptr hsm_client;
-                    auto client = m_client_factory->get_client(backend);
+                    auto client =
+                        m_client_factory->get_client(backend, s3_client);
 
                     if (auto raw_client =
                             dynamic_cast<HsmObjectStoreClient*>(client.get())) {
@@ -209,7 +211,7 @@ void HsmObjectStoreClientManager::setup_clients(
         }
         else if (get_client(identifier) == nullptr) {
             if (backend.is_built_in()) {
-                auto client = m_client_factory->get_client(backend);
+                auto client = m_client_factory->get_client(backend, s3_client);
                 client->initialize(
                     backend.get_primary_key(), cache_path,
                     backend.get_config());

@@ -3,6 +3,7 @@
 #include "EnumUtils.h"
 #include "ErrorUtils.h"
 #include "HestiaConfig.h"
+#include "S3Client.h"
 
 #include <memory>
 
@@ -12,6 +13,7 @@ class DistributedHsmService;
 class HsmService;
 class KeyValueStoreClient;
 class HttpClient;
+class S3Client;
 class HsmObjectStoreClient;
 class UserService;
 class EventFeed;
@@ -62,13 +64,12 @@ class HestiaApplication : public IHestiaApplication {
 
   protected:
     virtual bool uses_local_storage() const;
-    virtual bool uses_http_client() const;
 
     virtual void initialize_logger() const;
 
     virtual void set_app_mode(const std::string& host, unsigned port) = 0;
 
-    virtual void setup_http_client();
+    virtual void setup_http_clients();
     virtual void setup_key_value_store();
 
     virtual void setup_object_store();
@@ -87,6 +88,7 @@ class HestiaApplication : public IHestiaApplication {
     std::unique_ptr<EventFeed> m_event_feed;
     std::unique_ptr<KeyValueStoreClient> m_kv_store_client;
     std::unique_ptr<HttpClient> m_http_client;
+    std::unique_ptr<S3Client> m_s3_client;
     std::unique_ptr<HsmObjectStoreClient> m_object_store_client;
     std::unique_ptr<UserService> m_user_service;
 };

@@ -3,7 +3,7 @@
 #include "DistributedHsmService.h"
 #include "S3DatasetAdapter.h"
 #include "S3Error.h"
-#include "S3Path.h"
+#include "S3Request.h"
 #include "S3ViewUtils.h"
 
 #include "HsmService.h"
@@ -24,10 +24,10 @@ S3ContainerView::S3ContainerView(DistributedHsmService* service) :
 HttpResponse::Ptr S3ContainerView::on_get(
     const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    const auto s3_path = S3Path(request.get_path());
+    S3Request s3_request(request);
 
     CrudIdentifier id;
-    id.set_name(s3_path.m_container_name);
+    id.set_name(s3_request.m_path.m_bucket_name);
     id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery query(id, CrudQuery::OutputFormat::ITEM);
@@ -44,8 +44,7 @@ HttpResponse::Ptr S3ContainerView::on_get(
 
     if (!get_response->found()) {
         response = HttpResponse::create(404, "Not Found");
-        S3Error s3_error(
-            S3Error::Code::_404_NO_SUCH_BUCKET, request.get_tracking_id());
+        S3Error s3_error(S3Error::Code::_404_NO_SUCH_BUCKET, s3_request);
         response->set_body(s3_error.to_string());
     }
     else {
@@ -64,15 +63,15 @@ HttpResponse::Ptr S3ContainerView::on_get(
 HttpResponse::Ptr S3ContainerView::on_put(
     const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    const auto s3_path = S3Path(request.get_path());
+    S3Request s3_request(request);
 
     CrudIdentifier id;
-    id.set_name(s3_path.m_container_name);
+    id.set_name(s3_request.m_path.m_bucket_name);
     id.set_parent_primary_key(auth.m_user_id);
 
     CrudQuery query(
-        KeyValuePair{"name", s3_path.m_container_name}, CrudQuery::Format::GET,
-        CrudQuery::OutputFormat::ITEM);
+        KeyValuePair{"name", s3_request.m_path.m_bucket_name},
+        CrudQuery::Format::GET, CrudQuery::OutputFormat::ITEM);
     const auto get_response = m_service->make_request(
         CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
         HsmItem::dataset_name);
@@ -94,7 +93,7 @@ HttpResponse::Ptr S3ContainerView::on_put(
     }
     else {
         Dataset dataset;
-        dataset.set_name(s3_path.m_container_name);
+        dataset.set_name(s3_request.m_path.m_bucket_name);
 
         auto update_response = m_service->make_request(
             TypedCrudRequest<Dataset>(

@@ -10,7 +10,7 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
     S3ClientTestFixture() : ObjectStoreTestWrapper("mock_s3_plugin") {}
 };
 
-TEST_CASE_METHOD(S3ClientTestFixture, "S3 client put", "[s3]")
+TEST_CASE_METHOD(S3ClientTestFixture, "S3 client put", "[.s3]")
 {
     hestia::StorageObject obj("0000");
     const std::string content = "The quick brown fox jumps over the lazy dog.";

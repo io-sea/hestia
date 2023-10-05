@@ -4,8 +4,14 @@
 #include <vector>
 
 #include "HttpError.h"
+#include "HttpResponse.h"
+#include "S3Request.h"
 
 namespace hestia {
+
+class XmlElement;
+using XmlElementPtr = std::unique_ptr<XmlElement>;
+
 class S3Error : public HttpError {
   public:
     enum class Code {
@@ -28,15 +34,35 @@ class S3Error : public HttpError {
         CUSTOM
     };
 
-    S3Error(Code code, const std::string& request);
+    S3Error() = default;
+
+    S3Error(
+        Code code,
+        const S3Request& request,
+        const std::string& message_details = {});
+
+    S3Error(const HttpResponse& http_response);
+
+    Code get_s3_code() const;
 
     void add_field(const std::string& key, const std::string& value);
 
+    void add_message_details(const std::string& details);
+
     std::string to_string() const override;
 
+    bool is_ok() const;
+
   private:
-    std::string m_identifier;
-    std::string m_request;
+    void from_xml(const XmlElement& element);
+
+    XmlElementPtr to_xml() const;
+
+    Code m_s3_code;
+    std::string m_code_str;
+    std::string m_request_id;
+    S3Path m_path;
+    std::string m_message_details;
     std::vector<std::pair<std::string, std::string>> m_fields;
 };
 }  // namespace hestia

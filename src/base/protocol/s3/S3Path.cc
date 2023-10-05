@@ -6,9 +6,9 @@ S3Path::S3Path(const HttpRequest& request)
 {
     if (const auto& host = request.get_header().get_item("Host");
         !host.empty()) {
-        m_container_name     = host;
+        m_bucket_name        = host;
         const auto full_path = request.get_path();
-        m_object_id          = full_path.substr(1, full_path.size());
+        m_object_key         = full_path.substr(1, full_path.size());
     }
     else {
         from_path_only(request.get_path());
@@ -26,6 +26,15 @@ enum class LineState {
     AWAITING_OBJECT_END,
     AWAITING_QUERY_END
 };
+
+std::string S3Path::get_resource_path() const
+{
+    std::string path = "/" + m_bucket_name;
+    if (!m_object_key.empty()) {
+        path += "/" + m_object_key;
+    }
+    return path;
+}
 
 void S3Path::from_path_only(const std::string& path)
 {
@@ -46,22 +55,22 @@ void S3Path::from_path_only(const std::string& path)
         else {
             if (line_state == LineState::AWAITING_FIRST_NON_SLASH) {
                 line_state = LineState::AWAITING_CONTAINER_END;
-                m_container_name += c;
+                m_bucket_name += c;
             }
             else if (line_state == LineState::AWAITING_CONTAINER_END) {
                 if (c == '?') {
                     line_state = LineState::AWAITING_QUERY_END;
                 }
                 else {
-                    m_container_name += c;
+                    m_bucket_name += c;
                 }
             }
             else if (line_state == LineState::AWAITING_OBJECT_END) {
-                if (m_object_id.empty() && c == '?') {
+                if (m_object_key.empty() && c == '?') {
                     line_state = LineState::AWAITING_QUERY_END;
                 }
                 else {
-                    m_object_id += c;
+                    m_object_key += c;
                 }
             }
             else if (line_state == LineState::AWAITING_QUERY_END) {

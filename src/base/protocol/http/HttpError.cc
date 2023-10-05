@@ -28,6 +28,16 @@ bool HttpError::equals(const HttpError& other) const
     return m_code == other.m_code && m_message == other.m_message;
 }
 
+HttpError::Code HttpError::get_code_from_numeric(unsigned code)
+{
+    for (const auto& error : errors) {
+        if (error.second.first == code) {
+            return error.first;
+        }
+    }
+    return HttpError::Code::_500_INTERNAL_SERVER_ERROR;
+}
+
 HttpError::CodeAndId HttpError::get_code_and_id() const
 {
     unsigned short code    = 500;

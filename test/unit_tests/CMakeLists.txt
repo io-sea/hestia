@@ -17,17 +17,19 @@ set(UNIT_TEST_SOURCES
     base/common/TestTimeUtils.cc
     base/common/TestUuidUtils.cc
     base/common/TestXmlUtils.cc
+    base/common/TestXmlParser.cc
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
     base/protocol/TestHttpRequest.cc
+    base/protocol/TestS3Client.cc
     base/protocol/TestS3Path.cc
     base/protocol/TestS3Error.cc
     base/storage/TestBlockStore.cc
     base/storage/TestInMemoryObjectStoreClient.cc
     base/storage/TestFileObjectStoreClient.cc
     base/storage/TestPhobosClient.cc
-    base/storage/TestS3Client.cc
+    base/storage/TestS3ObjectStoreClient.cc
     base/crud/TestLockableModel.cc
     base/crud/TestCrudService.cc
     base/crud/TestHttpCrudClient.cc

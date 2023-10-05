@@ -1,4 +1,3 @@
-add_subdirectory(libs3)
 add_subdirectory(motr)
 add_subdirectory(phobos)
 
@@ -27,4 +26,4 @@ add_module(
         app
 )
 
-add_dependencies(hestia_mocks hestia_mock_phobos_plugin hestia_mock_s3_plugin hestia_mock_motr_plugin)
+add_dependencies(hestia_mocks hestia_mock_phobos_plugin hestia_mock_motr_plugin)

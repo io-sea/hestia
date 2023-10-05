@@ -1,24 +1,23 @@
 #include <catch2/catch_all.hpp>
 
+#include "HttpResponse.h"
 #include "S3Error.h"
+#include "S3Request.h"
 
-#include <sstream>
+#include <iostream>
 
 TEST_CASE("Test S3Error", "[s3]")
 {
+    hestia::S3Request request;
+    request.m_path        = hestia::S3Path("/my_bucket");
+    request.m_tracking_id = "1234";
+
     hestia::S3Error error(
-        hestia::S3Error::Code::_400_AUTHORIZATION_HEADER_MALFORMED, "mybucket");
+        hestia::S3Error::Code::_400_AUTHORIZATION_HEADER_MALFORMED, request);
 
-    std::stringstream sstr;
-    sstr << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    sstr << "<Error>\n";
-    sstr << "<Code>AuthorizationHeaderMalformed</Code>\n";
-    sstr
-        << "<Message>The authorization header you provided is invalid.</Message>\n";
-    sstr << "<Resource>/mybucket</Resource>\n";
-    sstr << "</Error>";
+    hestia::HttpResponse http_response;
+    http_response.body() = error.to_string();
 
-    std::stringstream error_sstr;
-    error_sstr << error;
-    REQUIRE(sstr.str() == error_sstr.str());
+    hestia::S3Error reconstructed_error(http_response);
+    REQUIRE(reconstructed_error.to_string() == error.to_string());
 }

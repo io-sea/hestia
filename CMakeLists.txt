@@ -25,7 +25,6 @@ option(HESTIA_BUILD_TESTS "Build Hestia tests." OFF)
 option(HESTIA_WITH_PHOBOS "Build Phobos Object Store Integration." OFF)
 option(HESTIA_WITH_MOTR "Build the Cortx Motr Integration." OFF)
 option(HESTIA_WITH_PROXYGEN "Build the Proxyen webserver." OFF)
-option(HESTIA_WITH_S3_CLIENT "Build the S3 Client." ON)
 
 option(HESTIA_USE_SRC_RPM_SPEC "Turn on when generating an SRPM." OFF)
 

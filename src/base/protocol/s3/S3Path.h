@@ -7,12 +7,16 @@
 namespace hestia {
 class S3Path {
   public:
+    S3Path() = default;
+
     S3Path(const HttpRequest& request);
 
     S3Path(const std::string& path);
 
-    std::string m_container_name;
-    std::string m_object_id;
+    std::string get_resource_path() const;
+
+    std::string m_bucket_name;
+    std::string m_object_key;
     std::string m_queries;
 
     static constexpr char meta_prefix[] = "x-amz-meta-";

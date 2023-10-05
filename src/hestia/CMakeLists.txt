@@ -19,7 +19,6 @@ add_module(
         web/s3/S3UrlRouter.h
         web/s3/middleware/S3AuthenticationMiddleware.h 
         web/s3/middleware/S3AuthorisationSession.h
-        web/s3/middleware/S3AuthorisationObject.h 
         web/s3/views/S3ContainerView.h 
         web/s3/views/S3ObjectView.h
         web/s3/views/S3ContainerListView.h
@@ -41,7 +40,6 @@ add_module(
         web/s3/S3UrlRouter.cc
         web/s3/middleware/S3AuthenticationMiddleware.cc 
         web/s3/middleware/S3AuthorisationSession.cc
-        web/s3/middleware/S3AuthorisationObject.cc 
         web/s3/views/S3ContainerView.cc 
         web/s3/views/S3ObjectView.cc
         web/s3/views/S3ContainerListView.cc

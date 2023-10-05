@@ -2,6 +2,7 @@ include(AddModule)
 include(FetchDependencies)
 
 fetch_openssl()
+fetch_libxml2()
 fetch_spdlog()
 fetch_nlohmann_json()
 fetch_yaml_cpp()
@@ -49,6 +50,11 @@ add_module(
         utils/TimeUtils.h
         utils/UuidUtils.h
         utils/YamlUtils.h
+        xml/XmlAttribute.h 
+        xml/XmlDocument.h 
+        xml/XmlElement.h 
+        xml/XmlProlog.h 
+        xml/XmlParser.h
     SOURCES  
         File.cc
         Logger.cc
@@ -87,6 +93,11 @@ add_module(
         utils/TimeUtils.cc
         utils/UuidUtils.cc
         utils/YamlUtils.cc
+        xml/XmlAttribute.cc  
+        xml/XmlDocument.cc
+        xml/XmlElement.cc 
+        xml/XmlProlog.cc 
+        xml/XmlParser.cc
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
@@ -97,12 +108,14 @@ add_module(
         streams/impls
         concurrency
         utils
+        xml
     PRIVATE_DEPENDENCIES
         yaml-cpp::yaml-cpp
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         OpenSSL::SSL 
         OpenSSL::Crypto
+        LibXml2::LibXml2
         ${CMAKE_DL_LIBS}
     WITH_FILESYSTEM
 )

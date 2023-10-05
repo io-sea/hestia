@@ -24,6 +24,8 @@ add_module(
         clients/memory/InMemoryHsmObjectStoreClient.h
         clients/memory/InMemoryKeyValueStoreClient.h
         clients/redis/RedisKeyValueStoreClient.h
+        clients/s3/S3ObjectStoreClient.h 
+        clients/s3/S3Config.h
         hsm/HsmObjectStoreClient.h
         hsm/HsmObjectStoreClientPlugin.h
         requests/HsmObjectStoreError.h
@@ -50,6 +52,8 @@ add_module(
         clients/memory/InMemoryHsmObjectStoreClient.cc
         clients/memory/InMemoryKeyValueStoreClient.cc
         clients/redis/RedisKeyValueStoreClient.cc
+        clients/s3/S3ObjectStoreClient.cc 
+        clients/s3/S3Config.cc
         hsm/HsmObjectStoreClient.cc
         hsm/HsmObjectStoreClientPlugin.cc
         requests/HsmObjectStoreError.cc
@@ -66,12 +70,14 @@ add_module(
         clients/file
         clients/memory
         clients/redis
+        clients/s3
         hsm
         requests
     INTERNAL_DEPENDENCIES 
         common
         protocol
         http_client
+        s3_client
     PRIVATE_DEPENDENCIES
         hiredis::hiredis
     WITH_FILESYSTEM
@@ -82,4 +88,3 @@ add_dependencies(${PROJECT_NAME}_storage_and_plugins ${PROJECT_NAME}_storage)
 
 add_subdirectory(clients/phobos)
 add_subdirectory(clients/motr)
-add_subdirectory(clients/s3)

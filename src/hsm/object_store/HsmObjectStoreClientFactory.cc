@@ -4,6 +4,7 @@
 #include "FileObjectStoreClient.h"
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryObjectStoreClient.h"
+#include "S3ObjectStoreClient.h"
 
 #include "Logger.h"
 
@@ -90,7 +91,7 @@ bool HsmObjectStoreClientFactory::is_client_type_available(
 }
 
 ObjectStoreClient::Ptr HsmObjectStoreClientFactory::get_client(
-    const ObjectStoreBackend& client_spec) const
+    const ObjectStoreBackend& client_spec, S3Client* s3_client) const
 {
     if (client_spec.is_built_in()) {
         if (client_spec.get_backend() == ObjectStoreBackend::Type::FILE_HSM) {
@@ -99,17 +100,21 @@ ObjectStoreClient::Ptr HsmObjectStoreClientFactory::get_client(
         }
         else if (client_spec.get_backend() == ObjectStoreBackend::Type::FILE) {
             LOG_INFO("Setting up FileObjectStoreClient");
-            return hestia::FileObjectStoreClient::create();
+            return FileObjectStoreClient::create();
         }
         else if (
             client_spec.get_backend() == ObjectStoreBackend::Type::MEMORY_HSM) {
             LOG_INFO("Setting up InMemoryHsmObjectStoreClient");
-            return hestia::InMemoryHsmObjectStoreClient::create();
+            return InMemoryHsmObjectStoreClient::create();
         }
         else if (
             client_spec.get_backend() == ObjectStoreBackend::Type::MEMORY) {
             LOG_INFO("Setting up InMemoryObjectStoreClient");
-            return hestia::InMemoryObjectStoreClient::create();
+            return InMemoryObjectStoreClient::create();
+        }
+        else if (client_spec.get_backend() == ObjectStoreBackend::Type::S3) {
+            LOG_INFO("Setting up S3ObjectStoreClient");
+            return S3ObjectStoreClient::create(s3_client);
         }
     }
     LOG_ERROR(
