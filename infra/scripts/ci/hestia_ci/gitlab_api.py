@@ -88,16 +88,18 @@ class GitlabAPI(GenericAPI):
         """
         self.gl_bot.variables.update(str(key), str(val))
 
-    def create_merge_request(self, merge_json: Path, auto_merge: bool = True):
+    def create_merge_request(self, merge_json: Path, auto_merge: bool = True) -> dict:
         """
         Create a merge request with given parameter file, specified here:
         https://docs.gitlab.com/ee/api/merge_requests.html#create-mr
         Merge it immediately if auto_merge is True
         """
         with open(merge_json, 'r') as f:
-            mr = self.gl_bot.mergerequests.create(json.load(f))
+            data = json.load(f)
+            mr = self.gl_bot.mergerequests.create(data)
             if auto_merge:
                 mr.merge()
+            return data
 
     def create_tag(self, tag_name: str, ref_branch: str = "master"):
         """

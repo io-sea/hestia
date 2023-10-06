@@ -32,10 +32,10 @@ if __name__ == "__main__":
     api = GitlabAPI(build_info=build_info, bot_token=args.bot_token) 
 
     # Create and merge a merge-request with specified parameters
-    api.create_merge_request(args.merge_json, auto_merge=True)
+    merge_dict = api.create_merge_request(args.merge_json, auto_merge=True)
 
     # Tag the merge point in master
-    api.create_tag(f"v{args.version}", "master")
+    api.create_tag(f"v{args.version}", merge_dict["target_branch"])
 
     # Update the patch release version (to match the tag)
     api.update_variable(args.patch_var, args.version)

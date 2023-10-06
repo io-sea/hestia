@@ -217,6 +217,92 @@ There are a collection of Deploy jobs that create a release from the `master` br
 
 They can be manually triggered through the Gitlab 'Build->Pipeline schedules' panel.
 
+## Scripting for CI
+
+To add new scripts to the CI, if they are complex/involve networked communication with the Gitlab REST API, 
+they should be done using the Python module `hestia_ci`, which is documented inline. Following this is a quick 
+description of the purposes of currently available scripts using this module. For many of these scripts, you 
+will need to provide a "bot user token" or "project access token", instructions for this can be found [here](https://docs.gitlab.com/ee/user/project/settings/project_access_tokens.html).
+
+### Update CI Variables (Persistent CI data) - [`update_var.py`](/infra/scripts/ci/update_var.py)
+
+```sh
+usage: update_var.py [-h] [--bot_token BOT_TOKEN] [-p] [-m] [-M] key value
+
+positional arguments:
+  key
+  value
+
+options:
+  -h, --help            show this help message and exit
+  --bot_token BOT_TOKEN
+  # Optional flags
+  -p, --version_increment_patch
+  -m, --version_increment_minor
+  -M, --version_increment_major
+```
+
+Updates a key value pair in the CI's persistent variable store, optionally treating it as a version
+string, with convenience options to bump particular components.
+
+
+### Deploy devel to master (Staging Workflow for Nightly CI) - [`nightly_deploy.py`](/infra/scripts/ci/nightly_deploy.py)
+
+```sh
+usage: nightly_deploy.py [-h] [--project_name PROJECT_NAME] [--arch ARCH] [--version VERSION] [--bot_token BOT_TOKEN] [--merge_json MERGE_JSON] [--nightly_var NIGHTLY_VAR]
+                         [--patch_var PATCH_VAR] [--commit_var COMMIT_VAR] [--nightly_commit_var NIGHTLY_COMMIT_VAR]
+
+options:
+  -h, --help            show this help message and exit
+  --project_name PROJECT_NAME
+  --arch ARCH
+  --version VERSION
+  --bot_token BOT_TOKEN
+  --merge_json MERGE_JSON
+# Optional overrides for CI variable names
+  --nightly_var NIGHTLY_VAR 
+  --patch_var PATCH_VAR
+  --commit_var COMMIT_VAR
+  --nightly_commit_var NIGHTLY_COMMIT_VAR
+```
+
+If the nightly CI workflow passes, this deployment script is called. It will merge the source branch 
+specified in [`nightly_merge.json`](/infra/scripts/ci/nightly_merge.json) to the target branch, tag
+the current nightly version on the target branch, and update the next patch release version, next
+nightly version, and last commit SHA processed by the nightly to match this. Note that the last nightly 
+commit SHA will always be updated, even if the pipline fails.
+
+### Deploy Release from master - [`master_deploy.py`](/infra/scripts/ci/master_deploy.py)
+
+```sh
+usage: master_deploy.py [-h] [--artifacts_file ARTIFACTS_FILE] [--artifacts_dir ARTIFACTS_DIR] [--project_name PROJECT_NAME] [--arch ARCH] [--version VERSION]
+                        [--bot_token BOT_TOKEN] [--schedule_type {DEPLOY_MASTER_PATCH,DEPLOY_MASTER_MINOR,DEPLOY_MASTER_MAJOR}] [--nightly_var NIGHTLY_VAR] [--patch_var PATCH_VAR]
+                        [--minor_var MINOR_VAR] [--major_var MAJOR_VAR] [--release_branch RELEASE_BRANCH]
+
+options:
+  -h, --help            show this help message and exit
+  --artifacts_file ARTIFACTS_FILE
+  --artifacts_dir ARTIFACTS_DIR
+  --project_name PROJECT_NAME
+  --arch ARCH
+  --version VERSION
+  --bot_token BOT_TOKEN
+  --schedule_type {DEPLOY_MASTER_PATCH,DEPLOY_MASTER_MINOR,DEPLOY_MASTER_MAJOR}
+# Optional overrides for CI defaults
+  --nightly_var NIGHTLY_VAR
+  --patch_var PATCH_VAR
+  --minor_var MINOR_VAR
+  --major_var MAJOR_VAR
+  --release_branch RELEASE_BRANCH
+```
+
+Triggered manually from one of three possible schedules (for the current version, bumping the minor version and 
+bumping the major version), this script will upload build artifacts (the RPMs, executable tar, docs and src) to
+the Gitlab package registry, and then create a new release (and tag it, if bumping), attaching these artifacts.
+The artifacts are specified by the file [master_deploy_artifacts.json](/infra/scripts/ci/master_deploy_artifacts.json).
+Finally, it will update the CI variables associated with the _next_ version for the nightly, non-bumped release,
+minor bump release, and major bump release builds.
+
 # System Integration Testing
 
 This section documents some setup to help with testing Hestia against third-party applications.
