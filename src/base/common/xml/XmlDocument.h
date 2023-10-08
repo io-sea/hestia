@@ -30,6 +30,8 @@ class XmlDocument {
 
     std::string to_string() const;
 
+    static std::string to_string(const XmlElement& element);
+
   private:
     XmlPrologPtr m_prolog;
     XmlElementPtr m_root;

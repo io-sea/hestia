@@ -36,6 +36,8 @@ class S3Object {
 
     XmlElementPtr to_xml() const;
 
+    void to_xml(XmlElement& element) const;
+
     bool operator==(const S3Object& other) const { return is_equal(other); }
 
     friend std::ostream& operator<<(std::ostream& os, S3Object const& obj)
@@ -54,5 +56,6 @@ class S3Object {
     RestoreStatus m_restore_status;
     std::size_t m_size{0};
     std::string m_storage_class;
+    std::string m_content_mimetype{"binary/octet-stream"};
 };
 }  // namespace hestia

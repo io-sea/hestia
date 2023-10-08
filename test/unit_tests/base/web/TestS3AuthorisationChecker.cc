@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "S3AuthorisationSession.h"
+#include "S3AuthorisationChecker.h"
 
 #include "HttpRequest.h"
 #include "InMemoryKeyValueStoreClient.h"
@@ -81,13 +81,13 @@ std::string bad_empty_body_hash =
     "e3b0544298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
 TEST_CASE_METHOD(
-    TestS3AuthorizationFixture, "S3 authorization - object", "[authorisation]")
+    TestS3AuthorizationFixture,
+    "Test S3 authorization - object",
+    "[authorisation]")
 {
     hestia::HttpRequest request("/test.txt", hestia::HttpRequest::Method::GET);
     request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
     request.get_header().set_item("x-amz-date", "20130524T000000Z");
-
-    hestia::S3AuthorisationSession auth_session(m_user_service.get());
 
     GIVEN("A GET request")
     {
@@ -111,8 +111,11 @@ TEST_CASE_METHOD(
 
             THEN("The authorisation is valid")
             {
-                const auto result = auth_session.authorise(request);
-                REQUIRE(result.is_valid());
+                const auto response = hestia::S3AuthorisationChecker::authorise(
+                    *m_user_service, request);
+                REQUIRE(
+                    response.m_status
+                    != hestia::S3AuthorisationChecker::Status::FAILED);
             }
         }
 
@@ -124,8 +127,11 @@ TEST_CASE_METHOD(
 
             THEN("The authorisation is not valid")
             {
-                const auto result = auth_session.authorise(request);
-                REQUIRE_FALSE(result.is_valid());
+                const auto response = hestia::S3AuthorisationChecker::authorise(
+                    *m_user_service, request);
+                REQUIRE(
+                    response.m_status
+                    == hestia::S3AuthorisationChecker::Status::FAILED);
             }
         }
 
@@ -137,8 +143,11 @@ TEST_CASE_METHOD(
 
             THEN("The authorisation is not valid")
             {
-                const auto result = auth_session.authorise(request);
-                REQUIRE_FALSE(result.is_valid());
+                const auto response = hestia::S3AuthorisationChecker::authorise(
+                    *m_user_service, request);
+                REQUIRE(
+                    response.m_status
+                    == hestia::S3AuthorisationChecker::Status::FAILED);
             }
         }
     }
@@ -156,8 +165,6 @@ TEST_CASE_METHOD(
         "AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request";
     const std::string headers = "host;x-amz-content-sha256;x-amz-date";
 
-    hestia::S3AuthorisationSession auth_session(m_user_service.get());
-
     WHEN("The GET request contains one empty valued query")
     {
         hestia::Map queries;
@@ -172,8 +179,11 @@ TEST_CASE_METHOD(
 
         THEN("The authorisation is valid")
         {
-            const auto result = auth_session.authorise(request);
-            REQUIRE(result.is_valid());
+            const auto response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                != hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 
@@ -193,8 +203,11 @@ TEST_CASE_METHOD(
 
         THEN("The authorisation is valid")
         {
-            const auto result = auth_session.authorise(request);
-            REQUIRE(result.is_valid());
+            const auto response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                != hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 }
@@ -222,8 +235,6 @@ TEST_CASE_METHOD(
     const std::string sig =
         "98ad721746da40c64f1a55b78f14c238d841ea1380cd77a1b5971af0ece108bd";
 
-    hestia::S3AuthorisationSession auth_session(m_user_service.get());
-
     WHEN("The authorization header is not valid")
     {
         request.get_header().set_item(
@@ -232,8 +243,11 @@ TEST_CASE_METHOD(
 
         THEN("The authorisation will fail before payload is added")
         {
-            const auto result = auth_session.authorise(request);
-            REQUIRE_FALSE(result.is_valid());
+            const auto response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                == hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 
@@ -247,14 +261,20 @@ TEST_CASE_METHOD(
         THEN(
             "After the first call to authorise() the status is 'waiting_for_payload'")
         {
-            auto result = auth_session.authorise(request);
-            REQUIRE(result.is_waiting_for_payload());
+            auto result = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                result.m_status
+                == hestia::S3AuthorisationChecker::Status::WAITING_FOR_PAYLOAD);
 
             THEN("After adding the payload, the authorisation is valid")
             {
-                auth_session.add_chunk("Welcome to Amazon S3.");
-                result = auth_session.authorise(request);
-                REQUIRE(result.is_valid());
+                request.body() = "Welcome to Amazon S3.";
+                result         = hestia::S3AuthorisationChecker::authorise(
+                    *m_user_service, request);
+                REQUIRE(
+                    result.m_status
+                    == hestia::S3AuthorisationChecker::Status::VALID);
             }
         }
     }
@@ -266,12 +286,20 @@ TEST_CASE_METHOD(
                                  + ",SignedHeaders=" + headers
                                  + ",Signature=" + sig);
 
-        auto result = auth_session.authorise(request);
-        auth_session.add_chunk("Goodbye from Amazon S3.");
+        auto result =
+            hestia::S3AuthorisationChecker::authorise(*m_user_service, request);
+        REQUIRE(
+            result.m_status
+            == hestia::S3AuthorisationChecker::Status::WAITING_FOR_PAYLOAD);
+
+        request.body() = "Goodbye from Amazon S3.";
         THEN("The authorisation is not valid")
         {
-            auto result = auth_session.authorise(request);
-            REQUIRE_FALSE(result.is_valid());
+            result = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                result.m_status
+                == hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 }
@@ -281,8 +309,6 @@ TEST_CASE_METHOD(
     "S3 authorization - unsigned-payload",
     "[authorisation]")
 {
-    hestia::S3AuthorisationSession auth_session(m_user_service.get());
-
     hestia::HttpRequest request(
         "/lustre_hsm_4/0000000200000401_00000004_00000000.0",
         hestia::HttpRequest::Method::PUT);
@@ -324,13 +350,19 @@ TEST_CASE_METHOD(
 
         THEN("The authentication is valid")
         {
-            auto result = auth_session.authorise(request);
-            REQUIRE(result.is_valid());
+            auto response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                != hestia::S3AuthorisationChecker::Status::FAILED);
 
-            auth_session.add_chunk("Text that should not matter");
+            request.body() = "Text that should not matter";
 
-            result = auth_session.authorise(request);
-            REQUIRE(result.is_valid());
+            response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                != hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 
@@ -347,8 +379,11 @@ TEST_CASE_METHOD(
 
         THEN("The authorisation is not valid")
         {
-            auto result = auth_session.authorise(request);
-            REQUIRE_FALSE(result.is_valid());
+            const auto response = hestia::S3AuthorisationChecker::authorise(
+                *m_user_service, request);
+            REQUIRE(
+                response.m_status
+                == hestia::S3AuthorisationChecker::Status::FAILED);
         }
     }
 }

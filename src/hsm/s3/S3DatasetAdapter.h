@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Dataset.h"
+#include "S3Responses.h"
 #include "StringAdapter.h"
 
 #include <memory>
@@ -24,9 +25,8 @@ class S3DatasetAdapter : public StringAdapter {
     void dict_to_string(
         const Dictionary& dict, std::string& output) const override;
 
-    void on_list(const Dataset& dataset, std::string& output);
-
-    void on_list(const VecModelPtr& items, std::string& output);
+    void on_list_buckets(
+        const VecModelPtr& items, S3ListBucketResponse& list_bucket_response);
 
   private:
     std::string m_metadata_prefix;

@@ -6,8 +6,10 @@
 #include "S3Path.h"
 #include "S3Responses.h"
 #include "S3Status.h"
+#include "S3Types.h"
 
 #include "HttpRequest.h"
+#include "S3ListObjectsRequest.h"
 #include "S3Request.h"
 
 namespace hestia {
@@ -48,13 +50,14 @@ class S3Client {
         Stream* stream);
 
     S3ListObjectsResponse::Ptr list_objects(
-        const S3Bucket& bucket, const S3ListObjectRequest& request);
+        const S3Bucket& bucket, const S3ListObjectsRequest& request);
 
   private:
-    std::string get_authorization_header(
-        const S3UserContext& user_context, const HttpRequest& request) const;
-
-    void prepare_headers(HttpHeader& header, const std::string& path) const;
+    void prepare_headers(
+        const S3Request& request,
+        const S3Bucket& bucket,
+        HttpHeader& header,
+        const std::string& host = {}) const;
 
     S3Response::Ptr do_request(const HttpRequest& request) const;
 

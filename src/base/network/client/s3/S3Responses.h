@@ -6,36 +6,39 @@
 
 namespace hestia {
 struct S3Response {
-    S3Response(std::unique_ptr<HttpResponse> http_response)
-    {
-        if (http_response->error()) {
-            m_status = S3Status(*http_response);
-        }
-        m_http_response = std::move(http_response);
-    }
+    S3Response(std::unique_ptr<HttpResponse> http_response);
+
+    bool is_ok() const;
 
     using Ptr = std::unique_ptr<S3Response>;
     HttpResponse::Ptr m_http_response;
     S3Status m_status;
 };
 
-struct S3ListBucketResponse {
-    void deserialize(const std::string& response_body);
+class S3ListBucketResponse {
 
+  public:
+    S3ListBucketResponse() = default;
+
+    S3ListBucketResponse(const S3Response& response);
     using Ptr = std::unique_ptr<S3ListBucketResponse>;
-    std::vector<S3Bucket::Ptr> m_buckets;
+
+    void deserialize(const std::string& response_body);
+    std::string to_string() const;
+
+    std::vector<S3Bucket> m_buckets;
     S3Owner m_owner;
     S3Status m_error;
 };
 
 struct S3ListObjectsResponse {
-    S3ListObjectsResponse(bool is_version_2 = true) :
-        m_is_version2(is_version_2)
-    {
-    }
+    S3ListObjectsResponse() = default;
+
+    S3ListObjectsResponse(const S3Response& response, bool is_version_2 = true);
+    using Ptr = std::unique_ptr<S3ListObjectsResponse>;
 
     void deserialize(const std::string& response_body);
-    using Ptr = std::unique_ptr<S3ListObjectsResponse>;
+    std::string to_string() const;
 
     bool m_is_version2{true};
     S3Status m_error;

@@ -13,10 +13,24 @@ std::time_t TimeUtils::get_current_time()
 
 std::string TimeUtils::get_current_time_hr()
 {
-    auto now  = std::chrono::system_clock::now();
-    auto time = std::chrono::system_clock::to_time_t(now);
+    const auto now  = std::chrono::system_clock::now();
+    const auto time = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
     ss << std::put_time(std::localtime(&time), "%F_%H-%M-%S");
     return ss.str();
 }
+
+std::string TimeUtils::get_current_time_iso8601_basic()
+{
+    const auto now = std::chrono::system_clock::now();
+    return to_iso8601_basic(std::chrono::system_clock::to_time_t(now));
+}
+
+std::string TimeUtils::to_iso8601_basic(std::time_t time)
+{
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time), "%Y%m%dT%H%M%SZ");
+    return ss.str();
+}
+
 }  // namespace hestia

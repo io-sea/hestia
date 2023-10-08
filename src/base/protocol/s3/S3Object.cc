@@ -71,44 +71,48 @@ S3Object::S3Object(const XmlElement& element)
 XmlElementPtr S3Object::to_xml() const
 {
     auto root = XmlElement::create("Object");
+    to_xml(*root);
+    return root;
+}
 
+void S3Object::to_xml(XmlElement& element) const
+{
     if (!m_checksum_algorithm.empty()) {
         auto e = XmlElement::create("ChecksumAlgorithm");
         e->set_text(m_checksum_algorithm);
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
     if (!m_etag.empty()) {
         auto e = XmlElement::create("ETag");
         e->set_text(m_etag);
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
     if (!m_key.empty()) {
         auto e = XmlElement::create("Key");
         e->set_text(m_key);
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
     if (!m_last_modified.m_value.empty()) {
         auto e = XmlElement::create("LastModified");
         e->set_text(m_last_modified.m_value);
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
     if (m_owner.populated()) {
-        root->add_child(m_owner.to_xml());
+        element.add_child(m_owner.to_xml());
     }
     if (m_restore_status.populated()) {
-        root->add_child(m_restore_status.to_xml());
+        element.add_child(m_restore_status.to_xml());
     }
     if (m_size > 0) {
         auto e = XmlElement::create("Size");
         e->set_text(std::to_string(m_size));
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
     if (!m_storage_class.empty()) {
         auto e = XmlElement::create("StorageClass");
         e->set_text(m_storage_class);
-        root->add_child(std::move(e));
+        element.add_child(std::move(e));
     }
-    return root;
 }
 
 std::string S3Object::to_string() const

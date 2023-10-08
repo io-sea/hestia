@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "FileUtils.h"
 #include "JsonUtils.h"
 #include "TestUtils.h"
 
@@ -8,8 +9,10 @@
 
 TEST_CASE("Test JsonUtils - read/write", "[common]")
 {
-    auto test_output_dir = TestUtils::get_test_output_dir();
-    auto json_file_path  = test_output_dir / "json_file.txt";
+    auto test_output_dir = TestUtils::get_test_output_dir() / "TestJsonUtils";
+    std::filesystem::create_directory(test_output_dir);
+
+    auto json_file_path = test_output_dir / "json_file.txt";
 
     hestia::Map metadata;
     metadata.set_item("my_key0", "my_val0");
@@ -24,6 +27,8 @@ TEST_CASE("Test JsonUtils - read/write", "[common]")
     REQUIRE(expected_metadata.get_item("my_key0") == "my_val0");
     REQUIRE(expected_metadata.get_item("my_key1") == "my_val1");
     REQUIRE(expected_metadata.get_item("my_key2") == "my_val2");
+
+    std::filesystem::remove_all(test_output_dir);
 }
 
 TEST_CASE("Test JsonUtils - set/get values", "[common]")
@@ -37,8 +42,9 @@ TEST_CASE("Test JsonUtils - set/get values", "[common]")
     REQUIRE(values[0] == "my_val0");
     REQUIRE(values[1] == "my_val1");
 
-    auto test_output_dir = TestUtils::get_test_output_dir();
-    auto json_file_path  = test_output_dir / "json_file.txt";
+    auto test_output_dir = TestUtils::get_test_output_dir() / "TestJsonUtils";
+    std::filesystem::create_directory(test_output_dir);
+    auto json_file_path = test_output_dir / "json_file.txt";
 
     std::vector<hestia::KeyValuePair> kv_pairs;
     kv_pairs = {
@@ -59,12 +65,16 @@ TEST_CASE("Test JsonUtils - set/get values", "[common]")
         hestia::JsonUtils::get_value(json_file_path, given_key, expected_value);
     REQUIRE(value == 1);
     REQUIRE(expected_value == "my_new_val0");
+
+    std::filesystem::remove_all(test_output_dir);
 }
 
 TEST_CASE("Test JsonUtils - has/remove keys", "[common]")
 {
-    auto test_output_dir = TestUtils::get_test_output_dir();
-    auto json_file_path  = test_output_dir / "json_file.txt";
+    auto test_output_dir = TestUtils::get_test_output_dir() / "TestJsonUtils";
+    std::filesystem::create_directory(test_output_dir);
+
+    auto json_file_path = test_output_dir / "json_file.txt";
     hestia::Map metadata;
     metadata.set_item("my_key0", "my_val0");
     metadata.set_item("my_key1", "my_val1");
@@ -90,6 +100,8 @@ TEST_CASE("Test JsonUtils - has/remove keys", "[common]")
         json_file_path, {"my_key1", "my_key2"}, expected_founds);
     REQUIRE(expected_founds[0] == 0);
     REQUIRE(expected_founds[1] == 0);
+
+    std::filesystem::remove_all(test_output_dir);
 }
 
 TEST_CASE("Test JsonUtils - metadata to and from json", "[common]")

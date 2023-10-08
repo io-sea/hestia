@@ -20,7 +20,7 @@ add_module(
         object_store/HsmObjectStoreClientFactory.h
         object_store/HsmObjectStoreClientManager.h
         s3/S3DatasetAdapter.h
-        s3/S3ObjectAdapter.h
+        s3/S3HsmObjectAdapter.h
     SOURCES
         data_placement_engine/BasicDataPlacementEngine.cc
         data_placement_engine/DataPlacementEngineFactory.cc
@@ -37,7 +37,7 @@ add_module(
         object_store/HsmObjectStoreClientFactory.cc
         object_store/HsmObjectStoreClientManager.cc
         s3/S3DatasetAdapter.cc
-        s3/S3ObjectAdapter.cc
+        s3/S3HsmObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS
         data_placement_engine
         hsm_service

@@ -6,9 +6,9 @@
 namespace hestia {
 class DistributedHsmService;
 
-class S3ContainerListView : public WebView {
+class S3BucketListView : public WebView {
   public:
-    S3ContainerListView(DistributedHsmService* service);
+    S3BucketListView(DistributedHsmService* service);
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,

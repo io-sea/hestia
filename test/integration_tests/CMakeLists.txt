@@ -31,11 +31,7 @@ set(INTEGRATION_TEST_SOURCES
 add_executable(${INTEGRATION_TEST_MODULE} ${INTEGRATION_TEST_SOURCES})
 
 target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE
-    hestia_http_client
-    hestia_common
-    hestia_app
-    hestia_server
-    hestia_web
+    hestia_lib
     hestia_mocks
     hestia_test_utils
     Catch2::Catch2

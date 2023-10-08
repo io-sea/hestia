@@ -6,14 +6,14 @@
 
 #include <iostream>
 
-TEST_CASE("Test S3Error", "[s3]")
+TEST_CASE("Test S3Status", "[s3]")
 {
     hestia::S3Request request;
     request.m_path        = hestia::S3Path("/my_bucket");
     request.m_tracking_id = "1234";
 
     hestia::S3Status error(
-        hestia::S3Status::Code::_400_AUTHORIZATION_HEADER_MALFORMED, request);
+        hestia::S3StatusCode::_400_AUTHORIZATION_HEADER_MALFORMED, request);
 
     hestia::HttpResponse http_response;
     http_response.body() = error.to_string();

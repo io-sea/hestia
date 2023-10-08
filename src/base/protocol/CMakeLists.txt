@@ -20,7 +20,7 @@ add_module(
         s3/S3Object.h
         s3/S3Owner.h
         s3/S3Bucket.h
-        s3/S3AuthorisationObject.h
+        s3/S3ListObjectsRequest.h
     SOURCES
         http/HttpRequest.cc 
         http/HttpResponse.cc 
@@ -34,7 +34,7 @@ add_module(
         s3/S3Owner.cc
         s3/S3Bucket.cc
         s3/S3Request.cc
-        s3/S3AuthorisationObject.cc
+        s3/S3ListObjectsRequest.cc
     INTERNAL_INCLUDE_DIRS 
         http
         request

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "CrudIdentifier.h"
 #include "HttpRequest.h"
 #include "Map.h"
 #include "S3Path.h"
+#include "S3Request.h"
 
 #include "Logger.h"
 
@@ -41,19 +43,25 @@
 namespace hestia {
 class S3ViewUtils {
   public:
-    static void metadata_to_header(const Map& metadata, HttpResponse* response)
-    {
-        auto on_item =
-            [&response](const std::string& key, const std::string& value) {
-                response->header().set_item(S3Path::meta_prefix + key, value);
-            };
-        metadata.for_each_item(on_item);
-    }
+    static CrudIdentifier path_to_crud_id(const S3Path& path);
 
-    static void header_to_metadata(const HttpRequest& request, Map& metadata)
-    {
-        metadata =
-            request.get_header().get_items_with_prefix(S3Path::meta_prefix);
-    }
+    static HttpResponse::Ptr on_server_error(
+        const S3Request& req, const std::string& msg);
+
+    static HttpResponse::Ptr on_no_such_bucket(const S3Request& req);
+
+    static HttpResponse::Ptr on_no_such_key(
+        const S3Request& req, bool no_bucket = false);
+
+    static HttpResponse::Ptr on_bucket_already_exists(const S3Request& req);
+
+    static HttpResponse::Ptr on_tried_to_delete_nonempty_bucket(
+        const S3Request& req);
+
+    static void set_common_headers(HttpResponse& response);
+
+    static void metadata_to_header(const Map& metadata, HttpResponse* response);
+
+    static void header_to_metadata(const HttpRequest& request, Map& metadata);
 };
 }  // namespace hestia

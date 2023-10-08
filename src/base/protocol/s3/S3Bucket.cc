@@ -4,7 +4,10 @@
 
 namespace hestia {
 
-S3Bucket::S3Bucket(const std::string& name) : m_name(name) {}
+S3Bucket::S3Bucket(const std::string& name, const S3Timestamp& creation_date) :
+    m_name(name), m_creation_date(creation_date)
+{
+}
 
 S3Bucket::S3Bucket(const XmlElement& element)
 {
@@ -18,8 +21,24 @@ S3Bucket::S3Bucket(const XmlElement& element)
     }
 }
 
+XmlElementPtr S3Bucket::to_xml() const
+{
+    auto bucket_element = XmlElement::create("Bucket");
+
+    auto creation_date_element = XmlElement::create("CreationDate");
+    creation_date_element->set_text(m_creation_date.m_value);
+    bucket_element->add_child(std::move(creation_date_element));
+
+    auto name_element = XmlElement::create("Name");
+    name_element->set_text(m_name);
+    bucket_element->add_child(std::move(name_element));
+
+    return bucket_element;
+}
+
 // https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
-S3Status S3Bucket::validate_name(const std::string& tracking_id) const
+S3Status S3Bucket::validate_name(
+    const std::string& tracking_id, const S3UserContext& user_context) const
 {
     std::size_t max_length = 63;
 
@@ -99,12 +118,11 @@ S3Status S3Bucket::validate_name(const std::string& tracking_id) const
         return {};
     }
     else {
-        S3Request s3_request;
+        S3Request s3_request(user_context);
         s3_request.m_path.m_bucket_name = m_name;
         s3_request.m_tracking_id        = tracking_id;
         return {
-            S3Status::Code::_400_INVALID_BUCKET_NAME, s3_request,
-            error_message};
+            S3StatusCode::_400_INVALID_BUCKET_NAME, s3_request, error_message};
     }
 }
 
@@ -113,10 +131,12 @@ const std::string& S3Bucket::get_location_constraint() const
     return m_location_constraint;
 }
 
-std::unique_ptr<XmlElement> S3Bucket::get_location_constraint_xml() const
+void S3Bucket::add_location_constraint(XmlElement& element) const
 {
-    auto xml_element = XmlElement::create("LocationContrains");
-    xml_element->set_text(m_location_constraint);
-    return xml_element;
+    if (!m_location_constraint.empty()) {
+        auto constraint_element = XmlElement::create("LocationContrains");
+        constraint_element->set_text(m_location_constraint);
+        element.add_child(std::move(constraint_element));
+    }
 }
 }  // namespace hestia

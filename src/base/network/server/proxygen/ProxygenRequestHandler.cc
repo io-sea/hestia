@@ -49,7 +49,7 @@ void ProxygenRequestHandler::onRequest(
                  .has_expect_continue()) {
         LOG_INFO("Info responding to expect continue");
         auto response =
-            HttpResponse::create(HttpError(HttpError::Code::_100_CONTINUE));
+            HttpResponse::create(HttpStatus(HttpStatus::Code::_100_CONTINUE));
         ProxygenMessage::build_response(downstream_, response.get(), false);
     }
 }
@@ -72,7 +72,7 @@ void ProxygenRequestHandler::onBody(std::unique_ptr<folly::IOBuf> body) noexcept
             ProxygenMessage::build_response(
                 downstream_,
                 HttpResponse::create(
-                    HttpError(HttpError::Code::_500_INTERNAL_SERVER_ERROR))
+                    HttpStatus(HttpStatus::Code::_500_INTERNAL_SERVER_ERROR))
                     .get(),
                 true);
             m_response_sent = true;

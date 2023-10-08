@@ -1,12 +1,17 @@
 #pragma once
 
+#include "TimeUtils.h"
+
+#include <ctime>
+#include <iostream>
 #include <string>
 
 namespace hestia {
 struct S3Timestamp {
-    S3Timestamp() = default;
+    S3Timestamp() { m_value = TimeUtils::get_current_time_iso8601_basic(); }
 
     S3Timestamp(const std::string& value) : m_value(value) {}
+
     std::string m_value;
 };
 

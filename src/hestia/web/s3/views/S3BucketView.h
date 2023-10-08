@@ -1,14 +1,15 @@
 #pragma once
 
 #include "S3DatasetAdapter.h"
-#include "WebView.h"
+#include "S3HsmObjectAdapter.h"
+#include "S3WebView.h"
 
 namespace hestia {
 class DistributedHsmService;
 
-class S3ContainerView : public WebView {
+class S3BucketView : public S3WebView {
   public:
-    S3ContainerView(DistributedHsmService* service);
+    S3BucketView(DistributedHsmService* service);
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,
@@ -31,7 +32,7 @@ class S3ContainerView : public WebView {
         const AuthorizationContext&) override;
 
   private:
-    DistributedHsmService* m_service{nullptr};
-    std::unique_ptr<S3DatasetAdapter> m_dataset_adatper;
+    std::unique_ptr<S3DatasetAdapter> m_dataset_adapter;
+    std::unique_ptr<S3HsmObjectAdapter> m_object_adapter;
 };
 }  // namespace hestia

@@ -11,6 +11,8 @@ class S3Config : public SerializeableWithFields {
 
     S3Config();
 
+    S3Config(const S3Config& other);
+
     const std::string& get_user_agent() const;
 
     const std::string& get_default_host() const;
@@ -19,20 +21,13 @@ class S3Config : public SerializeableWithFields {
 
     std::string get_secret_access_key() const;
 
-    const std::string& get_metadata_prefix() const
-    {
-        return m_metadataprefix.get_value();
-    }
+    const std::string& get_metadata_prefix() const;
 
-    const std::string& get_default_bucket_name() const
-    {
-        return m_default_bucket_name.get_value();
-    }
+    const std::string& get_default_bucket_name() const;
 
-    bool is_path_uri_style() const
-    {
-        return m_uri_style.get_value() == UriStyle::PATH;
-    }
+    bool is_path_uri_style() const;
+
+    S3Config& operator=(const S3Config& other);
 
   private:
     void init();

@@ -21,10 +21,10 @@ set(UNIT_TEST_SOURCES
     base/common/TestYamlUtils.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
+    base/network/TestS3Client.cc
     base/protocol/TestHttpRequest.cc
-    base/protocol/TestS3Client.cc
     base/protocol/TestS3Path.cc
-    base/protocol/TestS3Error.cc
+    base/protocol/TestS3Status.cc
     base/storage/TestBlockStore.cc
     base/storage/TestInMemoryObjectStoreClient.cc
     base/storage/TestFileObjectStoreClient.cc
@@ -37,7 +37,7 @@ set(UNIT_TEST_SOURCES
     base/crud/TestEventFeed.cc
     base/web/TestWebApp.cc
     base/web/TestUserService.cc
-    base/web/TestS3Authorization.cc
+    base/web/TestS3AuthorisationChecker.cc
     hsm/TestMockMotrBackend.cc
     hsm/TestMockMotrHsm.cc
     hsm/TestMotrHsmClient.cc
@@ -65,12 +65,7 @@ if(NOT APPLE)
 endif()
 
 target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
-    hestia_common
-    hestia_app
     hestia_lib
-    hestia_server
-    hestia_storage
-    hestia_hsm
     hestia_mock_motr
     hestia_mocks
     hestia_test_utils
@@ -93,7 +88,6 @@ if(${HESTIA_WITH_MOTR})
     target_code_coverage(hestia_motr_plugin ALL)
 endif()
 
-target_code_coverage(hestia_mock_s3_plugin ALL)
 target_code_coverage(hestia_s3_plugin ALL)
 target_code_coverage(hestia_main)
 target_code_coverage(hestia_lib ALL)

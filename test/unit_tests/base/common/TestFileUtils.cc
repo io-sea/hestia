@@ -9,21 +9,18 @@
 
 TEST_CASE("Test FileUtils - file name/extension", "[common]")
 {
-    auto test_output_dir = TestUtils::get_test_output_dir();
-    std::filesystem::current_path(TestUtils::get_test_output_dir());
-    std::filesystem::directory_entry dir_entry{"fileutils_dir"};
-    std::filesystem::create_directory(dir_entry);
-    const std::filesystem::path path{dir_entry};
+    auto test_output_dir = TestUtils::get_test_output_dir() / "TestFileUtils";
 
+    std::filesystem::create_directory(test_output_dir);
 
-    std::ofstream(path / "file.txt");
-    std::filesystem::directory_entry file_path{path / "file.txt"};
+    std::ofstream(test_output_dir / "file.txt");
+    std::filesystem::directory_entry file_path{test_output_dir / "file.txt"};
     REQUIRE(hestia::FileUtils::is_file_with_extension(file_path, ".txt"));
     REQUIRE(
         hestia::FileUtils::get_filename_without_extension(file_path) == "file");
 
-    std::ofstream(path / "new_file.txt");
-    std::filesystem::directory_entry new_path{path / "new_file.txt"};
+    std::ofstream(test_output_dir / "new_file.txt");
+    std::filesystem::directory_entry new_path{test_output_dir / "new_file.txt"};
     hestia::FileUtils::create_if_not_existing(new_path);
     REQUIRE(
         hestia::FileUtils::get_filename_without_extension(new_path)
@@ -31,10 +28,10 @@ TEST_CASE("Test FileUtils - file name/extension", "[common]")
 
     REQUIRE(hestia::FileUtils::get_file_size(file_path) == 0);
 
-    hestia::FileUtils::empty_directory(dir_entry);
-    REQUIRE(is_empty(dir_entry));
+    hestia::FileUtils::empty_directory(test_output_dir);
+    REQUIRE(is_empty(test_output_dir));
 
-    std::filesystem::remove_all(dir_entry);
+    std::filesystem::remove_all(test_output_dir);
 }
 
 TEST_CASE("Test File- read/write", "[common]")

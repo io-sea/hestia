@@ -1,7 +1,7 @@
 #include "HestiaS3WebApp.h"
 
-#include "S3ContainerListView.h"
-#include "S3ContainerView.h"
+#include "S3BucketListView.h"
+#include "S3BucketView.h"
 #include "S3ObjectView.h"
 
 #include "S3AuthenticationMiddleware.h"
@@ -29,10 +29,9 @@ void HestiaS3WebApp::set_up_routing()
     auto s3_router = std::make_unique<S3UrlRouter>();
 
     s3_router->set_object_view(std::make_unique<S3ObjectView>(m_hsm_service));
-    s3_router->set_container_view(
-        std::make_unique<S3ContainerView>(m_hsm_service));
-    s3_router->set_container_list_view(
-        std::make_unique<S3ContainerListView>(m_hsm_service));
+    s3_router->set_bucket_view(std::make_unique<S3BucketView>(m_hsm_service));
+    s3_router->set_bucket_list_view(
+        std::make_unique<S3BucketListView>(m_hsm_service));
 
     m_url_router = std::move(s3_router);
 }

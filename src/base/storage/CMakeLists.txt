@@ -26,6 +26,8 @@ add_module(
         clients/redis/RedisKeyValueStoreClient.h
         clients/s3/S3ObjectStoreClient.h 
         clients/s3/S3Config.h
+        clients/s3/S3ObjectAdapter.h
+        clients/s3/S3BucketAdapter.h
         hsm/HsmObjectStoreClient.h
         hsm/HsmObjectStoreClientPlugin.h
         requests/HsmObjectStoreError.h
@@ -54,6 +56,8 @@ add_module(
         clients/redis/RedisKeyValueStoreClient.cc
         clients/s3/S3ObjectStoreClient.cc 
         clients/s3/S3Config.cc
+        clients/s3/S3ObjectAdapter.cc
+        clients/s3/S3BucketAdapter.cc
         hsm/HsmObjectStoreClient.cc
         hsm/HsmObjectStoreClientPlugin.cc
         requests/HsmObjectStoreError.cc

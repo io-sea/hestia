@@ -7,7 +7,7 @@
 #include <iostream>
 
 namespace hestia {
-XmlDocument::XmlDocument() : m_prolog(XmlProlog::create("xml")) {}
+XmlDocument::XmlDocument() : m_prolog(XmlProlog::create()) {}
 
 XmlDocument::~XmlDocument() {}
 
@@ -41,18 +41,19 @@ bool XmlDocument::has_root() const
     return bool(m_root);
 }
 
+std::string XmlDocument::to_string(const XmlElement& element)
+{
+    std::string content = XmlProlog().to_string() + "\n";
+    content += element.to_string();
+    return content;
+}
+
 std::string XmlDocument::to_string() const
 {
     std::string content;
     if (m_prolog) {
-        content += "<?xml";
-        for (const auto& [key, attribute] : m_prolog->get_attributes()) {
-            content += " " + attribute->get_name() + "=\""
-                       + attribute->get_value() + "\"";
-        }
-        content += "?>\n";
+        content += m_prolog->to_string() + "\n";
     }
-
     if (m_root) {
         content += m_root->to_string();
     }
