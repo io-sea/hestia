@@ -88,7 +88,6 @@ if(${HESTIA_WITH_MOTR})
     target_code_coverage(hestia_motr_plugin ALL)
 endif()
 
-target_code_coverage(hestia_s3_plugin ALL)
 target_code_coverage(hestia_main)
 target_code_coverage(hestia_lib ALL)
 target_code_coverage(${UNIT_TEST_MODULE} ALL)
