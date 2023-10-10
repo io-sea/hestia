@@ -126,6 +126,12 @@ export CXX=$LLVM_PATH/bin/clang++
 
 To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be set to `ON`, described further [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
 
+### CI Validation
+
+CI configuration linting and script validation can be run with `make ci_tests` and require the content of [`infra/scripts/ci/hestia_ci/requirements.txt`](/infra/scripts/ci/hestia_ci/requirements.txt) to be installed as Python packages (eg with `python3 -m pip install -U -r infra/scripts/ci/hestia_ci/requirements.txt`). 
+
+To enable linting via the Gitlab API, please save your [private token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) to [`infra/scripts/ci/gitlab-ci-auth.json`](/infra/scripts/ci/gitlab-ci-auth.json).
+
 ## Packaging
 
 Hestia can be packaged with:
@@ -227,7 +233,7 @@ will need to provide a "bot user token" or "project access token", instructions 
 ### Update CI Variables (Persistent CI data) - [`update_var.py`](/infra/scripts/ci/update_var.py)
 
 ```sh
-usage: update_var.py [-h] [--bot_token BOT_TOKEN] [-p] [-m] [-M] key value
+usage: update_var.py [-h] --bot_token BOT_TOKEN [-ver_inc {patch,minor,major}] key value
 
 positional arguments:
   key
@@ -236,59 +242,68 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --bot_token BOT_TOKEN
-  # Optional flags
-  -p, --version_increment_patch
-  -m, --version_increment_minor
-  -M, --version_increment_major
+  -ver_inc {patch,minor,major}, --version_increment {patch,minor,major}
 ```
 
 Updates a key value pair in the CI's persistent variable store, optionally treating it as a version
-string, with convenience options to bump particular components.
+string, with convenience option to bump particular components.
 
 
-### Deploy devel to master (Staging Workflow for Nightly CI) - [`nightly_deploy.py`](/infra/scripts/ci/nightly_deploy.py)
+### Merge devel to master (Staging Workflow for Nightly CI) - [`nightly_merge.py`](/infra/scripts/ci/nightly_merge.py)
 
 ```sh
-usage: nightly_deploy.py [-h] [--project_name PROJECT_NAME] [--arch ARCH] [--version VERSION] [--bot_token BOT_TOKEN] [--merge_json MERGE_JSON] [--nightly_var NIGHTLY_VAR]
-                         [--patch_var PATCH_VAR] [--commit_var COMMIT_VAR] [--nightly_commit_var NIGHTLY_COMMIT_VAR]
+usage: nightly_merge.py [-h] --bot_token BOT_TOKEN --project_name PROJECT_NAME --version VERSION --arch ARCH [--source_branch SOURCE_BRANCH] [--target_branch TARGET_BRANCH]
+                        [--title TITLE] [--description DESCRIPTION] [--remove_source_branch REMOVE_SOURCE_BRANCH] [--squash_on_merge SQUASH_ON_MERGE] [--auto_merge AUTO_MERGE]
+                        [--nightly_var NIGHTLY_VAR] [--patch_var PATCH_VAR] [--commit_var COMMIT_VAR] [--nightly_commit_var NIGHTLY_COMMIT_VAR]
 
 options:
   -h, --help            show this help message and exit
-  --project_name PROJECT_NAME
-  --arch ARCH
-  --version VERSION
   --bot_token BOT_TOKEN
-  --merge_json MERGE_JSON
-# Optional overrides for CI variable names
-  --nightly_var NIGHTLY_VAR 
+
+Arguments for BuildInfo:
+  --project_name PROJECT_NAME
+  --version VERSION
+  --arch ARCH
+
+Arguments for MergeArgs:
+  --source_branch SOURCE_BRANCH
+  --target_branch TARGET_BRANCH
+  --title TITLE
+  --description DESCRIPTION
+  --remove_source_branch REMOVE_SOURCE_BRANCH
+  --squash_on_merge SQUASH_ON_MERGE
+  --auto_merge AUTO_MERGE
+  --nightly_var NIGHTLY_VAR
   --patch_var PATCH_VAR
   --commit_var COMMIT_VAR
   --nightly_commit_var NIGHTLY_COMMIT_VAR
 ```
 
 If the nightly CI workflow passes, this deployment script is called. It will merge the source branch 
-specified in [`nightly_merge.json`](/infra/scripts/ci/nightly_merge.json) to the target branch, tag
-the current nightly version on the target branch, and update the next patch release version, next
-nightly version, and last commit SHA processed by the nightly to match this. Note that the last nightly 
-commit SHA will always be updated, even if the pipline fails.
+specified to the target branch, tag the current nightly version on the target branch, and update the 
+next patch release version, next nightly version, and last commit SHA processed by the nightly to match 
+this. Note that the last nightly commit SHA will always be updated, even if the pipline fails.
 
 ### Deploy Release from master - [`master_deploy.py`](/infra/scripts/ci/master_deploy.py)
 
 ```sh
-usage: master_deploy.py [-h] [--artifacts_file ARTIFACTS_FILE] [--artifacts_dir ARTIFACTS_DIR] [--project_name PROJECT_NAME] [--arch ARCH] [--version VERSION]
-                        [--bot_token BOT_TOKEN] [--schedule_type {DEPLOY_MASTER_PATCH,DEPLOY_MASTER_MINOR,DEPLOY_MASTER_MAJOR}] [--nightly_var NIGHTLY_VAR] [--patch_var PATCH_VAR]
-                        [--minor_var MINOR_VAR] [--major_var MAJOR_VAR] [--release_branch RELEASE_BRANCH]
+usage: master_deploy.py [-h] --bot_token BOT_TOKEN --project_name PROJECT_NAME --version VERSION --arch ARCH --artifacts_file ARTIFACTS_FILE --artifacts_dir ARTIFACTS_DIR
+                        --schedule_type SCHEDULE_TYPE [--nightly_var NIGHTLY_VAR] [--patch_var PATCH_VAR] [--minor_var MINOR_VAR] [--major_var MAJOR_VAR]
+                        [--release_branch RELEASE_BRANCH]
 
 options:
   -h, --help            show this help message and exit
+  --bot_token BOT_TOKEN
+
+Arguments for BuildInfo:
+  --project_name PROJECT_NAME
+  --version VERSION
+  --arch ARCH
+
+Arguments for DeployArgs:
   --artifacts_file ARTIFACTS_FILE
   --artifacts_dir ARTIFACTS_DIR
-  --project_name PROJECT_NAME
-  --arch ARCH
-  --version VERSION
-  --bot_token BOT_TOKEN
-  --schedule_type {DEPLOY_MASTER_PATCH,DEPLOY_MASTER_MINOR,DEPLOY_MASTER_MAJOR}
-# Optional overrides for CI defaults
+  --schedule_type SCHEDULE_TYPE
   --nightly_var NIGHTLY_VAR
   --patch_var PATCH_VAR
   --minor_var MINOR_VAR

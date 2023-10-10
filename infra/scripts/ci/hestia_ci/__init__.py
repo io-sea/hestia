@@ -20,16 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import hestia_ci
-
-from hestia_ci.gitlab_api import GitlabAPI
+from hestia_ci.ci_manager import CIManager
 from hestia_ci.build_objects import BuildInfo
-from hestia_ci.exceptions import *
+from hestia_ci.gitlab_client import GitlabClient
 
 
 __all__ = [
-    "GitlabAPI",
+    "CIManager",
     "BuildInfo",
+    "GitlabClient"
 ]
-
-__all__.extend(hestia_ci.exceptions.__all__)

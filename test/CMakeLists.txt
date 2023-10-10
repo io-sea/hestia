@@ -14,4 +14,12 @@ if(HESTIA_BUILD_TESTS)
     add_subdirectory(unit_tests)
     add_subdirectory(integration_tests)
     add_subdirectory(e2e_tests)
+
+    add_custom_target(${PROJECT_NAME}_ci_tests)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}_ci_tests POST_BUILD
+        COMMAND python3 -m pytest --verbose ${CMAKE_SOURCE_DIR}/infra/scripts/ci/hestia_ci
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} VERBATIM
+    )
+
 endif()

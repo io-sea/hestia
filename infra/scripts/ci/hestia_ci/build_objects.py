@@ -1,32 +1,33 @@
 import string
 import json
 from pathlib import Path
+from dataclasses import dataclass
 
-from hestia_ci.utils import Version
+from hestia_ci.utils import ParsableArgs
 
-class BuildInfo():    
-    def __init__(self, project_name: str, version: str | Version, arch: str) -> None:
-        self.project_name = project_name
-        self.version = version
-        self.arch = arch
+@dataclass
+class BuildInfo(ParsableArgs):    
+    project_name: str
+    version: str
+    arch: str
 
+@dataclass
+class BuildArtifact:
+    name: str
+    type: str
+    description: str
+    optional: bool = False
+    link_type: str = "other"
 
-class BuildArtifact():
-
-    def __init__(self, artifact_dict: dict) -> None:
-        self.name = artifact_dict["name"]
-        self.type = artifact_dict["type"]
-        self.link_type = artifact_dict["link_type"]
-        self.description = artifact_dict["description"]
-        self.optional = False
-        if "optional" in artifact_dict:
-            self.optional = artifact_dict["optional"]
-
+    @classmethod
+    def from_dict(cls, artifact_dict: dict):
+        return cls(**artifact_dict)
+        
     def get_path(self) -> Path:
-        return self.name / "." / self.type
+        return Path(self.name) / "." / self.type
 
 
-class BuildArtifacts():
+class BuildArtifacts:
 
     def __init__(self, build_info: BuildInfo) -> None:
         self.artifacts = []
@@ -37,10 +38,10 @@ class BuildArtifacts():
             artifact_file_content = string.Template(f.read())
 
         artifact_file_content.substitute({
-            "PROJECT", self.build_info.project_name,
-            "VERSION", str(self.build_info.version),
-            "ARCH", self.build_info.arch,
+            "PROJECT": self.build_info.project_name,
+            "VERSION": self.build_info.version,
+            "ARCH": self.build_info.arch
         })
 
-        artifact_json = json.loads(artifact_file_content)
-        self.artifacts = [BuildArtifact(a) for a in artifact_json]
+        artifact_json = json.loads(str(artifact_file_content))
+        self.artifacts = [BuildArtifact.from_dict(a) for a in artifact_json]

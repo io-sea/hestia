@@ -340,12 +340,11 @@ Nightly_deploy:
     - apk add py3-pip
     - *install_script_dependencies
   script:
-    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/nightly_deploy.py
+    - python3 ${CI_PROJECT_DIR}/infra/scripts/ci/nightly_merge.py
       --project_name=hestia
       --arch=$(arch)
       --version=$HESTIA_PROJECT_VERSION
       --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
-      --merge_json=${CI_PROJECT_DIR}/infra/scripts/ci/nightly_merge.json
 
 Nightly_cleanup:
   <<: *default_nightly_job
@@ -407,7 +406,7 @@ Master_build:
       --bot_token=$(cat $CI_CUSTOM_JOB_TOKEN)
       --key=CI_NIGHTLY_VERSION
       --value=$CI_NIGHTLY_VERSION
-      --version_increment_patch
+      --version_increment patch
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:

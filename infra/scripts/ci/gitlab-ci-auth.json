@@ -1,0 +1,5 @@
+{
+    "gitlab_api_url": "https://git.ichec.ie/",
+    "gitlab_project_id": "418",
+    "gitlab_private_token": "YOUR_AUTH_TOKEN"
+}

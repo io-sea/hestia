@@ -1,5 +1,20 @@
-from typing import NamedTuple
+import argparse
+from typing import NamedTuple, Sequence, Self
+from dataclasses import fields, dataclass, MISSING
 
+@dataclass
+class ParsableArgs:
+    """
+    Dataclass-based base class with automatic field parsing via argparse
+    """
+    @classmethod
+    def add_arguments(cls, parser: argparse.ArgumentParser) -> None:
+        group = parser.add_argument_group(f"Arguments for {cls.__name__}")
+        for f in fields(cls):
+            if f.default == MISSING:
+                group.add_argument(f"--{f.name}", type=f.type, required=True, help=f.metadata.get('help'))
+            else: 
+                group.add_argument(f"--{f.name}", type=f.type, default=f.default, help=f.metadata.get('help'))
 
 class Version(NamedTuple):
     major: int = 0

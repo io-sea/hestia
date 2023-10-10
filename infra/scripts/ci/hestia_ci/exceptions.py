@@ -1,4 +1,2 @@
-class HestiaConfigurationError(Exception):
+class HestiaPermissionError(Exception):
     pass
-
-__all__ = [name for name in dir() if name.endswith("Error")]
