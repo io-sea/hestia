@@ -130,7 +130,7 @@ To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be se
 
 CI configuration linting and script validation can be run with `make ci_tests` and require the content of [`infra/scripts/ci/hestia_ci/requirements.txt`](/infra/scripts/ci/hestia_ci/requirements.txt) to be installed as Python packages (eg with `python3 -m pip install -U -r infra/scripts/ci/hestia_ci/requirements.txt`). 
 
-To enable linting via the Gitlab API, please save your [private token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) to [`infra/scripts/ci/gitlab-ci-auth.json`](/infra/scripts/ci/gitlab-ci-auth.json).
+To enable linting via the Gitlab API, please save your [private token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) to [`infra/scripts/ci/gitlab_ci_auth.json`](/infra/scripts/ci/gitlab_ci_auth.json).
 
 ## Packaging
 

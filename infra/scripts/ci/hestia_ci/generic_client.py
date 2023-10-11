@@ -39,7 +39,13 @@ class GenericClient(ABC):
         Updates a persistent CI variable, for future runs of the CI
         """
         pass
-
+    
+    @abstractmethod
+    def get_variable(self, key: str) -> str | None:
+        """
+        Retrieve a persistent CI variable value from the API
+        """
+    
     @abstractmethod
     def create_merge_request(self, merge_params: Dict[str, Any], auto_merge: bool = True) -> None:
         """

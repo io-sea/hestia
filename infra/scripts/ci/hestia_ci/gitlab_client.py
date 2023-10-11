@@ -30,7 +30,8 @@ class GitlabClient(GenericClient):
 
         self.gl_job = gitlab.Gitlab(
                     url=api_url, job_token=token).projects.get(project_id, lazy=True)
-        
+    
+        self._gl_bot = None
         if private_token is not None:
             self._gl_bot = gitlab.Gitlab(
                             url=api_url, private_token=private_token).projects.get(project_id, lazy=True)
@@ -42,18 +43,18 @@ class GitlabClient(GenericClient):
         return self._gl_bot
 
     def get_artifact_url(self, artifact: BuildArtifact, build_info: BuildInfo) -> str:
-        return f"""{self.gl_job.generic_packages.path}
-                    /{build_info.project_name}
-                    /{build_info.version}
-                    /{artifact.get_path()}"""
+        return (f"{self.gl_job.generic_packages.path}"
+                f"/{build_info.project_name}"
+                f"/{build_info.version}"
+                f"/{artifact.get_path()}")
     
     def upload_artifact(self, source: Path, build_info: BuildInfo) -> None:
         """
         Persists a build artifact to the Gitlab project's package registry.
         """        
-        self.gl_job.upload_artifact(
+        self.gl_job.generic_packages.upload(
             package_name=build_info.project_name,
-            package_version=str(build_info.version),
+            package_version=build_info.version,
             file_name=source.name,
             path=source
         )
@@ -75,12 +76,21 @@ class GitlabClient(GenericClient):
                 "link_type": artifact.link_type
             })
 
-    def update_variable(self, key: str, val: str):
+    def update_variable(self, key: str, val: str) -> None:
         """
         Updates a persistent CI variable, for future runs of the CI
         """
         self.gl_bot.variables.update(key, {'value': val})
-
+    
+    def get_variable(self, key: str) -> str | None:
+        """
+        Retrieve a persistent CI variable value from the API
+        """
+        try:
+            return self.gl_job.variables.get(key).attributes.get("value")
+        except gitlab.GitlabGetError:
+            return None
+        
     def create_merge_request(self, merge_params: Dict[str, Any], auto_merge: bool = True):
         """
         Create a merge request with given parameter dictionary, specified here:

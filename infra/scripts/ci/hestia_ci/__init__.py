@@ -23,10 +23,11 @@
 from hestia_ci.ci_manager import CIManager
 from hestia_ci.build_objects import BuildInfo
 from hestia_ci.gitlab_client import GitlabClient
-
+import hestia_ci.exceptions as exceptions
 
 __all__ = [
     "CIManager",
     "BuildInfo",
-    "GitlabClient"
+    "GitlabClient",
+    "exceptions"
 ]

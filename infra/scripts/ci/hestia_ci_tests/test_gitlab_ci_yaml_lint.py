@@ -2,6 +2,11 @@ from pathlib import Path
 
 import pytest
 
+# Allow the use of a real gitlab api here
+@pytest.fixture(autouse=True)
+def mock_gitlab():
+    return
+
 @pytest.fixture(scope='session')
 def real_gitlab_client(pytestconfig):
     """
@@ -9,7 +14,7 @@ def real_gitlab_client(pytestconfig):
     Skips test if no token is provided. 
     """
     import json
-    auth_path = Path("infra/scripts/ci/gitlab-ci-auth.json")
+    auth_path = Path("infra/scripts/ci/gitlab_ci_auth.json")
     if not auth_path.exists():
         pytest.skip("No connection details given for Gitlab, skipping")
     with open(auth_path) as f:

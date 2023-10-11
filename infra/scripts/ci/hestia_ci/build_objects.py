@@ -24,7 +24,7 @@ class BuildArtifact:
         return cls(**artifact_dict)
         
     def get_path(self) -> Path:
-        return Path(self.name) / "." / self.type
+        return Path(self.name + "." + self.type)
 
 
 class BuildArtifacts:
