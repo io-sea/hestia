@@ -3,6 +3,7 @@
 #include "Dictionary.h"
 #include "HashUtils.h"
 #include "Logger.h"
+#include "StringUtils.h"
 #include "TimeUtils.h"
 #include "YamlUtils.h"
 
@@ -119,12 +120,26 @@ void set_literal(
     add_scalar(dict, key, value);
 }
 
-void set_xattrs(Dictionary& dict, const Map& meta)
+void set_xattrs(Dictionary& dict, const Map& meta, const char delim = '.')
 {
     dict.set_map_item("attrs", Dictionary::create(Dictionary::Type::MAP));
     auto xattrs = dict.get_map_item("attrs");
+
     for (const auto& [key, value] : meta.data()) {
-        add_scalar(*xattrs, key, value, "", true);
+        if (value.empty()) {
+            continue;
+        }
+        auto sub_key  = StringUtils::split_on_first(key, delim);
+        auto sub_dict = xattrs;
+        while (!sub_key.second.empty()) {
+            if (!sub_dict->has_map_item(sub_key.first)) {
+                sub_dict->set_map_item(
+                    sub_key.first, Dictionary::create(Dictionary::Type::MAP));
+            }
+            sub_dict = sub_dict->get_map_item(sub_key.first);
+            sub_key  = StringUtils::split_on_first(sub_key.second, delim);
+        }
+        add_scalar(*sub_dict, sub_key.first, value, "", true);
     }
 }
 
@@ -201,7 +216,6 @@ void HsmEventSink::on_extent_changed(
     for (const auto& tier_extent : object->tiers()) {
         const auto tier_name = tier_names[tier_extent.get_tier_id()];
         assert(!tier_name.empty());
-
         std::string extents_str;
         for (const auto& [offset, extent] : tier_extent.get_extents()) {
             if (extent.empty()) {
@@ -213,7 +227,7 @@ void HsmEventSink::on_extent_changed(
         if (!extents_str.empty()) {
             extents_str = extents_str.substr(0, extents_str.size() - 1);
         }
-        xattrs.set_item("tier_" + tier_name, extents_str);
+        xattrs.set_item("tiers." + tier_name, extents_str);
     }
     set_xattrs(dict, xattrs);
 }
