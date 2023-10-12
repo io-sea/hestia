@@ -21,23 +21,37 @@ class MockGitlab:
             self.xargs[key] = val
         
         self.projects = MockResourceManager(self, MockProject, "projects") 
-        self.projects.create("testid")
+        self.projects.create({"id": "testid"})
 
 
 class MockResource:
     def __init__(self, 
                  manager, 
-                 id: str, 
-                 attributes: Dict[str, str] | None = None) -> None:
-        self.id = id
+                 data: Dict[str, str] | None = None) -> None:
         self.manager = manager
-        self.attributes = attributes
+        self.attributes = data
+
 
 class MockProject(MockResource):
     def __init__(self, manager, id) -> None:
         super().__init__(manager, id)
-        self.variables = MockResourceManager(manager.gl)
-        self.generic_packages = MockGenericPackageManager(manager.gl)
+        self.variables = MockResourceManager(manager.gl, name="variables")
+        self.generic_packages = MockGenericPackageManager(manager.gl, name="generic_packages")
+        self.releases = MockResourceManager(manager.gl, MockRelease, name="releases")
+        self.mergerequests = MockResourceManager(manager.gl, MockMerge, name="mergerequests")
+        self.tags = MockResourceManager(manager.gl, name="tags")
+
+
+class MockRelease(MockResource):
+    def __init__(self, manager, data: Dict[str, str] | None = None) -> None:
+        super().__init__(manager, data)
+        self.links = MockResourceManager(manager.gl, name=f"{manager.name}/links")
+
+
+class MockMerge(MockResource):
+    def merge(self):
+        return None 
+
 
 class MockResourceManager:
     def __init__(self, gl: MockGitlab, 
@@ -49,20 +63,31 @@ class MockResourceManager:
         self._obj_store = {}
         self.resource_cls = resource_cls
 
-    def create(self, id: str) -> None:
-        if id not in self._obj_store:
-            self._obj_store[id] = self.resource_cls(self, id)
-
+    def create(self, data: Dict[str, Any]) -> MockResource:
+        id_keys = ["id", "name", "tag_name", "title"]
+        id_key = "id"
+        for key in id_keys:
+            if key in data.keys():
+                id_key = key
+                break
+        if data.get(id_key) is not None:
+            id = str(data[id_key])
+            self._obj_store[id] = self.resource_cls(self, data)
+            return self._obj_store[id]
+        else:
+            return self.resource_cls(self, data)
+        
     def get(self, id: str, lazy: bool = True) -> object | None:
         try:
             return self._obj_store[id]
         except KeyError:
-            raise gitlab.GitlabGetError
+            raise gitlab.GitlabGetError(id)
+        
+    def list(self):
+        return list(self._obj_store.values())
         
     def update(self, id: str, value: Dict[str, str] | None = None) -> None:
-        if id not in self._obj_store:
-            self.create(id)
-        self._obj_store[id] = self.resource_cls(self, id, attributes=value)
+        self._obj_store[id] = self.resource_cls(self, value)
 
 
 class MockGenericPackageManager(MockResourceManager):    

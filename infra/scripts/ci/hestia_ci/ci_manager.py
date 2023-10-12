@@ -26,7 +26,7 @@ class CIManager:
             artifacts = BuildArtifacts(self.build_info)
             artifacts.load(artifacts_file)
 
-            for artifact in artifacts.artifacts:
+            for idx, artifact in enumerate(artifacts.artifacts):
                 file_path = artifact.get_path()
 
                 if file_path.is_file():
@@ -35,6 +35,8 @@ class CIManager:
                     if not artifact.optional:
                         raise RuntimeError(
                             f"Couldn't find required artifact {file_path} for upload.")
+                    else:
+                        del artifacts.artifacts[idx] # Drop non-uploaded artifacts
                     
             return artifacts
     
@@ -102,7 +104,7 @@ class CIManager:
         title: str = "Nightly CI Merge"
         description: str = "Merge from successful nightly CI"
         remove_source_branch: bool = False
-        squash_on_merge: bool = False
+        squash: bool = False
         auto_merge: bool = True
         nightly_var: str = "CI_NIGHTLY_VERSION"
         patch_var: str = "CI_PATCH_RELEASE_VERSION"   

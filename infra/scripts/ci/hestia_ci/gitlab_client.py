@@ -6,7 +6,7 @@ import gitlab
 
 from hestia_ci.generic_client import GenericClient
 from hestia_ci.build_objects import BuildInfo, BuildArtifact, BuildArtifacts
-from hestia_ci.exceptions import HestiaPermissionError
+from hestia_ci.exceptions import *
 
 class GitlabClient(GenericClient):
     def __init__(self, 
@@ -89,7 +89,7 @@ class GitlabClient(GenericClient):
         try:
             return self.gl_job.variables.get(key).attributes.get("value")
         except gitlab.GitlabGetError:
-            return None
+            raise HestiaGetError
         
     def create_merge_request(self, merge_params: Dict[str, Any], auto_merge: bool = True):
         """
