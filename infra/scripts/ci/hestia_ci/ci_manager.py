@@ -27,8 +27,8 @@ class CIManager:
             artifacts.load(artifacts_file)
 
             for idx, artifact in enumerate(artifacts.artifacts):
-                file_path = artifact.get_path()
-
+                file_path = artifacts_dir / artifact.get_path()
+                
                 if file_path.is_file():
                     self.client.upload_artifact(artifacts_dir / file_path, self.build_info)
                 else:
@@ -91,8 +91,8 @@ class CIManager:
         vers[args.nightly_var] = vers[args.patch_var]
         
         # Persist release version number variables to CI
-        for key,var in vers:
-            self.client.update_variable(key=key, val=var)
+        for key in vers:
+            self.client.update_variable(key=key, val=str(vers[key]))
 
     @dataclass
     class MergeArgs(ParsableArgs):

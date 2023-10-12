@@ -32,7 +32,6 @@ class TestGitlabClient:
         for i in range(3):
             artifacts.artifacts.append(copy.deepcopy(build_artifact))
             artifacts.artifacts[i].name += f"_{i}"
-
    
         return artifacts
         
@@ -57,7 +56,10 @@ class TestGitlabClient:
     def test_artifacts(self, gl_client: hestia_ci.GitlabClient, build_info, build_artifact):
         gl_client.upload_artifact(build_artifact.get_path(), build_info)
         
-        assert isinstance(gl_client.gl_bot.generic_packages.get(build_info.project_name), dict)
+        package = gl_client.gl_bot.generic_packages.get(build_info.project_name).attributes
+        assert package is not None
+        assert package[build_info.version][str(build_artifact.get_path())]\
+            == build_artifact.get_path()
 
         assert gl_client.get_artifact_url(build_artifact, build_info) == f"https://gitlab.example.com/generic_packages/{build_info.project_name}/{build_info.version}/{build_artifact.get_path()}"
 

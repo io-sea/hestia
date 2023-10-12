@@ -27,7 +27,7 @@ class MockGitlab:
 class MockResource:
     def __init__(self, 
                  manager, 
-                 data: Dict[str, str] | None = None) -> None:
+                 data: Dict[str, Any]) -> None:
         self.manager = manager
         self.attributes = data
 
@@ -43,7 +43,7 @@ class MockProject(MockResource):
 
 
 class MockRelease(MockResource):
-    def __init__(self, manager, data: Dict[str, str] | None = None) -> None:
+    def __init__(self, manager, data: Dict[str, Any] | None = None) -> None:
         super().__init__(manager, data)
         self.links = MockResourceManager(manager.gl, name=f"{manager.name}/links")
 
@@ -64,7 +64,7 @@ class MockResourceManager:
         self.resource_cls = resource_cls
 
     def create(self, data: Dict[str, Any]) -> MockResource:
-        id_keys = ["id", "name", "tag_name", "title"]
+        id_keys = ["id", "name", "tag_name", "title", "package_name"]
         id_key = "id"
         for key in id_keys:
             if key in data.keys():
@@ -77,7 +77,7 @@ class MockResourceManager:
         else:
             return self.resource_cls(self, data)
         
-    def get(self, id: str, lazy: bool = True) -> object | None:
+    def get(self, id: str, lazy: bool = True) -> MockResource:
         try:
             return self._obj_store[id]
         except KeyError:
@@ -86,7 +86,7 @@ class MockResourceManager:
     def list(self):
         return list(self._obj_store.values())
         
-    def update(self, id: str, value: Dict[str, str] | None = None) -> None:
+    def update(self, id: str, value: Dict[str, Any]) -> None:
         self._obj_store[id] = self.resource_cls(self, value)
 
 
@@ -96,8 +96,13 @@ class MockGenericPackageManager(MockResourceManager):
         package_version: str,
         file_name: str,
         path: str | Path):
-        self._obj_store[package_name] = {
-            "package_version": package_version,
-            "file_name": file_name,
-            "path": path
-        }
+        if package_name not in self._obj_store:
+            package = self.create({"package_name": package_name})
+        else: 
+            package = self.get(package_name)
+
+        if package_version not in package.attributes:
+            package.attributes[package_version] = {}
+
+        package.attributes[package_version][file_name] = path
+    

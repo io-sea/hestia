@@ -253,7 +253,7 @@ string, with convenience option to bump particular components.
 
 ```sh
 usage: nightly_merge.py [-h] --bot_token BOT_TOKEN --project_name PROJECT_NAME --version VERSION --arch ARCH [--source_branch SOURCE_BRANCH] [--target_branch TARGET_BRANCH]
-                        [--title TITLE] [--description DESCRIPTION] [--remove_source_branch REMOVE_SOURCE_BRANCH] [--squash_on_merge SQUASH_ON_MERGE] [--auto_merge AUTO_MERGE]
+                        [--title TITLE] [--description DESCRIPTION] [--remove_source_branch REMOVE_SOURCE_BRANCH] [--squash SQUASH] [--auto_merge AUTO_MERGE]
                         [--nightly_var NIGHTLY_VAR] [--patch_var PATCH_VAR] [--commit_var COMMIT_VAR] [--nightly_commit_var NIGHTLY_COMMIT_VAR]
 
 options:
@@ -271,7 +271,7 @@ Arguments for MergeArgs:
   --title TITLE
   --description DESCRIPTION
   --remove_source_branch REMOVE_SOURCE_BRANCH
-  --squash_on_merge SQUASH_ON_MERGE
+  --squash SQUASH
   --auto_merge AUTO_MERGE
   --nightly_var NIGHTLY_VAR
   --patch_var PATCH_VAR

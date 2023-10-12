@@ -1,0 +1,22 @@
+[
+    {
+        "name" : "$PROJECT-$VERSION-1.$ARCH",
+        "type" : "rpm",
+        "link_type": "package",
+        "description" : "Project Binary RPM."
+    },
+    {
+        "name" : "$PROJECT-debuginfo-$VERSION-1.$ARCH",
+        "optional": true,
+        "type" : "rpm",
+        "link_type": "package",
+        "description" : "Project Binary debuginfo RPM - includes debugger symbols."
+    },
+    {
+        "name" : "$PROJECT-docs-$VERSION",
+        "optional": true,
+        "type" : "tar.gz",
+        "link_type": "other",
+        "description" : "Project Documentation."
+    }
+]

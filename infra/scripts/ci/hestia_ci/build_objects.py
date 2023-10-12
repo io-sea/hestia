@@ -36,12 +36,12 @@ class BuildArtifacts:
     def load(self, artifact_file: Path) -> None:
         with open(artifact_file, 'r') as f:
             artifact_file_content = string.Template(f.read())
-
-        artifact_file_content.substitute({
+        
+        artifact_file_content = artifact_file_content.substitute({
             "PROJECT": self.build_info.project_name,
             "VERSION": self.build_info.version,
             "ARCH": self.build_info.arch
         })
 
-        artifact_json = json.loads(str(artifact_file_content))
+        artifact_json = json.loads(artifact_file_content)
         self.artifacts = [BuildArtifact.from_dict(a) for a in artifact_json]
