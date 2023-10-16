@@ -386,7 +386,7 @@ int hestia_create(
 
 int hestia_free_output(char** output)
 {
-    delete[] * output;
+    delete[] (*output);
     return 0;
 }
 

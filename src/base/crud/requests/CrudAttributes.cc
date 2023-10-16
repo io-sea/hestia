@@ -100,6 +100,7 @@ std::string CrudAttributes::to_string(Format format)
         case Format::NONE:
             return "none";
     }
+    return "none";
 }
 
 }  // namespace hestia

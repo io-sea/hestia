@@ -114,12 +114,13 @@ void KeyValueCrudClient::create(
     }
     else if (crud_request.get_query().is_dict_output_format()) {
         crud_response.set_dict(std::move(content));
+        content = nullptr;
     }
     else if (crud_request.get_query().is_item_output_format()) {
         json_adapter->from_dict(*content, crud_response.items());
     }
 
-    if (record_modified_attrs) {
+    if (content != nullptr && record_modified_attrs) {
         assign_modified_attributes(*content, crud_response);
     }
     crud_response.ids() = ids;
@@ -182,13 +183,14 @@ void KeyValueCrudClient::update(
     }
     else if (crud_request.get_query().is_dict_output_format()) {
         crud_response.set_dict(std::move(updated_content));
+        updated_content = nullptr;
     }
     else if (crud_request.get_query().is_item_output_format()) {
         get_adapter(CrudAttributes::Format::JSON)
             ->from_dict(*updated_content, crud_response.items());
     }
 
-    if (record_modified_attrs) {
+    if (updated_content != nullptr && record_modified_attrs) {
         LOG_INFO("Adding modified attrs");
         assign_modified_attributes(*updated_content, crud_response);
     }

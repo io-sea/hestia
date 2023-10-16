@@ -1,55 +1,14 @@
-server:
-  host_address: 127.0.0.1
-  host_port: 8080
-  web_app: hestia::HsmService
-  backend: hestia::Basic
-  controller: true
-  tag: controller0
+tiers:
+  - name: "0"
+  - name: "1"
 
-web_apps:
-  - identitifier: hestia::HsmService
-    interface: http
-  - identitifier: hestia::HsmServiceS3
-    interface: s3
-
-server_backends:
-  - identifier: hestia::Basic
-  - identifier: hestia::Proxygen
-
-object_store_clients:
-  - identifier: hestia::FileHsmObjectStoreClient
-    source: built_in
-    type: hsm
-    root: hsm_object_store
-  - identifier: hestia::FileObjectStoreClient
-    source: built_in
-    type: basic
-    root: object_store
-  - identifier: hestia::S3Client
-    source: plugin
-    type: basic
-    plugin_path: libhestia_s3_plugin
-  - identifier: hestia::PhobosClient
-    source: plugin
-    type: basic
-    plugin_path: libhestia_phobos_plugin
-  - identifier: hestia::mock::MockPhobosClient
-    source: mock
-    type: basic
-    plugin_path: libhestia_mock_phobos_plugin
-
-key_value_store:
-  client_identifier: hestia::FileKeyValueStoreClient
-
-key_value_store_clients:
-  - identifier: hestia::FileKeyValueStoreClient
-
-tier_registry:
-  - identifier: 0
-    client_identifier: hestia::PhobosClient
-  - identifier: 1
-    client_identifier: hestia::FileHsmObjectStoreClient
+object_store_backends:
+  - backend_type: file
+    tier_names: ["0"]
+    config: 
+      root: phobos_tests_object_store
+  - backend_type: mock_phobos
+    tier_names: ["1"]
 
 event_feed:
-  event_feed_path: event_feed.yaml
-  event_feed_active: y
+  active: true

@@ -146,10 +146,14 @@ void Dictionary::expand(const Map& flat_representation)
         count++;
     }
 
+    // NOLINTBEGIN
+    // This is for the clang linter - it is complaining that 'b' has been moved
+    // inside the STL sort algorithm. Assuming false alarm.
     std::sort(
         parsed_keys.begin(), parsed_keys.end(),
         [](const std::vector<std::string>& a,
            const std::vector<std::string>& b) { return a.size() < b.size(); });
+    // NOLINTEND
 
     for (const auto& parsed_keyset : parsed_keys) {
         Dictionary* working_dict = this;
