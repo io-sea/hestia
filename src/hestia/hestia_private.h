@@ -7,6 +7,10 @@ class HestiaPrivate {
   public:
     static void override_client(std::unique_ptr<IHestiaClient> client);
 
+    static IHestiaClient* get_client();
+
+    static bool check_initialized();
+
     static int hestia_start_server(
         const char* host, int port, const char* config);
 

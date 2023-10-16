@@ -19,15 +19,19 @@ add_module(
     WITH_FILESYSTEM
     HEADERS
         hestia.h
+        hestia_iosea.h
     SOURCES
         hestia/hestia.cc
+        hestia/hestia_iosea.cc
     PRIVATE_DEPENDENCIES
         ${PROJECT_NAME}_app
 )
 
 target_sources(${PROJECT_NAME}_lib PUBLIC FILE_SET 
     HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/hestia.h)
+    FILES 
+        ${CMAKE_CURRENT_SOURCE_DIR}/hestia.h 
+        ${CMAKE_CURRENT_SOURCE_DIR}/hestia_iosea.h)
 
 set(RPATH_ORIGIN_VAR "\${ORIGIN}")
 if(APPLE)

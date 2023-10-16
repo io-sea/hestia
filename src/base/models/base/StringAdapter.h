@@ -7,6 +7,8 @@ namespace hestia {
 
 class StringAdapter {
   public:
+    StringAdapter() = default;
+
     StringAdapter(
         ModelFactory* model_factory,
         Serializeable::Format format = Serializeable::Format::FULL);
@@ -86,6 +88,8 @@ class JsonAdapter : public StringAdapter {
 
 class KeyValueAdapter : public StringAdapter {
   public:
+    KeyValueAdapter() = default;
+
     KeyValueAdapter(
         ModelFactory* model_factory,
         Serializeable::Format format = Serializeable::Format::FULL);

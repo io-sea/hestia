@@ -32,11 +32,26 @@ void HestiaPrivate::override_client(std::unique_ptr<IHestiaClient> client)
     g_client = std::move(client);
 }
 
+IHestiaClient* HestiaPrivate::get_client()
+{
+    return g_client.get();
+}
+
+bool HestiaPrivate::check_initialized()
+{
+    if (!g_client) {
+        std::cerr
+            << "Hestia client not initialized. Call 'hestia_initilaize()' first.";
+        return false;
+    }
+    return true;
+}
+
 #define ID_AND_STATE_CHECK(oid)                                                \
     if (oid == nullptr) {                                                      \
         return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;                      \
     }                                                                          \
-    if (!check_initialized()) {                                                \
+    if (!HestiaPrivate::check_initialized()) {                                 \
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;                      \
     }
 
@@ -246,16 +261,6 @@ int hestia_finish()
     return 0;
 }
 
-bool check_initialized()
-{
-    if (!g_client) {
-        std::cerr
-            << "Hestia client not initialized. Call 'hestia_initilaize()' first.";
-        return false;
-    }
-    return true;
-}
-
 void str_to_char(const std::string& str, char** chars)
 {
     *chars = new char[str.size() + 1];
@@ -318,7 +323,7 @@ int create_or_update(
     int* len_response,
     bool is_create)
 {
-    if (!check_initialized()) {
+    if (!HestiaPrivate::check_initialized()) {
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
@@ -437,7 +442,7 @@ int hestia_read(
     int* len_response,
     int* total_count)
 {
-    if (!check_initialized()) {
+    if (!HestiaPrivate::check_initialized()) {
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
@@ -499,7 +504,7 @@ int hestia_remove(
     const char* input,
     int len_input)
 {
-    if (!check_initialized()) {
+    if (!HestiaPrivate::check_initialized()) {
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
