@@ -82,10 +82,11 @@ std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
 
 void File::seek_to(std::size_t offset)
 {
-    if (m_in_stream.is_open()) {
-        m_in_stream.clear();
-        m_in_stream.seekg(offset);
+    if (!m_in_stream.is_open()) {
+        m_in_stream.open(m_path);
     }
+    m_in_stream.clear();
+    m_in_stream.seekg(offset);
 }
 
 OpStatus File::read(std::string& buffer)

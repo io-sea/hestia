@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "DictField.h"
 #include "Dictionary.h"
 
 #include <iostream>
@@ -66,4 +67,27 @@ TEST_CASE("Test Dictionary - Flatten and Expand", "[dictionary]")
     expanded.expand(flattened);
 
     REQUIRE(expanded == *outer_map);
+}
+
+TEST_CASE("RawDictField- modify value and primary key", "[common]")
+{
+    hestia::RawDictField testfield{"Test Field"};
+
+    hestia::Dictionary dict;
+
+    std::unordered_map<std::string, std::string> data{
+        {"mykey0", "myval0"}, {"mykey1", "myval1"}};
+
+    dict.set_map(data);
+
+    testfield.get_value_as_writeable() = dict;
+
+    REQUIRE(testfield.modified() == true);
+
+    REQUIRE(testfield.value().get_map().size() == 2);
+    REQUIRE(testfield.value().get_map_item("mykey0")->get_scalar() == "myval0");
+    REQUIRE(testfield.value().get_map_item("mykey1")->get_scalar() == "myval1");
+
+    testfield.set_is_primary_key(true);
+    REQUIRE(testfield.is_primary_key());
 }

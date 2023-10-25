@@ -42,6 +42,8 @@ TEST_CASE_METHOD(TestUserServiceFixture, "Test User Service", "[user-service]")
         m_user_service->authenticate_user(username, password);
     REQUIRE(auth_response->ok());
 
+    REQUIRE(m_user_service->is_authenticated());
+
     REQUIRE(auth_response->get_item()->id() == id);
 
     const auto token_response = m_user_service->authenticate_with_token(

@@ -44,3 +44,42 @@ TEST_CASE("Test Storage Tier", "[hsm]")
     REQUIRE(tier_with_id.id_uint() == 3);
     REQUIRE(tier_with_id.name() == "3");
 }
+
+TEST_CASE("Sequencefield with tiers", "[hsm], [common]")
+{
+    hestia::StorageTier tier0;
+    tier0.set_capacity(1234);
+    tier0.set_bandwidth(5678);
+
+    hestia::StorageTier tier1;
+    tier1.set_capacity(9012);
+    tier1.set_bandwidth(3456);
+
+    hestia::StorageTier tier2;
+    tier2.set_capacity(7890);
+    tier2.set_bandwidth(1357);
+
+    hestia::SequenceField<std::vector<hestia::StorageTier>> testfield(
+        "testField");
+
+    testfield.get_container_as_writeable() = {tier0, tier1, tier2};
+
+    hestia::Dictionary tiers_dict;
+
+    testfield.serialize(tiers_dict);
+
+    hestia::SequenceField<std::vector<hestia::StorageTier>> result_field(
+        "ResultField");
+
+    result_field.deserialize(tiers_dict);
+
+    REQUIRE(testfield.container().size() == result_field.container().size());
+
+    auto i2 = result_field.container().begin();
+    for (auto i1 = testfield.container().begin();
+         i1 != testfield.container().end(); i1++, i2++) {
+        REQUIRE(i1->get_bandwidth() == i2->get_bandwidth());
+        REQUIRE(i1->get_capacity() == i2->get_capacity());
+        REQUIRE(i1->get_backends().size() == i2->get_backends().size());
+    }
+}

@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "ScalarField.h"
 #include "Uuid.h"
 #include "UuidUtils.h"
 #include <stdint.h>
@@ -70,4 +71,12 @@ TEST_CASE("Test Uuid - set or unset", "[uuid]")
 {
     REQUIRE(hestia::Uuid().is_unset());
     REQUIRE(!hestia::Uuid(0).is_unset());
+}
+
+TEST_CASE("Test UuidField", "[uuid]")
+{
+    hestia::UuidField testfield{"UuidTestfield"};
+    testfield.value_from_string("00000000-0000-0000-0000-0000000001f4");
+    REQUIRE(
+        testfield.value_as_string() == "00000000-0000-0000-0000-0000000001f4");
 }

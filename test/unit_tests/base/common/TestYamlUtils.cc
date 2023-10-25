@@ -77,3 +77,54 @@ TEST_CASE("Yaml Utils Dict to Yaml", "[common]")
     REQUIRE(
         dict.to_string(true) == out_dict.to_string(true));  // Deep comparison
 }
+
+TEST_CASE("Test YamlUtils - load all", "[common]")
+{
+    auto test_input_dir = TestUtils::get_test_data_dir();
+    auto yaml_path      = test_input_dir / "test_multiple.yaml";
+
+    auto dict1 = hestia::Dictionary::create();
+    auto dict2 = hestia::Dictionary::create();
+    auto dict3 = hestia::Dictionary::create();
+    std::vector<std::unique_ptr<hestia::Dictionary>> dict_vect{};
+
+    dict_vect.push_back(std::move(dict1));
+    dict_vect.push_back(std::move(dict2));
+    dict_vect.push_back(std::move(dict3));
+
+    hestia::YamlUtils::load_all(yaml_path.string(), dict_vect);
+
+
+    auto root = dict_vect.at(0)->get_map_item("root");
+    REQUIRE(root);
+    REQUIRE(root->get_type() == hestia::Dictionary::Type::SEQUENCE);
+
+    REQUIRE(root->get_sequence().size() == 3);
+    REQUIRE(
+        root->get_sequence()[0]->get_type() == hestia::Dictionary::Type::MAP);
+    REQUIRE(
+        root->get_sequence()[0]->get_map_item("key1")->get_scalar()
+        == "value1");
+
+    auto root1 = dict_vect.at(1)->get_map_item("root");
+    REQUIRE(root1);
+    REQUIRE(root1->get_type() == hestia::Dictionary::Type::SEQUENCE);
+
+    REQUIRE(root1->get_sequence().size() == 3);
+    REQUIRE(
+        root1->get_sequence()[1]->get_type() == hestia::Dictionary::Type::MAP);
+    REQUIRE(
+        root1->get_sequence()[1]->get_map_item("key5")->get_scalar()
+        == "value5");
+
+    auto root2 = dict_vect.at(2)->get_map_item("root");
+    REQUIRE(root2);
+    REQUIRE(root2->get_type() == hestia::Dictionary::Type::SEQUENCE);
+
+    REQUIRE(root2->get_sequence().size() == 3);
+    REQUIRE(
+        root2->get_sequence()[2]->get_type() == hestia::Dictionary::Type::MAP);
+    REQUIRE(
+        root2->get_sequence()[2]->get_map_item("key9")->get_scalar()
+        == "value9");
+}

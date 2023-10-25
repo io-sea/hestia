@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include "ScalarField.h"
 #include "TimeUtils.h"
 #include "TimedLock.cc"
 
@@ -29,4 +30,18 @@ TEST_CASE("Test Timed Lock - lock/unlock", "[common]")
 
     lock.unlock();
     REQUIRE(!lock.m_active);
+}
+
+TEST_CASE("DateTimeField- set as now", "[common]")
+{
+    hestia::DateTimeField testfield("Test");
+
+    auto start = std::chrono::system_clock::now().time_since_epoch().count();
+
+    testfield.set_as_now();
+
+    auto end    = std::chrono::system_clock::now().time_since_epoch().count();
+    auto result = std::stoll(testfield.value_as_string());
+    REQUIRE(start <= result);
+    REQUIRE(result <= end);
 }
