@@ -74,8 +74,13 @@ TEST_CASE("Yaml Utils Dict to Yaml", "[common]")
 
     hestia::YamlUtils::load(out_yaml_path.string(), out_dict);
     LOG_DEBUG("Serialized Event : " + out_yaml);
+
+    hestia::Dictionary::FormatSpec dict_format;
+    dict_format.m_map_format.m_sort_keys = true;
+
     REQUIRE(
-        dict.to_string(true) == out_dict.to_string(true));  // Deep comparison
+        dict.to_string(dict_format)
+        == out_dict.to_string(dict_format));  // Deep comparison
 }
 
 TEST_CASE("Test YamlUtils - load all", "[common]")

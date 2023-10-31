@@ -63,8 +63,8 @@ class TestS3AuthorizationFixture {
         REQUIRE(m_user_service
                     ->make_request(hestia::CrudRequest{
                         hestia::CrudMethod::REMOVE,
-                        {},
-                        {hestia::CrudIdentifier(m_user.id())}})
+                        {hestia::CrudIdentifier(m_user.id())},
+                        {}})
                     ->ok());
     }
 

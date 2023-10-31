@@ -11,7 +11,7 @@ class KeyValueCrudClient : public CrudClient {
   public:
     KeyValueCrudClient(
         const CrudClientConfig& config,
-        AdapterCollectionPtr adapters,
+        ModelSerializer::Ptr serializer,
         KeyValueStoreClient* client,
         IdGenerator* id_generator   = nullptr,
         TimeProvider* time_provider = nullptr);
@@ -48,7 +48,6 @@ class KeyValueCrudClient : public CrudClient {
 
     void prepare_creation_overrides(
         const CrudUserContext& user_context,
-        const Model& item_template,
         Dictionary& creation_overrides) const;
 
     void prepare_update_overrides(Dictionary& update_overrides) const;

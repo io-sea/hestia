@@ -43,8 +43,8 @@ void HttpCrudPath::from_query(const CrudQuery& query, std::string& path)
         from_filter(query.get_filter(), path);
     }
     else if (query.is_id()) {
-        if (query.has_single_id()) {
-            from_identifier(query.get_id(), path);
+        if (query.get_ids().size() == 1) {
+            from_identifier(query.get_ids().first(), path);
         }
     }
 }

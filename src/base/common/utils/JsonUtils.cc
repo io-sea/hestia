@@ -24,156 +24,22 @@ std::string JsonUtils::to_json(const Map& metadata)
     return json.dump();
 }
 
-static bool is_excluded(
-    const std::string& key, const std::vector<std::string>& exclude_keys)
+void JsonUtils::from_json(const std::string& json_str, Map& metadata)
 {
-    return std::find(exclude_keys.begin(), exclude_keys.end(), key)
-           != exclude_keys.end();
-}
-
-void to_json_internal(
-    nlohmann::json& json,
-    const Dictionary& dict,
-    const std::vector<std::string>& exclude_keys,
-    const std::string& key = {})
-{
-    if (dict.get_type() == Dictionary::Type::SCALAR) {
-        if (key.empty()) {
-            json = dict.get_scalar();
-        }
-        else if (!is_excluded(key, exclude_keys)) {
-            json[key] = dict.get_scalar();
-        }
-        return;
-    }
-    else if (dict.get_type() == Dictionary::Type::SEQUENCE) {
-        std::vector<nlohmann::json> dict_items;
-        for (const auto& item : dict.get_sequence()) {
-            nlohmann::json dict_json;
-            to_json_internal(dict_json, *item, exclude_keys);
-            dict_items.push_back(dict_json);
-        }
-        if (key.empty()) {
-            json = dict_items;
-        }
-        else if (!is_excluded(key, exclude_keys)) {
-            json[key] = dict_items;
-        }
-        return;
-    }
-    else if (dict.get_type() == Dictionary::Type::MAP) {
-        for (const auto& [key, dict_item] : dict.get_map()) {
-
-            if (is_excluded(key, exclude_keys)) {
-                continue;
-            }
-
-            nlohmann::json dict_json;
-            to_json_internal(dict_json, *dict_item, exclude_keys);
-            if (dict_json.is_null()) {
-                dict_json = std::unordered_map<std::string, std::string>();
-            }
-            json[key] = dict_json;
-        }
-        return;
+    const auto json = nlohmann::json::parse(json_str);
+    for (const auto& [key, value] : json.items()) {
+        metadata.set_item(key, value);
     }
 }
 
-void JsonUtils::to_json(
-    const Dictionary& dict,
-    std::string& output,
-    const std::vector<std::string>& exclude_keys,
-    unsigned indent)
+void JsonUtils::read_values(
+    const std::string& buffer,
+    const std::string& path,
+    std::vector<std::string>& values)
 {
-    nlohmann::json json;
-    to_json_internal(json, dict, exclude_keys);
-
-    if (indent > 0) {
-        output = json.dump(indent);
-    }
-    else {
-        output = json.dump();
-    }
-}
-
-void from_json_internal(
-    const nlohmann::json& j,
-    Dictionary& dict,
-    const std::vector<std::string>& exclude_keys,
-    const std::string& parent_key = {})
-{
-    if (j.is_array()) {
-        auto array_dict =
-            std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-        for (const auto& [key, value] : j.items()) {
-            if (is_excluded(key, exclude_keys)) {
-                continue;
-            }
-            from_json_internal(value, *array_dict, exclude_keys);
-        }
-        dict.set_map_item(parent_key, std::move(array_dict));
-    }
-    else if (j.is_object()) {
-        if (dict.get_type() == Dictionary::Type::SEQUENCE) {
-            auto map_dict = std::make_unique<Dictionary>();
-            for (const auto& [key, value] : j.items()) {
-                if (is_excluded(key, exclude_keys)) {
-                    continue;
-                }
-                from_json_internal(value, *map_dict, exclude_keys, key);
-            }
-            dict.add_sequence_item(std::move(map_dict));
-        }
-        else if (parent_key.empty()) {
-            for (const auto& [key, value] : j.items()) {
-                if (is_excluded(key, exclude_keys)) {
-                    continue;
-                }
-                from_json_internal(value, dict, exclude_keys, key);
-            }
-        }
-        else {
-            auto map_dict = std::make_unique<Dictionary>();
-            for (const auto& [key, value] : j.items()) {
-                if (is_excluded(key, exclude_keys)) {
-                    continue;
-                }
-                from_json_internal(value, *map_dict, exclude_keys, key);
-            }
-            dict.set_map_item(parent_key, std::move(map_dict));
-        }
-    }
-    else {
-        auto scalar_dict =
-            std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
-
-        if (j.is_boolean()) {
-            scalar_dict->set_scalar(j ? "true" : "false");
-        }
-        else {
-            scalar_dict->set_scalar(j.get<std::string>());
-        }
-        if (parent_key.empty()) {
-            dict.add_sequence_item(std::move(scalar_dict));
-        }
-        else {
-            dict.set_map_item(parent_key, std::move(scalar_dict));
-        }
-    }
-}
-
-void JsonUtils::from_json(
-    const std::string& str,
-    Dictionary& dict,
-    const std::vector<std::string>& exclude_keys)
-{
-    if (str.empty()) {
-        return;
-    }
-
     nlohmann::json json;
     try {
-        json = nlohmann::json::parse(str);
+        json = nlohmann::json::parse(buffer);
     }
     catch (const std::exception& e) {
         LOG_ERROR("Error in json parsing: " << e.what());
@@ -181,34 +47,22 @@ void JsonUtils::from_json(
     }
 
     if (json.is_array()) {
-        dict.set_type(Dictionary::Type::SEQUENCE);
-
         for (const auto& [key, value] : json.items()) {
-            if (is_excluded(key, exclude_keys)) {
-                continue;
+            if (value.is_object()) {
+                for (const auto& [obj_key, obj_value] : json.items()) {
+                    if (obj_key == path && obj_value.is_string()) {
+                        values.push_back(obj_value);
+                    }
+                }
             }
-            from_json_internal(value, dict, exclude_keys);
         }
     }
     else if (json.is_object()) {
         for (const auto& [key, value] : json.items()) {
-            if (is_excluded(key, exclude_keys)) {
-                continue;
+            if (key == path && value.is_string()) {
+                values.push_back(value);
             }
-            from_json_internal(value, dict, exclude_keys, key);
         }
-    }
-    else {
-        dict.set_type(Dictionary::Type::SCALAR);
-        dict.set_scalar(json.get<std::string>());
-    }
-}
-
-void JsonUtils::from_json(const std::string& json_str, Map& metadata)
-{
-    const auto json = nlohmann::json::parse(json_str);
-    for (const auto& [key, value] : json.items()) {
-        metadata.set_item(key, value);
     }
 }
 

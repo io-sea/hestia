@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CrudRequest.h"
+#include "HestiaRequest.h"
 #include "HestiaTypes.h"
 #include "HsmAction.h"
 
@@ -12,61 +13,25 @@ namespace hestia {
 class IConsoleInterface;
 
 class HestiaClientCommand {
-
   public:
-    STRINGABLE_ENUM(OutputFormat, NONE, ID, JSON, KEY_VALUE, ID_KEY_VALUE)
+    STRINGABLE_ENUM(BodyFormat, NONE, ID, JSON, KEY_VALUE)
 
-    std::vector<std::string> get_crud_methods() const;
-
-    std::vector<std::string> get_action_subjects() const;
-
-    std::vector<HsmAction::Action> get_subject_actions(
-        const std::string& subject) const;
-
-    std::vector<std::string> get_hsm_subjects() const;
+    CrudMethod get_crud_method() const;
 
     std::vector<std::string> get_system_subjects() const;
 
     bool is_crud_method() const;
 
-    bool is_create_method() const;
+    void parse_console_inputs(
+        const IConsoleInterface& console, HestiaRequest& req) const;
 
-    bool is_read_method() const;
-
-    bool is_update_method() const;
-
-    bool is_remove_method() const;
-
-    bool is_identify_method() const;
-
-    bool is_data_management_action() const;
-
-    bool is_data_io_action() const;
-
-    bool is_data_put_action() const;
-
-    static bool expects_id(OutputFormat format);
-
-    static bool expects_attributes(OutputFormat format);
-
-    static OutputFormat output_format_from_string(const std::string& format);
-
-    std::pair<OutputFormat, CrudAttributes::Format> parse_create_update_inputs(
-        VecCrudIdentifier& ids,
-        CrudAttributes& attributes,
-        IConsoleInterface* console) const;
-
-    std::pair<OutputFormat, CrudAttributes::Format> parse_read_inputs(
-        CrudQuery& query, IConsoleInterface* console) const;
-
-    void parse_remove_inputs(
-        VecCrudIdentifier& ids, IConsoleInterface* console) const;
+    void parse_action(HestiaRequest& req);
 
     void set_crud_method(const std::string& method);
 
     void set_hsm_action(HsmAction::Action action);
 
-    void set_subject(HestiaType subject) { m_subject = subject; }
+    void set_subject(HestiaType subject);
 
     void set_hsm_subject(const std::string& subject);
 
@@ -93,6 +58,28 @@ class HestiaClientCommand {
     std::string m_count;
 
     std::filesystem::path m_path;
+
+  private:
+    void parse_create_update_inputs(
+        const IConsoleInterface& console, HestiaRequest& req) const;
+
+    void parse_read_inputs(
+        const IConsoleInterface& console, HestiaRequest& req) const;
+
+    void parse_remove_inputs(
+        const IConsoleInterface& console, HestiaRequest& req) const;
+
+    CrudIdentifier::InputFormat read_id_format(
+        CrudIdentifier::InputFormat default_format) const;
+
+    BodyFormat read_input_format(BodyFormat default_format) const;
+
+    CrudQuery::BodyFormat read_output_format(BodyFormat default_format) const;
+
+    void read_ids_from_console(
+        const IConsoleInterface& console,
+        HestiaRequest& req,
+        CrudIdentifier::InputFormat default_format) const;
 };
 
 }  // namespace hestia

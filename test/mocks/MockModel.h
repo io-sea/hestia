@@ -2,7 +2,6 @@
 
 #include "Model.h"
 #include "RelationshipField.h"
-#include "StringAdapter.h"
 
 namespace hestia::mock {
 class MockModel : public Model {
@@ -18,8 +17,6 @@ class MockModel : public Model {
     static std::string get_type();
 
     static std::unique_ptr<ModelFactory> create_factory();
-
-    static AdapterCollection::Ptr create_adapters();
 
     void init();
 
@@ -40,8 +37,6 @@ class MockModelWithParent : public Model {
     static std::string get_type();
 
     static std::unique_ptr<ModelFactory> create_factory();
-
-    static AdapterCollection::Ptr create_adapters();
 
     void set_parent_id(const std::string& id) { m_parent.set_id(id); }
 
@@ -74,8 +69,6 @@ class MockParentModel : public Model {
 
     static std::unique_ptr<ModelFactory> create_factory();
 
-    static AdapterCollection::Ptr create_adapters();
-
     const std::vector<MockModelWithParent>& get_models() const
     {
         return m_models.models();
@@ -102,8 +95,6 @@ class MockManyToManyTargetModel : public Model {
     static std::string get_type();
 
     static std::unique_ptr<ModelFactory> create_factory();
-
-    static AdapterCollection::Ptr create_adapters();
 
     const std::vector<MockModelWithParent>& get_many_to_many_children() const
     {

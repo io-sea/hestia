@@ -3,9 +3,9 @@
 #include "RequestError.h"
 #include "RequestException.h"
 
+#include "ErrorUtils.h"
 #include "HttpClient.h"
 #include "HttpCrudPath.h"
-#include "StringAdapter.h"
 
 #include "Logger.h"
 
@@ -15,320 +15,102 @@
 namespace hestia {
 HttpCrudClient::HttpCrudClient(
     const CrudClientConfig& config,
-    AdapterCollectionPtr adapters,
+    ModelSerializer::Ptr serializer,
     HttpClient* client) :
-    CrudClient(config, std::move(adapters)), m_client(client)
+    CrudClient(config, std::move(serializer)), m_client(client)
 {
 }
 
 HttpCrudClient::~HttpCrudClient() {}
 
+void apply_common_headers(
+    const CrudRequest& crud_request, HttpRequest& http_request)
+{
+    http_request.get_header().set_content_type("application/json");
+    http_request.get_header().set_auth_token(
+        crud_request.get_user_context().m_token);
+}
+
+HttpResponse::Ptr HttpCrudClient::make_request(const HttpRequest& req) const
+{
+    auto response = m_client->make_request(req);
+    if (response->error()) {
+        throw RequestException<CrudRequestError>(
+            {CrudErrorCode::ERROR, SOURCE_LOC() + " | Error in http client: "
+                                       + response->to_string()});
+    }
+    return response;
+}
+
+void HttpCrudClient::make_request(
+    const CrudRequest& crud_request,
+    HttpRequest::Method method,
+    CrudResponse& crud_response) const
+{
+    if (crud_request.has_ids()) {
+        std::size_t count{0};
+        for (const auto& id : crud_request.get_ids().data()) {
+            std::string path_suffix;
+            HttpCrudPath::from_identifier(id, path_suffix);
+
+            HttpRequest req(get_item_path() + path_suffix, method);
+            apply_common_headers(crud_request, req);
+
+            m_serializer->to_json(crud_request, req.body(), count);
+
+            const auto response = make_request(req);
+
+            m_serializer->append_json(response->body(), crud_response);
+            count++;
+        }
+    }
+    else {
+        HttpRequest req(get_item_path(), method);
+        apply_common_headers(crud_request, req);
+
+        m_serializer->to_json(crud_request, req.body());
+
+        const auto response = make_request(req);
+
+        m_serializer->append_json(response->body(), crud_response);
+    }
+}
+
 void HttpCrudClient::create(
     const CrudRequest& crud_request, CrudResponse& crud_response, bool)
 {
-    const auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
-    HttpRequest request(path, HttpRequest::Method::PUT);
-    request.get_header().set_content_type("application/json");
-    request.get_header().set_auth_token(
-        crud_request.get_user_context().m_token);
-
-    auto adapter = get_adapter(CrudAttributes::Format::JSON);
-    if (crud_request.has_items()) {
-        adapter->to_string(crud_request.items(), request.body());
-    }
-    else {
-        Dictionary ids_dict(Dictionary::Type::SEQUENCE);
-        for (const auto& id : crud_request.get_ids()) {
-            auto id_map = std::make_unique<Dictionary>();
-            id_map->set_map({{"id", id.get_primary_key()}});
-            ids_dict.add_sequence_item(std::move(id_map));
-        }
-        adapter->dict_to_string(ids_dict, request.body());
-    }
-
-    const auto response = m_client->make_request(request);
-    if (response->error()) {
-        throw RequestException<CrudRequestError>(
-            {CrudErrorCode::ERROR,
-             "Error in http client CREATE: " + response->to_string()});
-    }
-
-    adapter->from_string({response->body()}, crud_response.items());
-
-    std::vector<std::string> ids;
-    for (const auto& item : crud_response.items()) {
-        ids.push_back({item->get_primary_key()});
-    }
-    crud_response.ids() = ids;
-
-    if (crud_request.get_query().is_attribute_output_format()) {
-        crud_response.attributes().buffer() = response->body();
-    }
-    else if (crud_request.get_query().is_dict_output_format()) {
-        auto content = std::make_unique<Dictionary>();
-        adapter->dict_from_string(response->body(), *content);
-        crud_response.set_dict(std::move(content));
-    }
+    make_request(crud_request, HttpRequest::Method::PUT, crud_response);
 }
 
 void HttpCrudClient::update(
     const CrudRequest& crud_request, CrudResponse& crud_response, bool) const
 {
-    auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
-    const auto adapter = get_adapter(CrudAttributes::Format::JSON);
-
-    if (crud_request.has_items()) {
-        auto seq_dict =
-            std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-        for (const auto& item : crud_request.items()) {
-            const auto working_path = path + "/" + item->get_primary_key();
-
-            HttpRequest request(working_path, HttpRequest::Method::PUT);
-            request.get_header().set_content_type("application/json");
-            request.get_header().set_auth_token(
-                crud_request.get_user_context().m_token);
-            adapter->to_string(*item, request.body());
-
-            const auto response = m_client->make_request(request);
-            if (response->error()) {
-                throw RequestException<CrudRequestError>(
-                    {CrudErrorCode::ERROR,
-                     "Error in http client PUT: " + response->to_string()});
-            }
-
-            if (crud_request.items().size() == 1) {
-                adapter->from_string({response->body()}, crud_response.items());
-            }
-            else {
-                auto item_dict = std::make_unique<Dictionary>();
-                adapter->dict_from_string(response->body(), *item_dict);
-                seq_dict->add_sequence_item(std::move(item_dict));
-            }
-        }
-        if (crud_request.items().size() > 1) {
-            adapter->from_dict(*seq_dict, crud_response.items());
-        }
-    }
-    else {
-        auto seq_dict =
-            std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-
-        Dictionary attrs_dict;
-        if (crud_request.get_attributes().has_content()) {
-            const auto typed_adapter =
-                m_adapters->get_adapter(CrudAttributes::to_string(
-                    crud_request.get_attributes().get_input_format()));
-            typed_adapter->dict_from_string(
-                crud_request.get_attributes().get_buffer(), attrs_dict,
-                crud_request.get_attributes().get_key_prefix());
-        }
-
-        std::vector<std::string> request_paths;
-        for (const auto& id : crud_request.get_ids()) {
-            if (id.has_primary_key()) {
-                request_paths.push_back("/" + id.get_primary_key());
-            }
-            else if (id.has_parent_primary_key()) {
-                request_paths.push_back(
-                    "/?parent_id=" + id.get_parent_primary_key());
-            }
-        }
-        if (request_paths.empty() && !attrs_dict.is_empty()) {
-            if (attrs_dict.get_type() == Dictionary::Type::SEQUENCE) {
-                for (const auto& item : attrs_dict.get_sequence()) {
-                    if (item->has_map_item("id")) {
-                        request_paths.push_back(
-                            "/" + item->get_map_item("id")->get_scalar());
-                    }
-                }
-            }
-            else {
-                if (attrs_dict.has_map_item("id")) {
-                    request_paths.push_back(
-                        "/" + attrs_dict.get_map_item("id")->get_scalar());
-                }
-            }
-        }
-
-        std::size_t count{0};
-        for (const auto& item_path : request_paths) {
-            const auto working_path = path + item_path;
-
-            HttpRequest request(working_path, HttpRequest::Method::PUT);
-            request.get_header().set_content_type("application/json");
-            request.get_header().set_auth_token(
-                crud_request.get_user_context().m_token);
-
-            if (!attrs_dict.is_empty()) {
-                if (attrs_dict.get_type() == Dictionary::Type::SEQUENCE) {
-                    adapter->dict_to_string(
-                        *attrs_dict.get_sequence()[count], request.body());
-                }
-                else {
-                    adapter->dict_to_string(attrs_dict, request.body());
-                }
-            }
-
-            const auto response = m_client->make_request(request);
-            if (response->error()) {
-                throw RequestException<CrudRequestError>(
-                    {CrudErrorCode::ERROR,
-                     "Error in http client PUT: " + response->to_string()});
-            }
-
-            if (request_paths.size() == 1) {
-                adapter->from_string({response->body()}, crud_response.items());
-            }
-            else {
-                auto item_dict = std::make_unique<Dictionary>();
-                adapter->dict_from_string(response->body(), *item_dict);
-                seq_dict->add_sequence_item(std::move(item_dict));
-            }
-            count++;
-        }
-
-        if (!seq_dict->is_empty()) {
-            LOG_INFO("Setting response items")
-            adapter->from_dict(*seq_dict, crud_response.items());
-        }
-
-        std::vector<std::string> ids;
-        for (const auto& item : crud_response.items()) {
-            ids.push_back({item->get_primary_key()});
-        }
-        crud_response.ids() = ids;
-
-        if (crud_request.get_query().is_attribute_output_format()) {
-            auto typed_adatper =
-                get_adapter(crud_request.get_attributes().get_output_format());
-            typed_adatper->to_string(
-                crud_response.items(), crud_response.attributes().buffer());
-        }
-        else if (crud_request.get_query().is_dict_output_format()) {
-            auto content = std::make_unique<Dictionary>();
-            adapter->to_dict(crud_response.items(), *content);
-            crud_response.set_dict(std::move(content));
-        }
-    }
-}
-
-void HttpCrudClient::read(
-    const CrudRequest& crud_request, CrudResponse& crud_response) const
-{
-    std::string path =
-        m_config.m_endpoint + "/" + m_adapters->get_type() + "s/";
-
-    if (crud_request.get_query().is_id()
-        && !crud_request.get_query().has_single_id()) {
-        Dictionary dict(Dictionary::Type::SEQUENCE);
-        for (const auto& id : crud_request.get_query().ids()) {
-            std::string path_suffix;
-            HttpCrudPath::from_identifier(id, path_suffix);
-            HttpRequest request(path + path_suffix, HttpRequest::Method::GET);
-            request.get_header().set_content_type("application/json");
-            request.get_header().set_auth_token(
-                crud_request.get_user_context().m_token);
-
-            const auto response = m_client->make_request(request);
-
-            if (response->error()) {
-                if (response->code() == 404) {
-                    return;
-                }
-                throw RequestException<CrudRequestError>(
-                    {CrudErrorCode::ERROR,
-                     "Error in http client GET: " + response->to_string()});
-            }
-
-            auto item_dict = std::make_unique<Dictionary>();
-            get_adapter(CrudAttributes::Format::JSON)
-                ->dict_from_string(request.body(), *item_dict);
-            dict.add_sequence_item(std::move(item_dict));
-        }
-        get_adapter(CrudAttributes::Format::JSON)
-            ->from_dict(dict, crud_response.items());
-    }
-    else {
-        HttpCrudPath::from_query(crud_request.get_query(), path);
-
-        HttpRequest request(path, HttpRequest::Method::GET);
-        request.get_header().set_content_type("application/json");
-        request.get_header().set_auth_token(
-            crud_request.get_user_context().m_token);
-
-        const auto response = m_client->make_request(request);
-
-        if (response->error()) {
-            if (response->code() == 404) {
-                return;
-            }
-            throw RequestException<CrudRequestError>(
-                {CrudErrorCode::ERROR,
-                 "Error in http client GET: " + response->to_string()});
-        }
-        LOG_INFO("Got response: " << response->body());
-
-        std::vector<std::string> ids;
-
-        if (crud_request.get_query().is_id_output_format()) {
-            Dictionary dict;
-            get_adapter(CrudAttributes::Format::JSON)
-                ->dict_from_string(response->body(), dict);
-            if (dict.get_type() == Dictionary::Type::SEQUENCE) {
-                for (const auto& item : dict.get_sequence()) {
-                    if (item->has_map_item("id")) {
-                        ids.push_back(item->get_map_item("id")->get_scalar());
-                    }
-                }
-            }
-            else {
-                if (dict.has_map_item("id")) {
-                    ids.push_back(dict.get_map_item("id")->get_scalar());
-                }
-            }
-            crud_response.ids() = ids;
-        }
-        else if (crud_request.get_query().is_attribute_output_format()) {
-            crud_response.attributes().buffer() = response->body();
-        }
-        else if (crud_request.get_query().is_dict_output_format()) {
-            auto dict = std::make_unique<Dictionary>();
-            get_adapter(CrudAttributes::Format::JSON)
-                ->dict_from_string(response->body(), *dict);
-            crud_response.set_dict(std::move(dict));
-        }
-        else if (crud_request.get_query().is_item_output_format()) {
-            get_adapter(CrudAttributes::Format::JSON)
-                ->from_string({response->body()}, crud_response.items());
-        }
-    }
+    make_request(crud_request, HttpRequest::Method::PUT, crud_response);
 }
 
 void HttpCrudClient::remove(
     const CrudRequest& crud_request, CrudResponse& crud_response) const
 {
-    LOG_INFO("Doing remove request");
-    auto path = m_config.m_endpoint + "/" + m_adapters->get_type() + "s";
+    make_request(crud_request, HttpRequest::Method::DELETE, crud_response);
+}
 
-    for (const auto& id : crud_request.get_ids()) {
-        std::string path_suffix;
-        HttpCrudPath::from_identifier(id, path_suffix);
-        HttpRequest request(path + path_suffix, HttpRequest::Method::DELETE);
-        request.get_header().set_content_type("application/json");
-        request.get_header().set_auth_token(
-            crud_request.get_user_context().m_token);
+void HttpCrudClient::read(
+    const CrudRequest& crud_request, CrudResponse& crud_response) const
+{
+    if (crud_request.get_query().is_id()
+        && crud_request.get_query().get_ids().size() != 1) {
+        make_request(crud_request, HttpRequest::Method::GET, crud_response);
+    }
+    else {
+        std::string path = get_item_path();
+        HttpCrudPath::from_query(crud_request.get_query(), path);
 
-        const auto response = m_client->make_request(request);
+        HttpRequest request(path, HttpRequest::Method::GET);
+        apply_common_headers(crud_request, request);
 
-        if (response->error()) {
-            if (response->code() == 404) {
-                return;
-            }
-            throw RequestException<CrudRequestError>(
-                {CrudErrorCode::ERROR,
-                 "Error in http client DELETE: " + response->to_string()});
-        }
-        crud_response.ids().push_back(id.get_primary_key());
+        const auto response = make_request(request);
+
+        m_serializer->append_json(response->body(), crud_response);
     }
 }
 
@@ -361,22 +143,43 @@ bool HttpCrudClient::is_locked(
     return false;
 }
 
+std::string HttpCrudClient::get_item_path(const CrudIdentifier& id) const
+{
+    if (id.has_primary_key()) {
+        return get_item_path(id.get_primary_key());
+    }
+    else {
+        std::string queries;
+        if (id.has_parent_primary_key()) {
+            queries += "parent_id=" + id.get_parent_primary_key();
+        }
+        auto path = get_item_path();
+        if (!queries.empty()) {
+            path += "/?" + queries;
+        }
+        return path;
+    }
+}
+
 std::string HttpCrudClient::get_item_path(const std::string& id) const
 {
-    return m_config.m_prefix + ":" + m_adapters->get_type() + ":" + id;
+    auto path = m_config.m_endpoint + "/" + get_type() + "s";
+    if (!id.empty()) {
+        path += "/" + id;
+    }
+    return path;
 }
 
 void HttpCrudClient::get_item_keys(
     const std::vector<std::string>& ids, std::vector<std::string>& keys) const
 {
     for (const auto& id : ids) {
-        keys.push_back(
-            m_config.m_prefix + ":" + m_adapters->get_type() + ":" + id);
+        keys.push_back(m_config.m_prefix + ":" + get_type() + ":" + id);
     }
 }
 
 std::string HttpCrudClient::get_set_key() const
 {
-    return m_config.m_prefix + ":" + m_adapters->get_type() + "s";
+    return m_config.m_prefix + ":" + get_type() + "s";
 }
 }  // namespace hestia

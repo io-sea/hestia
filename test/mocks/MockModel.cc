@@ -33,23 +33,6 @@ std::unique_ptr<ModelFactory> MockModel::create_factory()
     return std::make_unique<TypedModelFactory<MockModel>>();
 }
 
-AdapterCollection::Ptr MockModel::create_adapters()
-{
-    auto model_factory     = create_factory();
-    auto model_factory_raw = model_factory.get();
-
-    auto adapters =
-        std::make_unique<AdapterCollection>(std::move(model_factory));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(model_factory_raw));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(model_factory_raw));
-
-    return adapters;
-}
-
 std::string MockModel::get_type()
 {
     return s_name;
@@ -94,23 +77,6 @@ MockModelWithParent& MockModelWithParent::operator=(
 std::unique_ptr<ModelFactory> MockModelWithParent::create_factory()
 {
     return std::make_unique<TypedModelFactory<MockModelWithParent>>();
-}
-
-AdapterCollection::Ptr MockModelWithParent::create_adapters()
-{
-    auto model_factory     = create_factory();
-    auto model_factory_raw = model_factory.get();
-
-    auto adapters =
-        std::make_unique<AdapterCollection>(std::move(model_factory));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(model_factory_raw));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(model_factory_raw));
-
-    return adapters;
 }
 
 std::string MockModelWithParent::get_type()
@@ -165,23 +131,6 @@ std::unique_ptr<ModelFactory> MockParentModel::create_factory()
     return std::make_unique<TypedModelFactory<MockParentModel>>();
 }
 
-AdapterCollection::Ptr MockParentModel::create_adapters()
-{
-    auto model_factory     = create_factory();
-    auto model_factory_raw = model_factory.get();
-
-    auto adapters =
-        std::make_unique<AdapterCollection>(std::move(model_factory));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(model_factory_raw));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(model_factory_raw));
-
-    return adapters;
-}
-
 std::string MockParentModel::get_type()
 {
     return s_name;
@@ -225,23 +174,6 @@ void MockManyToManyTargetModel::init()
 std::unique_ptr<ModelFactory> MockManyToManyTargetModel::create_factory()
 {
     return std::make_unique<TypedModelFactory<MockManyToManyTargetModel>>();
-}
-
-AdapterCollection::Ptr MockManyToManyTargetModel::create_adapters()
-{
-    auto model_factory     = create_factory();
-    auto model_factory_raw = model_factory.get();
-
-    auto adapters =
-        std::make_unique<AdapterCollection>(std::move(model_factory));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(model_factory_raw));
-    adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(model_factory_raw));
-
-    return adapters;
 }
 
 std::string MockManyToManyTargetModel::get_type()

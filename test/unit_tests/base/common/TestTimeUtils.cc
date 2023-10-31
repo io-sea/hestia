@@ -2,7 +2,7 @@
 
 #include "ScalarField.h"
 #include "TimeUtils.h"
-#include "TimedLock.cc"
+#include "TimedLock.h"
 
 #include <ctime>
 #include <iomanip>

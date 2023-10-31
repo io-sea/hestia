@@ -43,9 +43,11 @@ add_module(
         requests/BaseCrudRequest.cc
         requests/CrudQuery.cc
         requests/CrudIdentifier.cc
+        requests/CrudIdentifierCollection.cc
         requests/CrudAttributes.cc
         requests/CrudRequest.cc 
         requests/CrudResponse.cc 
+        requests/CrudSerializer.cc 
         requests/TypedCrudRequest.h 
         service/CrudService.cc
         service/CrudServiceWithUser.cc

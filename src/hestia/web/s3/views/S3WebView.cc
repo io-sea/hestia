@@ -23,9 +23,12 @@ std::pair<HttpResponse::Ptr, CrudResponsePtr> S3WebView::on_get_bucket(
         bucket_name.empty() ? s3_request.get_bucket_name() : bucket_name);
     bucket_id.set_parent_primary_key(auth.m_user_id);
 
-    CrudQuery bucket_query(bucket_id, CrudQuery::OutputFormat::ITEM);
+    CrudQuery bucket_query(bucket_id, CrudQuery::BodyFormat::ITEM);
     auto bucket_get_response = m_service->make_request(
-        CrudRequest{bucket_query, {auth.m_user_id, auth.m_user_token}},
+        CrudRequest{
+            CrudMethod::READ,
+            bucket_query,
+            {auth.m_user_id, auth.m_user_token}},
         HsmItem::dataset_name);
     if (!bucket_get_response->ok()) {
         const auto msg = bucket_get_response->get_error().to_string();

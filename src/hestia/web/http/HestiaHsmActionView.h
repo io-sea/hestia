@@ -2,7 +2,6 @@
 
 #include "CrudWebView.h"
 #include "HsmObject.h"
-#include "StringAdapter.h"
 
 #include <memory>
 

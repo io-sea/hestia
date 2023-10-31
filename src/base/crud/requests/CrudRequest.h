@@ -7,29 +7,24 @@ namespace hestia {
 
 class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
   public:
+    CrudRequest() = default;
+
+    CrudRequest(CrudMethod method);
+
     explicit CrudRequest(
         CrudMethod method,
         VecModelPtr items,
-        const CrudUserContext& user_context,
-        CrudQuery::OutputFormat output_format =
-            CrudQuery::OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+        const CrudQuery& query,
+        const CrudUserContext& user_context);
 
     explicit CrudRequest(
         CrudMethod method,
-        const CrudUserContext& user_context,
-        const VecCrudIdentifier& ids     = {},
-        const CrudAttributes& attributes = {},
-        CrudQuery::OutputFormat output_format =
-            CrudQuery::OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
-
-    explicit CrudRequest(
         const CrudQuery& query,
         const CrudUserContext& user_context,
         bool update_event_feed = true);
+
+    explicit CrudRequest(
+        CrudMethod method, const CrudUserContext& user_context);
 
     explicit CrudRequest(
         CrudMethod method,
@@ -44,11 +39,36 @@ class CrudRequest : public BaseCrudRequest, public MethodRequest<CrudMethod> {
 
     Model* get_item() const;
 
+    Dictionary::Ptr get_attribute_as_dict(std::size_t) const;
+
     bool has_items() const;
+
+    bool has_ids() const;
+
+    bool has_attributes() const;
+
+    bool is_create_method() const;
+
+    bool is_read_method() const;
+
+    bool is_identify_method() const;
+
+    bool is_update_method() const;
+
+    bool is_remove_method() const;
+
+    bool is_create_or_update_method() const;
 
     const VecModelPtr& items() const;
 
+    std::size_t size() const;
+
     bool should_update_event_feed() const { return m_update_event_feed; }
+
+    void write_body(
+        const CrudAttributes::FormatSpec& format,
+        std::string& buffer,
+        const Index& index = {}) const;
 
   protected:
     bool m_update_event_feed{true};

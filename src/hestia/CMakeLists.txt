@@ -10,6 +10,8 @@ add_module(
         application/HestiaCache.h
         application/HestiaApplication.h
         application/HestiaCommands.h
+        application/HestiaRequest.h 
+        application/HestiaResponse.h
         application/ServerConfig.h
         application/WebAppConfig.h
         web/http/HestiaWebApp.h 
@@ -24,6 +26,7 @@ add_module(
         web/s3/views/S3WebView.h 
         web/s3/views/S3BucketListView.h
     SOURCES
+        HestiaCApi.cc
         HestiaCli.cc
         HestiaClient.cc
         HestiaServer.cc
@@ -34,6 +37,8 @@ add_module(
         application/HestiaCommands.cc
         application/ServerConfig.cc
         application/WebAppConfig.cc
+        application/HestiaRequest.cc 
+        application/HestiaResponse.cc
         web/http/HestiaWebApp.cc 
         web/http/HestiaHsmActionView.cc 
         web/http/HestiaUserAuthView.cc

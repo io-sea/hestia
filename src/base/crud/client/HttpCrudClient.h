@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CrudClient.h"
+#include "HttpRequest.h"
+#include "HttpResponse.h"
 
 namespace hestia {
 
@@ -10,7 +12,7 @@ class HttpCrudClient : public CrudClient {
   public:
     HttpCrudClient(
         const CrudClientConfig& config,
-        AdapterCollectionPtr adapters,
+        ModelSerializer::Ptr serializer,
         HttpClient* client);
 
     virtual ~HttpCrudClient();
@@ -43,7 +45,9 @@ class HttpCrudClient : public CrudClient {
         const CrudIdentifier& id, CrudLockType lock_type) const override;
 
   protected:
-    std::string get_item_path(const std::string& id) const;
+    std::string get_item_path(const std::string& id = {}) const;
+
+    std::string get_item_path(const CrudIdentifier& id) const;
 
     void get_item_keys(
         const std::vector<std::string>& ids,
@@ -52,5 +56,13 @@ class HttpCrudClient : public CrudClient {
     std::string get_set_key() const;
 
     HttpClient* m_client{nullptr};
+
+  private:
+    void make_request(
+        const CrudRequest& req,
+        HttpRequest::Method method,
+        CrudResponse& crud_response) const;
+
+    HttpResponse::Ptr make_request(const HttpRequest& req) const;
 };
 }  // namespace hestia

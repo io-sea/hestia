@@ -21,7 +21,7 @@ class KeyValueCreateContext : public KeyValueFieldContext {
         const CrudUserContext& user_context)>;
 
     KeyValueCreateContext(
-        const AdapterCollection* adapters,
+        const CrudSerializer* serializer,
         const std::string& key_prefix,
         onIdGenerationFunc id_func,
         defaultParentIdFunc default_parent_id_func,
@@ -42,14 +42,34 @@ class KeyValueCreateContext : public KeyValueFieldContext {
         const std::string& primary_key_name) const;
 
   private:
+    struct ModelRelations {
+        void load(const Model& model)
+        {
+            model.get_index_fields(m_index);
+            model.get_foreign_key_fields(m_foreign_keys);
+            model.get_default_create_one_to_one_fields(m_one_to_one_keys);
+            model.get_many_to_many_fields(m_many_many_keys);
+
+            if (!model.get_parent_id().empty()) {
+                m_parent_id = model.get_parent_id();
+            }
+        }
+
+        SerializeableWithFields::VecIndexField m_index;
+        std::string m_parent_id;
+        std::string m_parent_name;
+        VecKeyValuePair m_foreign_key_id_replacements;
+        Model::VecForeignKeyContext m_foreign_keys;
+        VecKeyValuePair m_one_to_one_keys;
+        std::vector<Model::TypeIdsPair> m_many_many_keys;
+    };
+
     std::string get_foreign_key(
         const Model::ForeignKeyContext& foreign_key_context) const;
 
     std::string get_index_field_key(
         const SerializeableWithFields::IndexField& index_field,
-        const std::vector<std::string>& parent_ids,
-        std::size_t offset,
-        std::size_t num_indices) const;
+        const std::string& parent_id) const;
 
     void override_field(
         Dictionary& item_dict,
@@ -66,42 +86,14 @@ class KeyValueCreateContext : public KeyValueFieldContext {
     void replace_foreign_key_ids(
         Dictionary& item_dict, const VecKeyValuePair& replacements) const;
 
-    void serialize_item(const Model& item);
-
-    void serialize_items(
-        const CrudRequest& request,
-        std::vector<std::string>& output_ids,
-        Dictionary& output_content);
-
-    void serialize_ids(
-        const CrudRequest& request,
-        const Dictionary& input_attributes,
-        std::vector<std::string>& output_ids,
-        Dictionary& output_content);
-
-    void serialize_empty(
-        const Dictionary& input_attributes,
-        std::vector<std::string>& output_ids,
-        Dictionary& output_content);
-
-    void to_output_dict(
-        const StringAdapter& dict_adapter,
-        const Model& item,
-        Dictionary& output_content);
+    void serialize_item(const Model& item, ModelRelations& relations);
 
     onIdGenerationFunc m_id_callback;
     defaultParentIdFunc m_default_parent_id_func;
     getOrCreateParentFunc m_get_or_create_parent_func;
     createChildFunc m_create_child_func;
 
-    std::vector<SerializeableWithFields::VecIndexField> m_index;
-    std::vector<std::string> m_parent_names;
-    std::vector<VecKeyValuePair> m_foreign_key_id_replacements;
-
-    std::vector<Model::VecForeignKeyContext> m_foreign_key;
-    std::vector<VecKeyValuePair> m_one_to_one;
-    std::vector<std::vector<Model::TypeIdsPair>> m_many_many;
-    std::vector<std::string> m_parent_ids;
+    std::vector<ModelRelations> m_relations;
 };
 
 }  // namespace hestia

@@ -29,6 +29,7 @@ typedef enum hestia_item_e {
     HESTIA_NODE,
     HESTIA_ACTION,
     HESTIA_USER_METADATA,
+    HESTIA_TIER_EXTENT,
     HESTIA_ITEM_TYPE_COUNT,
 } hestia_item_t;
 
@@ -48,9 +49,7 @@ typedef enum hestia_io_format_e {
                               // with JSON option
     HESTIA_IO_JSON = 1 << 1,  // I/O will be in JSON format - does not combine
                               // with other options
-    HESTIA_IO_KEY_VALUE =
-        1 << 2,  // I/O will be in Key-Value
-                 // (my_key0,my_value0\nmy_key1,my_value1) format
+    HESTIA_IO_KEY_VALUE = 1 << 2,  // I/O will be in Key-Value format
 } hestia_io_format_t;
 
 typedef enum hestia_query_format_e {

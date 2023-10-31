@@ -7,7 +7,7 @@ namespace hestia {
 class KeyValueRemoveContext : public KeyValueFieldContext {
   public:
     KeyValueRemoveContext(
-        const AdapterCollection* adapters, const std::string& key_prefix);
+        const CrudSerializer* serializer, const std::string& key_prefix);
 
     void serialize_request(const CrudRequest& request);
 

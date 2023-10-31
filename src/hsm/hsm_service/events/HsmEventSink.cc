@@ -163,7 +163,8 @@ void HsmEventSink::on_extent_changed(
     const auto extent_service =
         m_hsm_service->get_service(HsmItem::Type::EXTENT);
     const auto response = extent_service->make_request(CrudRequest{
-        CrudQuery{CrudIdentifier(id), CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(id), CrudQuery::BodyFormat::ITEM},
         user_context});
     if (!response->found()) {
         throw std::runtime_error(
@@ -176,7 +177,8 @@ void HsmEventSink::on_extent_changed(
     const auto object_service =
         m_hsm_service->get_service(HsmItem::Type::OBJECT);
     const auto object_response = object_service->make_request(CrudRequest{
-        CrudQuery{CrudIdentifier(object_id), CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(object_id), CrudQuery::BodyFormat::ITEM},
         user_context});
     if (!object_response->found()) {
         throw std::runtime_error(
@@ -189,19 +191,15 @@ void HsmEventSink::on_extent_changed(
     set_string(dict, "id", object_id);
     set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 
-    std::set<std::string> tier_ids;
+    std::vector<std::string> tier_ids;
     for (const auto& extent : object->tiers()) {
-        tier_ids.insert(extent.get_tier_id());
-    }
-
-    VecCrudIdentifier tier_crud_ids;
-    for (const auto& id : tier_ids) {
-        tier_crud_ids.push_back(CrudIdentifier(id));
+        tier_ids.push_back(extent.get_tier_id());
     }
 
     const auto tier_service  = m_hsm_service->get_service(HsmItem::Type::TIER);
     const auto tier_response = tier_service->make_request(CrudRequest{
-        CrudQuery{tier_crud_ids, CrudQuery::OutputFormat::ITEM}, user_context});
+        CrudMethod::READ, CrudQuery{tier_ids, CrudQuery::BodyFormat::ITEM},
+        user_context});
     if (!tier_response->found()) {
         throw std::runtime_error(
             "Failed to find requested item in event sink check");
@@ -270,6 +268,7 @@ void HsmEventSink::on_object_read(const CrudEvent& event) const
 void HsmEventSink::on_object_create(
     Dictionary& dict, const std::string& id, const Map& metadata) const
 {
+    LOG_INFO("Object create");
     dict.set_tag("create");
 
     set_string(dict, "id", id);
@@ -306,7 +305,8 @@ std::string HsmEventSink::get_metadata_object_id(
     const auto metadata_service =
         m_hsm_service->get_service(HsmItem::Type::METADATA);
     const auto response = metadata_service->make_request(CrudRequest{
-        CrudQuery{CrudIdentifier(metadata_id), CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(metadata_id), CrudQuery::BodyFormat::ITEM},
         user_context, false});
     if (!response->found()) {
         throw std::runtime_error(
@@ -321,6 +321,8 @@ void HsmEventSink::on_user_metadata_update(
     const std::string& id,
     const Map& metadata) const
 {
+    LOG_INFO("Metadata update");
+
     if (metadata.empty()) {
         return;
     }
@@ -334,6 +336,8 @@ void HsmEventSink::on_user_metadata_update(
     Map xattrs;
     metadata.copy_with_prefix({"data."}, xattrs, "user_metadata.");
     set_xattrs(dict, xattrs);
+
+    LOG_INFO("Finished metadata update");
 }
 
 void HsmEventSink::on_user_metadata_read(
@@ -341,6 +345,8 @@ void HsmEventSink::on_user_metadata_read(
     Dictionary& dict,
     const std::string& id) const
 {
+    LOG_INFO("Metadata read");
+
     const auto object_id = get_metadata_object_id(user_context, id);
 
     dict.set_tag("read");

@@ -16,16 +16,13 @@ class HestiaCApiTestFixture {
         hestia::Dictionary extra_config;
         hestia::TestClientConfigs::get_hsm_memory_client_config(extra_config);
 
-        std::string config_str;
-        hestia::JsonUtils::to_json(extra_config, config_str);
-
-        auto rc = hestia_initialize(nullptr, nullptr, config_str.c_str());
+        auto rc = hestia_initialize(
+            nullptr, nullptr,
+            hestia::JsonDocument(extra_config).to_string().c_str());
         REQUIRE(rc == 0);
 
         auto mock_client = std::make_unique<hestia::mock::MockHestiaClient>();
         m_client         = mock_client.get();
-
-        hestia::HestiaPrivate::override_client(std::move(mock_client));
     }
 
     ~HestiaCApiTestFixture() { hestia_finish(); }
@@ -37,9 +34,18 @@ class HestiaCApiTestFixture {
 
         LOG_INFO("starting create");
 
-        const auto rc = hestia_create(
-            HESTIA_OBJECT, HESTIA_IO_NONE, HESTIA_ID_NONE, nullptr, 0,
-            HESTIA_IO_IDS, &output, &len_output);
+        int rc{0};
+        if (id.empty()) {
+            rc = hestia_create(
+                HESTIA_OBJECT, HESTIA_IO_NONE, HESTIA_ID_NONE, nullptr, 0,
+                HESTIA_IO_IDS, &output, &len_output);
+        }
+        else {
+            rc = hestia_create(
+                HESTIA_OBJECT, HESTIA_IO_IDS, HESTIA_ID, id.c_str(), id.size(),
+                HESTIA_IO_IDS, &output, &len_output);
+        }
+
         LOG_INFO("Finished create");
 
         REQUIRE(rc == 0);
@@ -105,7 +111,7 @@ class HestiaCApiTestFixture {
 
 TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API", "[hestia]")
 {
-    std::string id;
+    std::string id{"mock_id_0"};
     do_create(id);
     REQUIRE(id == "mock_id_0");
 

@@ -6,10 +6,7 @@
 namespace hestia {
 class CrudWebView : public WebView {
   public:
-    CrudWebView(CrudService* service, const std::string& type_name = {}) :
-        WebView(), m_service(service), m_type_name(type_name)
-    {
-    }
+    CrudWebView(CrudService* service, const std::string& type_name = {});
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,
@@ -31,5 +28,8 @@ class CrudWebView : public WebView {
 
     CrudService* m_service{nullptr};
     std::string m_type_name;
+
+    CrudQuery::FormatSpec m_readable_format;
+    CrudQuery::FormatSpec m_machine_format;
 };
 }  // namespace hestia

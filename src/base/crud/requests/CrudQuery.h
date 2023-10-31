@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CrudAttributes.h"
-#include "CrudIdentifier.h"
+#include "CrudIdentifierCollection.h"
 
 #include "EnumUtils.h"
 
@@ -9,49 +9,53 @@ namespace hestia {
 
 class CrudQuery {
   public:
-    enum class OutputFormat { ATTRIBUTES, ID, ITEM, DICT };
+    enum class BodyFormat { NONE, JSON, DICT, ID, ITEM };
     STRINGABLE_ENUM(Format, ID, GET, LIST)
 
-    CrudQuery(
-        OutputFormat output_format = OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+    struct FormatSpec {
+        CrudIdentifierCollection::FormatSpec m_id_format;
+        CrudAttributes::FormatSpec m_attrs_format;
+    };
+
+    CrudQuery(BodyFormat output_format = BodyFormat::JSON);
 
     CrudQuery(
         const CrudIdentifier& identifier,
-        OutputFormat output_format = OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+        BodyFormat output_format = BodyFormat::JSON);
 
     CrudQuery(
-        const VecCrudIdentifier& identifiers,
-        OutputFormat output_format = OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+        const CrudIdentifierCollection& identifiers,
+        BodyFormat output_format = BodyFormat::JSON);
 
     CrudQuery(
         const Map& filter,
-        Format format              = Format::LIST,
-        OutputFormat output_format = OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+        const Format format      = Format::LIST,
+        BodyFormat output_format = BodyFormat::JSON);
+
+    CrudQuery(const CrudAttributes& attrs, BodyFormat output_format);
 
     CrudQuery(
-        const KeyValuePair& filter,
-        Format format              = Format::LIST,
-        OutputFormat output_format = OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+        const std::string& attrs_body,
+        const CrudAttributes::FormatSpec& attrs_format,
+        BodyFormat output_format);
 
-    const VecCrudIdentifier& ids() const;
+    CrudQuery(
+        const CrudIdentifier& identifier,
+        const CrudAttributes& attrs,
+        BodyFormat output_format);
 
-    const CrudAttributes& get_attributes() const;
+    CrudIdentifierCollection& ids();
 
     CrudAttributes& attributes();
+
+    void append(
+        const std::string& body, const CrudAttributes::FormatSpec& format);
 
     bool expects_single_item() const;
 
     static Format format_from_string(const std::string& input);
+
+    const CrudAttributes& get_attributes() const;
 
     const Map& get_filter() const;
 
@@ -59,19 +63,13 @@ class CrudQuery {
 
     std::string get_format_as_string() const;
 
-    void set_format(Format format) { m_format = format; }
+    const CrudIdentifierCollection& get_ids() const { return m_ids; }
 
-    const CrudIdentifier& get_id() const;
-
-    const VecCrudIdentifier& get_ids() const { return m_ids; }
-
-    OutputFormat get_output_format() const;
+    BodyFormat get_output_format() const;
 
     std::size_t get_max_items() const;
 
     std::size_t get_offset() const;
-
-    bool has_single_id() const;
 
     bool is_filter() const;
 
@@ -83,13 +81,19 @@ class CrudQuery {
 
     bool is_attribute_output_format() const;
 
+    bool is_json_output_format() const;
+
     bool is_dict_output_format() const;
 
-    void set_output_format(OutputFormat output_format);
+    void set_format(Format format) { m_format = format; }
 
-    void set_attributes_output_format(CrudAttributes::Format format);
+    void set_output_format(BodyFormat output_format);
 
-    void set_ids(const VecCrudIdentifier& ids);
+    void set_ids(const CrudIdentifierCollection& ids);
+
+    void set_ids(
+        const std::string& buffer,
+        const CrudIdentifierCollection::FormatSpec& format);
 
     void set_filter(const Map& filter);
 
@@ -104,10 +108,10 @@ class CrudQuery {
     std::size_t m_offset{0};
     std::size_t m_count{0};
 
+    BodyFormat m_output_format{BodyFormat::JSON};
     Format m_format{Format::LIST};
-    OutputFormat m_output_format{OutputFormat::ATTRIBUTES};
 
-    VecCrudIdentifier m_ids;
+    CrudIdentifierCollection m_ids;
     Map m_filter;
 };
 }  // namespace hestia

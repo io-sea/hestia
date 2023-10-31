@@ -22,16 +22,13 @@ class KeyValueReadContext : public KeyValueFieldContext {
         const CrudUserContext&)>;
 
     KeyValueReadContext(
-        const AdapterCollection* adapters,
+        const CrudSerializer* serializer,
         const std::string& key_prefix,
         dbGetItemFunc db_get_item_func,
         dbGetSetsFunc db_get_sets_func,
         idFromParentIdFunc id_from_parent_id_func);
 
     bool serialize_request(const CrudRequest& request);
-
-    void on_empty_read(
-        const CrudQuery& query, CrudResponse& crud_response) const;
 
     const std::vector<std::string>& get_index_keys() const;
 
@@ -56,16 +53,13 @@ class KeyValueReadContext : public KeyValueFieldContext {
     void add_item_id(const std::string& item_id);
 
     void add_db_item_to_dict(
-        const std::string& db_item,
-        const StringAdapter* adapter,
-        Dictionary& dict) const;
+        const std::string& db_item, Dictionary& dict) const;
 
     void add_db_items_to_dict(
         const std::vector<std::string>& db_items,
         const std::string& name,
         std::size_t offset,
         std::size_t size,
-        const StringAdapter* adapter,
         Dictionary& dict) const;
 
     std::string get_proxy_key(
@@ -74,7 +68,8 @@ class KeyValueReadContext : public KeyValueFieldContext {
     std::string get_id_from_name(const CrudIdentifier& id) const;
 
     bool serialize_ids(
-        const CrudQuery& query, const CrudUserContext& user_context);
+        const CrudIdentifierCollection& ids,
+        const CrudUserContext& user_context);
 
     bool serialize_filter(const CrudQuery& query);
 

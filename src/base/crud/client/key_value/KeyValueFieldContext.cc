@@ -7,8 +7,8 @@
 namespace hestia {
 
 KeyValueFieldContext::KeyValueFieldContext(
-    const AdapterCollection* adapters, const std::string& key_prefix) :
-    m_adapters(adapters), m_key_prefix(key_prefix)
+    const CrudSerializer* serializer, const std::string& key_prefix) :
+    m_serializer(serializer), m_key_prefix(key_prefix)
 {
 }
 
@@ -33,7 +33,7 @@ void KeyValueFieldContext::get_item_keys(
 
 std::string KeyValueFieldContext::get_prefix() const
 {
-    return m_key_prefix + ":" + m_adapters->get_type();
+    return m_key_prefix + ":" + m_serializer->get_type();
 }
 
 std::string KeyValueFieldContext::get_set_key() const

@@ -258,6 +258,7 @@ class DistributedHsmObjectStoreClientTestFixture {
             auto response = tier_service->make_request(hestia::TypedCrudRequest{
                 hestia::CrudMethod::CREATE,
                 tier,
+                {},
                 {m_test_user.get_primary_key()}});
             REQUIRE(response->ok());
         }
@@ -347,8 +348,8 @@ class DistributedHsmObjectStoreClientTestFixture {
             m_local_dist_hsm_service->get_hsm_service()->make_request(
                 hestia::CrudRequest{
                     hestia::CrudMethod::CREATE,
-                    {m_test_user.get_primary_key()},
-                    {hestia::CrudIdentifier(id)}},
+                    {hestia::CrudIdentifier(id)},
+                    {m_test_user.get_primary_key()}},
                 hestia::HsmItem::hsm_object_name);
     }
 
@@ -397,7 +398,7 @@ TEST_CASE_METHOD(
         LOG_INFO("cb callback fired ok");
         REQUIRE(result->ok());
     };
-    m_local_dist_hsm_service->do_data_io_action(
+    m_local_dist_hsm_service->do_hsm_action(
         hestia::HsmActionRequest(action, m_test_user.get_primary_key()),
         &stream, completion_db);
 
@@ -415,7 +416,7 @@ TEST_CASE_METHOD(
         hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
     get_action.set_subject_key(id);
 
-    m_local_dist_hsm_service->do_data_io_action(
+    m_local_dist_hsm_service->do_hsm_action(
         hestia::HsmActionRequest(get_action, m_test_user.get_primary_key()),
         &stream, get_completion_cb);
 

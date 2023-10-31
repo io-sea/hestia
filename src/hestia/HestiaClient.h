@@ -2,6 +2,8 @@
 
 #include "HestiaApplication.h"
 #include "HestiaCommands.h"
+#include "HestiaRequest.h"
+#include "HestiaResponse.h"
 #include "Stream.h"
 
 #include <mutex>
@@ -14,33 +16,15 @@ class IHestiaClient : public IHestiaApplication {
   public:
     virtual ~IHestiaClient() = default;
 
-    virtual OpStatus create(
-        const HestiaType& subject,
-        VecCrudIdentifier& ids,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) = 0;
+    using progressFunc = std::function<void(const HsmAction& action)>;
 
-    virtual OpStatus read(const HestiaType& subject, CrudQuery& query) = 0;
+    using completionFunc = std::function<void(HestiaResponse::Ptr response)>;
 
-    virtual OpStatus update(
-        const HestiaType& subject,
-        const VecCrudIdentifier& id,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) = 0;
-
-    virtual OpStatus remove(
-        const HestiaType& subject, const VecCrudIdentifier& id) = 0;
-
-    virtual OpStatus do_data_movement_action(HsmAction& action) = 0;
-
-    using dataIoCompletionFunc =
-        std::function<void(OpStatus status, const HsmAction& action)>;
-    virtual void do_data_io_action(
-        const HsmAction& action,
-        Stream* stream,
-        dataIoCompletionFunc completion_func) = 0;
+    virtual void make_request(
+        const HestiaRequest& request,
+        completionFunc completion_func,
+        Stream* stream             = nullptr,
+        progressFunc progress_func = nullptr) noexcept = 0;
 
     virtual void get_last_error(std::string& error) = 0;
 
@@ -60,31 +44,11 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
         const std::string& server_host = {},
         unsigned server_port           = 8080) override;
 
-    OpStatus create(
-        const HestiaType& subject,
-        VecCrudIdentifier& ids,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) override;
-
-    OpStatus read(const HestiaType& subject, CrudQuery& query) override;
-
-    OpStatus update(
-        const HestiaType& subject,
-        const VecCrudIdentifier& id,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) override;
-
-    OpStatus remove(
-        const HestiaType& subject, const VecCrudIdentifier& id) override;
-
-    OpStatus do_data_movement_action(HsmAction& action) override;
-
-    void do_data_io_action(
-        const HsmAction& action,
-        Stream* stream,
-        dataIoCompletionFunc completion_func) override;
+    void make_request(
+        const HestiaRequest& request,
+        completionFunc completion_func,
+        Stream* stream             = nullptr,
+        progressFunc progress_func = nullptr) noexcept override;
 
     void get_last_error(std::string& error) override;
 
@@ -95,6 +59,14 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
     std::string get_runtime_info() const override;
 
   private:
+    HestiaResponse::Ptr do_crud(const HestiaRequest& request);
+
+    void do_hsm_action(
+        const HestiaRequest& request,
+        completionFunc completion_func,
+        Stream* stream             = nullptr,
+        progressFunc progress_func = nullptr);
+
     void clear_last_error();
 
     void set_app_mode(const std::string& host, unsigned port) override;

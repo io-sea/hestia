@@ -1,18 +1,36 @@
 #include "Dictionary.h"
 
+#include "ErrorUtils.h"
 #include "StringUtils.h"
 
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
 namespace hestia {
+
+Dictionary::Dictionary(const std::string& serialized, const FormatSpec& format)
+{
+    from_string(serialized, {}, format);
+}
+
+Dictionary::Dictionary(const Map& flat, const FormatSpec& format)
+{
+    expand(flat, format);
+}
+
 Dictionary::Dictionary(Dictionary::Type type) : m_type(type) {}
 
 Dictionary::Dictionary(const Dictionary& other)
 {
     copy_from(other);
+}
+
+Dictionary::Ptr Dictionary::create(const Map& flat, const FormatSpec& format)
+{
+    return std::make_unique<Dictionary>(flat, format);
 }
 
 Dictionary::Ptr Dictionary::create(Dictionary::Type type)
@@ -30,6 +48,31 @@ void Dictionary::set_type(Type type)
     m_type = type;
 }
 
+bool Dictionary::is_sequence() const
+{
+    return m_type == Type::SEQUENCE;
+}
+
+bool Dictionary::is_scalar() const
+{
+    return m_type == Type::SCALAR;
+}
+
+std::size_t Dictionary::get_size() const
+{
+    if (is_sequence()) {
+        return m_sequence.size();
+    }
+    else {
+        return 1;
+    }
+}
+
+bool Dictionary::is_map() const
+{
+    return m_type == Type::MAP;
+}
+
 void Dictionary::for_each_scalar(onItem func) const
 {
     if (m_type == Type::MAP) {
@@ -41,42 +84,85 @@ void Dictionary::for_each_scalar(onItem func) const
     }
 }
 
-void Dictionary::merge(const Dictionary& dict)
+Dictionary::Ptr Dictionary::get_copy_of_item(std::size_t idx) const
 {
-    if (dict.is_empty()) {
+    if (is_sequence()) {
+        if (idx >= m_sequence.size()) {
+            throw std::range_error(
+                SOURCE_LOC() + " | Out of range access attempted.");
+        }
+        return std::make_unique<Dictionary>(*m_sequence[idx]);
+    }
+    else {
+        if (idx > 0) {
+            throw std::range_error(
+                SOURCE_LOC() + " | Out of range access attempted.");
+        }
+        return std::make_unique<Dictionary>(*this);
+    }
+}
+
+void Dictionary::merge(const Dictionary& other, bool append)
+{
+    if (other.is_empty()) {
         return;
     }
 
     if (is_empty()) {
-        copy_from(dict);
+        copy_from(other);
+        return;
     }
 
-    if (dict.get_type() == Dictionary::Type::SCALAR
-        && m_type == Dictionary::Type::SCALAR) {
-        m_scalar = dict.m_scalar;
-    }
-    else if (
-        dict.get_type() == Dictionary::Type::SEQUENCE
-        && m_type == Dictionary::Type::SEQUENCE) {
-        for (const auto& item : dict.get_sequence()) {
-            m_sequence.push_back(std::make_unique<Dictionary>(*item));
+    if (other.is_scalar() && is_scalar()) {
+        if (append) {
+            add_sequence_item(std::make_unique<Dictionary>(*this));
+            add_sequence_item(std::make_unique<Dictionary>(other));
+            m_type = Dictionary::Type::SEQUENCE;
+            m_scalar.clear();
+            return;
+        }
+        else {
+            m_scalar = other.m_scalar;
+            return;
         }
     }
-    else if (
-        dict.get_type() == Dictionary::Type::MAP
-        && m_type == Dictionary::Type::MAP) {
-        for (const auto& [key, value] : dict.get_map()) {
-            if (const auto iter = m_map.find(key); iter == m_map.end()) {
-                m_map.emplace(key, std::make_unique<Dictionary>(*value));
+    else if (is_sequence()) {
+        if (other.is_sequence()) {
+            for (const auto& item : other.get_sequence()) {
+                m_sequence.push_back(std::make_unique<Dictionary>(*item));
+            }
+            return;
+        }
+        else if (other.is_map()) {
+            add_sequence_item(std::make_unique<Dictionary>(other));
+            return;
+        }
+    }
+    else if (is_map()) {
+        if (other.is_map()) {
+            if (append) {
+                add_sequence_item(std::make_unique<Dictionary>(*this));
+                add_sequence_item(std::make_unique<Dictionary>(other));
+                m_type = Dictionary::Type::SEQUENCE;
+                m_map.clear();
             }
             else {
-                iter->second = std::make_unique<Dictionary>(*value);
+                for (const auto& [key, value] : other.get_map()) {
+                    if (const auto iter = m_map.find(key);
+                        iter == m_map.end()) {
+                        m_map.emplace(
+                            key, std::make_unique<Dictionary>(*value));
+                    }
+                    else {
+                        iter->second = std::make_unique<Dictionary>(*value);
+                    }
+                }
+                return;
             }
         }
     }
-    else {
-        throw std::runtime_error("Incompatible dict types in merge operation");
-    }
+
+    throw std::runtime_error("Incompatible dict types in merge operation");
 }
 
 void flatten_layer(
@@ -111,23 +197,78 @@ void flatten_layer(
     }
 }
 
-void Dictionary::flatten(Map& flat_representation) const
+void Dictionary::flatten(
+    Map& flat_representation, const FormatSpec& format) const
 {
     if (is_empty()) {
         return;
     }
-
-    flatten_layer(*this, flat_representation, "", m_delim);
+    flatten_layer(*this, flat_representation, "", format.m_scope_delimiter);
 }
 
-std::string Dictionary::to_string(bool sort_keys) const
+void Dictionary::write(
+    std::string& buffer, const Index& index, const FormatSpec& format) const
 {
-    Map flat;
-    flatten(flat);
-    return flat.to_string(sort_keys);
+    if (is_sequence()) {
+
+        if (index.is_set()) {
+            if (index.value() >= m_sequence.size()) {
+                throw std::range_error(
+                    SOURCE_LOC() + " | Out of bounds access attempted.");
+            }
+            Map flat;
+            m_sequence[index.value()]->flatten(flat, format);
+            flat.write(buffer, format.m_map_format);
+        }
+        else {
+            std::size_t count{0};
+            for (const auto& entry : m_sequence) {
+                Map flat;
+                entry->flatten(flat, format);
+                flat.write(buffer, format.m_map_format);
+                if (count < m_sequence.size() - 1) {
+                    buffer += format.m_sequence_delimiter;
+                }
+                count++;
+            }
+        }
+    }
+    else {
+        if (index.is_set() && index.value() > 0) {
+            throw std::range_error(
+                SOURCE_LOC() + " | Out of bounds access attempted.");
+        }
+        Map flat;
+        flatten(flat, format);
+        flat.write(buffer, format.m_map_format);
+    }
 }
 
-void Dictionary::expand(const Map& flat_representation)
+std::string Dictionary::to_string(const FormatSpec& format) const
+{
+    std::string ret;
+    write(ret, {}, format);
+    return ret;
+}
+
+void Dictionary::get_values(
+    const SearchExpression& search, std::vector<std::string>& values) const
+{
+    if (is_sequence()) {
+        for (const auto& item : m_sequence) {
+            if (item->has_map_item(search.m_path)) {
+                values.push_back(
+                    item->get_map_item(search.m_path)->get_scalar());
+            }
+        }
+    }
+    else if (has_map_item(search.m_path)) {
+        values.push_back(get_map_item(search.m_path)->get_scalar());
+    }
+}
+
+void Dictionary::expand(
+    const Map& flat_representation, const FormatSpec& format)
 {
     if (flat_representation.empty()) {
         return;
@@ -142,7 +283,7 @@ void Dictionary::expand(const Map& flat_representation)
 
     std::size_t count{0};
     for (const auto& key : keys) {
-        StringUtils::split(key, m_delim, parsed_keys[count]);
+        StringUtils::split(key, format.m_scope_delimiter, parsed_keys[count]);
         count++;
     }
 
@@ -165,16 +306,25 @@ void Dictionary::expand(const Map& flat_representation)
                 full_path += entry;
             }
             else {
-                full_path += entry + m_delim;
+                full_path += entry + format.m_scope_delimiter;
             }
+
             if (StringUtils::starts_with(entry, "seq_")) {
                 if (working_dict->get_type() != Dictionary::Type::SEQUENCE) {
                     working_dict->set_type(Dictionary::Type::SEQUENCE);
                 }
-                auto dict                = std::make_unique<Dictionary>();
-                Dictionary* next_working = dict.get();
-                working_dict->add_sequence_item(std::move(dict));
-                working_dict = next_working;
+
+                const auto seq_index =
+                    std::stoull(StringUtils::remove_prefix(entry, "seq_"));
+                if (seq_index >= working_dict->get_sequence().size()) {
+                    std::size_t delta =
+                        seq_index - working_dict->get_sequence().size();
+                    for (std::size_t idx = 0; idx <= delta; idx++) {
+                        working_dict->add_sequence_item(
+                            std::make_unique<Dictionary>());
+                    }
+                }
+                working_dict = working_dict->get_sequence()[seq_index].get();
             }
             else {
                 if (working_dict->has_map_item(entry)) {
@@ -197,6 +347,40 @@ void Dictionary::expand(const Map& flat_representation)
                 }
             }
             count++;
+        }
+    }
+}
+
+void Dictionary::from_string(
+    const std::string& buffer,
+    const std::string& key_prefix,
+    const FormatSpec& format)
+{
+    if (buffer.empty()) {
+        return;
+    }
+
+    std::vector<std::string> entries;
+    StringUtils::split(buffer, format.m_sequence_delimiter, entries);
+
+    std::string working_prefix;
+    if (!key_prefix.empty()) {
+        working_prefix = key_prefix + format.m_scope_delimiter;
+    }
+
+    if (entries.size() == 1) {
+        Map flat;
+        flat.from_string(entries[0], format.m_map_format, working_prefix);
+        expand(flat, format);
+    }
+    else {
+        m_type = Dictionary::Type::SEQUENCE;
+        for (const auto& entry : entries) {
+            auto entry_dict = std::make_unique<Dictionary>();
+            Map flat;
+            flat.from_string(entry, format.m_map_format, working_prefix);
+            entry_dict->expand(flat, format);
+            add_sequence_item(std::move(entry_dict));
         }
     }
 }
@@ -391,6 +575,16 @@ void Dictionary::copy_from(const Dictionary& other)
 
     for (const auto& [key, value] : other.m_map) {
         m_map.emplace(key, std::make_unique<Dictionary>(*value));
+    }
+}
+
+void Dictionary::set_sequence(const VecKeyValuePair& items)
+{
+    m_type = Dictionary::Type::SEQUENCE;
+    for (const auto& [key, value] : items) {
+        auto map = std::make_unique<Dictionary>();
+        map->set_map({{key, value}});
+        add_sequence_item(std::move(map));
     }
 }
 

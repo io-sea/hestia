@@ -71,6 +71,15 @@ HsmItem::Type HsmItem::from_name(const std::string& type_name)
     }
 }
 
+std::vector<std::string> HsmItem::get_hsm_subjects()
+{
+    std::vector<std::string> subjects;
+    for (const auto& subject : HsmItem::get_all_items()) {
+        subjects.push_back(HsmItem::to_name(subject));
+    }
+    return subjects;
+}
+
 std::array<HsmItem::Type, 9> HsmItem::get_all_items()
 {
     return s_all_items;

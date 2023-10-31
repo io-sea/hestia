@@ -56,6 +56,10 @@ endif()
 
 add_dependencies(${INTEGRATION_TEST_MODULE} hestia_mock_phobos_plugin)
 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_link_libraries(${INTEGRATION_TEST_MODULE} PRIVATE development_flags)
+endif()
+
 target_code_coverage(${INTEGRATION_TEST_MODULE} ALL)
 
 catch_discover_tests(${INTEGRATION_TEST_MODULE})

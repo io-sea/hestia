@@ -7,7 +7,7 @@
 
 namespace hestia {
 S3DatasetAdapter::S3DatasetAdapter(const std::string& metadata_prefix) :
-    StringAdapter(nullptr), m_metadata_prefix(metadata_prefix)
+    m_metadata_prefix(metadata_prefix)
 {
 }
 
@@ -16,13 +16,6 @@ S3DatasetAdapter::Ptr S3DatasetAdapter::create(
 {
     return std::make_unique<S3DatasetAdapter>(metadata_prefix);
 }
-
-void S3DatasetAdapter::dict_from_string(
-    const std::string&, Dictionary&, const std::string&) const
-{
-}
-
-void S3DatasetAdapter::dict_to_string(const Dictionary&, std::string&) const {}
 
 void S3DatasetAdapter::on_list_buckets(
     const VecModelPtr& items, S3ListBucketResponse& list_bucket_response)

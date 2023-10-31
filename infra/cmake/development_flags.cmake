@@ -15,28 +15,32 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     )
 
     if(HESTIA_ENABLE_SANITIZERS)
-    target_compile_options(
-        development_flags
-        INTERFACE
-            -fsanitize=address,undefined
-            # -fsanitize=thread # Incompatible with address, debug only
-            -fno-sanitize-recover=all
-            -fno-sanitize=vptr
-            -fno-omit-frame-pointer
-    )
-    target_link_libraries(
-        development_flags
-        INTERFACE
-            -fsanitize=address,undefined
-            # -fsanitize=thread # Incompatible with address, debug only
-    )
+        add_library(sanitizer_flags INTERFACE)
 
-    # Issue with older clang versions and loading plugins: https://github.com/google/sanitizers/issues/1017
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(development_flags INTERFACE -mllvm -asan-use-private-alias=1)
-    endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(
+            sanitizer_flags
+            INTERFACE
+                -fsanitize=address,undefined
+                # -fsanitize=thread # Incompatible with address, debug only
+                -fno-sanitize-recover=all
+                -fno-sanitize=vptr
+                -fno-omit-frame-pointer
+        )
+        target_link_libraries(
+            sanitizer_flags
+            INTERFACE
+                -fsanitize=address,undefined
+                # -fsanitize=thread # Incompatible with address, debug only
+        )
 
-endif(HESTIA_ENABLE_SANITIZERS)
+        # Issue with older clang versions and loading plugins: https://github.com/google/sanitizers/issues/1017
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(sanitizer_flags INTERFACE -mllvm -asan-use-private-alias=1)
+        endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+
+        target_link_libraries(development_flags INTERFACE sanitizer_flags)
+
+    endif(HESTIA_ENABLE_SANITIZERS)
 
 endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 

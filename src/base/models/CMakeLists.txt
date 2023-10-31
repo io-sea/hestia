@@ -11,7 +11,7 @@ add_module(
         base/OwnableModel.h
         base/LockableModel.h
         base/LockableOwnableModel.h
-        base/StringAdapter.h
+        base/ModelSerializer.h
     SOURCES  
         AccessControlList.cc
         User.cc
@@ -21,7 +21,7 @@ add_module(
         base/LockableOwnableModel.cc
         base/LockableModel.cc
         base/OwnableModel.cc
-        base/StringAdapter.cc
+        base/ModelSerializer.cc
         base/RelationshipField.cc
     INTERNAL_INCLUDE_DIRS 
         base

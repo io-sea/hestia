@@ -69,11 +69,12 @@ TEST_CASE_METHOD(
 {
     m_dist_hsm_service->register_self();
 
-    hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
+    hestia::CrudQuery query(hestia::CrudQuery::BodyFormat::ITEM);
 
     auto get_response = m_dist_hsm_service->get_hsm_service()
                             ->get_service(hestia::HsmItem::Type::NODE)
-                            ->make_request(hestia::CrudRequest{query, {}});
+                            ->make_request(hestia::CrudRequest{
+                                hestia::CrudMethod::READ, query, {}});
     REQUIRE(get_response->ok());
     REQUIRE(get_response->items().size() == 1);
 
@@ -87,12 +88,13 @@ TEST_CASE_METHOD(
     auto put_response = m_dist_hsm_service->get_hsm_service()
                             ->get_service(hestia::HsmItem::Type::NODE)
                             ->make_request(hestia::TypedCrudRequest{
-                                hestia::CrudMethod::CREATE, node, {}});
+                                hestia::CrudMethod::CREATE, node, {}, {}});
     REQUIRE(put_response->ok());
 
     auto get_response2 = m_dist_hsm_service->get_hsm_service()
                              ->get_service(hestia::HsmItem::Type::NODE)
-                             ->make_request(hestia::CrudRequest{query, {}});
+                             ->make_request(hestia::CrudRequest{
+                                 hestia::CrudMethod::READ, query, {}});
 
     REQUIRE(get_response2->ok());
     REQUIRE(get_response2->items().size() == 2);

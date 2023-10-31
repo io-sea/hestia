@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Index.h"
 #include "Map.h"
+#include "SearchExpression.h"
 
 #include <functional>
 #include <memory>
@@ -36,17 +38,31 @@ class Dictionary {
 
     enum class Type { SCALAR, SEQUENCE, MAP };
 
+    struct FormatSpec {
+        FormatSpec() : m_sequence_delimiter("\n\n") {}
+
+        std::string m_sequence_delimiter{"\n\n"};
+        std::string m_scope_delimiter{"."};
+        Map::FormatSpec m_map_format;
+    };
+
+    Dictionary(const Map& flat, const FormatSpec& format);
+
+    Dictionary(const std::string& serialized, const FormatSpec& format);
+
     Dictionary(Type type = Type::MAP);
 
     Dictionary(const Dictionary& other);
 
     static Ptr create(Type type = Type::MAP);
 
+    static Ptr create(const Map& flat, const FormatSpec& format);
+
     void add_sequence_item(std::unique_ptr<Dictionary> item);
 
-    void expand(const Map& flat_representation);
+    void expand(const Map& flat_representation, const FormatSpec& format = {});
 
-    void flatten(Map& flat_representation) const;
+    void flatten(Map& flat_representation, const FormatSpec& format = {}) const;
 
     using onItem =
         std::function<void(const std::string& key, const std::string& value)>;
@@ -54,13 +70,20 @@ class Dictionary {
 
     Dictionary* get_map_item(const std::string& key) const;
 
+    Dictionary::Ptr get_copy_of_item(std::size_t idx) const;
+
     const std::string& get_scalar() const;
 
     std::string get_scalar(
         const std::string& key, const std::string& delimiter = "::") const;
 
+    std::size_t get_size() const;
+
     void get_scalars(
         const std::string& key, std::vector<std::string>& values) const;
+
+    void get_values(
+        const SearchExpression& search, std::vector<std::string>& values) const;
 
     const std::pair<std::string, std::string>& get_tag() const;
 
@@ -74,7 +97,7 @@ class Dictionary {
     void get_map_items(
         Map& sink, const std::vector<std::string>& exclude_keys = {}) const;
 
-    void merge(const Dictionary& dict);
+    void merge(const Dictionary& dict, bool append = false);
 
     bool has_key_and_value(
         const KeyValuePair& kv_pair, const std::string& delimiter = "::") const;
@@ -84,6 +107,12 @@ class Dictionary {
     bool has_tag() const;
 
     bool is_empty() const;
+
+    bool is_sequence() const;
+
+    bool is_scalar() const;
+
+    bool is_map() const;
 
     void set_map_item(const std::string& key, std::unique_ptr<Dictionary> item);
 
@@ -107,20 +136,31 @@ class Dictionary {
 
     void set_map(const std::unordered_map<std::string, std::string>& items);
 
+    void set_sequence(const VecKeyValuePair& items);
+
     void set_tag(const std::string& tag, const std::string& prefix = "");
 
     void set_type(Type type);
 
-    std::string to_string(bool sort_keys = false) const;  // For debugging
+    void from_string(
+        const std::string& buffer,
+        const std::string& key_prefix = {},
+        const FormatSpec& format      = {});
 
-    bool operator==(const Dictionary& rhs) const;  // Deep Comparision
+    std::string to_string(const FormatSpec& format = {}) const;
+
+    void write(
+        std::string& buffer,
+        const Index& index       = {},
+        const FormatSpec& format = {}) const;
+
+    bool operator==(const Dictionary& rhs) const;
 
     Dictionary& operator=(const Dictionary& other);
 
   private:
     void copy_from(const Dictionary& other);
 
-    const std::string m_delim = ".";
     Type m_type{Type::MAP};
     std::pair<std::string, std::string> m_tag;
     std::string m_scalar;

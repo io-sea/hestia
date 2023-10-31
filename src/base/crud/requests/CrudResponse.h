@@ -13,15 +13,31 @@ class CrudResponse : public Response<CrudErrorCode> {
   public:
     using Ptr = std::unique_ptr<CrudResponse>;
 
-    CrudResponse(const BaseRequest& request, const std::string& type);
+    CrudResponse(
+        const BaseRequest& request,
+        const std::string& type,
+        CrudQuery::BodyFormat output_format);
 
-    static Ptr create(const BaseRequest& request, const std::string& type);
+    static Ptr create(
+        const BaseRequest& request,
+        const std::string& type,
+        CrudQuery::BodyFormat output_format);
 
     virtual ~CrudResponse();
 
-    const CrudAttributes& attributes() const;
+    void add_attributes(
+        const std::string& buffer, const CrudAttributes::FormatSpec& format);
 
-    CrudAttributes& attributes();
+    void add_attributes(
+        std::unique_ptr<Dictionary> dict,
+        const CrudIdentifier::FormatSpec& id_format);
+
+    void add_ids(
+        const std::string& json, const CrudIdentifier::FormatSpec& format);
+
+    void add_item(std::unique_ptr<Model> item);
+
+    const CrudAttributes& get_attributes() const;
 
     Model* get_item() const;
 
@@ -33,15 +49,25 @@ class CrudResponse : public Response<CrudErrorCode> {
         return typed_model;
     }
 
+    bool expects_modified_attributes() const;
+
+    bool expects_attributes() const;
+
+    bool expects_items() const;
+
+    bool expects_ids() const;
+
+    bool found() const;
+
+    bool has_attributes() const;
+
     const VecModelPtr& items() const;
 
     VecModelPtr& items();
 
-    const Dictionary* dict() const;
+    CrudIdentifierCollection& ids() { return m_ids; }
 
-    std::vector<std::string>& ids() { return m_ids; }
-
-    const std::vector<std::string>& ids() const { return m_ids; }
+    const CrudIdentifierCollection& get_ids() const { return m_ids; }
 
     std::vector<std::string>& parent_ids() { return m_parent_ids; }
 
@@ -49,22 +75,20 @@ class CrudResponse : public Response<CrudErrorCode> {
 
     const std::vector<Map>& modified_attrs() const { return m_modified_attrs; };
 
-    bool found() const;
-
-    void set_item(std::unique_ptr<Model> item);
-
-    void set_dict(std::unique_ptr<Dictionary> dict);
+    void set_attributes(JsonDocument::Ptr json);
 
     void set_locked(bool is_locked);
 
     bool locked() const;
 
+    void write(std::string& buffer, const CrudQuery::FormatSpec& format);
+
   private:
     VecModelPtr m_items;
-    std::unique_ptr<Dictionary> m_items_dict;
     CrudAttributes m_attributes;
+    CrudQuery::BodyFormat m_output_format;
 
-    std::vector<std::string> m_ids;
+    CrudIdentifierCollection m_ids;
     std::vector<std::string> m_parent_ids;
 
     std::vector<Map> m_modified_attrs;

@@ -66,6 +66,7 @@ add_module(
         buffer/WriteableBufferView.cc
         concurrency/ThreadCollection.cc
         concurrency/TimedLock.cc
+        json/JsonDocument.cc
         plugins/PluginHandle.cc
         plugins/PluginLoader.cc
         random/IdGenerator.cc
@@ -101,6 +102,7 @@ add_module(
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
+        json
         plugins
         random
         serialization

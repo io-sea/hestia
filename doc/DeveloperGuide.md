@@ -97,27 +97,19 @@ infra/scripts/run_lint.sh /path/to/build/dir
 
 ##### Mac Specifics
 
-On Mac `brew` currently packages `clang-format` and `llvm` as version 16, which are newer than the CI version. This can lead to compatibility issues. 
+On Mac with `brew` we need to carefully set the runtime paths to avoid various compatibility issues:
 
-For us, version 15 works:
-
-```bash
-brew install llvm@15
+```sh
+brew install llvm
 ```
 
-If you want to use this as your default compiler add the following to your `.zshrc`.
+The following should be set in any shell you use for compiling (e.g. you can add them to `~/.zshrc`). Note this is slightly different to the paths suggested by brew.
 
-```bash
-echo 'export PATH=$LLVM_PATH/bin:$PATH' >> ~/.zshrc
-echo 'export LDFLAGS=-L$LLVM_PATH/lib' >> ~/.zshrc
-echo 'export CPPFLAGS=-I$LLVM_PATH/include' >> ~/.zshrc
-```
-
-A typical value on Mac is `LLVM_PATH=/opt/homebrew/opt/llvm@15`;
-
-Before running CMake, the compiler should be explicitly set to this one also:
-
-```bash
+```sh
+export LLVM_PATH=/opt/homebrew/opt/llvm
+export PATH=$LLVM_PATH/bin:$PATH
+export LDFLAGS="-L$LLVM_PATH/lib/c++ -Wl,-rpath,$LLVM_PATH/lib/c++":$LDFLAGS
+export CPPFLAGS=-I$LLVM_PATH/include:$CPPFLAGS
 export CC=$LLVM_PATH/bin/clang
 export CXX=$LLVM_PATH/bin/clang++
 ```

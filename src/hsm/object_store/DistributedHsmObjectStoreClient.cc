@@ -59,7 +59,8 @@ void DistributedHsmObjectStoreClient::do_initialize(
         m_hsm_service->get_hsm_service()
             ->get_service(HsmItem::Type::TIER)
             ->make_request(CrudRequest{
-                CrudQuery{CrudQuery::OutputFormat::ITEM}, current_user_id});
+                CrudMethod::READ, CrudQuery{CrudQuery::BodyFormat::ITEM},
+                current_user_id});
 
     std::vector<StorageTier> tiers;
     for (const auto& item : response->items()) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -57,6 +58,9 @@ class StringUtils {
 
     static void trim(std::string& str);
 
+    static void to_char(
+        const std::string& str, char** chars, int* length = nullptr);
+
     /**
      * Convert the string to lower case
      *
@@ -77,6 +81,9 @@ class StringUtils {
 
     static void to_lines(
         const std::string& input, std::vector<std::string>& lines);
+
+    static std::string flatten(
+        const std::vector<std::string>& entries, char delimiter = ',');
 
     static bool has_character(const std::string& input, char check);
 };

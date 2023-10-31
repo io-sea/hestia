@@ -7,13 +7,6 @@ server:
   controller_address: 127.0.0.1:8080
   tag: worker0
 
-web_apps:
-  - identitifier: hestia::HsmService
-    interface: http
-
-server_backends:
-  - identifier: hestia::Basic
-
 object_store_backends:
   - backend_type: file_hsm
     tier_names: ["0", "1", "2", "3", "4"]

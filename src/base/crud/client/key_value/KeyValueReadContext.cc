@@ -5,12 +5,12 @@
 namespace hestia {
 
 KeyValueReadContext::KeyValueReadContext(
-    const AdapterCollection* adapters,
+    const CrudSerializer* serializer,
     const std::string& key_prefix,
     dbGetItemFunc db_get_item_func,
     dbGetSetsFunc db_get_sets_func,
     idFromParentIdFunc id_from_parent_id_func) :
-    KeyValueFieldContext(adapters, key_prefix),
+    KeyValueFieldContext(serializer, key_prefix),
     m_db_get_item_func(db_get_item_func),
     m_db_get_sets_func(db_get_sets_func),
     m_id_from_parent_id_func(id_from_parent_id_func)
@@ -24,21 +24,20 @@ const std::vector<std::string>& KeyValueReadContext::get_index_keys() const
 
 bool KeyValueReadContext::serialize_request(const CrudRequest& request)
 {
-    auto template_item = m_adapters->get_model_factory()->create();
-    template_item->get_foreign_key_proxy_fields(m_foreign_key_proxies);
+    m_serializer->get_template()->get_foreign_key_proxy_fields(
+        m_foreign_key_proxies);
 
-    const auto& query = request.get_query();
-    if (query.is_id()) {
-        if (!serialize_ids(query, request.get_user_context())) {
+    if (request.has_ids()) {
+        if (!serialize_ids(request.get_ids(), request.get_user_context())) {
             return false;
         }
     }
     else {
-        if (query.get_filter().empty()) {
+        if (request.get_query().get_filter().empty()) {
             serialize_empty();
         }
         else {
-            if (!serialize_filter(query)) {
+            if (!serialize_filter(request.get_query())) {
                 return false;
             }
         }
@@ -47,11 +46,9 @@ bool KeyValueReadContext::serialize_request(const CrudRequest& request)
 }
 
 bool KeyValueReadContext::serialize_ids(
-    const CrudQuery& query, const CrudUserContext& user_context)
+    const CrudIdentifierCollection& ids, const CrudUserContext& user_context)
 {
-    auto item_template = m_adapters->get_model_factory()->create();
-
-    for (const auto& id : query.ids()) {
+    for (const auto& id : ids.data()) {
         std::string working_id;
         if (id.has_primary_key()) {
             working_id = id.get_primary_key();
@@ -61,8 +58,9 @@ bool KeyValueReadContext::serialize_ids(
         }
         else if (id.has_parent_primary_key()) {
             working_id = m_id_from_parent_id_func(
-                item_template->get_parent_type(), m_adapters->get_type(),
-                id.get_parent_primary_key(), user_context);
+                m_serializer->get_template()->get_parent_type(),
+                m_serializer->get_type(), id.get_parent_primary_key(),
+                user_context);
         }
 
         if (working_id.empty()) {
@@ -107,18 +105,6 @@ std::string KeyValueReadContext::get_id_from_name(
         get_field_key(field_prefix + "name", id.get_name()));
 }
 
-void KeyValueReadContext::on_empty_read(
-    const CrudQuery& query, CrudResponse& crud_response) const
-{
-    if (query.is_dict_output_format()) {
-        auto response_dict = std::make_unique<Dictionary>();
-        if (!query.expects_single_item()) {
-            response_dict->set_type(Dictionary::Type::SEQUENCE);
-        }
-        crud_response.set_dict(std::move(response_dict));
-    }
-}
-
 void KeyValueReadContext::process_foreign_key_content(
     const std::vector<std::string>& db_values,
     const std::vector<std::size_t>& sizes,
@@ -127,9 +113,6 @@ void KeyValueReadContext::process_foreign_key_content(
     if (db_values.empty()) {
         return;
     }
-
-    const auto adapter = m_adapters->get_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON));
 
     std::size_t offset = 0;
     for (std::size_t idx = 0; idx < m_index_keys.size(); idx++) {
@@ -142,7 +125,7 @@ void KeyValueReadContext::process_foreign_key_content(
             const auto index = idx * num_proxies + jdx;
 
             add_db_items_to_dict(
-                db_values, name, offset, sizes[index], adapter, *item_dict);
+                db_values, name, offset, sizes[index], *item_dict);
             offset += sizes[index];
         }
         foreign_key_dicts.add_sequence_item(std::move(item_dict));
@@ -154,14 +137,13 @@ void KeyValueReadContext::add_db_items_to_dict(
     const std::string& name,
     std::size_t offset,
     std::size_t size,
-    const StringAdapter* adapter,
     Dictionary& dict) const
 {
     assert(offset + size <= db_items.size());
 
     auto items_dict = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
     for (std::size_t idx = 0; idx < size; idx++) {
-        add_db_item_to_dict(db_items[offset + idx], adapter, *items_dict);
+        add_db_item_to_dict(db_items[offset + idx], *items_dict);
     }
     dict.set_map_item(name, std::move(items_dict));
 }
@@ -173,12 +155,10 @@ void KeyValueReadContext::add_item_id(const std::string& item_id)
 }
 
 void KeyValueReadContext::add_db_item_to_dict(
-    const std::string& db_item,
-    const StringAdapter* adapter,
-    Dictionary& dict) const
+    const std::string& db_item, Dictionary& dict) const
 {
     auto item_dict = std::make_unique<Dictionary>();
-    adapter->dict_from_string(db_item, *item_dict);
+    JsonDocument(db_item).write(*item_dict);
     dict.add_sequence_item(std::move(item_dict));
 }
 
@@ -186,7 +166,7 @@ void KeyValueReadContext::update_foreign_proxy_keys(const std::string& item_id)
 {
     for (const auto& [type, name] : m_foreign_key_proxies) {
         const auto key =
-            get_proxy_key(m_adapters->get_type(), item_id) + ":" + type + "s";
+            get_proxy_key(m_serializer->get_type(), item_id) + ":" + type + "s";
         m_foreign_key_proxy_keys.push_back(key);
     }
 }

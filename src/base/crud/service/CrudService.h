@@ -39,7 +39,7 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
     void set_default_name(const std::string& name);
 
   protected:
-    virtual void create(
+    virtual void create_crud(
         const CrudRequest& request,
         CrudResponse& response,
         bool record_modified_attrs) const;

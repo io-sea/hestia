@@ -20,31 +20,11 @@ class MockHestiaClient : public IHestiaClient {
         const std::string& server_host = {},
         unsigned server_port           = 8080) override;
 
-    OpStatus create(
-        const HestiaType& subject,
-        VecCrudIdentifier& ids,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) override;
-
-    OpStatus update(
-        const HestiaType& subject,
-        const VecCrudIdentifier& ids,
-        CrudAttributes& attributes,
-        CrudAttributes::Format output_format =
-            CrudAttributes::Format::JSON) override;
-
-    OpStatus read(const HestiaType& subject, CrudQuery& query) override;
-
-    OpStatus remove(
-        const HestiaType& subject, const VecCrudIdentifier& ids) override;
-
-    OpStatus do_data_movement_action(HsmAction& action) override;
-
-    void do_data_io_action(
-        const HsmAction& action,
-        Stream* stream,
-        dataIoCompletionFunc completion_func) override;
+    void make_request(
+        const HestiaRequest& request,
+        completionFunc completion_func,
+        Stream* stream             = nullptr,
+        progressFunc progress_func = nullptr) noexcept override;
 
     void get_last_error(std::string& error) override;
 

@@ -7,6 +7,16 @@
 
 namespace hestia {
 
+CrudWebView::CrudWebView(CrudService* service, const std::string& type_name) :
+    WebView(), m_service(service), m_type_name(type_name)
+{
+    m_readable_format.m_attrs_format.set_is_json();
+    m_readable_format.m_attrs_format.m_json_format.m_indent      = true;
+    m_readable_format.m_attrs_format.m_json_format.m_indent_size = 4;
+
+    m_machine_format.m_attrs_format.set_is_json();
+}
+
 std::string CrudWebView::get_path(const HttpRequest& request) const
 {
     const auto path =
@@ -33,65 +43,46 @@ HttpResponse::Ptr CrudWebView::on_get(
     response->header().set_content_type(content_type);
 
     if (path.empty()) {
-
-        const auto query_type = request.get_header().has_html_accept_type() ?
-                                    CrudQuery::OutputFormat::DICT :
-                                    CrudQuery::OutputFormat::ATTRIBUTES;
-        CrudQuery query(query_type);
-        bool has_id{false};
+        const auto response_type = request.get_header().has_html_accept_type() ?
+                                       CrudQuery::BodyFormat::DICT :
+                                       CrudQuery::BodyFormat::JSON;
+        CrudQuery query(response_type);
         if (!request.get_queries().empty()) {
-            CrudIdentifier id;
-            if (const auto name_val = request.get_queries().get_item("name");
-                !name_val.empty()) {
-                id.set_name(name_val);
-                has_id = true;
-            }
-            if (const auto parent_name_val =
-                    request.get_queries().get_item("parent_name");
-                !parent_name_val.empty()) {
-                id.set_parent_name(parent_name_val);
-            }
-            if (const auto parent_id_val =
-                    request.get_queries().get_item("parent_id");
-                !parent_id_val.empty()) {
-                id.set_parent_primary_key(parent_id_val);
-            }
+            CrudIdentifier id(
+                request.get_queries(), CrudIdentifier::FormatSpec());
+            if (id.has_value()) {
 
-            if (has_id) {
-                query.set_ids({id});
+                query.ids().add(id);
             }
         }
 
         auto crud_response = m_service->make_request(
-            CrudRequest(query, {auth.m_user_id, auth.m_user_token}),
-            m_type_name);
+            CrudRequest(CrudMethod::READ, query, auth), m_type_name);
         if (!crud_response->ok()) {
             return HttpResponse::create(
                 {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
                  crud_response->get_error().to_string()});
         }
 
-        if (has_id && !crud_response->found()) {
+        if (!query.get_ids().empty() && !crud_response->found()) {
             return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND});
         }
 
         if (request.get_header().has_html_accept_type()) {
             std::string json_body;
-            JsonUtils::to_json(*crud_response->dict(), json_body, {}, 4);
+            crud_response->write(json_body, m_readable_format);
             response->set_body(
                 CrudWebPages::get_item_view(m_type_name, json_body));
         }
         else {
-            response->set_body(crud_response->attributes().get_buffer());
+            crud_response->write(response->body(), m_machine_format);
         }
     }
     else {
         const auto id = path;
-        CrudQuery query(
-            CrudIdentifier(id), CrudQuery::OutputFormat::ATTRIBUTES);
+        CrudQuery query(id, CrudQuery::BodyFormat::JSON);
         auto crud_response = m_service->make_request(
-            CrudRequest{query, {auth.m_user_id, auth.m_user_token}},
-            m_type_name);
+            CrudRequest{CrudMethod::READ, query, auth}, m_type_name);
         if (!crud_response->ok()) {
             return HttpResponse::create(
                 {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
@@ -100,7 +91,7 @@ HttpResponse::Ptr CrudWebView::on_get(
         if (!crud_response->found()) {
             return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND});
         }
-        response->set_body(crud_response->attributes().get_buffer());
+        crud_response->write(response->body(), m_machine_format);
     }
     return response;
 }
@@ -121,10 +112,7 @@ HttpResponse::Ptr CrudWebView::on_delete(
     }
 
     auto crud_response = m_service->make_request(
-        CrudRequest{
-            CrudMethod::REMOVE,
-            {auth.m_user_id, auth.m_user_token},
-            {CrudIdentifier(path)}},
+        CrudRequest{CrudMethod::REMOVE, {CrudIdentifier(path)}, auth},
         m_type_name);
     if (!crud_response->ok()) {
         return HttpResponse::create(
@@ -151,8 +139,7 @@ HttpResponse::Ptr CrudWebView::on_put(
 
     auto response = HttpResponse::create();
 
-    CrudAttributes attributes;
-    attributes.set_buffer(request.body());
+    CrudAttributes attributes(JsonDocument::create(request.body()));
 
     const std::string parent_id = request.get_queries().get_item("parent_id");
 
@@ -161,10 +148,8 @@ HttpResponse::Ptr CrudWebView::on_put(
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::CREATE,
-                {auth.m_user_id, auth.m_user_token},
-                {},
-                attributes,
-                CrudQuery::OutputFormat::ATTRIBUTES},
+                {attributes, CrudQuery::BodyFormat::JSON},
+                auth},
             m_type_name);
     }
     else {
@@ -178,10 +163,8 @@ HttpResponse::Ptr CrudWebView::on_put(
         crud_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE,
-                {auth.m_user_id, auth.m_user_token},
-                {id},
-                attributes,
-                CrudQuery::OutputFormat::ATTRIBUTES},
+                {id, attributes, CrudQuery::BodyFormat::JSON},
+                auth},
             m_type_name);
     }
     if (!crud_response->ok()) {
@@ -189,8 +172,7 @@ HttpResponse::Ptr CrudWebView::on_put(
             {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
              crud_response->get_error().to_string()});
     }
-
-    response->set_body(crud_response->attributes().get_buffer());
+    crud_response->write(response->body(), m_machine_format);
     return response;
 }
 }  // namespace hestia

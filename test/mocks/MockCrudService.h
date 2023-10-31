@@ -3,7 +3,6 @@
 #include "CrudService.h"
 #include "InMemoryKeyValueStoreClient.h"
 #include "Model.h"
-#include "StringAdapter.h"
 
 #include "MockIdGenerator.h"
 #include "MockTimeProvider.h"

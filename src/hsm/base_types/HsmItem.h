@@ -46,6 +46,8 @@ class HsmItem {
 
     static std::array<Type, 9> get_all_items();
 
+    static std::vector<std::string> get_hsm_subjects();
+
   protected:
     Type m_hsm_type{Type::OBJECT};
     static constexpr std::array<Type, 9> s_all_items{

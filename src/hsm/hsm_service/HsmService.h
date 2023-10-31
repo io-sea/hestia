@@ -47,43 +47,49 @@ class HsmService : public CrudService {
         const CrudRequest& request,
         const std::string& type = {}) const noexcept override;
 
-    [[nodiscard]] HsmActionResponse::Ptr make_request(
-        const HsmActionRequest& request) const noexcept;
-
-    using dataIoCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
-    void do_data_io_action(
+    using actionCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
+    using actionProgressFunc   = std::function<void(HsmActionResponse::Ptr)>;
+    void do_hsm_action(
         const HsmActionRequest& request,
         Stream* stream,
-        dataIoCompletionFunc completion_func) const;
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func = nullptr) const noexcept;
 
     void update_tiers(const std::string& user_id);
 
   private:
+    CrudResponse::Ptr do_crud(
+        HsmItem::Type subject_type, const CrudRequest& request) const;
+
     CrudResponse::Ptr crud_create(
-        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
-    CrudResponse::Ptr crud_read(
-        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
-    CrudResponse::Ptr crud_update(
-        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
-    CrudResponse::Ptr crud_remove(
-        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
-    CrudResponse::Ptr crud_identify(
-        HsmItem::Type subject_type, const CrudRequest& request) const noexcept;
+        HsmItem::Type subject_type, const CrudRequest& request) const;
 
     void get_data(
         const HsmActionRequest& request,
         Stream* stream,
-        dataIoCompletionFunc completion_func) const noexcept;
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func) const;
+
     void put_data(
         const HsmActionRequest& request,
         Stream* stream,
-        dataIoCompletionFunc completion_func) const noexcept;
-    HsmActionResponse::Ptr copy_data(
-        const HsmActionRequest& request) const noexcept;
-    HsmActionResponse::Ptr move_data(
-        const HsmActionRequest& request) const noexcept;
-    HsmActionResponse::Ptr release_data(
-        const HsmActionRequest& request) const noexcept;
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func) const;
+
+    void copy_data(
+        const HsmActionRequest& request,
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func) const;
+
+    void move_data(
+        const HsmActionRequest& request,
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func) const;
+
+    void release_data(
+        const HsmActionRequest& request,
+        actionCompletionFunc completion_func,
+        actionProgressFunc progress_func) const;
 
     void on_put_data_complete(
         const BaseRequest& req,
@@ -93,7 +99,7 @@ class HsmService : public CrudService {
         const Extent& extent,
         const std::string& store_id,
         const HsmAction& working_action,
-        dataIoCompletionFunc completion_func) const;
+        actionCompletionFunc completion_func) const;
 
     void on_get_data_complete(
         const BaseRequest& req,
@@ -101,7 +107,7 @@ class HsmService : public CrudService {
         const HsmAction& working_action,
         const Extent& extent,
         bool db_update,
-        dataIoCompletionFunc completion_func) const;
+        actionCompletionFunc completion_func) const;
 
     CrudResponsePtr get_or_create_action(
         const HsmActionRequest& req, HsmAction& working_action) const;

@@ -124,151 +124,58 @@ void HestiaClient::get_last_error(std::string& error)
     error = m_last_errors[std::this_thread::get_id()];
 }
 
-OpStatus HestiaClient::create(
-    const HestiaType& subject,
-    VecCrudIdentifier& ids,
-    CrudAttributes& attributes,
-    CrudAttributes::Format output_format)
+void HestiaClient::make_request(
+    const HestiaRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    progressFunc progress_func) noexcept
 {
-    clear_last_error();
-
-    CrudService* service{nullptr};
-    if (subject.m_type == HestiaType::Type::SYSTEM
-        && subject.m_system_type == HestiaType::SystemType::USER) {
-        service = m_user_service.get();
-    }
-    else if (subject.m_type == HestiaType::Type::HSM) {
-        service = m_hsm_service;
-    }
-    if (service != nullptr) {
-        const auto response = service->make_request(
-            CrudRequest{
-                CrudMethod::CREATE, m_user_service->get_current_user_context(),
-                ids, attributes, CrudQuery::OutputFormat::ATTRIBUTES,
-                output_format},
-            HsmItem::to_name(subject.m_hsm_type));
-        ERROR_CHECK(response, "CREATE");
-        ids.clear();
-        for (const auto& id : response->ids()) {
-            ids.push_back(
-                CrudIdentifier(id, CrudIdentifier::Type::PRIMARY_KEY));
+    if (request.is_crud_request()) {
+        HestiaResponse::Ptr response;
+        try {
+            response = do_crud(request);
         }
-        attributes = response->attributes();
-    }
-    return {};
-}
-
-OpStatus HestiaClient::update(
-    const HestiaType& subject,
-    const VecCrudIdentifier& ids,
-    CrudAttributes& attributes,
-    CrudAttributes::Format output_format)
-{
-    clear_last_error();
-
-    CrudService* service{nullptr};
-    if (subject.m_type == HestiaType::Type::SYSTEM
-        && subject.m_system_type == HestiaType::SystemType::USER) {
-        service = m_user_service.get();
-    }
-    else if (subject.m_type == HestiaType::Type::HSM) {
-        service = m_hsm_service;
-    }
-    if (service != nullptr) {
-        if (ids.size() == 1) {
-            LOG_INFO("Doing update with id: " << ids[0].get_primary_key());
+        catch (const std::exception& e) {
+            response = HestiaResponse::create(
+                {OpStatus::Status::ERROR, -1, "Exception in crud method"});
         }
-        else {
-            LOG_INFO("Doing update with: " << ids.size() << " ids.");
-        }
-        LOG_INFO(
-            "Attribute format is: " << attributes.get_input_format_as_string());
-
-        const auto response = service->make_request(
-            CrudRequest{
-                CrudMethod::UPDATE, m_user_service->get_current_user_context(),
-                ids, attributes, CrudQuery::OutputFormat::ATTRIBUTES,
-                output_format},
-            HsmItem::to_name(subject.m_hsm_type));
-        ERROR_CHECK(response, "UPDATE");
-        attributes = response->attributes();
-    }
-    return {};
-}
-
-OpStatus HestiaClient::remove(
-    const HestiaType& subject, const VecCrudIdentifier& ids)
-{
-    clear_last_error();
-
-    CrudService* service{nullptr};
-    if (subject.m_type == HestiaType::Type::SYSTEM
-        && subject.m_system_type == HestiaType::SystemType::USER) {
-        service = m_user_service.get();
-    }
-    else if (subject.m_type == HestiaType::Type::HSM) {
-        service = m_hsm_service;
-    }
-    if (service != nullptr) {
-
-        if (ids.size() == 1) {
-            LOG_INFO("Doing remove with id: " << ids[0].get_primary_key());
-        }
-        else {
-            LOG_INFO("Doing remove with: " << ids.size() << " ids.");
-        }
-
-        const auto response = service->make_request(
-            CrudRequest{
-                CrudMethod::REMOVE, m_user_service->get_current_user_context(),
-                ids},
-            HsmItem::to_name(subject.m_hsm_type));
-        ERROR_CHECK(response, "REMOVE");
-    }
-    return {};
-}
-
-OpStatus HestiaClient::read(const HestiaType& subject, CrudQuery& query)
-{
-    clear_last_error();
-
-    // Serializeable::Format format = Serializeable::Format::CHILD_ID;
-    CrudService* service{nullptr};
-    if (subject.m_type == HestiaType::Type::SYSTEM
-        && subject.m_system_type == HestiaType::SystemType::USER) {
-        service = m_user_service.get();
+        completion_func(std::move(response));
     }
     else {
+        try {
+            do_hsm_action(request, completion_func, stream, progress_func);
+        }
+        catch (const std::exception& e) {
+            completion_func(HestiaResponse::create(
+                {OpStatus::Status::ERROR, -1, "Exception in hsm action"}));
+        }
+    }
+}
+
+HestiaResponse::Ptr HestiaClient::do_crud(const HestiaRequest& request)
+{
+    clear_last_error();
+
+    CrudService* service{nullptr};
+    if (request.is_user_type()) {
+        service = m_user_service.get();
+    }
+    else if (request.is_hsm_type()) {
         service = m_hsm_service;
     }
-
-    if (service != nullptr) {
-        if (query.get_format() == CrudQuery::Format::ID) {
-            if (query.get_ids().size() == 1) {
-                LOG_INFO(
-                    "Doing query with id: "
-                    << query.get_ids()[0].get_primary_key());
-            }
-            else {
-                LOG_INFO(
-                    "Doing query with: " << query.get_ids().size() << " ids.");
-            }
-        }
-
-        CrudResponsePtr response;
-        response = service->make_request(
-            CrudRequest{query, m_user_service->get_current_user_context()},
-            HsmItem::to_name(subject.m_hsm_type));
-        ERROR_CHECK(response, "READ");
-        query.attributes() = response->attributes();
-
-        VecCrudIdentifier ids;
-        for (const auto& id : response->ids()) {
-            ids.push_back(id);
-        }
-        query.set_ids(ids);
+    if (service == nullptr) {
+        return HestiaResponse::create(
+            {OpStatus::Status::ERROR, -1, "Unsupported type requested."});
     }
-    return {};
+
+    auto crud_response = service->make_request(
+        CrudRequest{
+            request.get_crud_request().method(),
+            request.get_crud_request().get_query(),
+            m_user_service->get_current_user_context()},
+        request.get_hsm_type_as_string());
+
+    return HestiaResponse::create(std::move(crud_response));
 }
 
 std::string HestiaClient::get_runtime_info() const
@@ -276,47 +183,27 @@ std::string HestiaClient::get_runtime_info() const
     return HestiaApplication::get_runtime_info();
 }
 
-void HestiaClient::do_data_io_action(
-    const HsmAction& action,
+void HestiaClient::do_hsm_action(
+    const HestiaRequest& request,
+    completionFunc completion_func,
     Stream* stream,
-    dataIoCompletionFunc completion_func)
+    progressFunc progress_func)
 {
+    (void)progress_func;
     clear_last_error();
 
-    auto hsm_completion_func =
-        [this, completion_func](HsmActionResponse::Ptr response) {
-            if (!response->ok()) {
-                set_last_error(
-                    "Error in data io operation: "
-                    + response->get_error().to_string());
-                completion_func(
-                    rc::error(response->get_error()), response->get_action());
-            }
-            else {
-                completion_func({}, response->get_action());
-            }
-        };
-    m_hsm_service->do_data_io_action(
-        HsmActionRequest{action, m_user_service->get_current_user_context()},
+    auto hsm_completion_func = [this, completion_func](
+                                   HsmActionResponse::Ptr response) {
+        if (!response->ok()) {
+            set_last_error(
+                "Error in hsm action: " + response->get_error().to_string());
+        }
+        completion_func(HestiaResponse::create(std::move(response)));
+    };
+    m_hsm_service->do_hsm_action(
+        HsmActionRequest{
+            request.get_action(), m_user_service->get_current_user_context()},
         stream, hsm_completion_func);
-}
-
-OpStatus HestiaClient::do_data_movement_action(HsmAction& action)
-{
-    clear_last_error();
-
-    if (const auto response = m_hsm_service->make_request(
-            {action, m_user_service->get_current_user_context()});
-        !response->ok()) {
-        set_last_error(
-            "Error in data movement operation: "
-            + response->get_error().to_string());
-        return rc::error(response->get_error());
-    }
-    else {
-        action = response->get_action();
-    }
-    return {};
 }
 
 void HestiaClient::load_object_store_defaults()

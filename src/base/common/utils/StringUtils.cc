@@ -19,6 +19,18 @@ bool StringUtils::has_character(const std::string& input, char check)
     return input.find(check) != std::string::npos;
 }
 
+void StringUtils::to_char(const std::string& str, char** chars, int* length)
+{
+    *chars = new char[str.size() + 1];
+    for (std::size_t idx = 0; idx < str.size(); idx++) {
+        (*chars)[idx] = str[idx];
+    }
+    (*chars)[str.size()] = '\0';
+    if (length != nullptr) {
+        *length = str.size();
+    }
+}
+
 std::pair<std::string, std::string> StringUtils::split_on_first(
     const std::string& str, const std::string& substr)
 {
@@ -187,4 +199,19 @@ std::string StringUtils::replace(
     }
     return output;
 }
+
+std::string StringUtils::flatten(
+    const std::vector<std::string>& entries, char delimiter)
+{
+    if (entries.empty()) {
+        return {};
+    }
+    std::string ret;
+    for (std::size_t idx = 0; idx < entries.size() - 1; idx++) {
+        ret += entries[idx] + delimiter;
+    }
+    ret += entries[entries.size() - 1];
+    return ret;
+}
+
 }  // namespace hestia

@@ -3,6 +3,7 @@
 #include "JsonUtils.h"
 #include "MockCrudService.h"
 #include "MockModel.h"
+#include "ModelSerializer.h"
 #include "TypedCrudRequest.h"
 
 #include <iostream>
@@ -30,13 +31,9 @@ class TestCrudServiceFixture {
 TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE,
-        {},
-        {},
-        {},
-        hestia::CrudQuery::OutputFormat::ITEM});
-    REQUIRE(create_response->ok());
+        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
 
+    REQUIRE(create_response->ok());
     REQUIRE(create_response->items().size() == 1);
 
     auto created_model =
@@ -53,8 +50,8 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(create_response1->ok());
 
     auto created_model1 =
@@ -67,23 +64,25 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
     {
         WHEN("the item exists")
         {
-            hestia::CrudQuery query(
-                hestia::CrudIdentifier("1"),
-                hestia::CrudQuery::OutputFormat::ITEM);
             const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+                m_service->make_request(hestia::CrudRequest{
+                    hestia::CrudMethod::READ,
+                    {hestia::CrudIdentifier("1"),
+                     hestia::CrudQuery::BodyFormat::ITEM},
+                    {}});
+
             THEN("It is found ok")
             {
                 REQUIRE(get_response->ok());
                 REQUIRE(get_response->found());
             }
 
-            hestia::CrudQuery query1(
-                create_response1->get_item()->id(),
-                hestia::CrudQuery::OutputFormat::ITEM);
-
             const auto get_response1 =
-                m_service->make_request(hestia::CrudRequest{query1, {}});
+                m_service->make_request(hestia::CrudRequest{
+                    hestia::CrudMethod::READ,
+                    {create_response1->get_item()->id(),
+                     hestia::CrudQuery::BodyFormat::ITEM},
+                    {}});
             REQUIRE(get_response1->ok());
             REQUIRE(get_response1->found());
 
@@ -95,9 +94,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         {
             hestia::CrudQuery query(
                 hestia::CrudIdentifier("3"),
-                hestia::CrudQuery::OutputFormat::ITEM);
-            const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+                hestia::CrudQuery::BodyFormat::ITEM);
+            const auto get_response = m_service->make_request(
+                hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("It is not found ok")
             {
                 REQUIRE(get_response->ok());
@@ -108,14 +107,14 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 
     WHEN("Getting using multiple ids")
     {
-        hestia::VecCrudIdentifier ids;
-        ids.push_back(create_response->get_item()->id());
-        ids.push_back(create_response1->get_item()->id());
+        hestia::CrudIdentifierCollection ids;
+        ids.add_primary_key(create_response->get_item()->id());
+        ids.add_primary_key(create_response1->get_item()->id());
 
-        hestia::CrudQuery query(ids, hestia::CrudQuery::OutputFormat::ITEM);
+        hestia::CrudQuery query(ids, hestia::CrudQuery::BodyFormat::ITEM);
 
-        const auto get_response =
-            m_service->make_request(hestia::CrudRequest{query, {}});
+        const auto get_response = m_service->make_request(
+            hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
         THEN("The correct number are found")
         {
             REQUIRE(get_response->ok());
@@ -130,9 +129,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "model_name"},
                 hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::OutputFormat::ITEM);
-            const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+                hestia::CrudQuery::BodyFormat::ITEM);
+            const auto get_response = m_service->make_request(
+                hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("It is found ok")
             {
                 REQUIRE(get_response->ok());
@@ -145,9 +144,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "no_model_has_this_name"},
                 hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::OutputFormat::ITEM);
-            const auto get_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+                hestia::CrudQuery::BodyFormat::ITEM);
+            const auto get_response = m_service->make_request(
+                hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("It is not found ok")
             {
                 REQUIRE(get_response->ok());
@@ -158,9 +157,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 
     WHEN("Getting without a query")
     {
-        hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ITEM);
-        const auto get_response =
-            m_service->make_request(hestia::CrudRequest{query, {}});
+        hestia::CrudQuery query(hestia::CrudQuery::BodyFormat::ITEM);
+        const auto get_response = m_service->make_request(
+            hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
         THEN("All items are found")
         {
             REQUIRE(get_response->ok());
@@ -173,10 +172,7 @@ TEST_CASE_METHOD(
     TestCrudServiceFixture, "Test Crud Service - Update", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE,
-        {},
-        {},
-        hestia::CrudQuery::OutputFormat::ITEM});
+        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
     REQUIRE(create_response->ok());
 
     REQUIRE(create_response->items().size() == 1);
@@ -195,8 +191,8 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(create_response1->ok());
 
     auto created_model1 =
@@ -217,8 +213,8 @@ TEST_CASE_METHOD(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
                 hestia::CrudMethod::UPDATE,
                 model_to_update,
-                {},
-                hestia::CrudQuery::OutputFormat::ITEM});
+                hestia::CrudQuery::BodyFormat::ITEM,
+                {}});
         REQUIRE(update_response->ok());
 
         THEN("It reflects the update")
@@ -241,13 +237,8 @@ TEST_CASE_METHOD(
     TestCrudServiceFixture, "Test Crud Service - Read", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE,
-        {},
-        {},
-        {},
-        hestia::CrudQuery::OutputFormat::ITEM});
+        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
     REQUIRE(create_response->ok());
-
     REQUIRE(create_response->items().size() == 1);
 
     auto created_model =
@@ -264,8 +255,8 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(create_response1->ok());
 
     auto created_model1 =
@@ -276,11 +267,12 @@ TEST_CASE_METHOD(
 
     WHEN("Listing items")
     {
+
         WHEN("there is no filter")
         {
-            hestia::CrudQuery query(hestia::CrudQuery::OutputFormat::ID);
-            const auto list_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+            hestia::CrudQuery query(hestia::CrudQuery::BodyFormat::ID);
+            const auto list_response = m_service->make_request(
+                hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("all items are returned")
             {
                 REQUIRE(list_response->ok());
@@ -293,10 +285,10 @@ TEST_CASE_METHOD(
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "model_name"},
                 hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::OutputFormat::ID);
+                hestia::CrudQuery::BodyFormat::ID);
 
-            const auto list_response =
-                m_service->make_request(hestia::CrudRequest{query, {}});
+            const auto list_response = m_service->make_request(
+                hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("a matching item is returned")
             {
                 REQUIRE(list_response->ok());
@@ -313,10 +305,8 @@ TEST_CASE_METHOD(
     {
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
-            {},
-            {},
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
 
         THEN("It is created ok and returns an item")
         {
@@ -340,8 +330,8 @@ TEST_CASE_METHOD(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
                 hestia::CrudMethod::CREATE,
                 named_model,
-                {},
-                hestia::CrudQuery::OutputFormat::ITEM});
+                hestia::CrudQuery::BodyFormat::ITEM,
+                {}});
 
         THEN("It is created ok and returns an item")
         {
@@ -362,23 +352,21 @@ TEST_CASE_METHOD(
 
         hestia::CrudAttributes attributes;
 
-        auto model_factory = hestia::mock::MockModel::create_factory();
-        hestia::JsonAdapter adapter(model_factory.get());
+        hestia::ModelSerializer adapter(
+            hestia::mock::MockModel::create_factory());
 
         hestia::Dictionary dict;
         named_model.serialize(dict);
 
-        std::string content;
-        adapter.dict_to_string(dict, content);
-        attributes.set_buffer(content);
+        hestia::CrudAttributes::FormatSpec attr_format;
+        attr_format.m_type = hestia::CrudAttributes::Format::DICT;
+
+        attributes.append(dict.to_string(), attr_format);
 
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
-            {},
-            {},
-            attributes,
-            hestia::CrudQuery::OutputFormat::ITEM});
-
+            {attributes, hestia::CrudQuery::BodyFormat::ITEM},
+            {}});
 
         THEN("It is created ok and returns an item")
         {
@@ -392,17 +380,15 @@ TEST_CASE_METHOD(
 
     WHEN("Items are created with multiple ids")
     {
-        hestia::VecCrudIdentifier ids;
-        ids.push_back(hestia::CrudIdentifier("4"));
-        ids.push_back(hestia::CrudIdentifier("5"));
-        ids.push_back(hestia::CrudIdentifier("6"));
+        hestia::CrudIdentifierCollection ids;
+        ids.add(hestia::CrudIdentifier("4"));
+        ids.add(hestia::CrudIdentifier("5"));
+        ids.add(hestia::CrudIdentifier("6"));
 
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
-            {},
-            ids,
-            {},
-            hestia::CrudQuery::OutputFormat::ID});
+            {ids, hestia::CrudQuery::BodyFormat::ID},
+            {}});
 
         THEN("The correct number of items are created")
         {
@@ -422,8 +408,8 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockParentModel>{
             hestia::CrudMethod::CREATE,
             parent_model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(response->ok());
 
     hestia::mock::MockManyToManyTargetModel many_many_target_model;
@@ -431,8 +417,8 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockManyToManyTargetModel>{
             hestia::CrudMethod::CREATE,
             many_many_target_model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(many_target_response->ok());
 
     hestia::mock::MockModelWithParent model;
@@ -443,17 +429,15 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModelWithParent>{
             hestia::CrudMethod::CREATE,
             model,
-            {},
-            hestia::CrudQuery::OutputFormat::ITEM});
+            hestia::CrudQuery::BodyFormat::ITEM,
+            {}});
     REQUIRE(child_response->ok());
-
-    std::cout << m_service->m_kv_store_client->dump() << std::endl;
 
     hestia::CrudQuery query(
         hestia::CrudIdentifier(response->get_item()->id()),
-        hestia::CrudQuery::OutputFormat::ITEM);
-    auto updated_parent_response =
-        m_parent_service->make_request(hestia::CrudRequest(query, {}));
+        hestia::CrudQuery::BodyFormat::ITEM);
+    auto updated_parent_response = m_parent_service->make_request(
+        hestia::CrudRequest(hestia::CrudMethod::READ, query, {}));
     REQUIRE(updated_parent_response->ok());
     auto updated_parent =
         updated_parent_response->get_item_as<hestia::mock::MockParentModel>();
@@ -461,9 +445,9 @@ TEST_CASE_METHOD(
 
     hestia::CrudQuery many_many_query(
         hestia::CrudIdentifier(many_target_response->get_item()->id()),
-        hestia::CrudQuery::OutputFormat::ITEM);
+        hestia::CrudQuery::BodyFormat::ITEM);
     auto updated_many_many_response = m_many_many_parent_service->make_request(
-        hestia::CrudRequest(many_many_query, {}));
+        hestia::CrudRequest(hestia::CrudMethod::READ, many_many_query, {}));
     REQUIRE(updated_many_many_response->ok());
     auto updated_many_many =
         updated_many_many_response

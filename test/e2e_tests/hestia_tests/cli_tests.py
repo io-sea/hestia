@@ -19,7 +19,7 @@ class CliTests(BaseTestFixture):
     def write_temp_attrs(self, path, attrs):
         with open(path, 'w') as f:
             for key, value in attrs.items():
-                f.write("data." + key + "," + value + "\n")
+                f.write("data." + key + "=" + value + "\n")
 
     def check_event_feed(self, id, tag):
         path = self.runtime_path / "cache" / "event_feed.yaml"

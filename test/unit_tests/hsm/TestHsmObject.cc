@@ -19,9 +19,15 @@ TEST_CASE("Test HsmObject", "[hsm]")
     hestia::Dictionary copy_constructed_dict;
     copy_constructed_object.serialize(copy_constructed_dict);
 
-    REQUIRE(object_dict.to_string(true) == copied_dict.to_string(true));
+    hestia::Dictionary::FormatSpec dict_format;
+    dict_format.m_map_format.m_sort_keys = true;
+
     REQUIRE(
-        copy_constructed_dict.to_string(true) == copied_dict.to_string(true));
+        object_dict.to_string(dict_format)
+        == copied_dict.to_string(dict_format));
+    REQUIRE(
+        copy_constructed_dict.to_string(dict_format)
+        == copied_dict.to_string(dict_format));
 
     hestia::HsmObject deserialized_object;
     deserialized_object.deserialize(copied_dict);

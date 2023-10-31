@@ -1,7 +1,6 @@
 #include <catch2/catch_all.hpp>
 
 #include "StorageTier.h"
-#include "StringAdapter.h"
 
 #include <iostream>
 
@@ -27,10 +26,15 @@ TEST_CASE("Test Storage Tier", "[hsm]")
     hestia::Dictionary copy_constructed_tier_dict;
     copy_constructed_tier.serialize(copy_constructed_tier_dict);
 
-    REQUIRE(tier_dict.to_string(true) == copied_tier_dict.to_string(true));
+    hestia::Dictionary::FormatSpec dict_format;
+    dict_format.m_map_format.m_sort_keys = true;
+
     REQUIRE(
-        copy_constructed_tier_dict.to_string(true)
-        == copied_tier_dict.to_string(true));
+        tier_dict.to_string(dict_format)
+        == copied_tier_dict.to_string(dict_format));
+    REQUIRE(
+        copy_constructed_tier_dict.to_string(dict_format)
+        == copied_tier_dict.to_string(dict_format));
 
     hestia::StorageTier deserialized_tier;
     deserialized_tier.deserialize(copied_tier_dict);

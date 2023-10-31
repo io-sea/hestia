@@ -1,11 +1,15 @@
 #pragma once
 
+#include "Dictionary.h"
 #include "EnumUtils.h"
 
 #include <string>
 #include <vector>
 
 namespace hestia {
+
+class CrudIdentifier;
+using VecCrudIdentifier = std::vector<CrudIdentifier>;
 
 class CrudIdentifier {
   public:
@@ -23,9 +27,21 @@ class CrudIdentifier {
         NAME_PARENT_NAME,
         NAME_PARENT_ID)
 
+    struct FormatSpec {
+        std::string m_primary_key_name{"id"};
+        std::string m_name_key_name{"name"};
+        std::string m_parent_id_key_name{"parent_id"};
+        std::string m_parent_name_key_name{"parent_name"};
+        InputFormat m_input_format;
+    };
+
     CrudIdentifier() = default;
 
-    CrudIdentifier(const std::string& key, Type type = Type::PRIMARY_KEY);
+    CrudIdentifier(const Map& buffer, const FormatSpec& format);
+
+    CrudIdentifier(const std::string& buffer, const FormatSpec& format);
+
+    CrudIdentifier(const std::string& buffer, Type type = Type::PRIMARY_KEY);
 
     CrudIdentifier(
         const std::string& name,
@@ -52,11 +68,6 @@ class CrudIdentifier {
 
     bool has_parent_name() const;
 
-    static std::size_t parse(
-        const std::string& buffer,
-        InputFormat format,
-        std::vector<CrudIdentifier>& ids);
-
     void set_primary_key(const std::string& key);
 
     void set_name(const std::string& name) { m_name = name; }
@@ -70,6 +81,8 @@ class CrudIdentifier {
 
     void from_buffer(const std::string& line, InputFormat format);
 
+    void write(Dictionary& dict, const FormatSpec& format) const;
+
   private:
     std::string m_primary_key;
     std::string m_name;
@@ -77,5 +90,4 @@ class CrudIdentifier {
     std::string m_parent_name;
 };
 
-using VecCrudIdentifier = std::vector<CrudIdentifier>;
 }  // namespace hestia

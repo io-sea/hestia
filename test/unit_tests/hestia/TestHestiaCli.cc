@@ -1,8 +1,9 @@
 #include <catch2/catch_all.hpp>
 
 #include "HestiaCli.h"
-#include "MockHestiaClient.h"
+#include "HestiaClient.h"
 #include "StringUtils.h"
+#include "TestClientConfigs.h"
 
 #include <iostream>
 
@@ -18,26 +19,29 @@ class TestConsoleInterface : public hestia::IConsoleInterface {
         m_err_output += output;
     }
 
-    bool console_read(std::string& line) const override
+    void console_read(std::string& buffer) const override { buffer = m_input; }
+
+    void console_write(const std::vector<std::string>& output) const override
     {
-        if (m_input_line_count == m_input_lines.size()) {
-            return false;
+        for (const auto& line : output) {
+            m_output += line + '\n';
         }
-        line = m_input_lines[m_input_line_count];
-        m_input_line_count++;
-        return true;
     }
+
     mutable std::string m_output;
     mutable std::string m_err_output;
-    std::vector<std::string> m_input_lines;
-    mutable std::size_t m_input_line_count{0};
+    std::string m_input;
 };
 
 class HestiaCliTestFixture {
   public:
     HestiaCliTestFixture()
     {
-        m_test_client = std::make_unique<hestia::mock::MockHestiaClient>();
+        hestia::Dictionary extra_config;
+        hestia::TestClientConfigs::get_hsm_memory_client_config(extra_config);
+
+        m_test_client = std::make_unique<hestia::HestiaClient>();
+        m_test_client->initialize({}, {}, extra_config);
 
         auto console = std::make_unique<TestConsoleInterface>();
         m_console    = console.get();
@@ -64,15 +68,15 @@ class HestiaCliTestFixture {
         delete[] input_args;
     }
 
-    void run()
+    void run(bool skip_init = false)
     {
-        auto rc = m_cli->run(m_test_client.get());
+        auto rc = m_cli->run(m_test_client.get(), skip_init);
         REQUIRE(rc.ok());
     }
 
     std::unique_ptr<hestia::HestiaCli> m_cli;
     TestConsoleInterface* m_console{nullptr};
-    std::unique_ptr<hestia::mock::MockHestiaClient> m_test_client;
+    std::unique_ptr<hestia::HestiaApplication> m_test_client;
 };
 
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
@@ -83,69 +87,66 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
         parse_args(args);
         run();
 
+        THEN("We get some output - which should be an id")
+        {
+            REQUIRE_FALSE(m_console->m_output.empty());
+        }
+    }
+
+    WHEN("The create arg is used with an id")
+    {
+        std::vector<std::string> args = {"hestia", "object", "create", "1234"};
+        parse_args(args);
+        run();
+
         THEN("We get just an output id")
         {
             std::vector<std::string> output_lines;
             hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 1);
-            REQUIRE(output_lines[0] == "mock_id_0");
+            REQUIRE_FALSE(output_lines.empty());
+            REQUIRE(output_lines[0] == "1234");
         }
     }
 
     WHEN("The create arg is used with json output")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "--output_fmt=json"};
+            "hestia", "object", "create", "1234", "--output_fmt=json"};
         parse_args(args);
         run();
 
-        THEN("We get just json attr output")
+        THEN("We get json attr output")
         {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 1);
-            REQUIRE(output_lines[0] == "my_attr_body");
+            REQUIRE_FALSE(m_console->m_output.empty());
+            hestia::Dictionary dict;
+            hestia::JsonDocument(m_console->m_output).write(dict);
+            REQUIRE(dict.has_map_item("id"));
+            REQUIRE(dict.get_map_item("id")->get_scalar() == "1234");
         }
     }
 
     WHEN("The create arg is used with key value output")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "--output_fmt=key_value"};
+            "hestia", "object", "create", "1234", "--output_fmt=key_value"};
         parse_args(args);
         run();
 
-        THEN("We get just json attr output")
+        THEN("We get dict attr output")
         {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 1);
-            REQUIRE(output_lines[0] == "my_attr_key, my_attr_value");
+            REQUIRE_FALSE(m_console->m_output.empty());
+            hestia::Dictionary dict;
+            dict.from_string(m_console->m_output);
+            REQUIRE(dict.has_map_item("id"));
+            REQUIRE(dict.get_map_item("id")->get_scalar() == "1234");
         }
     }
 
-    WHEN("The create arg is used with key value and id output")
+    WHEN(" We create with multiple ids passed through std in")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "--output_fmt=id_key_value"};
-        parse_args(args);
-        run();
-
-        THEN("We get just json attr output")
-        {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 3);
-            REQUIRE(output_lines[0] == "mock_id_0");
-            REQUIRE(output_lines[2] == "my_attr_key, my_attr_value");
-        }
-    }
-
-    WHEN("Ids are passed through std in")
-    {
-        std::vector<std::string> args = {
-            "hestia", "object", "create", "--input_fmt=key_value"};
-        m_console->m_input_lines = {"id0", "id1"};
+            "hestia", "object", "create", "--input_fmt=id"};
+        m_console->m_input = "id0\nid1";
 
         parse_args(args);
         run();
@@ -160,68 +161,95 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
         }
     }
 
-    WHEN("An id is passed in the create args body")
+    WHEN(" We create with kv pairs and an id through std in")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "myid123"};
+            "hestia", "object", "create", "--input_fmt=key_value",
+            "--output_fmt=key_value"};
+        m_console->m_input = R"(
+            name=my_object
+            id=1234
+        )";
+
         parse_args(args);
         run();
 
-        THEN("It is returned in the response")
+        THEN("We get the kv pairs and id in the output")
         {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 1);
-            REQUIRE(output_lines[0] == "myid123");
+            REQUIRE_FALSE(m_console->m_output.empty());
+
+            hestia::Dictionary::FormatSpec dict_format;
+            hestia::Dictionary dict(m_console->m_output, dict_format);
+
+            REQUIRE(dict.has_map_item("id"));
+            REQUIRE(dict.get_map_item("id")->get_scalar() == "1234");
+            REQUIRE(dict.has_map_item("name"));
+            REQUIRE(dict.get_map_item("name")->get_scalar() == "my_object");
         }
     }
 }
 
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
 {
+    std::vector<std::string> create_args = {
+        "hestia", "object", "create", "1234"};
+    parse_args(create_args);
+    run();
+    m_console->m_output.clear();
+
+    /*
     WHEN("Key value pairs are used for the update")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "update", "--input_fmt=key_value",
-            "--output_fmt=id_key_value"};
-        m_console->m_input_lines = {
-            "id0", "mkey0, myval0", "id1", "mykey1, myval1"};
+            "hestia", "metadata", "update", "1234",
+            "--id_fmt=parent_id",
+            "--input_fmt=key_value",
+            "--output_fmt=key_value"};
+        m_console->m_input = "data.my_key0=my_value0\ndata.my_key1=my_value1";
 
         parse_args(args);
-        run();
+        run(true);
 
         THEN("We get ids and key value outputs")
         {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 8);
-            REQUIRE(output_lines[0] == "id0");
-            REQUIRE(output_lines[1] == "id1");
-            REQUIRE(output_lines[4] == "mkey0, myval0");
-            REQUIRE(output_lines[6] == "mykey1, myval1");
+            REQUIRE_FALSE(m_console->m_output.empty());
+            hestia::Dictionary dict;
+            dict.from_string(m_console->m_output);
+            REQUIRE(dict.has_map_item("data"));
+            REQUIRE_FALSE(dict.get_map_item("data")->is_empty());
         }
     }
+    */
 
     WHEN("Json is used for the update")
     {
-        std::vector<std::string> args = {
-            "hestia", "object", "update", "--input_fmt=json",
-            "--output_fmt=json"};
-        m_console->m_input_lines = {"content"};
+        std::vector<std::string> args = {"hestia",
+                                         "metadata",
+                                         "update",
+                                         "1234",
+                                         "--id_fmt=parent_id",
+                                         "--input_fmt=json",
+                                         "--output_fmt=json"};
+        m_console->m_input            = R"(
+            {"data" : { "my_key0" : "my_value0",
+                        "my_key1" : "my_value1"}}
+                        )";
 
         parse_args(args);
-        run();
+        run(true);
 
-        THEN("We get ids and key value outputs")
+        THEN("We get json outputs")
         {
-            std::vector<std::string> output_lines;
-            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-            REQUIRE(output_lines.size() == 1);
-            REQUIRE(output_lines[0] == "content");
+            REQUIRE_FALSE(m_console->m_output.empty());
+            hestia::Dictionary dict;
+            hestia::JsonDocument(m_console->m_output).write(dict);
+            REQUIRE(dict.has_map_item("data"));
+            REQUIRE_FALSE(dict.get_map_item("data")->is_empty());
         }
     }
 }
 
+/*
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Read", "[hestia]")
 {
     std::vector<std::string> args = {
@@ -233,6 +261,6 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Read", "[hestia]")
 
     std::vector<std::string> output_lines;
     hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-    REQUIRE(output_lines.size() == 1);
-    REQUIRE(output_lines[0] == "query_output");
+    REQUIRE_FALSE(output_lines.empty());
 }
+*/

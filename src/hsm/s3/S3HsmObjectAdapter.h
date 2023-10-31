@@ -3,26 +3,17 @@
 #include "Dataset.h"
 #include "HsmObject.h"
 #include "S3Responses.h"
-#include "StringAdapter.h"
 
 #include <memory>
 
 namespace hestia {
-class S3HsmObjectAdapter : public StringAdapter {
+class S3HsmObjectAdapter {
   public:
     using Ptr = std::unique_ptr<S3HsmObjectAdapter>;
 
     S3HsmObjectAdapter(const std::string& metadata_prefix = {});
 
     static Ptr create(const std::string& metadata_prefix = {});
-
-    void dict_from_string(
-        const std::string& input,
-        Dictionary& dict,
-        const std::string& key_prefix = {}) const override;
-
-    void dict_to_string(
-        const Dictionary& dict, std::string& output) const override;
 
     void get_headers(
         const std::string& bucket_name,

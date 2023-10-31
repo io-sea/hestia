@@ -4,6 +4,43 @@
 #include <sstream>
 
 namespace hestia {
+
+
+CrudIdentifier::CrudIdentifier(const Map& buffer, const FormatSpec& format)
+{
+    if (const auto name_val = buffer.get_item(format.m_name_key_name);
+        !name_val.empty()) {
+        m_name = name_val;
+    }
+    if (const auto parent_name_val =
+            buffer.get_item(format.m_parent_name_key_name);
+        !parent_name_val.empty()) {
+        m_parent_name = parent_name_val;
+    }
+    if (const auto parent_id_val = buffer.get_item(format.m_parent_id_key_name);
+        !parent_id_val.empty()) {
+        m_parent_primary_key = parent_id_val;
+    }
+}
+
+CrudIdentifier::CrudIdentifier(
+    const std::string& name, const std::string& parent_key, Type type)
+{
+    m_name = name;
+    if (type == Type::PRIMARY_KEY) {
+        m_parent_primary_key = parent_key;
+    }
+    else {
+        m_parent_name = parent_key;
+    }
+}
+
+CrudIdentifier::CrudIdentifier(
+    const std::string& buffer, const FormatSpec& format)
+{
+    from_buffer(buffer, format.m_input_format);
+}
+
 CrudIdentifier::CrudIdentifier(const std::string& key, Type type)
 {
     if (type == Type::PRIMARY_KEY) {
@@ -17,31 +54,6 @@ CrudIdentifier::CrudIdentifier(const std::string& key, Type type)
 void CrudIdentifier::set_primary_key(const std::string& key)
 {
     m_primary_key = key;
-}
-
-std::size_t CrudIdentifier::parse(
-    const std::string& buffer,
-    InputFormat format,
-    std::vector<CrudIdentifier>& ids)
-{
-    if (format == InputFormat::NONE) {
-        return 0;
-    }
-
-    std::stringstream ss(buffer);
-    std::string line;
-    std::size_t byte_count{0};
-    while (std::getline(ss, line, '\n')) {
-        if (line.empty()) {
-            byte_count++;
-            break;
-        }
-        CrudIdentifier id;
-        id.from_buffer(line, format);
-        ids.push_back(id);
-        byte_count += line.size() + 1;
-    }
-    return byte_count;
 }
 
 CrudIdentifier::InputFormat CrudIdentifier::input_format_from_string(
@@ -124,21 +136,10 @@ const std::string& CrudIdentifier::get_parent_primary_key() const
     return m_parent_primary_key;
 }
 
-CrudIdentifier::CrudIdentifier(
-    const std::string& name, const std::string& parent_key, Type type)
-{
-    m_name = name;
-    if (type == Type::PRIMARY_KEY) {
-        m_parent_primary_key = parent_key;
-    }
-    else {
-        m_parent_name = parent_key;
-    }
-}
-
 bool CrudIdentifier::has_value() const
 {
-    return has_parent_primary_key() || has_name();
+    return has_parent_primary_key() || has_name() || has_primary_key()
+           || has_parent_name();
 }
 
 bool CrudIdentifier::has_primary_key() const
@@ -160,4 +161,23 @@ bool CrudIdentifier::has_parent_name() const
 {
     return !m_parent_name.empty();
 }
+
+void CrudIdentifier::write(Dictionary& dict, const FormatSpec& format) const
+{
+    Map items;
+    if (!m_primary_key.empty()) {
+        items.set_item(format.m_primary_key_name, m_primary_key);
+    }
+    if (!m_parent_name.empty()) {
+        items.set_item(format.m_parent_name_key_name, m_parent_name);
+    }
+    if (!m_name.empty()) {
+        items.set_item(format.m_name_key_name, m_name);
+    }
+    if (!m_parent_primary_key.empty()) {
+        items.set_item(format.m_parent_id_key_name, m_parent_primary_key);
+    }
+    dict.set_map(items.data());
+}
+
 }  // namespace hestia

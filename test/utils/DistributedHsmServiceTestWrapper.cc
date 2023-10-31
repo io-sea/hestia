@@ -59,6 +59,7 @@ void DistributedHsmServiceTestWrapper::init(
         auto response = tier_service->make_request(hestia::TypedCrudRequest{
             hestia::CrudMethod::CREATE,
             tier,
+            {},
             {m_user_service->get_current_user().get_primary_key()}});
         REQUIRE(response->ok());
     }

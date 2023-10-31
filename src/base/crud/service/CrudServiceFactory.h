@@ -5,7 +5,7 @@
 #include "HttpCrudClient.h"
 #include "IdGenerator.h"
 #include "KeyValueCrudClient.h"
-#include "StringAdapter.h"
+#include "ModelSerializer.h"
 
 #include <cassert>
 #include <memory>
@@ -24,17 +24,8 @@ class CrudServiceFactory {
     {
         assert(backend != nullptr);
 
-        auto item_factory     = std::make_unique<TypedModelFactory<ItemT>>();
-        auto item_factory_raw = item_factory.get();
-
-        auto adapter_collection =
-            std::make_unique<AdapterCollection>(std::move(item_factory));
-        adapter_collection->add_adapter(
-            CrudAttributes::to_string(CrudAttributes::Format::JSON),
-            std::make_unique<JsonAdapter>(item_factory_raw));
-        adapter_collection->add_adapter(
-            CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-            std::make_unique<KeyValueAdapter>(item_factory_raw));
+        auto serializer = std::make_unique<ModelSerializer>(
+            std::make_unique<TypedModelFactory<ItemT>>());
 
         CrudClientConfig crud_client_config;
         crud_client_config.m_prefix   = config.m_global_prefix;
@@ -60,8 +51,8 @@ class CrudServiceFactory {
                 id_generator = std::make_unique<DefaultIdGenerator>();
             }
             crud_client = std::make_unique<KeyValueCrudClient>(
-                crud_client_config, std::move(adapter_collection),
-                kv_backend->m_client, id_generator.get());
+                crud_client_config, std::move(serializer), kv_backend->m_client,
+                id_generator.get());
         }
         else if (backend->get_type() == CrudServiceBackend::Type::HTTP_REST) {
             auto http_backend =
@@ -72,7 +63,7 @@ class CrudServiceFactory {
             }
 
             crud_client = std::make_unique<HttpCrudClient>(
-                crud_client_config, std::move(adapter_collection),
+                crud_client_config, std::move(serializer),
                 http_backend->m_client);
         }
 

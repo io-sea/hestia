@@ -44,8 +44,9 @@ S3AuthorisationChecker::find_user(
 {
     CrudQuery query(
         KeyValuePair{"name", s3_request.get_user_context().m_user_id},
-        CrudQuery::Format::GET, CrudQuery::OutputFormat::ITEM);
-    auto response = user_service.make_request(CrudRequest{query, {}});
+        CrudQuery::Format::GET, CrudQuery::BodyFormat::ITEM);
+    auto response =
+        user_service.make_request(CrudRequest{CrudMethod::READ, query, {}});
 
     if (!response->ok()) {
         LOG_ERROR(s3_request.to_string())

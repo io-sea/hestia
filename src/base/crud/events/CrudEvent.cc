@@ -32,8 +32,9 @@ CrudEvent::CrudEvent(
     m_subject_type.init_value(subject_type);
     m_method.init_value(method);
 
-    m_subject_ids.get_container_as_writeable() = response.ids();
-    m_modified_attrs                           = response.modified_attrs();
+    response.get_ids().get_primary_keys(
+        m_subject_ids.get_container_as_writeable());
+    m_modified_attrs = response.modified_attrs();
 }
 
 const CrudUserContext& CrudEvent::get_user_context() const

@@ -7,7 +7,6 @@
 
 #include "HashUtils.h"
 #include "IdGenerator.h"
-#include "StringAdapter.h"
 #include "TimeProvider.h"
 #include "TypedCrudRequest.h"
 #include "UserTokenGenerator.h"
@@ -41,29 +40,11 @@ UserService::Ptr UserService::create(
     TimeProvider* time_provider,
     std::unique_ptr<UserTokenGenerator> token_generator)
 {
-    auto user_model_factory     = std::make_unique<TypedModelFactory<User>>();
-    auto user_model_factory_raw = user_model_factory.get();
+    auto user_serialzer = std::make_unique<ModelSerializer>(
+        std::make_unique<TypedModelFactory<User>>());
 
-    auto user_adapters =
-        std::make_unique<AdapterCollection>(std::move(user_model_factory));
-    user_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(user_model_factory_raw));
-    user_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(user_model_factory_raw));
-
-    auto token_model_factory = std::make_unique<TypedModelFactory<UserToken>>();
-    auto token_model_factory_raw = token_model_factory.get();
-
-    auto token_adapters =
-        std::make_unique<AdapterCollection>(std::move(token_model_factory));
-    token_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON),
-        std::make_unique<JsonAdapter>(token_model_factory_raw));
-    token_adapters->add_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::KEY_VALUE),
-        std::make_unique<KeyValueAdapter>(token_model_factory_raw));
+    auto token_serializer = std::make_unique<ModelSerializer>(
+        std::make_unique<TypedModelFactory<UserToken>>());
 
     CrudClientConfig client_config;
     client_config.m_prefix = config.m_global_prefix;
@@ -79,11 +60,11 @@ UserService::Ptr UserService::create(
         }
 
         crud_client = std::make_unique<KeyValueCrudClient>(
-            client_config, std::move(user_adapters), kv_backend->m_client,
+            client_config, std::move(user_serialzer), kv_backend->m_client,
             id_generator, time_provider);
 
         token_crud_client = std::make_unique<KeyValueCrudClient>(
-            client_config, std::move(token_adapters), kv_backend->m_client,
+            client_config, std::move(token_serializer), kv_backend->m_client,
             id_generator, time_provider);
     }
     else {
@@ -95,10 +76,10 @@ UserService::Ptr UserService::create(
                 "Failed to convert to http service backend");
         }
         crud_client = std::make_unique<HttpCrudClient>(
-            client_config, std::move(user_adapters), http_backend->m_client);
+            client_config, std::move(user_serialzer), http_backend->m_client);
 
         token_crud_client = std::make_unique<HttpCrudClient>(
-            client_config, std::move(token_adapters), http_backend->m_client);
+            client_config, std::move(token_serializer), http_backend->m_client);
     }
     auto token_service =
         std::make_unique<CrudService>(config, std::move(token_crud_client));
@@ -131,9 +112,10 @@ BaseResponse::Ptr UserService::load_or_create_default_user()
     const auto default_user_name = "hestia_default_user";
 
     CrudRequest get_request(
+        CrudMethod::READ,
         CrudQuery{
             CrudIdentifier{default_user_name, CrudIdentifier::Type::NAME},
-            CrudQuery::OutputFormat::ITEM},
+            CrudQuery::BodyFormat::ITEM},
         {});
     auto get_response = make_request(get_request);
     if (!get_response->ok()) {
@@ -155,8 +137,8 @@ BaseResponse::Ptr UserService::load_or_create_default_user()
 
     const auto created_user = register_response->get_item_as<User>();
     if (created_user == nullptr) {
-        auto response =
-            std::make_unique<CrudResponse>(get_request, User::get_type());
+        auto response = std::make_unique<CrudResponse>(
+            get_request, User::get_type(), CrudQuery::BodyFormat::NONE);
         response->on_error(
             {CrudErrorCode::ERROR, "Bad cast of response item to user"});
         return response;
@@ -172,9 +154,10 @@ CrudResponse::Ptr UserService::authenticate_user(
     const std::string& username, const std::string& password)
 {
     CrudRequest get_request(
+        CrudMethod::READ,
         CrudQuery{
             CrudIdentifier{username, CrudIdentifier::Type::NAME},
-            CrudQuery::OutputFormat::ITEM},
+            CrudQuery::BodyFormat::ITEM},
         {});
     auto get_response = make_request(get_request);
     if (!get_response->ok()) {
@@ -189,8 +172,8 @@ CrudResponse::Ptr UserService::authenticate_user(
 
     const auto user = get_response->get_item_as<User>();
     if (user == nullptr) {
-        auto response =
-            std::make_unique<CrudResponse>(get_request, User::get_type());
+        auto response = std::make_unique<CrudResponse>(
+            get_request, User::get_type(), CrudQuery::BodyFormat::NONE);
         response->on_error(
             {CrudErrorCode::ERROR, "Bad cast of response item to user"});
         return response;
@@ -206,8 +189,8 @@ CrudResponse::Ptr UserService::authenticate_user(
         LOG_ERROR(
             "Supplied password doesn't match: " << hashed_password << " | "
                                                 << user->password());
-        auto response =
-            std::make_unique<CrudResponse>(get_request, User::get_type());
+        auto response = std::make_unique<CrudResponse>(
+            get_request, User::get_type(), CrudQuery::BodyFormat::NONE);
         response->on_error(
             {CrudErrorCode::NOT_AUTHENTICATED, "Failed to authenticate user"});
         return response;
@@ -217,16 +200,17 @@ CrudResponse::Ptr UserService::authenticate_user(
 CrudResponse::Ptr UserService::authenticate_with_token(const std::string& token)
 {
     CrudRequest req(
+        CrudMethod::READ,
         CrudQuery{
             KeyValuePair{"value", token}, CrudQuery::Format::GET,
-            CrudQuery::OutputFormat::ITEM},
+            CrudQuery::BodyFormat::ITEM},
         {});
 
     auto token_get_response = m_token_service->make_request(req);
     if (!token_get_response->ok()) {
         LOG_ERROR("Failed to authenticate with token - internal error");
-        auto error_response =
-            std::make_unique<CrudResponse>(req, User::get_type());
+        auto error_response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         error_response->on_error(
             {CrudErrorCode::ERROR, "Failed to check for token."});
         return error_response;
@@ -234,8 +218,8 @@ CrudResponse::Ptr UserService::authenticate_with_token(const std::string& token)
 
     if (!token_get_response->found()) {
         LOG_ERROR("No matching token found.");
-        auto error_response =
-            std::make_unique<CrudResponse>(req, User::get_type());
+        auto error_response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         error_response->on_error(
             {CrudErrorCode::ITEM_NOT_FOUND, "No matching token found."});
         return error_response;
@@ -244,24 +228,26 @@ CrudResponse::Ptr UserService::authenticate_with_token(const std::string& token)
     const auto user_token = token_get_response->get_item_as<UserToken>();
     assert(user_token != nullptr);
     if (user_token == nullptr) {
-        auto response = std::make_unique<CrudResponse>(req, User::get_type());
+        auto response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         response->on_error(
             {CrudErrorCode::ERROR, "Bad cast of response item to user token"});
         return response;
     }
 
     CrudRequest user_req(
+        CrudMethod::READ,
         CrudQuery{
             CrudIdentifier{
                 user_token->get_user_id(), CrudIdentifier::Type::PRIMARY_KEY},
-            CrudQuery::OutputFormat::ITEM},
+            CrudQuery::BodyFormat::ITEM},
         {});
 
     auto get_response = make_request(user_req);
     if (!get_response->ok()) {
         LOG_ERROR("Failed to get user given id - internal error");
-        auto error_response =
-            std::make_unique<CrudResponse>(req, User::get_type());
+        auto error_response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         error_response->on_error(
             {CrudErrorCode::ITEM_NOT_FOUND,
              "Failed to get user from token id."});
@@ -270,8 +256,8 @@ CrudResponse::Ptr UserService::authenticate_with_token(const std::string& token)
 
     if (!get_response->found()) {
         LOG_ERROR("No matching user found.");
-        auto error_response =
-            std::make_unique<CrudResponse>(req, User::get_type());
+        auto error_response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         error_response->on_error(
             {CrudErrorCode::ITEM_NOT_FOUND, "No matching user found."});
         return error_response;
@@ -287,9 +273,10 @@ CrudResponse::Ptr UserService::register_user(
     LOG_INFO("Register user: " << username);
 
     CrudRequest request(
+        CrudMethod::READ,
         CrudQuery{
             CrudIdentifier{username, CrudIdentifier::Type::NAME},
-            CrudQuery::OutputFormat::ITEM},
+            CrudQuery::BodyFormat::ITEM},
         {});
     auto find_response = make_request(request);
     if (!find_response->ok()) {
@@ -298,8 +285,8 @@ CrudResponse::Ptr UserService::register_user(
     }
 
     if (find_response->found()) {
-        auto response =
-            std::make_unique<CrudResponse>(request, User::get_type());
+        auto response = std::make_unique<CrudResponse>(
+            request, User::get_type(), CrudQuery::BodyFormat::NONE);
         LOG_INFO("Attempted to regiser already existing user");
         response->on_error(
             {CrudErrorCode::CANT_OVERRIDE_EXISTING, "User already exists"});
@@ -312,7 +299,7 @@ CrudResponse::Ptr UserService::register_user(
     user.set_password(get_hashed_password(username, password));
 
     auto create_response = make_request(TypedCrudRequest<User>{
-        CrudMethod::CREATE, user, {}, CrudQuery::OutputFormat::ID});
+        CrudMethod::CREATE, user, CrudQuery::BodyFormat::ID, {}});
     if (!create_response->ok()) {
         LOG_ERROR("Unexpected error creating new user");
         return create_response;
@@ -321,15 +308,15 @@ CrudResponse::Ptr UserService::register_user(
     assert(!create_response->ids().empty());
 
     LOG_INFO("Adding user token");
-    UserToken token(create_response->ids()[0]);
+    UserToken token(create_response->ids().first().get_primary_key());
     token.set_value(m_token_generator->generate());
 
     TypedCrudRequest<UserToken> req(
-        CrudMethod::CREATE, token, {}, CrudQuery::OutputFormat::ID);
+        CrudMethod::CREATE, token, CrudQuery::BodyFormat::ID, {});
     auto token_response = m_token_service->make_request(req);
     if (!token_response->ok()) {
-        auto error_response =
-            std::make_unique<CrudResponse>(req, User::get_type());
+        auto error_response = std::make_unique<CrudResponse>(
+            req, User::get_type(), CrudQuery::BodyFormat::NONE);
         error_response->on_error(
             {CrudErrorCode::ITEM_NOT_FOUND,
              "Failed to create access token for user."});
@@ -337,9 +324,8 @@ CrudResponse::Ptr UserService::register_user(
     }
 
     auto get_response = make_request(CrudRequest{
-        CrudQuery{
-            CrudIdentifier(create_response->ids()[0]),
-            CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{create_response->ids().first(), CrudQuery::BodyFormat::ITEM},
         {}});
     if (!get_response->ok()) {
         LOG_ERROR(get_response->get_error().to_string());

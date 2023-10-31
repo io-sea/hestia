@@ -21,6 +21,40 @@ OpStatus MockHestiaClient::initialize(
     return {};
 }
 
+void MockHestiaClient::make_request(
+    const HestiaRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    progressFunc progress_func) noexcept
+{
+    (void)request;
+    (void)completion_func;
+    (void)stream;
+    (void)progress_func;
+}
+
+void MockHestiaClient::get_last_error(std::string& error)
+{
+    (void)error;
+}
+
+void MockHestiaClient::set_last_error(const std::string& msg)
+{
+    (void)msg;
+}
+
+OpStatus MockHestiaClient::run()
+{
+    return {};
+}
+
+std::string MockHestiaClient::get_runtime_info() const
+{
+    return {};
+}
+
+
+/*
 OpStatus MockHestiaClient::create(
     const HestiaType& subject,
     VecCrudIdentifier& ids,
@@ -91,11 +125,6 @@ OpStatus MockHestiaClient::remove(
     return {};
 }
 
-std::string MockHestiaClient::get_runtime_info() const
-{
-    return {};
-}
-
 OpStatus MockHestiaClient::do_data_movement_action(HsmAction& action)
 {
     (void)action;
@@ -138,18 +167,6 @@ void MockHestiaClient::do_data_io_action(
     stream->set_completion_func(stream_complete);
 }
 
-void MockHestiaClient::get_last_error(std::string& error)
-{
-    (void)error;
-}
 
-void MockHestiaClient::set_last_error(const std::string& msg)
-{
-    (void)msg;
-}
-
-OpStatus MockHestiaClient::run()
-{
-    return {};
-}
+*/
 }  // namespace hestia::mock

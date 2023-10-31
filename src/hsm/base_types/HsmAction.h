@@ -5,6 +5,7 @@
 #include "OwnableModel.h"
 
 #include <string>
+#include <vector>
 
 namespace hestia {
 class HsmAction : public HsmItem, public OwnableModel {
@@ -28,27 +29,26 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     static std::string get_type();
 
-    const std::string get_subject_key() const
-    {
-        return m_subject_key.get_value();
-    };
+    const std::string& get_subject_key() const;
 
-    HsmItem::Type get_subject() const { return m_subject.get_value(); }
+    static std::vector<std::string> get_action_subjects();
 
-    Action get_action() const { return m_action.get_value(); }
+    static std::vector<HsmAction::Action> get_subject_actions(
+        const std::string& subject);
 
-    uint8_t get_source_tier() const { return m_source_tier.get_value(); }
+    HsmItem::Type get_subject() const;
 
-    uint8_t get_target_tier() const { return m_target_tier.get_value(); }
+    Action get_action() const;
 
-    std::size_t get_offset() const { return m_offset.get_value(); }
+    uint8_t get_source_tier() const;
 
-    std::size_t get_size() const { return m_to_transfer.get_value(); }
+    uint8_t get_target_tier() const;
 
-    std::size_t get_num_transferred() const
-    {
-        return m_transferred.get_value();
-    }
+    std::size_t get_offset() const;
+
+    std::size_t get_size() const;
+
+    std::size_t get_num_transferred() const;
 
     bool is_crud_method() const;
 
@@ -70,16 +70,13 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     void set_target_tier(uint8_t tier);
 
-    void set_offset(std::size_t offset) { m_offset.update_value(offset); }
+    void set_offset(std::size_t offset);
 
-    void set_subject_key(const std::string& key)
-    {
-        m_subject_key.update_value(key);
-    }
+    void set_subject_key(const std::string& key);
 
-    void set_subject(HsmItem::Type subject) { m_subject.update_value(subject); }
+    void set_subject(HsmItem::Type subject);
 
-    void set_size(const std::size_t& size) { m_to_transfer.update_value(size); }
+    void set_size(std::size_t size);
 
     HsmAction& operator=(const HsmAction& other);
 

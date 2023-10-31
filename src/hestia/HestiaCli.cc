@@ -14,6 +14,7 @@
 #include "ProjectConfig.h"
 
 #include <CLI/CLI11.hpp>
+#include <future>
 #include <iostream>
 
 namespace hestia {
@@ -33,7 +34,7 @@ void HestiaCli::add_hsm_actions(
     HsmAction::Action_enum_string_converter converter;
     converter.init();
 
-    for (const auto& action : m_client_command.get_subject_actions(subject)) {
+    for (const auto& action : HsmAction::get_subject_actions(subject)) {
         const auto action_name = converter.to_string(action);
         const auto tag         = subject + "_" + action_name;
 
@@ -188,15 +189,25 @@ void HestiaCli::add_crud_commands(
     commands[subject + "_identify"] = identify_cmd;
 }
 
+void HestiaCli::reset_cli()
+{
+    m_client_command = HestiaClientCommand();
+    m_user_token.clear();
+    m_config_path.clear();
+    m_server_host.clear();
+}
+
 void HestiaCli::parse_args(int argc, char* argv[])
 {
+    reset_cli();
+
     CLI::App app{
         "Hestia - Hierarchical Storage Tiers Interface for Applications",
         "hestia"};
 
     std::unordered_map<std::string, CLI::App*> commands;
 
-    for (const auto& subject : m_client_command.get_hsm_subjects()) {
+    for (const auto& subject : HsmItem::get_hsm_subjects()) {
         add_crud_commands(commands, app, subject);
     }
 
@@ -204,7 +215,7 @@ void HestiaCli::parse_args(int argc, char* argv[])
         add_crud_commands(commands, app, subject);
     }
 
-    for (const auto& subject : m_client_command.get_action_subjects()) {
+    for (const auto& subject : HsmAction::get_action_subjects()) {
         add_hsm_actions(commands, commands[subject], subject);
     }
 
@@ -248,8 +259,8 @@ void HestiaCli::parse_args(int argc, char* argv[])
     HsmAction::Action_enum_string_converter action_string_converter;
     action_string_converter.init();
 
-    for (const auto& subject : m_client_command.get_hsm_subjects()) {
-        for (const auto& method : m_client_command.get_crud_methods()) {
+    for (const auto& subject : HsmItem::get_hsm_subjects()) {
+        for (const auto& method : BaseCrudRequest::get_crud_methods()) {
             auto command = commands[subject + "_" + method];
             if (command != nullptr && command->parsed()) {
                 m_client_command.set_crud_method(method);
@@ -258,8 +269,7 @@ void HestiaCli::parse_args(int argc, char* argv[])
                 break;
             }
         }
-        for (const auto& action :
-             m_client_command.get_subject_actions(subject)) {
+        for (const auto& action : HsmAction::get_subject_actions(subject)) {
             const auto action_str = action_string_converter.to_string(action);
             if (commands[subject + "_" + action_str]->parsed()) {
                 m_client_command.set_hsm_action(action);
@@ -271,7 +281,7 @@ void HestiaCli::parse_args(int argc, char* argv[])
     }
 
     for (const auto& subject : m_client_command.get_system_subjects()) {
-        for (const auto& method : m_client_command.get_crud_methods()) {
+        for (const auto& method : BaseCrudRequest::get_crud_methods()) {
             auto command = commands[subject + "_" + method];
             if (command != nullptr && command->parsed()) {
                 m_client_command.set_crud_method(method);
@@ -326,7 +336,7 @@ bool HestiaCli::is_daemon() const
            || m_app_command == AppCommand::DAEMON_STOP;
 }
 
-OpStatus HestiaCli::run(IHestiaApplication* app)
+OpStatus HestiaCli::run(IHestiaApplication* app, bool skip_init)
 {
     if (m_client_command.m_is_version) {
         return {};
@@ -342,7 +352,7 @@ OpStatus HestiaCli::run(IHestiaApplication* app)
         return run_server(app);
     }
     else if (m_app_command == AppCommand::CLIENT) {
-        return run_client(app);
+        return run_client(app, skip_init);
     }
     else {
         return {
@@ -364,24 +374,26 @@ void HestiaCli::print_version()
         + " version: " + hestia::project_config::get_project_version());
 }
 
-OpStatus HestiaCli::run_client(IHestiaApplication* app)
+OpStatus HestiaCli::run_client(IHestiaApplication* app, bool skip_init)
 {
-    OpStatus status;
-    try {
-        status = app->initialize(
-            m_config_path, m_user_token, {}, m_server_host, m_server_port);
-    }
-    catch (const std::exception& e) {
-        status = OpStatus(OpStatus::Status::ERROR, -1, e.what());
-    }
-    catch (...) {
-        status = OpStatus(
-            OpStatus::Status::ERROR, -1,
-            "Unknown exception initializing client.");
-    }
+    if (!skip_init) {
+        OpStatus status;
+        try {
+            status = app->initialize(
+                m_config_path, m_user_token, {}, m_server_host, m_server_port);
+        }
+        catch (const std::exception& e) {
+            status = OpStatus(OpStatus::Status::ERROR, -1, e.what());
+        }
+        catch (...) {
+            status = OpStatus(
+                OpStatus::Status::ERROR, -1,
+                "Unknown exception initializing client.");
+        }
 
-    if (!status.ok()) {
-        return status;
+        if (!status.ok()) {
+            return status;
+        }
     }
 
     if (m_client_command.m_is_verbose) {
@@ -396,162 +408,75 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app)
     }
 
     if (m_client_command.is_crud_method()) {
-        return on_crud_method(client);
+        HestiaRequest req(
+            m_client_command.m_subject, m_client_command.get_crud_method());
+        m_client_command.parse_console_inputs(*m_console_interface, req);
+        return on_client_request(*client, req);
     }
-    else if (m_client_command.is_data_management_action()) {
-        m_client_command.m_action.set_subject(
-            m_client_command.m_subject.m_hsm_type);
-        m_client_command.m_action.set_target_tier(
-            m_client_command.m_target_tier);
-        m_client_command.m_action.set_source_tier(
-            m_client_command.m_source_tier);
-        if (!m_client_command.m_id.empty()) {
-            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
-        }
-
-        const auto status =
-            client->do_data_movement_action(m_client_command.m_action);
-        if (status.ok()) {
-            m_console_interface->console_write(m_client_command.m_action.id());
-        }
-        return status;
+    else {
+        HestiaRequest req(
+            m_client_command.m_subject, m_client_command.m_action);
+        m_client_command.parse_action(req);
+        return on_client_request(*client, req);
     }
-    else if (m_client_command.is_data_io_action()) {
-        Stream stream;
-        OpStatus status;
-        m_client_command.m_action.set_subject(
-            m_client_command.m_subject.m_hsm_type);
-        m_client_command.m_action.set_target_tier(
-            m_client_command.m_target_tier);
-        m_client_command.m_action.set_source_tier(
-            m_client_command.m_source_tier);
-        if (!m_client_command.m_id.empty()) {
-            m_client_command.m_action.set_subject_key(m_client_command.m_id[0]);
-        }
-        if (m_client_command.is_data_put_action()) {
-            stream.set_source(
-                FileStreamSource::create(m_client_command.m_path));
-            m_client_command.m_action.set_size(stream.get_source_size());
-        }
-        else {
-            stream.set_sink(FileStreamSink::create(m_client_command.m_path));
-        }
-
-        auto completion_cb =
-            [&status, this](OpStatus ret_status, const HsmAction& action) {
-                status = ret_status;
-                m_console_interface->console_write(action.get_primary_key());
-            };
-
-        client->do_data_io_action(
-            m_client_command.m_action, &stream, completion_cb);
-
-        if (m_client_command.is_data_put_action()) {
-            if (stream.waiting_for_content()) {
-                auto result = stream.flush();
-                if (!result.ok()) {
-                    const auto msg =
-                        "Failed to flush stream with: " + result.to_string();
-                    LOG_ERROR(msg);
-                    return {OpStatus::Status::ERROR, -1, msg};
-                }
-            }
-        }
-        else {
-            if (stream.has_content()) {
-                auto result = stream.flush();
-                if (!result.ok()) {
-                    const auto msg =
-                        "Failed to flush stream with: " + result.to_string();
-                    LOG_ERROR(msg);
-                    return {OpStatus::Status::ERROR, -1, msg};
-                }
-            }
-        }
-        return status;
-    }
-    return {
-        OpStatus::Status::ERROR, -1, "Unsupported client method requested."};
 }
 
-OpStatus HestiaCli::on_crud_method(IHestiaClient* client)
+OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
 {
-    if (m_client_command.is_create_method()
-        || m_client_command.is_update_method()) {
-        const bool is_create = m_client_command.is_create_method();
+    Stream stream;
+    if (req.supports_stream_source()) {
+        stream.set_source(FileStreamSource::create(m_client_command.m_path));
+        req.action().set_size(stream.get_source_size());
+    }
+    else if (req.supports_stream_sink()) {
+        stream.set_sink(FileStreamSink::create(m_client_command.m_path));
+    }
 
-        VecCrudIdentifier ids;
-        CrudAttributes attributes;
-        const auto& [output_format, output_attr_format] =
-            m_client_command.parse_create_update_inputs(
-                ids, attributes, m_console_interface.get());
-        if (is_create) {
-            if (const auto status = client->create(
-                    m_client_command.m_subject, ids, attributes,
-                    output_attr_format);
-                !status.ok()) {
-                return status;
-            }
-        }
-        else {
-            if (const auto status = client->update(
-                    m_client_command.m_subject, ids, attributes,
-                    output_attr_format);
-                !status.ok()) {
-                return status;
-            }
-        }
-        const bool should_write_attributes =
-            HestiaClientCommand::expects_attributes(output_format)
-            && !attributes.buffer().empty();
-        if (HestiaClientCommand::expects_id(output_format)) {
-            for (const auto& id : ids) {
-                m_console_interface->console_write(id.get_primary_key());
-            }
-            if (should_write_attributes) {
-                m_console_interface->console_write("");
-            }
-        }
-        if (should_write_attributes) {
-            m_console_interface->console_write(attributes.buffer());
-        }
-    }
-    else if (m_client_command.is_read_method()) {
-        LOG_INFO(
-            "CLI Read request for type: "
-            << HestiaType::to_string(m_client_command.m_subject));
-        CrudQuery query;
-        const auto& [output_format, output_attr_format] =
-            m_client_command.parse_read_inputs(
-                query, m_console_interface.get());
-        if (const auto status = client->read(m_client_command.m_subject, query);
-            !status.ok()) {
-            return status;
-        }
-        const bool should_write_attributes =
-            HestiaClientCommand::expects_attributes(output_format)
-            && !query.get_attributes().get_buffer().empty();
+    std::promise<HestiaResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
 
-        if (HestiaClientCommand::expects_id(output_format)) {
-            for (const auto& id : query.get_ids()) {
-                m_console_interface->console_write(id.get_primary_key());
-            }
-            if (should_write_attributes) {
-                m_console_interface->console_write("");
+    auto progress_cb = [this](const HsmAction& action) {
+        m_console_interface->console_write(
+            "Processing HSM action: " + action.get_primary_key());
+    };
+
+    auto completion_cb = [&response_promise](HestiaResponse::Ptr response) {
+        response_promise.set_value(std::move(response));
+    };
+
+    client.make_request(req, completion_cb, &stream, progress_cb);
+
+    if (req.supports_stream_source()) {
+        if (stream.waiting_for_content()) {
+            auto result = stream.flush();
+            if (!result.ok()) {
+                const auto msg =
+                    "Failed to flush stream with: " + result.to_string();
+                LOG_ERROR(msg);
+                return {OpStatus::Status::ERROR, -1, msg};
             }
         }
-        if (should_write_attributes) {
-            m_console_interface->console_write(
-                query.get_attributes().get_buffer());
+    }
+    else if (req.supports_stream_sink()) {
+        if (stream.has_content()) {
+            auto result = stream.flush();
+            if (!result.ok()) {
+                const auto msg =
+                    "Failed to flush stream with: " + result.to_string();
+                LOG_ERROR(msg);
+                return {OpStatus::Status::ERROR, -1, msg};
+            }
         }
     }
-    else if (m_client_command.is_remove_method()) {
-        LOG_INFO("CLI Remove request");
-        VecCrudIdentifier ids;
-        m_client_command.parse_remove_inputs(ids, m_console_interface.get());
-        return client->remove(m_client_command.m_subject, ids);
+
+    const auto response = response_future.get();
+    if (response->ok()) {
+        CrudQuery::FormatSpec format;
+        format.m_attrs_format.m_json_format.m_collapse_single = true;
+        format.m_attrs_format.m_json_format.set_indent(4);
+        m_console_interface->console_write(response->write(format));
     }
-    return {};
+    return response->get_status();
 }
 
 OpStatus HestiaCli::run_server(IHestiaApplication* app)

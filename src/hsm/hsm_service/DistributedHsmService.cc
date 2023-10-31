@@ -28,7 +28,7 @@ DistributedHsmService::DistributedHsmService(
         LOG_INFO("Assigning tier ids to config backends from names");
         auto tier_service  = m_hsm_service->get_service(HsmItem::Type::TIER);
         auto tier_response = tier_service->make_request(CrudRequest{
-            CrudQuery{CrudQuery::OutputFormat::ITEM},
+            CrudMethod::READ, CrudQuery{CrudQuery::BodyFormat::ITEM},
             user_service->get_current_user().get_primary_key()});
 
         std::unordered_map<std::string, std::string> tier_ids;
@@ -100,127 +100,73 @@ CrudResponse::Ptr DistributedHsmService::make_request(
     return m_hsm_service->make_request(request, type);
 }
 
-HsmActionResponse::Ptr DistributedHsmService::make_request(
-    const HsmActionRequest& request) const noexcept
-{
-    if (m_config.m_self.is_controller()) {
-        std::string source_tier;
-        std::string target_tier;
-        if (request.get_action().get_action()
-            == HsmAction::Action::RELEASE_DATA) {
-            source_tier = std::to_string(request.source_tier());
-        }
-        else {
-            source_tier = std::to_string(request.source_tier());
-            target_tier = std::to_string(request.target_tier());
-        }
-
-        for (const auto& backend : get_backends()) {
-            if (backend.has_tier_name(source_tier)) {
-                LOG_INFO("Controller has source backend locally - using that.");
-                return m_hsm_service->make_request(request);
-            }
-        }
-
-        if (!target_tier.empty()) {
-            for (const auto& backend : get_backends()) {
-                if (backend.has_tier_name(target_tier)) {
-                    LOG_INFO(
-                        "Controller has target backend locally - using that.");
-                    return m_hsm_service->make_request(request);
-                }
-            }
-        }
-
-        auto response =
-            HsmActionResponse::create(request, request.get_action());
-
-        auto node_address = get_backend_address(request.source_tier());
-        if (node_address.empty()) {
-            const std::string message = "No backend found for source tier: "
-                                        + std::to_string(request.source_tier());
-            LOG_ERROR(message);
-            response->on_error({HsmActionErrorCode::ITEM_NOT_FOUND, message});
-            return response;
-        }
-        else {
-            LOG_INFO("Redirecting to: " + node_address);
-            response->set_redirect_location(node_address);
-            return response;
-        }
-    }
-    else {
-        return m_hsm_service->make_request(request);
-    }
-}
-
-void DistributedHsmService::do_data_io_action(
+void DistributedHsmService::do_hsm_action(
     const HsmActionRequest& request,
     Stream* stream,
-    dataIoCompletionFunc completion_func) const
+    actionCompletionFunc completion_func,
+    actionProgressFunc progress_func) const noexcept
 {
-    if (m_config.m_self.is_controller()) {
-        std::string tier_name;
-        if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
-            tier_name = std::to_string(request.target_tier());
-        }
-        else {
-            tier_name = std::to_string(request.source_tier());
-        }
+    if (!m_config.m_self.is_controller()) {
+        m_hsm_service->do_hsm_action(
+            request, stream, completion_func, progress_func);
+        return;
+    }
 
+    const auto tier = request.is_put_data_action() ?
+                          std::to_string(request.target_tier()) :
+                          std::to_string(request.source_tier());
+    for (const auto& backend : get_backends()) {
+        if (backend.has_tier_name(tier)) {
+            LOG_INFO(
+                "Controller has first requested backend locally - using it.");
+            m_hsm_service->do_hsm_action(
+                request, stream, completion_func, progress_func);
+            return;
+        }
+    }
+
+    if (request.is_copy_or_move_data_action()) {
+        const auto secondary_tier = std::to_string(request.target_tier());
         for (const auto& backend : get_backends()) {
-            if (backend.has_tier_name(tier_name)) {
-                LOG_INFO("Controller has backend locally - using that.");
-                m_hsm_service->do_data_io_action(
-                    request, stream, completion_func);
+            if (backend.has_tier_name(secondary_tier)) {
+                LOG_INFO(
+                    "Controller has second requested backend locally - using it.");
+                m_hsm_service->do_hsm_action(
+                    request, stream, completion_func, progress_func);
                 return;
             }
         }
+    }
 
-        if (request.get_action().get_action() == HsmAction::Action::PUT_DATA) {
-            auto response =
-                HsmActionResponse::create(request, request.get_action());
+    // No local backends found - redirect to remote
+    auto response = HsmActionResponse::create(request, request.get_action());
 
-            auto node_address = get_backend_address(request.target_tier());
-            if (node_address.empty()) {
-                const std::string message =
-                    "No backend found for tier: "
-                    + std::to_string(request.target_tier());
-                LOG_ERROR(message);
-                response->on_error(
-                    {HsmActionErrorCode::ITEM_NOT_FOUND, message});
-                completion_func(std::move(response));
-            }
-            else {
-                LOG_INFO("Redirecting to: " + node_address);
-                response->set_redirect_location(node_address);
-                completion_func(std::move(response));
-            }
-        }
-        else if (
-            request.get_action().get_action() == HsmAction::Action::GET_DATA) {
-            auto response =
-                HsmActionResponse::create(request, request.get_action());
+    const auto remote_tier = request.is_put_data_action() ?
+                                 request.target_tier() :
+                                 request.source_tier();
+    std::string node_address;
+    try {
+        node_address = get_backend_address(remote_tier);
+    }
+    catch (const std::exception& e) {
+        const std::string msg =
+            SOURCE_LOC() + " | Exception getting backend address: " + e.what();
+        LOG_ERROR(msg);
+        response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+        completion_func(std::move(response));
+    }
 
-            auto node_address = get_backend_address(request.source_tier());
-            if (node_address.empty()) {
-                const std::string message =
-                    "No backend found for tier: "
-                    + std::to_string(request.source_tier());
-                LOG_ERROR(message);
-                response->on_error(
-                    {HsmActionErrorCode::ITEM_NOT_FOUND, message});
-                completion_func(std::move(response));
-            }
-            else {
-                LOG_INFO("Redirecting to: " + node_address);
-                response->set_redirect_location(node_address);
-                completion_func(std::move(response));
-            }
-        }
+    if (node_address.empty()) {
+        const std::string msg =
+            "No backend found for tier: " + std::to_string(remote_tier);
+        LOG_ERROR(msg);
+        response->on_error({HsmActionErrorCode::ITEM_NOT_FOUND, msg});
+        completion_func(std::move(response));
     }
     else {
-        m_hsm_service->do_data_io_action(request, stream, completion_func);
+        LOG_INFO("Redirecting to: " + node_address);
+        response->set_redirect_location(node_address);
+        completion_func(std::move(response));
     }
 }
 
@@ -239,7 +185,7 @@ void DistributedHsmService::register_self()
 
     CrudIdentifier id(m_config.m_self.name(), CrudIdentifier::Type::NAME);
     auto get_response = node_service->make_request(CrudRequest{
-        CrudQuery(id, CrudQuery::OutputFormat::ITEM),
+        CrudMethod::READ, CrudQuery(id, CrudQuery::BodyFormat::ITEM),
         m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
@@ -251,9 +197,10 @@ void DistributedHsmService::register_self()
         LOG_INFO("Pre-existing endpoint not found - will request new one.");
 
         auto create_response = node_service->make_request(TypedCrudRequest{
-            CrudMethod::CREATE, m_config.m_self,
-            m_user_service->get_current_user_context(),
-            CrudQuery::OutputFormat::ITEM});
+            CrudMethod::CREATE,
+            m_config.m_self,
+            {CrudQuery::BodyFormat::ITEM},
+            m_user_service->get_current_user_context()});
         if (!create_response->ok()) {
             LOG_ERROR(
                 "Failed to register node: "
@@ -291,7 +238,7 @@ void DistributedHsmService::register_backends()
 
         auto response =
             backend_service->make_request(TypedCrudRequest<ObjectStoreBackend>(
-                CrudMethod::CREATE, backend,
+                CrudMethod::CREATE, backend, {},
                 m_user_service->get_current_user_context()));
         if (!response->ok()) {
             throw std::runtime_error(
@@ -305,7 +252,7 @@ void DistributedHsmService::register_backends()
 
     CrudIdentifier id(m_config.m_self.get_primary_key());
     auto get_response = node_service->make_request(CrudRequest{
-        CrudQuery(id, CrudQuery::OutputFormat::ITEM),
+        CrudMethod::READ, CrudQuery(id, CrudQuery::BodyFormat::ITEM),
         m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
@@ -332,7 +279,7 @@ std::string DistributedHsmService::get_backend_address(
     CrudIdentifier tier_id(
         std::to_string(tier_name), CrudIdentifier::Type::NAME);
     auto get_response = tier_service->make_request(CrudRequest{
-        CrudQuery{tier_id, CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ, CrudQuery{tier_id, CrudQuery::BodyFormat::ITEM},
         m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
@@ -355,7 +302,7 @@ std::string DistributedHsmService::get_backend_address(
 
     auto node_service      = m_hsm_service->get_service(HsmItem::Type::NODE);
     auto node_get_response = node_service->make_request(CrudRequest{
-        CrudQuery{node_id, CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ, CrudQuery{node_id, CrudQuery::BodyFormat::ITEM},
         m_user_service->get_current_user_context()});
     if (!node_get_response->ok()) {
         throw std::runtime_error(

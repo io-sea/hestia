@@ -132,10 +132,10 @@ void setup_tiers(
     }
 
     LOG_INFO("Check for new Tiers to add.");
-    CrudQuery query(CrudQuery::OutputFormat::ITEM);
+    CrudQuery query(CrudQuery::BodyFormat::ITEM);
 
-    auto tiers_list_response =
-        tier_service->make_request(CrudRequest{query, current_user_id});
+    auto tiers_list_response = tier_service->make_request(
+        CrudRequest{CrudMethod::READ, query, current_user_id});
 
     for (const auto& config_tier : tiers) {
         bool found{false};
@@ -150,7 +150,7 @@ void setup_tiers(
                 "Adding tier: " << config_tier.name() << " to Tier service");
             if (auto response =
                     tier_service->make_request(TypedCrudRequest<StorageTier>{
-                        CrudMethod::CREATE, config_tier, current_user_id});
+                        CrudMethod::CREATE, config_tier, {}, current_user_id});
                 !response->ok()) {
                 LOG_ERROR("Failed to PUT tier in initialization.");
                 return;

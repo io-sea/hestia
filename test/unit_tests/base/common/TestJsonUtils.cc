@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "FileUtils.h"
+#include "JsonDocument.h"
 #include "JsonUtils.h"
 #include "TestUtils.h"
 
@@ -131,15 +132,15 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
     seq_dict->add_sequence_item(std::move(nest0));
     dict.set_map_item("nested", std::move(seq_dict));
 
-    std::string json;
-    hestia::JsonUtils::to_json(dict, json);
+    hestia::JsonDocument json(dict);
 
     hestia::Dictionary ret_dict;
-    hestia::JsonUtils::from_json(json, ret_dict);
+    json.write(ret_dict);
+
     REQUIRE(ret_dict.has_map_item("nested"));
 
     auto nested_seq = ret_dict.get_map_item("nested");
-    REQUIRE(nested_seq->get_type() == hestia::Dictionary::Type::SEQUENCE);
+    REQUIRE(nested_seq->is_sequence());
     REQUIRE(nested_seq->get_sequence().size() == 1);
     REQUIRE(
         nested_seq->get_sequence()[0]->get_map_item("key2")->get_scalar()
@@ -148,9 +149,9 @@ TEST_CASE("Test JsonUtils - dict to and from json", "[common]")
         nested_seq->get_sequence()[0]->get_map_item("key3")->get_scalar()
         == "val3");
 
-    std::string json_rebuilt;
-    hestia::JsonUtils::to_json(ret_dict, json_rebuilt);
-    REQUIRE(json_rebuilt == json);
+    hestia::JsonDocument json_rebuilt(ret_dict);
+
+    REQUIRE(json_rebuilt.to_string() == json.to_string());
 }
 
 TEST_CASE("Test JsonUtils - General dict", "[common]")
@@ -173,7 +174,8 @@ TEST_CASE("Test JsonUtils - General dict", "[common]")
         \"type\":\"object_store_client\"}";
 
     hestia::Dictionary dict;
-    hestia::JsonUtils::from_json(content, dict);
+    hestia::JsonDocument json(content);
+    json.write(dict);
 
     REQUIRE(!dict.is_empty());
     REQUIRE(dict.has_map_item("config"));

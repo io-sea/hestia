@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CrudEvent.h"
-#include "StringAdapter.h"
+#include "ModelSerializer.h"
 
 #include <fstream>
 
@@ -25,8 +25,7 @@ class CrudEventFileSink : public EventSink {
     void on_event(const CrudEvent& event);
 
   private:
-    std::unique_ptr<ModelFactory> m_model_factory;
-    std::unique_ptr<StringAdapter> m_adapter;
+    std::unique_ptr<ModelSerializer> m_adapter;
     std::string m_output_path{"event_feed.yaml"};
 };
 
@@ -39,8 +38,7 @@ class CrudEventBufferSink : public EventSink {
     const std::string& get_buffer() const;
 
   private:
-    std::unique_ptr<ModelFactory> m_model_factory;
-    std::unique_ptr<StringAdapter> m_adapter;
+    std::unique_ptr<ModelSerializer> m_adapter;
     std::string m_events;
 };
 }  // namespace hestia

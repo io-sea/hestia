@@ -1,13 +1,13 @@
 #pragma once
 
-#include "StringAdapter.h"
+#include "CrudSerializer.h"
 
 namespace hestia {
 
 class KeyValueFieldContext {
   public:
     KeyValueFieldContext(
-        const AdapterCollection* adapters, const std::string& key_prefix);
+        const CrudSerializer* serializer, const std::string& key_prefix);
 
     virtual ~KeyValueFieldContext() = default;
 
@@ -25,7 +25,7 @@ class KeyValueFieldContext {
     std::string get_prefix() const;
 
   protected:
-    const AdapterCollection* m_adapters{nullptr};
+    const CrudSerializer* m_serializer{nullptr};
     std::string m_key_prefix;
 };
 

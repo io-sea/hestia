@@ -23,6 +23,36 @@ class HsmActionRequest :
 
     const CrudUserContext& get_user_context() const;
 
+    bool is_release_data_action() const
+    {
+        return m_action.get_action() == HsmAction::Action::RELEASE_DATA;
+    }
+
+    bool is_copy_data_action() const
+    {
+        return m_action.get_action() == HsmAction::Action::COPY_DATA;
+    }
+
+    bool is_move_data_action() const
+    {
+        return m_action.get_action() == HsmAction::Action::MOVE_DATA;
+    }
+
+    bool is_put_data_action() const
+    {
+        return m_action.get_action() == HsmAction::Action::PUT_DATA;
+    }
+
+    bool is_get_data_action() const
+    {
+        return m_action.get_action() == HsmAction::Action::GET_DATA;
+    }
+
+    bool is_copy_or_move_data_action() const
+    {
+        return is_copy_data_action() || is_move_data_action();
+    }
+
     std::string method_as_string() const override;
 
     std::string subject_as_string() const;

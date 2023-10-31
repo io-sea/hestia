@@ -2,7 +2,6 @@
 
 #include "CrudService.h"
 #include "IdGenerator.h"
-#include "StringAdapter.h"
 #include "TimeProvider.h"
 
 #include "ErrorUtils.h"
@@ -14,13 +13,13 @@
 namespace hestia {
 CrudClient::CrudClient(
     const CrudClientConfig& config,
-    AdapterCollectionPtr adapters,
+    ModelSerializer::Ptr model_serializer,
     IdGenerator* id_generator,
     TimeProvider* time_provider) :
     m_id_generator(id_generator),
     m_time_provider(time_provider),
     m_config(config),
-    m_adapters(std::move(adapters))
+    m_serializer(CrudSerializer::create(std::move(model_serializer)))
 {
     if (m_id_generator == nullptr) {
         m_default_id_generator = std::make_unique<DefaultIdGenerator>();
@@ -42,23 +41,17 @@ std::string CrudClient::generate_id(const std::string& name) const
     }
 
     return m_id_generator->get_id(
-        m_config.m_prefix + "::" + m_adapters->get_type() + "::" + name);
+        m_config.m_prefix + "::" + m_serializer->get_type() + "::" + name);
 }
 
 bool CrudClient::matches_query(const Model& item, const Map& query) const
 {
-    return m_adapters->get_default_adapter()->matches_query(item, query);
-}
-
-const StringAdapter* CrudClient::get_adapter(
-    CrudAttributes::Format format) const
-{
-    return m_adapters->get_adapter(CrudAttributes::to_string(format));
+    return m_serializer->matches_query(item, query);
 }
 
 std::string CrudClient::get_type() const
 {
-    return m_adapters->get_type();
+    return m_serializer->get_type();
 }
 
 Dictionary::Ptr CrudClient::create_child(
@@ -76,18 +69,14 @@ Dictionary::Ptr CrudClient::create_child(
     CrudIdentifier id;
     id.set_parent_primary_key(parent_id);
     auto create_response = child_service_iter->second->make_request(CrudRequest{
-        CrudMethod::CREATE,
-        user_context,
-        {id},
-        {},
-        CrudQuery::OutputFormat::DICT});
+        CrudMethod::CREATE, {id, CrudQuery::BodyFormat::DICT}, user_context});
     if (!create_response->ok()) {
         throw std::runtime_error(
             "Failed to create default child: "
             + create_response->get_error().to_string());
     }
     return std::make_unique<Dictionary>(
-        *create_response->dict()->get_sequence()[0]);
+        *create_response->get_attributes().get_dict()->get_sequence()[0]);
 }
 
 std::string CrudClient::get_id_from_parent_id(
@@ -104,7 +93,8 @@ std::string CrudClient::get_id_from_parent_id(
     }
 
     auto get_response = parent_service_iter->second->make_request(CrudRequest{
-        CrudQuery{id, CrudQuery::OutputFormat::ITEM}, user_context});
+        CrudMethod::READ, CrudQuery{id, CrudQuery::BodyFormat::ITEM},
+        user_context});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to get default parent: "
@@ -156,8 +146,8 @@ void CrudClient::get_or_create_default_parent(
         id.set_parent_primary_key(user_id);
     }
 
-    auto get_response = parent_service_iter->second->make_request(
-        CrudRequest{CrudQuery{id, CrudQuery::OutputFormat::ID}, user_id});
+    auto get_response = parent_service_iter->second->make_request(CrudRequest{
+        CrudMethod::READ, CrudQuery{id, CrudQuery::BodyFormat::ID}, user_id});
     if (!get_response->ok()) {
         throw std::runtime_error(
             "Failed to get default parent: "
@@ -168,17 +158,14 @@ void CrudClient::get_or_create_default_parent(
         assert(!get_response->ids().empty());
         LOG_INFO(
             "Found default parent of type: " + type
-            + " with id: " + get_response->ids()[0]);
-        set_default_parent_id(type, get_response->ids()[0]);
+            + " with id: " + get_response->ids().first().get_primary_key());
+        set_default_parent_id(
+            type, get_response->ids().first().get_primary_key());
     }
     else {
         auto create_response =
             parent_service_iter->second->make_request(CrudRequest{
-                CrudMethod::CREATE,
-                user_id,
-                {id},
-                {},
-                CrudQuery::OutputFormat::ID});
+                CrudMethod::CREATE, {id, CrudQuery::BodyFormat::ID}, user_id});
         if (!create_response->ok()) {
             throw std::runtime_error(
                 "Failed to create default parent: "
@@ -187,8 +174,9 @@ void CrudClient::get_or_create_default_parent(
         assert(!create_response->ids().empty());
         LOG_INFO(
             "Created default parent of type: " + type
-            + " with id: " + create_response->ids()[0]);
-        set_default_parent_id(type, create_response->ids()[0]);
+            + " with id: " + create_response->ids().first().get_primary_key());
+        set_default_parent_id(
+            type, create_response->ids().first().get_primary_key());
     }
 }
 

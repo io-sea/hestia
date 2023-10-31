@@ -6,6 +6,7 @@
 
 #include "CacheTestFixture.h"
 
+#include <future>
 #include <iostream>
 
 class TestHestiaClient : public hestia::HestiaClient {
@@ -23,6 +24,25 @@ class HestiaClientTestFixture : public CacheTestFixture {
         m_client->initialize(m_config_path);
     }
 
+    hestia::HestiaResponse::Ptr make_request(
+        const hestia::HestiaRequest& req, hestia::Stream* stream = nullptr)
+    {
+        std::promise<hestia::HestiaResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HestiaResponse::Ptr response) {
+                REQUIRE(response->get_status().ok());
+                response_promise.set_value(std::move(response));
+            };
+        m_client->make_request(req, completion_cb, stream);
+
+        if (stream != nullptr) {
+            (void)stream->flush();
+        }
+        return response_future.get();
+    }
+
     void get_and_check(
         const std::string& id, uint8_t tier, const std::string& content)
     {
@@ -36,17 +56,8 @@ class HestiaClientTestFixture : public CacheTestFixture {
         get_action.set_subject_key(id);
         get_action.set_source_tier(tier);
 
-        hestia::OpStatus status;
-        auto completion_cb = [&status](
-                                 hestia::OpStatus ret_status,
-                                 const hestia::HsmAction& action) {
-            status = ret_status;
-            (void)action;
-        };
-
-        m_client->do_data_io_action(get_action, &stream, completion_cb);
-        (void)stream.flush();
-        REQUIRE(status.ok());
+        hestia::HestiaRequest req(hestia::HsmItem::Type::OBJECT, get_action);
+        make_request(req, &stream);
 
         std::string returned_content(
             return_buffer.begin(), return_buffer.end());
@@ -62,12 +73,16 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
 
     hestia::VecCrudIdentifier ids;
     hestia::CrudAttributes attributes;
-    auto status =
-        m_client->create(hestia::HsmItem::Type::OBJECT, ids, attributes);
-    REQUIRE(status.ok());
-    REQUIRE(ids.size() == 1);
-    REQUIRE(attributes.has_content());
-    REQUIRE(attributes.is_json_input());
+
+    hestia::HestiaRequest create_req(
+        hestia::HsmItem::Type::OBJECT, hestia::CrudMethod::CREATE);
+    auto create_response = make_request(create_req);
+
+    REQUIRE(create_response->get_ids().size() == 1);
+    const auto working_id =
+        create_response->get_ids().first().get_primary_key();
+
+    REQUIRE(create_response->has_content());
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
 
@@ -77,51 +92,46 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
 
     hestia::HsmAction put_action(
         hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
-    put_action.set_subject_key(ids[0].get_primary_key());
+    put_action.set_subject_key(working_id);
     put_action.set_target_tier(0);
 
-    hestia::HsmAction returned_put_action;
-    auto completion_cb = [&status, &returned_put_action](
-                             hestia::OpStatus ret_status,
-                             const hestia::HsmAction& action) {
-        status              = ret_status;
-        returned_put_action = action;
-    };
-    m_client->do_data_io_action(put_action, &stream, completion_cb);
-    REQUIRE(stream.flush().ok());
-    REQUIRE(status.ok());
+    hestia::HestiaRequest put_req(hestia::HsmItem::Type::OBJECT, put_action);
+    const auto put_response = make_request(put_req, &stream);
 
-    REQUIRE_FALSE(returned_put_action.get_primary_key().empty());
+    REQUIRE_FALSE(put_response->get_action_id().empty());
 
     hestia::VecCrudIdentifier action_ids;
-    action_ids.push_back(returned_put_action.get_primary_key());
+    action_ids.push_back(put_response->get_action_id());
 
-    hestia::CrudQuery action_query(
-        hestia::CrudIdentifier(returned_put_action.get_primary_key()),
-        hestia::CrudQuery::OutputFormat::ATTRIBUTES);
-    m_client->read(hestia::HsmItem::Type::ACTION, action_query);
-    REQUIRE_FALSE(action_query.get_attributes().get_buffer().empty());
+    hestia::HestiaRequest read_req(
+        hestia::HsmItem::Type::ACTION, hestia::CrudMethod::READ);
+    read_req.set_id(put_response->get_action_id());
+    read_req.set_output_format(hestia::CrudQuery::BodyFormat::DICT);
 
-    get_and_check(ids[0].get_primary_key(), 0, content);
+    const auto read_response = make_request(read_req);
+    REQUIRE(read_response->has_content());
+
+    get_and_check(working_id, 0, content);
 
     hestia::HsmAction copy_action(
         hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::COPY_DATA);
-    copy_action.set_subject_key(ids[0].get_primary_key());
+    copy_action.set_subject_key(working_id);
     copy_action.set_source_tier(0);
     copy_action.set_target_tier(1);
 
-    status = m_client->do_data_movement_action(copy_action);
-    REQUIRE(status.ok());
+    hestia::HestiaRequest copy_req(hestia::HsmItem::Type::OBJECT, copy_action);
+    make_request(copy_req);
 
-    get_and_check(ids[0].get_primary_key(), 1, content);
+    get_and_check(working_id, 1, content);
 
     hestia::HsmAction move_action(
         hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::MOVE_DATA);
-    move_action.set_subject_key(ids[0].get_primary_key());
+    move_action.set_subject_key(working_id);
     move_action.set_source_tier(1);
     move_action.set_target_tier(2);
 
-    status = m_client->do_data_movement_action(move_action);
-    REQUIRE(status.ok());
-    get_and_check(ids[0].get_primary_key(), 2, content);
+    hestia::HestiaRequest move_req(hestia::HsmItem::Type::OBJECT, move_action);
+    make_request(move_req);
+
+    get_and_check(working_id, 2, content);
 }

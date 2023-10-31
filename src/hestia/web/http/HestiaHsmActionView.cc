@@ -6,8 +6,8 @@
 #include "HsmServicesFactory.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
+#include "ModelSerializer.h"
 #include "RequestContext.h"
-#include "StringAdapter.h"
 
 #include "Logger.h"
 #include "StringUtils.h"
@@ -112,7 +112,6 @@ HttpResponse::Ptr HestiaHsmActionView::on_head(
     return HttpResponse::create(404, "Not Found.");
 }
 
-
 HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     const HttpRequest& request,
     const Map& action_map,
@@ -136,10 +135,9 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
         HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
 
     std::string redirect_location;
-    if (action.is_data_io_action()) {
-        auto completion_cb = [request_context = request.get_context(),
-                              &redirect_location](
-                                 HsmActionResponse::Ptr response_ret) {
+    auto completion_cb =
+        [request_context = request.get_context(),
+         &redirect_location](HsmActionResponse::Ptr response_ret) {
             if (response_ret->ok()) {
                 LOG_INFO("Data action completed sucessfully");
                 if (!response_ret->get_redirect_location().empty()) {
@@ -147,11 +145,12 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
                 }
                 else {
                     auto response = HttpResponse::create();
-                    auto action_factory =
-                        std::make_unique<TypedModelFactory<HsmAction>>();
-                    JsonAdapter json_adapter(action_factory.get());
-                    json_adapter.to_string(
-                        response_ret->get_action(), response->body());
+
+                    ModelSerializer serializer(
+                        std::make_unique<TypedModelFactory<HsmAction>>());
+                    Dictionary dict;
+                    serializer.to_dict(response_ret->get_action(), dict);
+                    response->set_body(JsonDocument(dict).to_string());
                     request_context->set_response(std::move(response));
                 }
             }
@@ -163,36 +162,15 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
                     HttpResponse::create(500, "Internal Server Error."));
             }
         };
-        m_hestia_service->do_data_io_action(
-            HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
-            request.get_context()->get_stream(), completion_cb);
 
-        if (!redirect_location.empty()) {
-            response = HttpResponse::create(307, "Found");
-            response->header().set_item(
-                "Location", "http://" + redirect_location + m_path);
-        }
-    }
-    else {
-        auto action_response = m_hestia_service->make_request(
-            HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}));
-        if (!action_response->ok()) {
-            return HttpResponse::create(500, "Internal Server Error.");
-        }
+    m_hestia_service->do_hsm_action(
+        HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
+        request.get_context()->get_stream(), completion_cb);
 
-        redirect_location = action_response->get_redirect_location();
-        if (!redirect_location.empty()) {
-            response = HttpResponse::create(307, "Found");
-            response->header().set_item(
-                "Location", "http://" + redirect_location + m_path);
-        }
-        else {
-            auto action_factory =
-                std::make_unique<TypedModelFactory<HsmAction>>();
-            JsonAdapter json_adapter(action_factory.get());
-            json_adapter.to_string(
-                action_response->get_action(), response->body());
-        }
+    if (!redirect_location.empty()) {
+        response = HttpResponse::create(307, "Found");
+        response->header().set_item(
+            "Location", "http://" + redirect_location + m_path);
     }
 
     return response;

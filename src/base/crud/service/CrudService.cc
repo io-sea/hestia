@@ -50,7 +50,8 @@ CrudService::~CrudService() {}
         "Starting Subject: " << get_type()
                              << ", Method: " << request.method_as_string());
 
-    auto response = std::make_unique<CrudResponse>(request, get_type());
+    auto response = std::make_unique<CrudResponse>(
+        request, get_type(), request.get_output_format());
 
     bool record_modified_attrs{false};
     if (m_event_feed != nullptr) {
@@ -61,7 +62,7 @@ CrudService::~CrudService() {}
     switch (request.method()) {
         case CrudMethod::CREATE:
             try {
-                create(request, *response, record_modified_attrs);
+                create_crud(request, *response, record_modified_attrs);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -131,7 +132,7 @@ CrudService::~CrudService() {}
     return response;
 }
 
-void CrudService::create(
+void CrudService::create_crud(
     const CrudRequest& request,
     CrudResponse& response,
     bool record_modified_attrs) const

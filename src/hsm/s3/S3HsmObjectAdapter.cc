@@ -4,7 +4,7 @@
 
 namespace hestia {
 S3HsmObjectAdapter::S3HsmObjectAdapter(const std::string& metadata_prefix) :
-    StringAdapter(nullptr), m_metadata_prefix(metadata_prefix)
+    m_metadata_prefix(metadata_prefix)
 {
 }
 
@@ -12,15 +12,6 @@ S3HsmObjectAdapter::Ptr S3HsmObjectAdapter::create(
     const std::string& metadata_prefix)
 {
     return std::make_unique<S3HsmObjectAdapter>(metadata_prefix);
-}
-
-void S3HsmObjectAdapter::dict_from_string(
-    const std::string&, Dictionary&, const std::string&) const
-{
-}
-
-void S3HsmObjectAdapter::dict_to_string(const Dictionary&, std::string&) const
-{
 }
 
 void S3HsmObjectAdapter::get_headers(

@@ -3,7 +3,6 @@
 #include "IdGenerator.h"
 #include "KeyValueStoreClient.h"
 #include "KeyValueStoreRequest.h"
-#include "StringAdapter.h"
 #include "TimeProvider.h"
 
 #include "CrudService.h"
@@ -22,28 +21,28 @@
 namespace hestia {
 KeyValueCrudClient::KeyValueCrudClient(
     const CrudClientConfig& config,
-    AdapterCollectionPtr adapters,
+    ModelSerializer::Ptr serializer,
     KeyValueStoreClient* client,
     IdGenerator* id_generator,
     TimeProvider* time_provider) :
-    CrudClient(config, std::move(adapters), id_generator, time_provider),
+    CrudClient(config, std::move(serializer), id_generator, time_provider),
     m_client(client)
 {
+    m_serializer->load_template();
 }
 
 KeyValueCrudClient::~KeyValueCrudClient() {}
 
 void KeyValueCrudClient::prepare_creation_overrides(
     const CrudUserContext& user_context,
-    const Model& item_template,
     Dictionary& create_overrides_dict) const
 {
     const auto current_time = m_time_provider->get_current_time();
 
-    ModelCreationContext create_overrides(item_template.get_runtime_type());
+    ModelCreationContext create_overrides(m_serializer->get_runtime_type());
     create_overrides.m_creation_time.update_value(current_time);
     create_overrides.m_last_modified_time.update_value(current_time);
-    if (item_template.has_owner()) {
+    if (m_serializer->type_has_owner()) {
         create_overrides.add_user(user_context.m_id);
     }
     create_overrides.serialize(create_overrides_dict);
@@ -72,28 +71,27 @@ void KeyValueCrudClient::create(
     };
 
     KeyValueCreateContext create_context(
-        m_adapters.get(), m_config.m_prefix, id_generation_func,
+        m_serializer.get(), m_config.m_prefix, id_generation_func,
         default_parent_id_func, get_or_create_parent_func, create_child_func);
 
     // Convert the request to a sequence of primary-keys (ids) and corresponding
     // content bodies (as dictionary sequence entries)
     std::vector<std::string> ids;
-    auto content = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+    auto content = Dictionary::create(Dictionary::Type::SEQUENCE);
     create_context.serialize_request(crud_request, ids, *content);
 
     // Prepare a dictionary to override creation-related fields (e.g. created
     // and last modified times)
-    auto item_template = m_adapters->get_model_factory()->create();
     Dictionary creation_overrides;
     prepare_creation_overrides(
-        crud_request.get_user_context(), *item_template, creation_overrides);
+        crud_request.get_user_context(), creation_overrides);
 
     // Prepare the query for the key value store
     std::vector<KeyValuePair> string_set_queries;
     std::vector<KeyValuePair> set_add_queries;
     create_context.prepare_db_query(
         string_set_queries, set_add_queries, ids, *content, creation_overrides,
-        item_template->get_primary_key_name());
+        m_serializer->get_template()->get_primary_key_name());
 
     // Make batch requests to the STRING and SET kv store endpoints
     const auto response = m_client->make_request(
@@ -106,31 +104,15 @@ void KeyValueCrudClient::create(
          m_config.m_endpoint});
     error_check("SET_ADD", set_response.get());
 
-    // Return the response in the requested format
-    const auto json_adapter = get_adapter(CrudAttributes::Format::JSON);
-    if (crud_request.get_query().is_attribute_output_format()) {
-        json_adapter->dict_to_string(
-            *content, crud_response.attributes().buffer());
-    }
-    else if (crud_request.get_query().is_dict_output_format()) {
-        crud_response.set_dict(std::move(content));
-        content = nullptr;
-    }
-    else if (crud_request.get_query().is_item_output_format()) {
-        json_adapter->from_dict(*content, crud_response.items());
-    }
-
-    if (content != nullptr && record_modified_attrs) {
-        assign_modified_attributes(*content, crud_response);
-    }
-    crud_response.ids() = ids;
+    m_serializer->append_dict(
+        std::move(content), crud_response, record_modified_attrs);
 }
 
 void KeyValueCrudClient::prepare_update_overrides(
     Dictionary& update_overrides) const
 {
     const auto current_time = m_time_provider->get_current_time();
-    ModelUpdateContext update_context(m_adapters->get_type());
+    ModelUpdateContext update_context(m_serializer->get_type());
     update_context.m_last_modified_time.update_value(current_time);
     update_context.serialize(update_overrides);
 }
@@ -151,7 +133,7 @@ void KeyValueCrudClient::update(
 
     auto content = std::make_unique<Dictionary>();
     KeyValueUpdateContext update_context(
-        m_adapters.get(), m_config.m_prefix, id_from_parent_id_func);
+        m_serializer.get(), m_config.m_prefix, id_from_parent_id_func);
     update_context.serialize_request(crud_request, *content);
 
     // Get the queried items from the db.
@@ -175,26 +157,8 @@ void KeyValueCrudClient::update(
          m_config.m_endpoint});
     error_check("STRING_SET", set_response.get());
 
-    // Prepare the reponse
-    if (crud_request.get_query().is_attribute_output_format()) {
-        get_adapter(CrudAttributes::Format::JSON)
-            ->dict_to_string(
-                *updated_content, crud_response.attributes().buffer());
-    }
-    else if (crud_request.get_query().is_dict_output_format()) {
-        crud_response.set_dict(std::move(updated_content));
-        updated_content = nullptr;
-    }
-    else if (crud_request.get_query().is_item_output_format()) {
-        get_adapter(CrudAttributes::Format::JSON)
-            ->from_dict(*updated_content, crud_response.items());
-    }
-
-    if (updated_content != nullptr && record_modified_attrs) {
-        LOG_INFO("Adding modified attrs");
-        assign_modified_attributes(*updated_content, crud_response);
-    }
-    crud_response.ids() = update_context.get_index_ids();
+    m_serializer->append_dict(
+        std::move(updated_content), crud_response, record_modified_attrs);
 }
 
 void KeyValueCrudClient::read(
@@ -219,10 +183,10 @@ void KeyValueCrudClient::read(
         return get_id_from_parent_id(parent_type, child_type, id, user_context);
     };
     KeyValueReadContext read_context(
-        m_adapters.get(), m_config.m_prefix, db_get_item_func, db_get_sets_func,
-        id_from_parent_id_func);
+        m_serializer.get(), m_config.m_prefix, db_get_item_func,
+        db_get_sets_func, id_from_parent_id_func);
     if (!read_context.serialize_request(request)) {
-        read_context.on_empty_read(request.get_query(), crud_response);
+
         return;
     }
 
@@ -231,7 +195,6 @@ void KeyValueCrudClient::read(
     if (!get_db_items(
             read_context.get_index_keys(), *read_content,
             request.get_query().expects_single_item())) {
-        read_context.on_empty_read(request.get_query(), crud_response);
         return;
     }
 
@@ -252,36 +215,17 @@ void KeyValueCrudClient::read(
             get_db_items(foreign_keys), foreign_key_set_sizes,
             foreign_key_content);
     }
+
     read_context.merge_foreign_key_content(foreign_key_content, *read_content);
 
-    // Prepare the response
-    auto item_template = m_adapters->get_model_factory()->create();
-    read_content->get_scalars(
-        item_template->get_primary_key_name(), crud_response.ids());
-
-    if (request.get_query().is_attribute_output_format()) {
-        LOG_INFO(
-            "Returning attrs in format: "
-            + CrudAttributes::to_string(
-                request.get_query().get_attributes().get_output_format()));
-        get_adapter(request.get_query().get_attributes().get_output_format())
-            ->dict_to_string(
-                *read_content, crud_response.attributes().buffer());
-    }
-    else if (request.get_query().is_item_output_format()) {
-        get_adapter(CrudAttributes::Format::JSON)
-            ->from_dict(*read_content, crud_response.items());
-    }
-    else if (request.get_query().is_dict_output_format()) {
-        crud_response.set_dict(std::move(read_content));
-    }
+    m_serializer->append_dict(std::move(read_content), crud_response);
 }
 
 void KeyValueCrudClient::remove(
     const CrudRequest& request, CrudResponse& crud_response) const
 {
     // Prepare a db GET query
-    KeyValueRemoveContext remove_context(m_adapters.get(), m_config.m_prefix);
+    KeyValueRemoveContext remove_context(m_serializer.get(), m_config.m_prefix);
     remove_context.serialize_request(request);
 
     // Do the query - if any item not found then fail
@@ -366,10 +310,12 @@ void KeyValueCrudClient::get_db_items(
         response->found().begin(), response->found().end(),
         [](bool v) { return !v; });
     if (any_false) {
-        throw std::runtime_error("Attempted to update a non-existing resource");
+        throw std::runtime_error("Attempted to get a non-existing resource");
     }
-    get_adapter(CrudAttributes::Format::JSON)
-        ->from_string(response->items(), items);
+
+    Dictionary dict;
+    JsonDocument(response->items()).write(dict);
+    m_serializer->get_model_serializer()->from_dict(dict, items);
 }
 
 bool KeyValueCrudClient::get_db_items(
@@ -391,8 +337,8 @@ bool KeyValueCrudClient::get_db_items(
         return false;
     }
 
-    const auto adapter = get_adapter(CrudAttributes::Format::JSON);
-    adapter->from_string(response->items(), db_content, !expects_single);
+    (void)expects_single;
+    JsonDocument(response->items()).write(db_content);
     return true;
 }
 
@@ -449,8 +395,8 @@ std::string KeyValueCrudClient::get_lock_key(
     const std::string& id, CrudLockType lock_type) const
 {
     std::string lock_str = lock_type == CrudLockType::READ ? "r" : "w";
-    return m_config.m_prefix + ":" + m_adapters->get_type() + "_lock" + lock_str
-           + ":" + id;
+    return m_config.m_prefix + ":" + m_serializer->get_type() + "_lock"
+           + lock_str + ":" + id;
 }
 
 void KeyValueCrudClient::error_check(

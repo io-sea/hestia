@@ -33,7 +33,7 @@ class HestiaCli {
 
     void parse_args(int argc, char* argv[]);
 
-    OpStatus run(IHestiaApplication* app);
+    OpStatus run(IHestiaApplication* app, bool skip_init = false);
 
   private:
     void add_crud_commands(
@@ -52,8 +52,9 @@ class HestiaCli {
     void add_move_data_options(CLI::App* command);
     void add_release_data_options(CLI::App* command);
 
-    OpStatus run_client(IHestiaApplication* app);
-    OpStatus on_crud_method(IHestiaClient* client);
+    OpStatus run_client(IHestiaApplication* app, bool skip_init);
+
+    OpStatus on_client_request(IHestiaClient& client, HestiaRequest& req);
 
     OpStatus run_server(IHestiaApplication* app);
     OpStatus start_daemon(IHestiaApplication* app);
@@ -61,6 +62,8 @@ class HestiaCli {
 
     OpStatus print_info(IHestiaApplication* app);
     void print_version();
+
+    void reset_cli();
 
     std::string m_user_token;
     std::string m_config_path;

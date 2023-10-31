@@ -30,8 +30,8 @@ class HsmServiceTestFixture {
         m_test_user.set_name("test_user");
         auto user_create_response =
             m_user_service->make_request(hestia::TypedCrudRequest<hestia::User>(
-                hestia::CrudMethod::CREATE, m_test_user, {},
-                hestia::CrudQuery::OutputFormat::ITEM));
+                hestia::CrudMethod::CREATE, m_test_user,
+                hestia::CrudQuery::BodyFormat::ITEM, {}));
         REQUIRE(user_create_response->ok());
         m_test_user = *user_create_response->get_item_as<hestia::User>();
 
@@ -54,7 +54,9 @@ class HsmServiceTestFixture {
 
             auto response = tier_service->make_request(
                 hestia::TypedCrudRequest<hestia::StorageTier>{
-                    hestia::CrudMethod::CREATE, tier,
+                    hestia::CrudMethod::CREATE,
+                    tier,
+                    {},
                     m_test_user.get_primary_key()});
             REQUIRE(response->ok());
 
@@ -78,7 +80,9 @@ class HsmServiceTestFixture {
             m_hsm_service
                 ->make_request(
                     hestia::TypedCrudRequest<hestia::HsmObject>{
-                        hestia::CrudMethod::CREATE, obj,
+                        hestia::CrudMethod::CREATE,
+                        obj,
+                        {},
                         hestia::CrudUserContext(m_test_user.get_primary_key())},
                     hestia::HsmItem::hsm_object_name)
                 ->ok());
@@ -87,9 +91,10 @@ class HsmServiceTestFixture {
     bool exists(const hestia::HsmObject& obj)
     {
         hestia::CrudQuery query(
-            obj.get_primary_key(), hestia::CrudQuery::OutputFormat::ITEM);
+            obj.get_primary_key(), hestia::CrudQuery::BodyFormat::ITEM);
         auto exists = m_hsm_service->make_request(
-            hestia::CrudRequest(query, {}), hestia::HsmItem::hsm_object_name);
+            hestia::CrudRequest(hestia::CrudMethod::READ, query, {}),
+            hestia::HsmItem::hsm_object_name);
         REQUIRE(exists->ok());
         return exists->found();
     }
@@ -99,7 +104,7 @@ class HsmServiceTestFixture {
         REQUIRE(m_hsm_service
                     ->make_request(
                         hestia::TypedCrudRequest<hestia::HsmObject>{
-                            hestia::CrudMethod::UPDATE, obj, {}},
+                            hestia::CrudMethod::UPDATE, obj, {}, {}},
                         hestia::HsmItem::hsm_object_name)
                     ->ok());
     }
@@ -117,7 +122,7 @@ class HsmServiceTestFixture {
             [&response](hestia::HsmActionResponse::Ptr completion_response) {
                 response = std::move(completion_response);
             };
-        m_hsm_service->do_data_io_action(
+        m_hsm_service->do_hsm_action(
             hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
             stream, completion_cb);
         (void)stream->flush();
@@ -137,11 +142,11 @@ class HsmServiceTestFixture {
             [&response](hestia::HsmActionResponse::Ptr completion_response) {
                 response = std::move(completion_response);
             };
-        m_hsm_service->do_data_io_action(
+        m_hsm_service->do_hsm_action(
             hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
             stream, completion_cb);
         (void)stream->flush();
-        // REQUIRE(response->ok());
+        REQUIRE(response->ok());
     }
 
 
@@ -153,10 +158,17 @@ class HsmServiceTestFixture {
         action.set_source_tier(src_tier);
         action.set_target_tier(tgt_tier);
         action.set_subject_key(obj.get_primary_key());
-        REQUIRE(m_hsm_service
-                    ->make_request(hestia::HsmActionRequest(
-                        action, {m_test_user.get_primary_key()}))
-                    ->ok());
+
+        hestia::HsmActionResponse::Ptr response;
+        auto completion_cb =
+            [&response](hestia::HsmActionResponse::Ptr completion_response) {
+                response = std::move(completion_response);
+            };
+
+        m_hsm_service->do_hsm_action(
+            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
+            nullptr, completion_cb);
+        REQUIRE(response->ok());
     }
 
     void move(const hestia::HsmObject& obj, int src_tier, int tgt_tier)
@@ -167,10 +179,16 @@ class HsmServiceTestFixture {
         action.set_source_tier(src_tier);
         action.set_target_tier(tgt_tier);
         action.set_subject_key(obj.get_primary_key());
-        REQUIRE(m_hsm_service
-                    ->make_request(hestia::HsmActionRequest(
-                        action, {m_test_user.get_primary_key()}))
-                    ->ok());
+        hestia::HsmActionResponse::Ptr response;
+        auto completion_cb =
+            [&response](hestia::HsmActionResponse::Ptr completion_response) {
+                response = std::move(completion_response);
+            };
+
+        m_hsm_service->do_hsm_action(
+            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
+            nullptr, completion_cb);
+        REQUIRE(response->ok());
     }
 
     /*
@@ -210,10 +228,11 @@ class HsmServiceTestFixture {
     {
         hestia::CrudQuery query(
             hestia::CrudIdentifier(obj.get_primary_key()),
-            hestia::CrudQuery::OutputFormat::ITEM);
+            hestia::CrudQuery::BodyFormat::ITEM);
 
         auto response = m_hsm_service->make_request(
-            hestia::CrudRequest(query, {}), hestia::HsmItem::hsm_object_name);
+            hestia::CrudRequest(hestia::CrudMethod::READ, query, {}),
+            hestia::HsmItem::hsm_object_name);
         REQUIRE(response->ok());
 
         auto object = response->get_item_as<hestia::HsmObject>();
@@ -232,7 +251,7 @@ class HsmServiceTestFixture {
     hestia::User m_test_user;
 };
 
-TEST_CASE_METHOD(HsmServiceTestFixture, "HSM Service test", "[hsm-service]")
+TEST_CASE_METHOD(HsmServiceTestFixture, "Test HSM Service", "[hsm-service]")
 {
     std::string id_0 = "0000";
     hestia::HsmObject obj0(id_0);

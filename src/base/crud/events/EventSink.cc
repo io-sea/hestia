@@ -1,37 +1,36 @@
 #include "EventSink.h"
 
 #include "Logger.h"
-#include "StringAdapter.h"
 
 namespace hestia {
 
-CrudEventFileSink::CrudEventFileSink() :
-    m_model_factory(std::make_unique<TypedModelFactory<CrudEvent>>()),
-    m_adapter(std::make_unique<JsonAdapter>(m_model_factory.get()))
+CrudEventFileSink::CrudEventFileSink()
+//:
+// m_adapter(std::make_unique<ModelSerializer>(std::make_unique<TypedModelFactory<CrudEvent>>))
 {
 }
 
 void CrudEventFileSink::on_event(const CrudEvent& event)
 {
-    std::string str;
-    m_adapter->to_string(event, str);
+    Dictionary dict;
+    m_adapter->to_dict(event, dict);
 
     std::ofstream output_file;
     output_file.open(m_output_path, std::ios::app);
-    output_file << str;
+    output_file << JsonDocument(dict).to_string();
 }
 
-CrudEventBufferSink::CrudEventBufferSink() :
-    m_model_factory(std::make_unique<TypedModelFactory<CrudEvent>>()),
-    m_adapter(std::make_unique<JsonAdapter>(m_model_factory.get()))
+CrudEventBufferSink::CrudEventBufferSink()
+//  :
+// m_adapter(std::make_unique<ModelSerializer>(std::make_unique<TypedModelFactory<CrudEvent>>))
 {
 }
 
 void CrudEventBufferSink::on_event(const CrudEvent& event)
 {
-    std::string str;
-    m_adapter->to_string(event, str);
-    m_events.append(str);
+    Dictionary dict;
+    m_adapter->to_dict(event, dict);
+    m_events.append(JsonDocument(dict).to_string());
 }
 
 const std::string& CrudEventBufferSink::get_buffer() const

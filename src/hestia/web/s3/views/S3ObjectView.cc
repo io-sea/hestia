@@ -111,7 +111,7 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
             response = S3ViewUtils::on_server_error(s3_request, msg);
         }
     };
-    m_service->do_data_io_action(
+    m_service->do_hsm_action(
         HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
         request.get_context()->get_stream(), completion_cb);
 
@@ -140,13 +140,15 @@ HttpResponse::Ptr S3ObjectView::on_copy_object(
             s3_request.get_bucket_name(), s3_request.get_object_key())) {
         Map attributes =
             request.get_header().get_items_with_prefix(S3Path::meta_prefix);
+
+        CrudAttributes::FormatSpec attr_format;
         auto create_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::UPDATE,
-                {auth.m_user_id, auth.m_user_token},
-                {S3ViewUtils::path_to_crud_id(s3_request.m_path)},
-                {attributes},
-                CrudQuery::OutputFormat::ITEM},
+                {S3ViewUtils::path_to_crud_id(s3_request.m_path),
+                 CrudAttributes(attributes, attr_format),
+                 CrudQuery::BodyFormat::ITEM},
+                auth},
             HsmItem::hsm_object_name);
         if (!create_response->ok()) {
             const auto msg = create_response->get_error().to_string();
@@ -203,13 +205,14 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
 
     Map attributes =
         request.get_header().get_items_with_prefix(S3Path::meta_prefix);
+    CrudAttributes::FormatSpec attr_format;
+
     auto create_response = m_service->make_request(
         CrudRequest{
             CrudMethod::CREATE,
-            {auth.m_user_id, auth.m_user_token},
-            {object_id},
-            {attributes},
-            CrudQuery::OutputFormat::ITEM},
+            {object_id, CrudAttributes(attributes, attr_format),
+             CrudQuery::BodyFormat::ITEM},
+            auth},
         HsmItem::hsm_object_name);
     if (!create_response->ok()) {
         const auto msg = create_response->get_error().to_string();
@@ -257,7 +260,7 @@ HttpResponse::Ptr S3ObjectView::on_put_data(
                 response = HttpResponse::create(500, "Internal Server Error.");
             }
         };
-    m_service->do_data_io_action(
+    m_service->do_hsm_action(
         HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
         request.get_context()->get_stream(), completion_cb);
 
@@ -325,7 +328,8 @@ std::pair<HttpResponse::Ptr, CrudResponsePtr> S3ObjectView::on_get_object(
 
     auto obj_get_response = m_service->make_request(
         CrudRequest{
-            CrudQuery{object_id, CrudQuery::OutputFormat::ITEM},
+            CrudMethod::READ,
+            CrudQuery{object_id, CrudQuery::BodyFormat::ITEM},
             {auth.m_user_id, auth.m_user_token}},
         HsmItem::hsm_object_name);
     if (!obj_get_response->ok()) {
@@ -368,7 +372,7 @@ HttpResponse::Ptr S3ObjectView::on_delete_object(
 {
     auto response = m_service->make_request(
         CrudRequest{
-            CrudMethod::REMOVE, {auth.m_user_id, auth.m_user_token}, {key}},
+            CrudMethod::REMOVE, {key}, {auth.m_user_id, auth.m_user_token}},
         HsmItem::hsm_object_name);
     if (!response->ok()) {
         const auto msg = response->get_error().to_string();

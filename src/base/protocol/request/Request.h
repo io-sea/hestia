@@ -16,6 +16,8 @@ class BaseRequest {
 
     const std::string& get_url() const { return m_url; }
 
+    void set_id(const std::string& id) { m_id = id; }
+
   private:
     std::string m_url;
     std::string m_id;
@@ -24,6 +26,8 @@ class BaseRequest {
 template<typename METHOD>
 class MethodRequest {
   public:
+    MethodRequest() = default;
+
     MethodRequest(METHOD method) : m_method(method) {}
 
     virtual ~MethodRequest() = default;

@@ -19,6 +19,7 @@ set(UNIT_TEST_SOURCES
     base/common/TestXmlUtils.cc
     base/common/TestXmlParser.cc
     base/common/TestYamlUtils.cc
+    base/common/TestSerialization.cc
     base/network/TestSocket.cc
     base/network/TestTcpServer.cc
     base/network/TestS3Client.cc
@@ -51,6 +52,7 @@ set(UNIT_TEST_SOURCES
     hsm/TestDistributedHsmObjectStoreClient.cc
     hestia/TestHestiaClient.cc
     hestia/TestHestiaCApi.cc
+    hestia/TestHestiaHLCApi.cc
     hestia/TestHestiaCli.cc
     hestia/TestS3WebApp.cc
 )
@@ -72,6 +74,10 @@ target_link_libraries(${UNIT_TEST_MODULE} PRIVATE
     ${PLATFORM_LIBS}
     Catch2::Catch2
 )
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_link_libraries(${UNIT_TEST_MODULE} PRIVATE development_flags)
+endif()
 
 add_dependencies(${UNIT_TEST_MODULE} hestia_mocks)
 

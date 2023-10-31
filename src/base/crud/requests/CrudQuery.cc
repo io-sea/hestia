@@ -1,57 +1,56 @@
 #include "CrudQuery.h"
+
+#include "StringUtils.h"
+
 #include <stdexcept>
 
 namespace hestia {
 
-CrudQuery::CrudQuery(
-    OutputFormat output_format, CrudAttributes::Format attributes_format) :
-    m_output_format(output_format)
+CrudQuery::CrudQuery(BodyFormat output_format) : m_output_format(output_format)
 {
-    m_attributes.set_output_format(attributes_format);
+}
+
+CrudQuery::CrudQuery(const CrudAttributes& attrs, BodyFormat output_format) :
+    m_attributes(attrs), m_output_format(output_format)
+{
+    m_ids.add_primary_keys(m_attributes.get_ids());
+}
+
+CrudQuery::CrudQuery(
+    const std::string& attrs_body,
+    const CrudAttributes::FormatSpec& attrs_format,
+    BodyFormat output_format) :
+    m_attributes(attrs_body, attrs_format), m_output_format(output_format)
+{
+    m_ids.add_primary_keys(m_attributes.get_ids());
 }
 
 CrudQuery::CrudQuery(
     const CrudIdentifier& identifier,
-    OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    m_output_format(output_format)
+    const CrudAttributes& attrs,
+    BodyFormat output_format) :
+    m_attributes(attrs), m_output_format(output_format)
 {
-    m_attributes.set_output_format(attributes_format);
-    m_ids    = {identifier};
-    m_format = Format::ID;
+    m_ids.add(identifier);
 }
 
 CrudQuery::CrudQuery(
-    const VecCrudIdentifier& identifiers,
-    OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    m_output_format(output_format), m_ids(identifiers)
+    const CrudIdentifier& identifier, BodyFormat output_format) :
+    m_output_format(output_format), m_format(Format::ID)
 {
-    m_attributes.set_output_format(attributes_format);
-    m_format = Format::ID;
+    m_ids.add(identifier);
 }
 
 CrudQuery::CrudQuery(
-    const Map& filter,
-    Format format,
-    OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    m_output_format(output_format), m_filter(filter)
+    const CrudIdentifierCollection& identifiers, BodyFormat output_format) :
+    m_output_format(output_format), m_format(Format::ID), m_ids(identifiers)
 {
-    m_attributes.set_output_format(attributes_format);
-    m_format = format;
 }
 
 CrudQuery::CrudQuery(
-    const KeyValuePair& filter,
-    Format format,
-    OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    m_output_format(output_format)
+    const Map& filter, Format format, BodyFormat output_format) :
+    m_output_format(output_format), m_format(format), m_filter(filter)
 {
-    m_attributes.set_output_format(attributes_format);
-    m_filter.set_item(filter.first, filter.second);
-    m_format = format;
 }
 
 const Map& CrudQuery::get_filter() const
@@ -71,24 +70,16 @@ CrudAttributes& CrudQuery::attributes()
 
 bool CrudQuery::expects_single_item() const
 {
-    return (is_id() && ids().size() == 1)
+    return (is_id() && m_ids.size() == 1)
            || (is_filter() && get_format() == CrudQuery::Format::GET);
 }
 
-const VecCrudIdentifier& CrudQuery::ids() const
+CrudIdentifierCollection& CrudQuery::ids()
 {
     return m_ids;
 }
 
-const CrudIdentifier& CrudQuery::get_id() const
-{
-    if (!has_single_id()) {
-        throw std::runtime_error("Single crud id requested but none set");
-    }
-    return m_ids[0];
-}
-
-CrudQuery::OutputFormat CrudQuery::get_output_format() const
+CrudQuery::BodyFormat CrudQuery::get_output_format() const
 {
     return m_output_format;
 }
@@ -123,45 +114,47 @@ bool CrudQuery::is_id() const
     return m_format == Format::ID;
 }
 
-bool CrudQuery::has_single_id() const
+bool CrudQuery::is_json_output_format() const
 {
-    return m_ids.size() == 1;
-}
-
-bool CrudQuery::is_id_output_format() const
-{
-    return m_output_format == OutputFormat::ID;
-}
-
-bool CrudQuery::is_item_output_format() const
-{
-    return m_output_format == OutputFormat::ITEM;
-}
-
-bool CrudQuery::is_attribute_output_format() const
-{
-    return m_output_format == OutputFormat::ATTRIBUTES;
+    return m_output_format == BodyFormat::JSON;
 }
 
 bool CrudQuery::is_dict_output_format() const
 {
-    return m_output_format == OutputFormat::DICT;
+    return m_output_format == BodyFormat::DICT;
 }
 
-void CrudQuery::set_output_format(OutputFormat output_format)
+bool CrudQuery::is_id_output_format() const
+{
+    return m_output_format == BodyFormat::ID;
+}
+
+bool CrudQuery::is_item_output_format() const
+{
+    return m_output_format == BodyFormat::ITEM;
+}
+
+bool CrudQuery::is_attribute_output_format() const
+{
+    return is_json_output_format() || is_dict_output_format();
+}
+
+void CrudQuery::set_output_format(BodyFormat output_format)
 {
     m_output_format = output_format;
 }
 
-void CrudQuery::set_attributes_output_format(CrudAttributes::Format format)
-{
-    m_attributes.set_output_format(format);
-}
-
-void CrudQuery::set_ids(const VecCrudIdentifier& ids)
+void CrudQuery::set_ids(const CrudIdentifierCollection& ids)
 {
     m_ids    = ids;
     m_format = Format::ID;
+}
+
+void CrudQuery::set_ids(
+    const std::string& buffer,
+    const CrudIdentifierCollection::FormatSpec& format)
+{
+    m_ids.load(buffer, format);
 }
 
 void CrudQuery::set_filter(const Map& filter)
@@ -182,6 +175,12 @@ void CrudQuery::set_count(std::size_t count)
 const CrudAttributes& CrudQuery::get_attributes() const
 {
     return m_attributes;
+}
+
+void CrudQuery::append(
+    const std::string& body, const CrudAttributes::FormatSpec& format)
+{
+    m_attributes.append(body, format);
 }
 
 

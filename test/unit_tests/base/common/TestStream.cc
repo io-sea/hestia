@@ -144,7 +144,6 @@ TEST_CASE("Test ProgressFunc", "[stream]")
     // generate a random string of length 100, to test the progress func
     int count                             = 0;
     std::function<void(int)> progressfunc = [&count, &stream](int x) {
-        std::cout << x << " bytes transferred" << std::endl;
         REQUIRE(static_cast<int>(stream.get_num_transferred()) == x);
         ++count;
     };
@@ -206,7 +205,7 @@ TEST_CASE("Test POSIX file stream IO using file descriptors", "[stream]")
 
     std::vector<char> result_buffer(data.size());
     stream.set_sink(hestia::InMemoryStreamSink::create(result_buffer));
-    // std::cout<<stream.flush().message()<<std::endl;
+
     REQUIRE(stream.flush().ok());
 
     std::string result(result_buffer.begin(), result_buffer.end());

@@ -11,7 +11,6 @@
 
 #include "IdGenerator.h"
 #include "StorageTier.h"
-#include "StringAdapter.h"
 #include "TimeProvider.h"
 
 #include "ErrorUtils.h"
@@ -26,14 +25,18 @@
 
 #include <iostream>
 
-#define ERROR_CHECK(response, working_action)                                  \
+#define ERROR_CHECK(response, working_action, completion_func)                 \
     if (!response->ok()) {                                                     \
-        return hestia::HsmActionResponse::create(                              \
+        LOG_ERROR(SOURCE_LOC() + " | " + response->get_error().to_string())    \
+        auto action_response = hestia::HsmActionResponse::create(              \
             req, working_action, std::move(response));                         \
+        completion_func(std::move(action_response));                           \
+        return;                                                                \
     }
 
 #define CRUD_ERROR_CHECK(response, working_action, completion_func)            \
     if (!response->ok()) {                                                     \
+        LOG_ERROR(SOURCE_LOC() + " | " + response->get_error().to_string())    \
         auto action_response = HsmActionResponse::create(req, working_action); \
         action_response->on_error(                                             \
             {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
@@ -43,6 +46,7 @@
 
 #define CRUD_ERROR_CHECK_RETURN(response, working_action)                      \
     if (!response->ok()) {                                                     \
+        LOG_ERROR(SOURCE_LOC() + " | " + response->get_error().to_string())    \
         auto action_response = HsmActionResponse::create(req, working_action); \
         action_response->on_error(                                             \
             {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
@@ -106,74 +110,47 @@ CrudResponse::Ptr HsmService::make_request(
     const CrudRequest& req, const std::string& type) const noexcept
 {
     LOG_INFO("Request " << type << " " << req.method_as_string());
-    const auto subject_type = HsmItem::from_name(type);
+
+    auto response = CrudResponse::create(req, type, req.get_output_format());
     switch (req.method()) {
         case CrudMethod::CREATE:
-            return crud_create(subject_type, req);
-        case CrudMethod::READ:
-            return crud_read(subject_type, req);
+            try {
+                response = crud_create(HsmItem::from_name(type), req);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in CRUD: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({CrudErrorCode::STL_EXCEPTION, msg});
+            }
+            return response;
         case CrudMethod::UPDATE:
-            return crud_update(subject_type, req);
+        case CrudMethod::READ:
         case CrudMethod::IDENTIFY:
-            return crud_identify(subject_type, req);
         case CrudMethod::REMOVE:
-            return crud_remove(subject_type, req);
+            try {
+                response = do_crud(HsmItem::from_name(type), req);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in CRUD: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({CrudErrorCode::STL_EXCEPTION, msg});
+            }
+            return response;
         case CrudMethod::LOCK:
         case CrudMethod::UNLOCK:
         case CrudMethod::LOCKED:
         default:
-            return nullptr;
-    }
-}
-
-HsmActionResponse::Ptr HsmService::make_request(
-    const HsmActionRequest& req) const noexcept
-{
-    switch (req.method()) {
-        case HsmAction::Action::COPY_DATA:
-            return copy_data(req);
-        case HsmAction::Action::MOVE_DATA:
-            return move_data(req);
-        case HsmAction::Action::RELEASE_DATA:
-            return release_data(req);
-        case HsmAction::Action::NONE:
-        case HsmAction::Action::PUT_DATA:
-        case HsmAction::Action::GET_DATA:
-        case HsmAction::Action::CRUD:
-        default:
-            return nullptr;
-    }
-}
-
-void HsmService::do_data_io_action(
-    const HsmActionRequest& request,
-    Stream* stream,
-    dataIoCompletionFunc completion_func) const
-{
-    if (request.method() == HsmAction::Action::PUT_DATA) {
-        put_data(request, stream, completion_func);
-    }
-    else {
-        get_data(request, stream, completion_func);
-    }
-}
-
-void HsmService::update_tiers(const std::string& user_id)
-{
-    auto tier_service = m_services->get_service(HsmItem::Type::TIER);
-    auto get_response = tier_service->make_request(
-        CrudRequest(CrudQuery{CrudQuery::OutputFormat::ITEM}, user_id));
-    if (!get_response->ok()) {
-        THROW_WITH_SOURCE_LOC("Failed listing tiers in cache request");
-    }
-    for (const auto& item : get_response->items()) {
-        auto tier_item = dynamic_cast<StorageTier*>(item.get());
-        m_tier_cache[tier_item->id_uint()] = tier_item->get_primary_key();
+            response->on_error(
+                {CrudErrorCode::UNSUPPORTED_REQUEST_METHOD,
+                 "Locking not supported yet."});
+            return response;
     }
 }
 
 CrudResponse::Ptr HsmService::crud_create(
-    HsmItem::Type subject_type, const CrudRequest& req) const noexcept
+    HsmItem::Type subject_type, const CrudRequest& req) const
 {
     LOG_INFO("Starting HSMService CREATE");
     CrudService* service{nullptr};
@@ -181,8 +158,8 @@ CrudResponse::Ptr HsmService::crud_create(
         service = m_services->get_service(subject_type);
     }
     catch (const std::exception& e) {
-        auto response =
-            CrudResponse::create(req, HsmItem::to_name(subject_type));
+        auto response = CrudResponse::create(
+            req, HsmItem::to_name(subject_type), CrudQuery::BodyFormat::NONE);
         response->on_error(
             {CrudErrorCode::ERROR, SOURCE_LOC() + " | " + e.what()});
         return response;
@@ -193,55 +170,104 @@ CrudResponse::Ptr HsmService::crud_create(
     return response;
 }
 
-CrudResponse::Ptr HsmService::crud_read(
-    HsmItem::Type subject_type, const CrudRequest& req) const noexcept
+CrudResponse::Ptr HsmService::do_crud(
+    HsmItem::Type subject_type, const CrudRequest& req) const
 {
-    LOG_INFO("Starting HSMService READ");
-
-    const auto service = m_services->get_service(subject_type);
-    auto response      = service->make_request(req);
-
-    LOG_INFO("Finished HSMService READ");
-    return response;
+    return m_services->get_service(subject_type)->make_request(req);
 }
 
-CrudResponse::Ptr HsmService::crud_update(
-    HsmItem::Type subject_type, const CrudRequest& req) const noexcept
+void HsmService::do_hsm_action(
+    const HsmActionRequest& req,
+    Stream* stream,
+    actionCompletionFunc completion_func,
+    actionProgressFunc progress_func) const noexcept
 {
-    LOG_INFO("Starting HSMService UPDATE");
+    auto response = HsmActionResponse::create(req, req.get_action());
 
-    const auto service = m_services->get_service(subject_type);
-    auto response      = service->make_request(req);
-
-    LOG_INFO("Finished HSMService UPDATE");
-    return response;
-}
-
-CrudResponse::Ptr HsmService::crud_remove(
-    HsmItem::Type subject_type, const CrudRequest& req) const noexcept
-{
-    LOG_INFO("Starting HSMService REMOVE");
-
-    const auto service = m_services->get_service(subject_type);
-    auto response      = service->make_request(req);
-    if (!response->ok()) {
-        return response;
+    switch (req.method()) {
+        case HsmAction::Action::COPY_DATA:
+            try {
+                copy_data(req, completion_func, progress_func);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in COPY_DATA: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+                completion_func(std::move(response));
+            }
+            return;
+        case HsmAction::Action::MOVE_DATA:
+            try {
+                move_data(req, completion_func, progress_func);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in MOVE_DATA: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+                completion_func(std::move(response));
+            }
+            return;
+        case HsmAction::Action::RELEASE_DATA:
+            try {
+                release_data(req, completion_func, progress_func);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in RELEASE_DATA: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+                completion_func(std::move(response));
+            }
+            return;
+        case HsmAction::Action::PUT_DATA:
+            try {
+                put_data(req, stream, completion_func, progress_func);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in PUT_DATA: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+                completion_func(std::move(response));
+            }
+            return;
+        case HsmAction::Action::GET_DATA:
+            try {
+                get_data(req, stream, completion_func, progress_func);
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in GET_DATA: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
+                completion_func(std::move(response));
+            }
+            return;
+        case HsmAction::Action::CRUD:
+        case HsmAction::Action::NONE:
+        default:
+            response->on_error(
+                {HsmActionErrorCode::UNSUPPORTED_REQUEST_METHOD,
+                 "Unsupported request method."});
+            completion_func(std::move(response));
+            return;
     }
-
-    LOG_INFO("Finished HSMService REMOVE");
-    return response;
 }
 
-CrudResponse::Ptr HsmService::crud_identify(
-    HsmItem::Type subject_type, const CrudRequest& req) const noexcept
+void HsmService::update_tiers(const std::string& user_id)
 {
-    LOG_INFO("Starting HSMService Identify");
-
-    const auto service = m_services->get_service(subject_type);
-    auto response      = service->make_request(req);
-
-    LOG_INFO("Finished HSMService Identify");
-    return response;
+    auto tier_service = m_services->get_service(HsmItem::Type::TIER);
+    auto get_response = tier_service->make_request(CrudRequest(
+        CrudMethod::READ, CrudQuery{CrudQuery::BodyFormat::ITEM}, user_id));
+    if (!get_response->ok()) {
+        THROW_WITH_SOURCE_LOC("Failed listing tiers in cache request");
+    }
+    for (const auto& item : get_response->items()) {
+        auto tier_item = dynamic_cast<StorageTier*>(item.get());
+        m_tier_cache[tier_item->id_uint()] = tier_item->get_primary_key();
+    }
 }
 
 CrudResponsePtr HsmService::get_or_create_action(
@@ -251,20 +277,22 @@ CrudResponsePtr HsmService::get_or_create_action(
         auto action_service = m_services->get_service(HsmItem::Type::ACTION);
         auto action_response =
             action_service->make_request(TypedCrudRequest<HsmAction>{
-                CrudMethod::CREATE, working_action, req.get_user_context(),
-                CrudQuery::OutputFormat::ITEM});
+                CrudMethod::CREATE, working_action, CrudQuery::BodyFormat::ITEM,
+                req.get_user_context()});
         if (!action_response->ok()) {
             return action_response;
         }
         working_action = *action_response->get_item_as<HsmAction>();
     }
-    return CrudResponse::create(req, HsmItem::hsm_action_name);
+    return CrudResponse::create(
+        req, HsmItem::hsm_action_name, CrudQuery::BodyFormat::NONE);
 }
 
 void HsmService::put_data(
     const HsmActionRequest& req,
     hestia::Stream* stream,
-    dataIoCompletionFunc completion_func) const noexcept
+    actionCompletionFunc completion_func,
+    actionProgressFunc) const
 {
     assert(stream != nullptr);
 
@@ -279,17 +307,18 @@ void HsmService::put_data(
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
-        CrudQuery(
-            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+        CrudMethod::READ,
+          {req.get_action().get_subject_key(), CrudQuery::BodyFormat::ITEM},
         req.get_user_context()});
     CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
     if (!get_response->found()) {
+        std::string msg = SOURCE_LOC() + " | Object "
+                          + req.get_action().get_subject_key() + " not found";
+        LOG_ERROR(msg);
+
         auto response = HsmActionResponse::create(req, working_action);
-        response->on_error(
-            {HsmActionErrorCode::ITEM_NOT_FOUND,
-             SOURCE_LOC() + " | Object " + req.get_action().get_subject_key()
-                 + " not found"});
+        response->on_error({HsmActionErrorCode::ITEM_NOT_FOUND, msg});
         completion_func(std::move(response));
         return;
     }
@@ -380,7 +409,7 @@ void HsmService::on_put_data_complete(
     const Extent& working_extent,
     const std::string& store_id,
     const HsmAction& working_action,
-    dataIoCompletionFunc completion_func) const
+    actionCompletionFunc completion_func) const
 {
     LOG_INFO("Doing db update");
     TierExtents extent;
@@ -405,12 +434,12 @@ void HsmService::on_put_data_complete(
     if (extent_needs_creation) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::CREATE, extent, user_context));
+                CrudMethod::CREATE, extent, {}, user_context));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, extent, user_context));
+                CrudMethod::UPDATE, extent, {}, user_context));
     }
 
     if (!extent_put_response->ok()) {
@@ -431,7 +460,7 @@ void HsmService::on_put_data_complete(
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, updated_object, user_context});
+            CrudMethod::UPDATE, updated_object, {}, user_context});
     auto response = HsmActionResponse::create(req, working_action);
 
     set_action_finished_ok(
@@ -458,7 +487,8 @@ const std::string& HsmService::get_tier_id(uint8_t tier) const
 void HsmService::get_data(
     const HsmActionRequest& req,
     Stream* stream,
-    dataIoCompletionFunc completion_func) const noexcept
+    actionCompletionFunc completion_func,
+    actionProgressFunc) const
 {
     LOG_INFO(
         "Starting HSMService GET DATA: " + req.to_string() + " | "
@@ -472,8 +502,9 @@ void HsmService::get_data(
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
 
     auto get_response = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
         CrudQuery(
-            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+            req.get_action().get_subject_key(), CrudQuery::BodyFormat::ITEM),
         req.get_user_context()});
     CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
@@ -542,7 +573,7 @@ void HsmService::on_get_data_complete(
     const HsmAction& working_action,
     const Extent& extent,
     bool db_update,
-    dataIoCompletionFunc completion_func) const
+    actionCompletionFunc completion_func) const
 {
     if (db_update) {
         set_action_finished_ok(
@@ -551,8 +582,9 @@ void HsmService::on_get_data_complete(
 
     if (m_event_feed != nullptr) {
         CrudRequest crud_req{CrudMethod::READ, user_context};
-        CrudResponse crud_response{req, HsmItem::hsm_object_name};
-        crud_response.ids().push_back(working_action.get_subject_key());
+        CrudResponse crud_response{
+            req, HsmItem::hsm_object_name, CrudQuery::BodyFormat::ID};
+        crud_response.ids().add_primary_key(working_action.get_subject_key());
 
         CrudEvent read_event(
             HsmItem::hsm_object_name, CrudMethod::READ, crud_req, crud_response,
@@ -572,7 +604,8 @@ void HsmService::set_action_error(
     auto action_service = get_service(HsmItem::Type::ACTION);
 
     const auto action_read = action_service->make_request(CrudRequest{
-        CrudQuery{CrudIdentifier(action_id), CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(action_id), CrudQuery::BodyFormat::ITEM},
         user_context});
     if (!action_read->ok()) {
         throw std::runtime_error("Failed to get action for error assignment");
@@ -585,8 +618,9 @@ void HsmService::set_action_error(
     auto action = *action_read->get_item_as<HsmAction>();
     action.on_error(message);
 
-    const auto action_update = action_service->make_request(
-        TypedCrudRequest<HsmAction>{CrudMethod::UPDATE, action, user_context});
+    const auto action_update =
+        action_service->make_request(TypedCrudRequest<HsmAction>{
+            CrudMethod::UPDATE, action, {}, user_context});
     if (!action_update->ok()) {
         throw std::runtime_error("Failed to get action for error assignment");
     }
@@ -600,7 +634,8 @@ void HsmService::set_action_finished_ok(
     auto action_service = get_service(HsmItem::Type::ACTION);
 
     const auto action_read = action_service->make_request(CrudRequest{
-        CrudQuery{CrudIdentifier(action_id), CrudQuery::OutputFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(action_id), CrudQuery::BodyFormat::ITEM},
         user_context});
     if (!action_read->ok()) {
         throw std::runtime_error("Failed to get action for error assignment");
@@ -615,8 +650,9 @@ void HsmService::set_action_finished_ok(
 
     LOG_INFO("Updating Action");
 
-    const auto action_update = action_service->make_request(
-        TypedCrudRequest<HsmAction>{CrudMethod::UPDATE, action, user_context});
+    const auto action_update =
+        action_service->make_request(TypedCrudRequest<HsmAction>{
+            CrudMethod::UPDATE, action, {}, user_context});
     if (!action_update->ok()) {
         throw std::runtime_error("Failed to get action for error assignment");
     }
@@ -624,8 +660,10 @@ void HsmService::set_action_finished_ok(
 
 void HsmService::set_action_progress(const std::string&, std::size_t) {}
 
-HsmActionResponse::Ptr HsmService::move_data(
-    const HsmActionRequest& req) const noexcept
+void HsmService::move_data(
+    const HsmActionRequest& req,
+    actionCompletionFunc completion_func,
+    actionProgressFunc) const
 {
     LOG_INFO(
         "Starting HSMService MOVE DATA: " + req.to_string() + " | "
@@ -633,14 +671,15 @@ HsmActionResponse::Ptr HsmService::move_data(
 
     auto working_action        = req.get_action();
     const auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action, completion_func);
 
     auto object_service     = m_services->get_service(HsmItem::Type::OBJECT);
     const auto get_response = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
         CrudQuery(
-            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+            req.get_action().get_subject_key(), CrudQuery::BodyFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
+    CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -655,7 +694,7 @@ HsmActionResponse::Ptr HsmService::move_data(
     copy_data_request.set_target_tier(req.target_tier());
     copy_data_request.set_action_id(working_action.get_primary_key());
     auto copy_data_response = m_object_store->make_request(copy_data_request);
-    ERROR_CHECK(copy_data_response, working_action);
+    ERROR_CHECK(copy_data_response, working_action, completion_func);
 
     HsmObjectStoreRequest release_data_request(
         working_object->id(), HsmObjectStoreRequestMethod::REMOVE);
@@ -664,12 +703,13 @@ HsmActionResponse::Ptr HsmService::move_data(
     release_data_request.set_action_id(working_action.get_primary_key());
     auto release_data_response =
         m_object_store->make_request(release_data_request);
-    ERROR_CHECK(release_data_response, working_action);
+    ERROR_CHECK(release_data_response, working_action, completion_func);
 
     if (copy_data_response->is_handled_remote()) {
         auto response = HsmActionResponse::create(req, working_action);
         LOG_INFO("Finished HSMService MOVE DATA - Handled on remote");
-        return response;
+        completion_func(std::move(response));
+        return;
     }
 
     TierExtents source_extent;
@@ -698,24 +738,24 @@ HsmActionResponse::Ptr HsmService::move_data(
     if (extent_needs_creation) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::CREATE, target_extent, req.get_user_context()));
+                CrudMethod::CREATE, target_extent, {}, req.get_user_context()));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, target_extent, req.get_user_context()));
+                CrudMethod::UPDATE, target_extent, {}, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
+    CRUD_ERROR_CHECK(extent_put_response, working_action, completion_func);
 
     extent_put_response =
         extent_service->make_request(TypedCrudRequest<TierExtents>(
-            CrudMethod::UPDATE, source_extent, req.get_user_context()));
-    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
+            CrudMethod::UPDATE, source_extent, {}, req.get_user_context()));
+    CRUD_ERROR_CHECK(extent_put_response, working_action, completion_func);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_context()});
-    CRUD_ERROR_CHECK_RETURN(object_put_response, working_action);
+            CrudMethod::UPDATE, *working_object, {}, req.get_user_context()});
+    CRUD_ERROR_CHECK(object_put_response, working_action, completion_func);
 
     set_action_finished_ok(
         req.get_user_context(), working_action.get_primary_key(),
@@ -724,12 +764,13 @@ HsmActionResponse::Ptr HsmService::move_data(
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService MOVE DATA");
-
-    return response;
+    completion_func(std::move(response));
 }
 
-HsmActionResponse::Ptr HsmService::copy_data(
-    const HsmActionRequest& req) const noexcept
+void HsmService::copy_data(
+    const HsmActionRequest& req,
+    actionCompletionFunc completion_func,
+    actionProgressFunc) const
 {
     LOG_INFO(
         "Starting HSMService COPY DATA: " + req.to_string() + " | "
@@ -737,14 +778,15 @@ HsmActionResponse::Ptr HsmService::copy_data(
 
     HsmAction working_action = req.get_action();
     auto action_response     = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action, completion_func);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
         CrudQuery(
-            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+            req.get_action().get_subject_key(), CrudQuery::BodyFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
+    CRUD_ERROR_CHECK(get_response, working_action, completion_func);
 
     const auto working_object = get_response->get_item_as<HsmObject>();
 
@@ -761,12 +803,12 @@ HsmActionResponse::Ptr HsmService::copy_data(
     copy_data_request.set_action_id(working_action.get_primary_key());
 
     auto copy_data_response = m_object_store->make_request(copy_data_request);
-    ERROR_CHECK(copy_data_response, working_action);
+    ERROR_CHECK(copy_data_response, working_action, completion_func);
 
     if (copy_data_response->is_handled_remote()) {
         auto response = HsmActionResponse::create(req, working_action);
         LOG_INFO("Finished HSMService COPY DATA - Handled on remote");
-        return response;
+        completion_func(std::move(response));
     }
 
     TierExtents source_extent;
@@ -794,19 +836,19 @@ HsmActionResponse::Ptr HsmService::copy_data(
     if (extent_needs_creation) {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::CREATE, target_extent, req.get_user_context()));
+                CrudMethod::CREATE, target_extent, {}, req.get_user_context()));
     }
     else {
         extent_put_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, target_extent, req.get_user_context()));
+                CrudMethod::UPDATE, target_extent, {}, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK_RETURN(extent_put_response, working_action);
+    CRUD_ERROR_CHECK(extent_put_response, working_action, completion_func);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_context()});
-    CRUD_ERROR_CHECK_RETURN(object_put_response, working_action);
+            CrudMethod::UPDATE, *working_object, {}, req.get_user_context()});
+    CRUD_ERROR_CHECK(object_put_response, working_action, completion_func);
 
     set_action_finished_ok(
         req.get_user_context(), working_action.get_primary_key(),
@@ -815,12 +857,13 @@ HsmActionResponse::Ptr HsmService::copy_data(
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService COPY DATA");
-
-    return response;
+    completion_func(std::move(response));
 }
 
-HsmActionResponse::Ptr HsmService::release_data(
-    const HsmActionRequest& req) const noexcept
+void HsmService::release_data(
+    const HsmActionRequest& req,
+    actionCompletionFunc completion_func,
+    actionProgressFunc) const
 {
     LOG_INFO(
         "Starting HSMService RELEASE DATA: " + req.to_string() + " | "
@@ -828,14 +871,15 @@ HsmActionResponse::Ptr HsmService::release_data(
 
     auto working_action  = req.get_action();
     auto action_response = get_or_create_action(req, working_action);
-    CRUD_ERROR_CHECK_RETURN(action_response, working_action);
+    CRUD_ERROR_CHECK(action_response, working_action, completion_func);
 
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto get_response   = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
         CrudQuery(
-            req.get_action().get_subject_key(), CrudQuery::OutputFormat::ITEM),
+            req.get_action().get_subject_key(), CrudQuery::BodyFormat::ITEM),
         req.get_user_context()});
-    CRUD_ERROR_CHECK_RETURN(get_response, working_action);
+    CRUD_ERROR_CHECK(get_response, working_action, completion_func);
     auto working_object = get_response->get_item_as<HsmObject>();
 
     HsmObjectStoreRequest remove_data_request(
@@ -851,14 +895,14 @@ HsmActionResponse::Ptr HsmService::release_data(
     remove_data_request.set_action_id(working_action.get_primary_key());
     auto remove_data_response =
         m_object_store->make_request(remove_data_request);
-    ERROR_CHECK(remove_data_response, working_action);
+    ERROR_CHECK(remove_data_response, working_action, completion_func);
 
     const auto requires_db_update = !remove_data_response->object_is_remote();
     if (requires_db_update) {
         LOG_INFO("Will update db from this node");
     }
     else {
-        return HsmActionResponse::create(req, working_action);
+        completion_func(HsmActionResponse::create(req, working_action));
     }
 
     TierExtents extent;
@@ -879,19 +923,19 @@ HsmActionResponse::Ptr HsmService::release_data(
 
     if (extent.empty()) {
         extent_response = extent_service->make_request(CrudRequest(
-            CrudMethod::REMOVE, req.get_user_context(),
-            {extent.get_primary_key()}));
+            CrudMethod::REMOVE, {extent.get_primary_key()},
+            req.get_user_context()));
     }
     else {
         extent_response =
             extent_service->make_request(TypedCrudRequest<TierExtents>(
-                CrudMethod::UPDATE, extent, req.get_user_context()));
+                CrudMethod::UPDATE, extent, {}, req.get_user_context()));
     }
-    CRUD_ERROR_CHECK_RETURN(extent_response, working_action);
+    CRUD_ERROR_CHECK(extent_response, working_action, completion_func);
 
     auto object_put_response =
         object_service->make_request(TypedCrudRequest<HsmObject>{
-            CrudMethod::UPDATE, *working_object, req.get_user_context()});
+            CrudMethod::UPDATE, *working_object, {}, req.get_user_context()});
 
     set_action_finished_ok(
         req.get_user_context(), working_action.get_primary_key(), 0);
@@ -899,8 +943,7 @@ HsmActionResponse::Ptr HsmService::release_data(
     auto response = HsmActionResponse::create(req, working_action);
 
     LOG_INFO("Finished HSMService REMOVE");
-
-    return response;
+    completion_func(std::move(response));
 }
 
 }  // namespace hestia

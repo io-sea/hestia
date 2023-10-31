@@ -3,20 +3,6 @@
 namespace hestia {
 
 BaseCrudRequest::BaseCrudRequest(
-    const CrudUserContext& user_context,
-    const VecCrudIdentifier& ids,
-    const CrudAttributes& attributes,
-    CrudQuery::OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    BaseRequest(), m_user_context(user_context), m_ids(ids)
-{
-    m_query.attributes() = attributes;
-    m_query.set_output_format(output_format);
-
-    m_query.set_attributes_output_format(attributes_format);
-}
-
-BaseCrudRequest::BaseCrudRequest(
     const CrudUserContext& user_context, const CrudQuery& query) :
     BaseRequest(), m_user_context(user_context), m_query(query)
 {
@@ -28,14 +14,25 @@ BaseCrudRequest::BaseCrudRequest(
 {
 }
 
+std::vector<std::string> BaseCrudRequest::get_crud_methods()
+{
+    std::vector<std::string> methods;
+    CrudMethod_enum_string_converter converter;
+    converter.init();
+    for (const auto& method : BaseCrudRequest::s_all_methods) {
+        methods.push_back(converter.to_string(method));
+    }
+    return methods;
+}
+
 const CrudAttributes& BaseCrudRequest::get_attributes() const
 {
     return m_query.get_attributes();
 }
 
-const VecCrudIdentifier& BaseCrudRequest::get_ids() const
+const CrudIdentifierCollection& BaseCrudRequest::get_ids() const
 {
-    return m_ids;
+    return m_query.get_ids();
 }
 
 const CrudUserContext& BaseCrudRequest::get_user_context() const
@@ -46,6 +43,46 @@ const CrudUserContext& BaseCrudRequest::get_user_context() const
 const CrudQuery& BaseCrudRequest::get_query() const
 {
     return m_query;
+}
+
+CrudQuery::BodyFormat BaseCrudRequest::get_output_format() const
+{
+    return m_query.get_output_format();
+}
+
+void BaseCrudRequest::set_ids(const CrudIdentifierCollection& ids)
+{
+    m_query.set_ids(ids);
+}
+
+void BaseCrudRequest::set_query_filter(const Map& filter)
+{
+    m_query.set_filter(filter);
+}
+
+void BaseCrudRequest::set_ids(
+    const std::string& buffer,
+    const CrudIdentifierCollection::FormatSpec& format)
+{
+    m_query.set_ids(buffer, format);
+}
+
+void BaseCrudRequest::append(
+    const std::string& body, const CrudAttributes::FormatSpec& format)
+{
+    m_query.append(body, format);
+}
+
+void BaseCrudRequest::set_output_format(CrudQuery::BodyFormat format)
+{
+    m_query.set_output_format(format);
+}
+
+void BaseCrudRequest::set_offset_and_count(
+    std::size_t offset, std::size_t count)
+{
+    m_query.set_count(count);
+    m_query.set_offset(offset);
 }
 
 CrudLockType BaseCrudRequest::lock_type() const

@@ -6,10 +6,10 @@
 namespace hestia {
 
 KeyValueUpdateContext::KeyValueUpdateContext(
-    const AdapterCollection* adapters,
+    const CrudSerializer* serializer,
     const std::string& key_prefix,
     idFromParentIdFunc id_from_parent_id_func) :
-    KeyValueFieldContext(adapters, key_prefix),
+    KeyValueFieldContext(serializer, key_prefix),
     m_id_from_parent_id_func(id_from_parent_id_func)
 {
 }
@@ -23,15 +23,14 @@ void KeyValueUpdateContext::serialize_request(
         }
     }
     else {
-        auto item_template   = m_adapters->get_model_factory()->create();
-        bool request_has_ids = !request.get_ids().empty();
-        for (const auto& id : request.get_ids()) {
+        auto item_template = m_serializer->create_template();
+        for (const auto& id : request.get_ids().data()) {
             if (id.has_primary_key()) {
                 m_index_ids.push_back(id.get_primary_key());
             }
             else if (id.has_parent_primary_key()) {
                 const auto id_from_parent = m_id_from_parent_id_func(
-                    item_template->get_parent_type(), m_adapters->get_type(),
+                    item_template->get_parent_type(), m_serializer->get_type(),
                     id.get_parent_primary_key(), request.get_user_context());
                 if (id_from_parent.empty()) {
                     throw std::runtime_error(
@@ -42,34 +41,14 @@ void KeyValueUpdateContext::serialize_request(
             }
         }
 
-        if (request.get_attributes().has_content()) {
-            LOG_INFO(
-                "Parsing update info with format: "
-                + CrudAttributes::to_string(
-                    request.get_attributes().get_input_format()));
-            const auto adapter =
-                m_adapters->get_adapter(CrudAttributes::to_string(
-                    request.get_attributes().get_input_format()));
-            adapter->dict_from_string(
-                request.get_attributes().get_buffer(), output_content,
-                request.get_attributes().get_key_prefix());
+        std::vector<std::string> ids;
+        request.get_attributes().get_values(SearchExpression("id"), ids);
+        for (const auto& id : ids) {
+            m_index_ids.push_back(id);
+        }
 
-            if (!request_has_ids) {
-                if (output_content.get_type() == Dictionary::Type::SEQUENCE) {
-                    for (const auto& item : output_content.get_sequence()) {
-                        if (item->has_map_item("id")) {
-                            m_index_ids.push_back(
-                                item->get_map_item("id")->get_scalar());
-                        }
-                    }
-                }
-                else {
-                    if (output_content.has_map_item("id")) {
-                        m_index_ids.push_back(
-                            output_content.get_map_item("id")->get_scalar());
-                    }
-                }
-            }
+        if (request.get_attributes().has_content()) {
+            output_content.merge(*request.get_attributes().get_copy_as_dict());
         }
     }
     for (const auto& id : m_index_ids) {
@@ -119,9 +98,7 @@ void KeyValueUpdateContext::prepare_db_query(
         }
     }
 
-    const auto dict_adapter = m_adapters->get_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON));
-    dict_adapter->to_dict(db_items, updated_content);
+    m_serializer->get_model_serializer()->to_dict(db_items, updated_content);
 
     prepare_query_keys(updated_content, db_query);
 }
@@ -130,23 +107,18 @@ void KeyValueUpdateContext::prepare_query_keys(
     const Dictionary& updated_content,
     std::vector<KeyValuePair>& db_query) const
 {
-    const auto adapter = m_adapters->get_adapter(
-        CrudAttributes::to_string(CrudAttributes::Format::JSON));
-
     if (updated_content.get_type() == Dictionary::Type::SEQUENCE) {
         std::size_t count = 0;
         for (const auto& dict_item : updated_content.get_sequence()) {
-            std::string content;
-            adapter->dict_to_string(*dict_item, content);
-            db_query.push_back({m_index_keys[count], content});
+            db_query.push_back(
+                {m_index_keys[count], JsonDocument(*dict_item).to_string()});
             count++;
         }
     }
     else {
         assert(m_index_keys.size() == 1);
-        std::string content;
-        adapter->dict_to_string(updated_content, content);
-        db_query.push_back({m_index_keys[0], content});
+        db_query.push_back(
+            {m_index_keys[0], JsonDocument(updated_content).to_string()});
     }
 }
 

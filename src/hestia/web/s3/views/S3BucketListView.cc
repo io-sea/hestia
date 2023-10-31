@@ -23,7 +23,8 @@ HttpResponse::Ptr S3BucketListView::on_get(
 
     auto container_list_response = m_service->make_request(
         CrudRequest{
-            CrudQuery{CrudQuery::OutputFormat::ITEM},
+            CrudMethod::READ,
+            CrudQuery{CrudQuery::BodyFormat::ITEM},
             {auth.m_user_id, auth.m_user_token}},
         HsmItem::dataset_name);
     if (!container_list_response->ok()) {

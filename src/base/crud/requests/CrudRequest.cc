@@ -1,39 +1,36 @@
 #include "CrudRequest.h"
 
 namespace hestia {
+
+CrudRequest::CrudRequest(CrudMethod method) : MethodRequest<CrudMethod>(method)
+{
+}
+
 CrudRequest::CrudRequest(
     CrudMethod method,
     VecModelPtr items,
-    const CrudUserContext& user_id,
-    CrudQuery::OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    BaseCrudRequest(user_id),
+    const CrudQuery& query,
+    const CrudUserContext& user_context) :
+    BaseCrudRequest(user_context, query),
     MethodRequest<CrudMethod>(method),
     m_items(std::move(items))
 {
-    m_query.set_output_format(output_format);
-    m_query.set_attributes_output_format(attributes_format);
 }
 
 CrudRequest::CrudRequest(
     CrudMethod method,
-    const CrudUserContext& user_id,
-    const VecCrudIdentifier& ids,
-    const CrudAttributes& attributes,
-    CrudQuery::OutputFormat output_format,
-    CrudAttributes::Format attributes_format) :
-    BaseCrudRequest(user_id, ids, attributes, output_format, attributes_format),
-    MethodRequest<CrudMethod>(method)
+    const CrudQuery& query,
+    const CrudUserContext& user_context,
+    bool update_event_feed) :
+    BaseCrudRequest(user_context, query),
+    MethodRequest<CrudMethod>(method),
+    m_update_event_feed(update_event_feed)
 {
 }
 
 CrudRequest::CrudRequest(
-    const CrudQuery& query,
-    const CrudUserContext& user_id,
-    bool update_event_feed) :
-    BaseCrudRequest(user_id, query),
-    MethodRequest<CrudMethod>(CrudMethod::READ),
-    m_update_event_feed(update_event_feed)
+    CrudMethod method, const CrudUserContext& user_context) :
+    BaseCrudRequest(user_context, {}), MethodRequest<CrudMethod>(method)
 {
 }
 
@@ -74,13 +71,72 @@ bool CrudRequest::has_items() const
     return !m_items.empty();
 }
 
+bool CrudRequest::has_attributes() const
+{
+    return m_query.get_attributes().has_content();
+}
+
 Model* CrudRequest::get_item() const
 {
     return m_items[0].get();
+}
+
+bool CrudRequest::has_ids() const
+{
+    return !m_query.get_ids().empty();
+}
+
+Dictionary::Ptr CrudRequest::get_attribute_as_dict(std::size_t index) const
+{
+    return m_query.get_attributes().get_copy_as_dict(index);
 }
 
 const VecModelPtr& CrudRequest::items() const
 {
     return m_items;
 }
+
+bool CrudRequest::is_create_method() const
+{
+    return m_method == CrudMethod::CREATE;
+}
+
+bool CrudRequest::is_read_method() const
+{
+    return m_method == CrudMethod::READ;
+}
+
+bool CrudRequest::is_identify_method() const
+{
+    return m_method == CrudMethod::IDENTIFY;
+}
+
+bool CrudRequest::is_update_method() const
+{
+    return m_method == CrudMethod::UPDATE;
+}
+
+bool CrudRequest::is_remove_method() const
+{
+    return m_method == CrudMethod::REMOVE;
+}
+
+bool CrudRequest::is_create_or_update_method() const
+{
+    return is_create_method() || is_update_method();
+}
+
+std::size_t CrudRequest::size() const
+{
+    return has_items() ? m_items.size() : get_ids().size();
+}
+
+void CrudRequest::write_body(
+    const CrudAttributes::FormatSpec& format,
+    std::string& buffer,
+    const Index& index) const
+{
+    m_query.get_attributes().write(buffer, format, index);
+}
+
 }  // namespace hestia

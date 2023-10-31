@@ -30,17 +30,6 @@ class JsonUtils {
      */
     static std::string to_json(const Map& metadata);
 
-    static void to_json(
-        const Dictionary& dict,
-        std::string& output,
-        const std::vector<std::string>& exclude_keys = {},
-        unsigned indent                              = 0);
-
-    static void from_json(
-        const std::string& str,
-        Dictionary& dict,
-        const std::vector<std::string>& exclude_keys = {});
-
     /**
      * Read Metadata from json - only reads the top level keys
      *
@@ -75,6 +64,11 @@ class JsonUtils {
         const std::filesystem::path& path,
         const std::vector<std::string>& keys,
         std::vector<bool>& found);
+
+    static void read_values(
+        const std::string& json,
+        const std::string& path,
+        std::vector<std::string>& values);
 
     static void remove_key(
         const std::filesystem::path& path, const std::string& key);

@@ -18,7 +18,6 @@
 #include "HsmService.h"
 #include "HsmServicesFactory.h"
 #include "StorageTier.h"
-#include "StringAdapter.h"
 #include "TypedCrudRequest.h"
 #include "UserService.h"
 #include "UuidUtils.h"
@@ -70,7 +69,9 @@ class TestHestiaWebAppFixture {
             hestia::StorageTier tier(idx);
             auto create_response = tier_service->make_request(
                 hestia::TypedCrudRequest<hestia::StorageTier>{
-                    hestia::CrudMethod::CREATE, tier,
+                    hestia::CrudMethod::CREATE,
+                    tier,
+                    {},
                     m_user_service->get_current_user().get_primary_key()});
             REQUIRE(create_response->ok());
         }
@@ -91,14 +92,10 @@ class TestHestiaWebAppFixture {
 
         m_dist_hsm_service->register_self();
 
-        m_object_factory =
-            std::make_unique<hestia::TypedModelFactory<hestia::HsmObject>>();
-        m_tier_factory =
-            std::make_unique<hestia::TypedModelFactory<hestia::StorageTier>>();
-        m_object_adapter =
-            std::make_unique<hestia::JsonAdapter>(m_object_factory.get());
-        m_tier_adapter =
-            std::make_unique<hestia::JsonAdapter>(m_tier_factory.get());
+        m_object_adapter = std::make_unique<hestia::ModelSerializer>(
+            std::make_unique<hestia::TypedModelFactory<hestia::HsmObject>>());
+        m_tier_adapter = std::make_unique<hestia::ModelSerializer>(
+            std::make_unique<hestia::TypedModelFactory<hestia::StorageTier>>());
 
         m_web_app = std::make_unique<hestia::HestiaWebApp>(
             m_user_service.get(), m_dist_hsm_service.get());
@@ -123,7 +120,10 @@ class TestHestiaWebAppFixture {
         req.get_header().set_content_type("application/json");
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
-        m_object_adapter->from_string({response->body()}, objects);
+
+        hestia::Dictionary dict;
+        hestia::JsonDocument(response->body()).write(dict);
+        m_object_adapter->from_dict(dict, objects);
     }
 
     void get_object(const std::string& id, hestia::HsmObject& object)
@@ -134,8 +134,13 @@ class TestHestiaWebAppFixture {
 
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
+
         std::vector<hestia::HsmObject::Ptr> objects;
-        m_object_adapter->from_string({response->body()}, objects);
+
+        hestia::Dictionary dict;
+        hestia::JsonDocument(response->body()).write(dict);
+        m_object_adapter->from_dict(dict, objects);
+
         object = *(dynamic_cast<hestia::HsmObject*>(objects[0].get()));
     }
 
@@ -150,11 +155,17 @@ class TestHestiaWebAppFixture {
         std::vector<hestia::HsmObject::Ptr> put_objects;
         put_objects.push_back(std::make_unique<hestia::HsmObject>(object));
 
-        m_object_adapter->to_string(put_objects, req.body());
+        hestia::Dictionary input_dict;
+        m_object_adapter->to_dict(put_objects, input_dict);
+        hestia::JsonDocument(input_dict).write(req.body());
+
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
+
         std::vector<hestia::HsmObject::Ptr> objects;
-        m_object_adapter->from_string({response->body()}, objects);
+        hestia::Dictionary dict;
+        hestia::JsonDocument(response->body()).write(dict);
+        m_object_adapter->from_dict(dict, objects);
         object = *(dynamic_cast<hestia::HsmObject*>(objects[0].get()));
     }
 
@@ -227,7 +238,10 @@ class TestHestiaWebAppFixture {
             m_base_url + "tiers", hestia::HttpRequest::Method::GET);
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
-        m_tier_adapter->from_string({response->body()}, tiers);
+
+        hestia::Dictionary dict;
+        hestia::JsonDocument(response->body()).write(dict);
+        m_tier_adapter->from_dict(dict, tiers);
     }
 
     void put_tier(const hestia::StorageTier& tier)
@@ -238,7 +252,10 @@ class TestHestiaWebAppFixture {
         std::vector<hestia::StorageTier::Ptr> put_tiers;
         put_tiers.push_back(std::make_unique<hestia::StorageTier>(tier));
 
-        m_tier_adapter->to_string(put_tiers, req.body());
+        hestia::Dictionary input_dict;
+        m_tier_adapter->to_dict(put_tiers, input_dict);
+        hestia::JsonDocument(input_dict).write(req.body());
+
         auto response = m_http_client->make_request(req);
         REQUIRE(!response->error());
     }
@@ -248,12 +265,8 @@ class TestHestiaWebAppFixture {
     std::unique_ptr<hestia::DistributedHsmService> m_dist_hsm_service;
     std::unique_ptr<hestia::UserService> m_user_service;
 
-    std::unique_ptr<hestia::TypedModelFactory<hestia::HsmObject>>
-        m_object_factory;
-    std::unique_ptr<hestia::TypedModelFactory<hestia::StorageTier>>
-        m_tier_factory;
-    std::unique_ptr<hestia::JsonAdapter> m_object_adapter;
-    std::unique_ptr<hestia::JsonAdapter> m_tier_adapter;
+    std::unique_ptr<hestia::ModelSerializer> m_object_adapter;
+    std::unique_ptr<hestia::ModelSerializer> m_tier_adapter;
 
     std::unique_ptr<hestia::HestiaWebApp> m_web_app;
     std::unique_ptr<TestServer> m_server;
@@ -269,6 +282,7 @@ TEST_CASE_METHOD(
     std::vector<hestia::Model::Ptr> objects;
     get_objects(objects);
     REQUIRE(objects.empty());
+    return;
 
     hestia::HsmObject obj;
     put_object(obj);

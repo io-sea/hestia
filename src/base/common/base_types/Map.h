@@ -19,6 +19,23 @@ using VecKeyValuePair = std::vector<KeyValuePair>;
 
 class Map {
   public:
+    struct FormatSpec {
+        FormatSpec() : m_sort_keys(false) {}
+        char m_kv_delimiter{'='};
+        char m_pair_delimiter{'\n'};
+        bool m_sort_keys{false};
+    };
+
+    Map() = default;
+
+    Map(const std::string& buffer, const FormatSpec& format);
+
+    Map(const std::vector<std::string>& buffer, const FormatSpec& format);
+
+    Map(const KeyValuePair& entry);
+
+    Map(const VecKeyValuePair& entries);
+
     virtual ~Map() = default;
 
     /**
@@ -82,6 +99,8 @@ class Map {
      */
     void merge(const Map& other);
 
+    void set_item(const std::string& combined, const FormatSpec& format = {});
+
     /**
      * Set the value corresponding to the key to item
      * @param key Container (map) key
@@ -93,7 +112,14 @@ class Map {
      * A string representation of the container - intended for debugging
      * @return A string representation of the container
      */
-    std::string to_string(bool sort_keys = false) const;
+    std::string to_string(const FormatSpec& format = {}) const;
+
+    void write(std::string& buffer, const FormatSpec& format = {}) const;
+
+    void from_string(
+        const std::string& str,
+        const FormatSpec& format  = {},
+        const std::string& prefix = {});
 
     bool operator==(const Map& other) const { return m_data == other.m_data; }
 

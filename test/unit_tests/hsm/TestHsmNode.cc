@@ -1,7 +1,6 @@
 #include <catch2/catch_all.hpp>
 
 #include "HsmNode.h"
-#include "StringAdapter.h"
 
 TEST_CASE("Test HsmNode", "[hsm]")
 {
@@ -20,9 +19,14 @@ TEST_CASE("Test HsmNode", "[hsm]")
     hestia::Dictionary copy_constructed_dict;
     copy_constructed_node.serialize(copy_constructed_dict);
 
-    REQUIRE(node_dict.to_string(true) == copied_dict.to_string(true));
+    hestia::Dictionary::FormatSpec dict_format;
+    dict_format.m_map_format.m_sort_keys = true;
+
     REQUIRE(
-        copy_constructed_dict.to_string(true) == copied_dict.to_string(true));
+        node_dict.to_string(dict_format) == copied_dict.to_string(dict_format));
+    REQUIRE(
+        copy_constructed_dict.to_string(dict_format)
+        == copied_dict.to_string(dict_format));
 
     hestia::HsmNode deserialized_node;
     deserialized_node.deserialize(copied_dict);

@@ -59,6 +59,10 @@ macro(fetch_yaml_cpp)
         set(YAML_BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
         set(YAML_CPP_BUILD_TOOLS OFF CACHE INTERNAL "")
         FetchContent_MakeAvailable(yaml-cpp)
+        if(CMAKE_BUILD_TYPE MATCHES Debug AND HESTIA_ENABLE_SANITIZERS)
+            target_link_libraries(yaml-cpp PRIVATE sanitizer_flags)
+        endif()
+        
 endmacro()
 
 # https://github.com/madler/zlib

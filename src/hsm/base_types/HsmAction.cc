@@ -116,4 +116,86 @@ bool HsmAction::has_action() const
     return m_action.get_value() != Action::NONE;
 }
 
+const std::string& HsmAction::get_subject_key() const
+{
+    return m_subject_key.get_value();
+}
+
+HsmItem::Type HsmAction::get_subject() const
+{
+    return m_subject.get_value();
+}
+
+HsmAction::Action HsmAction::get_action() const
+{
+    return m_action.get_value();
+}
+
+uint8_t HsmAction::get_source_tier() const
+{
+    return m_source_tier.get_value();
+}
+
+uint8_t HsmAction::get_target_tier() const
+{
+    return m_target_tier.get_value();
+}
+
+std::size_t HsmAction::get_offset() const
+{
+    return m_offset.get_value();
+}
+
+std::size_t HsmAction::get_size() const
+{
+    return m_to_transfer.get_value();
+}
+
+std::size_t HsmAction::get_num_transferred() const
+{
+    return m_transferred.get_value();
+}
+
+void HsmAction::set_offset(std::size_t offset)
+{
+    m_offset.update_value(offset);
+}
+
+void HsmAction::set_subject_key(const std::string& key)
+{
+    m_subject_key.update_value(key);
+}
+
+void HsmAction::set_subject(HsmItem::Type subject)
+{
+    m_subject.update_value(subject);
+}
+
+void HsmAction::set_size(std::size_t size)
+{
+    m_to_transfer.update_value(size);
+}
+
+std::vector<std::string> HsmAction::get_action_subjects()
+{
+    return {"object", "dataset"};
+}
+
+std::vector<HsmAction::Action> HsmAction::get_subject_actions(
+    const std::string& subject)
+{
+    if (subject == "object") {
+        return {
+            HsmAction::Action::PUT_DATA, HsmAction::Action::GET_DATA,
+            HsmAction::Action::COPY_DATA, HsmAction::Action::MOVE_DATA,
+            HsmAction::Action::RELEASE_DATA};
+    }
+    else if (subject == "dataset") {
+        return {
+            HsmAction::Action::COPY_DATA, HsmAction::Action::MOVE_DATA,
+            HsmAction::Action::RELEASE_DATA};
+    }
+    return {};
+}
+
 }  // namespace hestia

@@ -3,13 +3,13 @@
 #include "UserService.h"
 
 #include "HttpParser.h"
+#include "ModelSerializer.h"
 #include "StringUtils.h"
+#include "User.h"
 
 namespace hestia {
 HestiaUserAuthView::HestiaUserAuthView(UserService* user_service) :
-    WebView(),
-    m_user_service(user_service),
-    m_adapter(std::make_unique<JsonAdapter>(nullptr))
+    WebView(), m_user_service(user_service)
 {
 }
 
@@ -58,8 +58,13 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
 
     auto http_response = HttpResponse::create();
     std::string body;
-    m_adapter->to_string(response->items(), body);
-    http_response->set_body(body);
+
+    auto adapter = std::make_unique<ModelSerializer>(
+        std::make_unique<TypedModelFactory<User>>());
+
+    Dictionary dict;
+    adapter->to_dict(response->items(), dict);
+    http_response->set_body(JsonDocument(dict).to_string());
     return http_response;
 }
 

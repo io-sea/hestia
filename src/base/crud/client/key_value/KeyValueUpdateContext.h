@@ -15,7 +15,7 @@ class KeyValueUpdateContext : public KeyValueFieldContext {
         const CrudUserContext&)>;
 
     KeyValueUpdateContext(
-        const AdapterCollection* adapters,
+        const CrudSerializer* seriaizer,
         const std::string& key_prefix,
         idFromParentIdFunc id_from_parent_id_func);
 

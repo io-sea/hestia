@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AuthorizationContext.h"
 #include "CrudQuery.h"
 #include "EnumUtils.h"
 #include "Request.h"
@@ -14,6 +15,11 @@ STRINGABLE_ENUM(
 enum class CrudLockType { READ, WRITE };
 
 struct CrudUserContext {
+    CrudUserContext(const AuthorizationContext& auth) :
+        m_id(auth.m_user_id), m_token(auth.m_user_token)
+    {
+    }
+
     CrudUserContext(const std::string& id = {}, const std::string& token = {}) :
         m_id(id), m_token(token)
     {
@@ -25,14 +31,7 @@ struct CrudUserContext {
 
 class BaseCrudRequest : public BaseRequest {
   public:
-    BaseCrudRequest(
-        const CrudUserContext& user_context = {},
-        const VecCrudIdentifier& ids        = {},
-        const CrudAttributes& attributes    = {},
-        CrudQuery::OutputFormat output_format =
-            CrudQuery::OutputFormat::ATTRIBUTES,
-        CrudAttributes::Format attributes_format =
-            CrudAttributes::Format::JSON);
+    BaseCrudRequest() = default;
 
     BaseCrudRequest(
         const CrudUserContext& user_context, const CrudQuery& query);
@@ -42,15 +41,34 @@ class BaseCrudRequest : public BaseRequest {
 
     virtual ~BaseCrudRequest() = default;
 
+    void append(
+        const std::string& body, const CrudAttributes::FormatSpec& format);
+
     const CrudAttributes& get_attributes() const;
 
-    const VecCrudIdentifier& get_ids() const;
+    static std::vector<std::string> get_crud_methods();
+
+    const CrudIdentifierCollection& get_ids() const;
 
     const CrudUserContext& get_user_context() const;
 
     const CrudQuery& get_query() const;
 
+    CrudQuery::BodyFormat get_output_format() const;
+
     CrudLockType lock_type() const;
+
+    void set_ids(const CrudIdentifierCollection& ids);
+
+    void set_output_format(CrudQuery::BodyFormat format);
+
+    void set_query_filter(const Map& filter);
+
+    void set_ids(
+        const std::string& buffer,
+        const CrudIdentifierCollection::FormatSpec& format);
+
+    void set_offset_and_count(std::size_t offset, std::size_t count);
 
     static constexpr std::array<CrudMethod, 8> s_all_methods{
         CrudMethod::CREATE, CrudMethod::READ,     CrudMethod::UPDATE,
@@ -60,7 +78,6 @@ class BaseCrudRequest : public BaseRequest {
   protected:
     CrudUserContext m_user_context;
     CrudQuery m_query;
-    VecCrudIdentifier m_ids;
     CrudLockType m_lock_type{CrudLockType::READ};
 };
 }  // namespace hestia

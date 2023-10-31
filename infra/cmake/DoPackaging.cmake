@@ -67,6 +67,9 @@ endif()
 set(LINK_MODULES_FOR_EXPORT "")
 if(CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND LINK_MODULES_FOR_EXPORT development_flags)
+        if(HESTIA_ENABLE_SANITIZERS)
+                list(APPEND LINK_MODULES_FOR_EXPORT sanitizer_flags)
+        endif()
 endif()
 
 install(TARGETS 
@@ -122,13 +125,13 @@ install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia/"
         )
 
 install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/test/data/configs/"
-        DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/sample-configs"
+        DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME}/sample-configs"
         COMPONENT runtime
         )
 
 configure_file(infra/cmake/${PROJECT_NAME}d.yaml.in ${PROJECT_NAME}d.yaml @ONLY)
 install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.yaml"
-        DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}"
+        DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME}"
         COMPONENT runtime
         )
 
