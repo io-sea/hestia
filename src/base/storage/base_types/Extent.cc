@@ -112,7 +112,10 @@ void Extent::serialize(Dictionary& dict, Format) const
         {"offset", std::to_string(m_offset)},
         {"length", std::to_string(m_length)},
     };
-    dict.set_map(data);
+    dict.add_scalar_item(
+        "offset", std::to_string(m_offset), Dictionary::ScalarType::INT);
+    dict.add_scalar_item(
+        "length", std::to_string(m_length), Dictionary::ScalarType::INT);
 }
 
 void Extent::deserialize(const Dictionary& dict, Format)

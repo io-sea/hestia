@@ -335,7 +335,8 @@ void Dictionary::expand(
                         auto dict = std::make_unique<Dictionary>(
                             Dictionary::Type::SCALAR);
                         dict->set_scalar(
-                            flat_representation.get_item(full_path));
+                            flat_representation.get_item(full_path),
+                            ScalarType::STRING);
                         working_dict->set_map_item(entry, std::move(dict));
                     }
                     else {
@@ -488,6 +489,11 @@ const std::string& Dictionary::get_scalar() const
     return m_scalar;
 }
 
+Dictionary::ScalarType Dictionary::get_scalar_type() const
+{
+    return m_scalar_type;
+}
+
 bool Dictionary::has_map_item(const std::string& key) const
 {
     auto iter = m_map.find(key);
@@ -516,20 +522,23 @@ void Dictionary::set_map(
 {
     for (const auto& [key, value] : items) {
         auto dict = Dictionary::create(Dictionary::Type::SCALAR);
-        dict->set_scalar(value);
+        dict->set_scalar(value, ScalarType::STRING);
         set_map_item(key, std::move(dict));
     }
 }
 
-void Dictionary::set_scalar(const std::string& scalar, bool should_quote)
+void Dictionary::add_scalar_item(
+    const std::string& key, const std::string& value, ScalarType scalar_type)
 {
-    m_scalar       = scalar;
-    m_should_quote = should_quote;
+    auto dict = Dictionary::create(Dictionary::Type::SCALAR);
+    dict->set_scalar(value, scalar_type);
+    set_map_item(key, std::move(dict));
 }
 
-bool Dictionary::should_quote_scalar() const
+void Dictionary::set_scalar(const std::string& scalar, ScalarType scalar_type)
 {
-    return m_should_quote;
+    m_scalar      = scalar;
+    m_scalar_type = scalar_type;
 }
 
 bool Dictionary::has_tag() const
@@ -563,9 +572,10 @@ bool Dictionary::is_empty() const
 
 void Dictionary::copy_from(const Dictionary& other)
 {
-    m_type   = other.m_type;
-    m_tag    = other.m_tag;
-    m_scalar = other.m_scalar;
+    m_type        = other.m_type;
+    m_tag         = other.m_tag;
+    m_scalar      = other.m_scalar;
+    m_scalar_type = other.m_scalar_type;
     m_sequence.resize(other.m_sequence.size());
 
     for (std::size_t idx = 0; idx < m_sequence.size(); idx++) {

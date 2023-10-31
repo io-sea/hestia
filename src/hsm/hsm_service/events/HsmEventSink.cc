@@ -93,8 +93,8 @@ void add_scalar(
     Dictionary& dict,
     const std::string& key,
     const std::string& value,
-    const std::string& tag = "",
-    bool should_quote      = false)
+    const std::string& tag             = "",
+    Dictionary::ScalarType scalar_type = Dictionary::ScalarType::STRING)
 {
     if (value.empty()) {
         return;
@@ -104,20 +104,20 @@ void add_scalar(
         return;
     }
     dict.set_map_item(key, Dictionary::create(Dictionary::Type::SCALAR));
-    dict.get_map_item(key)->set_scalar(value, should_quote);
+    dict.get_map_item(key)->set_scalar(value, scalar_type);
     dict.get_map_item(key)->set_tag(tag);
 }
 
 void set_string(
     Dictionary& dict, const std::string& key, const std::string& value)
 {
-    add_scalar(dict, key, value, "", true);
+    add_scalar(dict, key, value, "", Dictionary::ScalarType::STRING);
 }
 
 void set_literal(
     Dictionary& dict, const std::string& key, const std::string& value)
 {
-    add_scalar(dict, key, value);
+    add_scalar(dict, key, value, "", Dictionary::ScalarType::INT);
 }
 
 void set_xattrs(Dictionary& dict, const Map& meta, const char delim = '.')
@@ -139,7 +139,9 @@ void set_xattrs(Dictionary& dict, const Map& meta, const char delim = '.')
             sub_dict = sub_dict->get_map_item(sub_key.first);
             sub_key  = StringUtils::split_on_first(sub_key.second, delim);
         }
-        add_scalar(*sub_dict, sub_key.first, value, "", true);
+        add_scalar(
+            *sub_dict, sub_key.first, value, "",
+            Dictionary::ScalarType::STRING);
     }
 }
 

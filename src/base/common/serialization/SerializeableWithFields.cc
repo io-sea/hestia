@@ -178,7 +178,6 @@ void SerializeableWithFields::deserialize(const Dictionary& dict, Format format)
             return;
         }
 
-
         for (const auto& [field_name, field] : m_scalar_fields) {
             if (key == field_name && !value.empty()) {
                 field->value_from_string(value);
@@ -204,12 +203,25 @@ void SerializeableWithFields::deserialize(const Dictionary& dict, Format format)
     }
 }
 
+Dictionary::ScalarType get_dict_type(const std::string& scalar_type)
+{
+    if (scalar_type == "int") {
+        return Dictionary::ScalarType::INT;
+    }
+    else if (scalar_type == "bool") {
+        return Dictionary::ScalarType::BOOL;
+    }
+    else {
+        return Dictionary::ScalarType::STRING;
+    }
+}
+
 void SerializeableWithFields::serialize(Dictionary& dict, Format format) const
 {
-    std::unordered_map<std::string, std::string> data;
-
     if (m_use_id) {
-        data[m_id.get_name()] = m_id.value_as_string();
+        dict.add_scalar_item(
+            m_id.get_name(), m_id.value_as_string(),
+            get_dict_type(m_id.get_scalar_type()));
     }
 
     if (format != Format::ID) {
@@ -217,19 +229,22 @@ void SerializeableWithFields::serialize(Dictionary& dict, Format format) const
             for (const auto& [field_name, field] : m_scalar_fields) {
                 const auto field_value = field->value_as_string();
                 if (!field_value.empty()) {
-                    data[field_name] = field_value;
+                    dict.add_scalar_item(
+                        field_name, field_value,
+                        get_dict_type(field->get_scalar_type()));
                 }
             }
         }
         else {
             for (const auto& [field_name, field] : m_scalar_fields) {
                 if (field->modified()) {
-                    data[field_name] = field->value_as_string();
+                    dict.add_scalar_item(
+                        field_name, field->value_as_string(),
+                        get_dict_type(field->get_scalar_type()));
                 }
             }
         }
     }
-    dict.set_map(data);
 
     if (format == Format::ID) {
         return;
@@ -238,7 +253,6 @@ void SerializeableWithFields::serialize(Dictionary& dict, Format format) const
     for (const auto& [field_name, field] : m_map_fields) {
         if (format == Format::MODIFIED && !field->modified()) {
             continue;
-            ;
         }
 
         auto field_dict = std::make_unique<Dictionary>();
@@ -251,7 +265,6 @@ void SerializeableWithFields::serialize(Dictionary& dict, Format format) const
     for (const auto& [field_name, field] : m_sequence_fields) {
         if (format == Format::MODIFIED && !field->modified()) {
             continue;
-            ;
         }
 
         auto field_dict =

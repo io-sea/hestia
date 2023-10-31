@@ -104,7 +104,8 @@ void load_node_to_dict(const YAML::Node& root, Dictionary& dict)
     }
     else if (root.IsScalar()) {
         auto scalar_dict = Dictionary::create(Dictionary::Type::SCALAR);
-        scalar_dict->set_scalar(root.as<std::string>());
+        scalar_dict->set_scalar(
+            root.as<std::string>(), Dictionary::ScalarType::STRING);
         dict.set_map_item("root", std::move(scalar_dict));
     }
 }
@@ -149,7 +150,8 @@ void on_map_item(
                 on_sequence(*value, emitter, sorted);
                 break;
             case Dictionary::Type::SCALAR:
-                if (value->should_quote_scalar()) {
+                if (value->get_scalar_type()
+                    == Dictionary::ScalarType::STRING) {
                     emitter << YAML::DoubleQuoted << value->get_scalar();
                 }
                 else {
@@ -199,7 +201,7 @@ void on_sequence(
             on_map(*value, emitter, sorted);
         }
         if (value->get_type() == Dictionary::Type::SCALAR) {
-            if (value->should_quote_scalar()) {
+            if (value->get_scalar_type() == Dictionary::ScalarType::STRING) {
                 emitter << YAML::DoubleQuoted << value->get_scalar();
             }
             else {
@@ -233,7 +235,9 @@ void on_map(const YAML::Node& node, Dictionary& dict)
             }
             else if (kv_pair.second.IsScalar()) {
                 auto scalar_dict = Dictionary::create(Dictionary::Type::SCALAR);
-                scalar_dict->set_scalar(kv_pair.second.as<std::string>());
+                scalar_dict->set_scalar(
+                    kv_pair.second.as<std::string>(),
+                    Dictionary::ScalarType::STRING);
                 dict.set_map_item(key, std::move(scalar_dict));
             }
         }
@@ -261,7 +265,8 @@ void on_sequence(const YAML::Node& node, Dictionary& dict)
         }
         else if (seq_node.IsScalar()) {
             auto scalar_dict = Dictionary::create(Dictionary::Type::SCALAR);
-            scalar_dict->set_scalar(seq_node.as<std::string>());
+            scalar_dict->set_scalar(
+                seq_node.as<std::string>(), Dictionary::ScalarType::STRING);
             dict.add_sequence_item(std::move(scalar_dict));
         }
     }

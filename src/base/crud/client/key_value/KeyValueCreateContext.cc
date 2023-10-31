@@ -171,7 +171,7 @@ void KeyValueCreateContext::override_field(
     const std::string& value) const
 {
     auto key_dict = std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
-    key_dict->set_scalar(value);
+    key_dict->set_scalar(value, Dictionary::ScalarType::STRING);
     item_dict.set_map_item(name, std::move(key_dict));
 }
 

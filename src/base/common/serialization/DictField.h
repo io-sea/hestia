@@ -104,7 +104,8 @@ class ScalarSequenceField : public DictField {
         for (const auto& item : m_container) {
             auto sequence_item_dict =
                 std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
-            sequence_item_dict->set_scalar(item);
+            sequence_item_dict->set_scalar(
+                item, Dictionary::ScalarType::STRING);
             dict.add_sequence_item(std::move(sequence_item_dict));
         }
     }

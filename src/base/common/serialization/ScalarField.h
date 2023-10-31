@@ -14,13 +14,20 @@ namespace hestia {
 class ScalarField : public BaseField {
   public:
     ScalarField(
-        const std::string& name, IndexScope index_scope = IndexScope::NONE);
+        const std::string& name,
+        const std::string& type,
+        IndexScope index_scope = IndexScope::NONE);
 
     virtual ~ScalarField() = default;
+
+    const std::string& get_scalar_type() const { return m_scalar_type; }
 
     virtual std::string value_as_string() const = 0;
 
     virtual void value_from_string(const std::string& value_str) = 0;
+
+  protected:
+    std::string m_scalar_type;
 };
 
 template<typename T>
@@ -28,9 +35,10 @@ class TypedScalarField : public ScalarField {
   public:
     TypedScalarField(
         const std::string& name,
+        const std::string& type,
         const T& default_value = T(),
         IndexScope index_scope = IndexScope::NONE) :
-        ScalarField(name, index_scope), m_value(default_value)
+        ScalarField(name, type, index_scope), m_value(default_value)
     {
     }
 
@@ -103,7 +111,7 @@ template<typename EnumT, typename ConverterT>
 class EnumField : public TypedScalarField<EnumT> {
   public:
     EnumField(const std::string& name, EnumT default_value = {}) :
-        TypedScalarField<EnumT>(name, default_value)
+        TypedScalarField<EnumT>(name, "str", default_value)
     {
         m_converter.init();
     }

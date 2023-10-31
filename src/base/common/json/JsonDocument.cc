@@ -3,6 +3,7 @@
 #include "Logger.h"
 
 #include "ErrorUtils.h"
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
@@ -133,10 +134,35 @@ void to_json_internal(
 {
     if (dict.get_type() == Dictionary::Type::SCALAR) {
         if (key.empty()) {
-            json = dict.get_scalar();
+            auto scalar_type = dict.get_scalar_type();
+            if (scalar_type == Dictionary::ScalarType::INT) {
+                json = std::stoull(dict.get_scalar());
+            }
+            else if (scalar_type == Dictionary::ScalarType::FLOAT) {
+                json = std::stod(dict.get_scalar());
+            }
+            else if (scalar_type == Dictionary::ScalarType::BOOL) {
+                json = dict.get_scalar() == "true";
+            }
+            else {
+                json = dict.get_scalar();
+            }
         }
         else if (!is_excluded(key, exclude_keys)) {
-            json[key] = dict.get_scalar();
+
+            auto scalar_type = dict.get_scalar_type();
+            if (scalar_type == Dictionary::ScalarType::INT) {
+                json[key] = std::stoull(dict.get_scalar());
+            }
+            else if (scalar_type == Dictionary::ScalarType::FLOAT) {
+                json[key] = std::stod(dict.get_scalar());
+            }
+            else if (scalar_type == Dictionary::ScalarType::BOOL) {
+                json[key] = dict.get_scalar() == "true";
+            }
+            else {
+                json[key] = dict.get_scalar();
+            }
         }
         return;
     }
@@ -342,10 +368,21 @@ void from_json_internal(
             std::make_unique<Dictionary>(Dictionary::Type::SCALAR);
 
         if (j.is_boolean()) {
-            scalar_dict->set_scalar(j ? "true" : "false");
+            scalar_dict->set_scalar(
+                j ? "true" : "false", Dictionary::ScalarType::BOOL);
+        }
+        else if (j.is_number_integer()) {
+            scalar_dict->set_scalar(
+                std::to_string(j.get<unsigned long long>()),
+                Dictionary::ScalarType::INT);
+        }
+        else if (j.is_number_float()) {
+            scalar_dict->set_scalar(
+                std::to_string(j.get<float>()), Dictionary::ScalarType::FLOAT);
         }
         else {
-            scalar_dict->set_scalar(j.get<std::string>());
+            scalar_dict->set_scalar(
+                j.get<std::string>(), Dictionary::ScalarType::STRING);
         }
         if (parent_key.empty()) {
             dict.add_sequence_item(std::move(scalar_dict));
@@ -396,7 +433,26 @@ void JsonDocument::write(
         }
         else {
             dict.set_type(Dictionary::Type::SCALAR);
-            dict.set_scalar(m_impl->m_json.get<std::string>());
+            if (m_impl->m_json.is_boolean()) {
+                dict.set_scalar(
+                    m_impl->m_json ? "true" : "false",
+                    Dictionary::ScalarType::BOOL);
+            }
+            else if (m_impl->m_json.is_number_integer()) {
+                dict.set_scalar(
+                    std::to_string(m_impl->m_json.get<unsigned long long>()),
+                    Dictionary::ScalarType::INT);
+            }
+            else if (m_impl->m_json.is_number_float()) {
+                dict.set_scalar(
+                    std::to_string(m_impl->m_json.get<float>()),
+                    Dictionary::ScalarType::FLOAT);
+            }
+            else {
+                dict.set_scalar(
+                    m_impl->m_json.get<std::string>(),
+                    Dictionary::ScalarType::STRING);
+            }
         }
     }
 }

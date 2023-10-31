@@ -37,6 +37,7 @@ class Dictionary {
     using Ptr = std::unique_ptr<Dictionary>;
 
     enum class Type { SCALAR, SEQUENCE, MAP };
+    enum class ScalarType { INT, FLOAT, STRING, BOOL, NULL_T };
 
     struct FormatSpec {
         FormatSpec() : m_sequence_delimiter("\n\n") {}
@@ -58,6 +59,11 @@ class Dictionary {
 
     static Ptr create(const Map& flat, const FormatSpec& format);
 
+    void add_scalar_item(
+        const std::string& key,
+        const std::string& value,
+        ScalarType scalar_type);
+
     void add_sequence_item(std::unique_ptr<Dictionary> item);
 
     void expand(const Map& flat_representation, const FormatSpec& format = {});
@@ -76,6 +82,8 @@ class Dictionary {
 
     std::string get_scalar(
         const std::string& key, const std::string& delimiter = "::") const;
+
+    ScalarType get_scalar_type() const;
 
     std::size_t get_size() const;
 
@@ -122,17 +130,8 @@ class Dictionary {
      * The class is agnostic to the scalar type, but does take a 'should_quote'
      * hint for conversion to other forms, for example yaml.
      * @param scalar The value of the scalar
-     * @param should_quote A hint for converts on whether this value should be quoted, e.g. as "my_scalar_value".
      */
-    void set_scalar(const std::string& scalar, bool should_quote = false);
-
-    /**
-     * Return true if this scalar type should be quoted - useful for string
-     * types with possible special characters
-     *
-     * @return true if this scalar type should be quoted
-     */
-    bool should_quote_scalar() const;
+    void set_scalar(const std::string& scalar, ScalarType scalar_type);
 
     void set_map(const std::unordered_map<std::string, std::string>& items);
 
@@ -164,7 +163,7 @@ class Dictionary {
     Type m_type{Type::MAP};
     std::pair<std::string, std::string> m_tag;
     std::string m_scalar;
-    bool m_should_quote{false};
+    ScalarType m_scalar_type{ScalarType::STRING};
     std::vector<std::unique_ptr<Dictionary>> m_sequence;
     std::unordered_map<std::string, std::unique_ptr<Dictionary>> m_map;
 };

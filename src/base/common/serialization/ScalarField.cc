@@ -4,14 +4,15 @@
 #include "UuidUtils.h"
 
 namespace hestia {
-ScalarField::ScalarField(const std::string& name, IndexScope index_scope) :
-    BaseField(name, index_scope)
+ScalarField::ScalarField(
+    const std::string& name, const std::string& type, IndexScope index_scope) :
+    BaseField(name, index_scope), m_scalar_type(type)
 {
 }
 
 StringField::StringField(
     const std::string& name, const std::string& default_value) :
-    TypedScalarField<std::string>(name, default_value)
+    TypedScalarField<std::string>(name, "str", default_value)
 {
 }
 
@@ -27,7 +28,7 @@ void StringField::value_from_string(const std::string& value_str)
 
 DateTimeField::DateTimeField(
     const std::string& name, std::time_t default_value) :
-    TypedScalarField<std::time_t>(name, default_value)
+    TypedScalarField<std::time_t>(name, "int", default_value)
 {
 }
 
@@ -47,7 +48,7 @@ void DateTimeField::set_as_now()
 }
 
 UuidField::UuidField(const std::string& name, const Uuid& default_value) :
-    TypedScalarField<Uuid>(name, default_value)
+    TypedScalarField<Uuid>(name, "str", default_value)
 {
 }
 
@@ -62,7 +63,7 @@ void UuidField::value_from_string(const std::string& value_str)
 }
 
 BooleanField::BooleanField(const std::string& name, bool default_value) :
-    TypedScalarField<bool>(name, default_value)
+    TypedScalarField<bool>(name, "bool", default_value)
 {
 }
 
@@ -78,7 +79,7 @@ void BooleanField::value_from_string(const std::string& value_str)
 
 UIntegerField::UIntegerField(
     const std::string& name, unsigned long default_value) :
-    TypedScalarField<unsigned long>(name, default_value)
+    TypedScalarField<unsigned long>(name, "int", default_value)
 {
 }
 
