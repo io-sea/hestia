@@ -68,6 +68,9 @@ class KeyValueCrudClient : public CrudClient {
 
     std::string get_db_item(const std::string& key) const;
 
+    bool check_keys_exist(
+        std::vector<std::string>& keys, bool false_if_any_missing) const;
+
     void get_db_sets(
         const std::vector<std::string>& keys,
         std::vector<std::vector<std::string>>& values) const;

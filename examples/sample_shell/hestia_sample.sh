@@ -44,4 +44,16 @@ curl \
 HESTIA_STATUS=$(cat tmp.json | jq  -r '.status')
 echo $HESTIA_STATUS
 
+# Release the data on a tier
+curl \
+  -H "hestia.hsm_action.action: release_data" \
+  -H "hestia.hsm_action.subject: object" \
+  -H "hestia.hsm_action.source_tier: 0" \
+  -H "hestia.hsm_action.subject_key: ${HESTIA_OBJECT_ID}" \
+  -H "authorization: ${HESTIA_TOKEN}" \
+  $HESTIA_ENDPOINT/api/v1/actions/
+
+# Delete the object overall
+curl -X DELETE -H "authorization: ${HESTIA_TOKEN}" $HESTIA_ENDPOINT/api/v1/objects/$HESTIA_OBJECT_ID
+
 

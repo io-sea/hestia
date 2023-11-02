@@ -17,6 +17,8 @@ class MockCrudService : public CrudService {
 
     static Ptr create();
 
+    static Ptr create_one_to_one(KeyValueStoreClient* kv_store_client);
+
     static Ptr create_mock_with_parent(KeyValueStoreClient* kv_store_client);
 
     static Ptr create_many_many_parent(KeyValueStoreClient* kv_store_client);

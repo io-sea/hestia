@@ -206,6 +206,13 @@ void Model::get_foreign_key_proxy_fields(VecKeyValuePair& fields) const
     }
 }
 
+void Model::get_one_to_one_fields(VecKeyValuePair& fields) const
+{
+    for (const auto& [name, dict] : m_one_to_one_proxy_fields) {
+        fields.push_back({dict->get_runtime_type(), dict->get_name()});
+    }
+}
+
 void Model::get_default_create_one_to_one_fields(VecKeyValuePair& fields) const
 {
     for (const auto& [name, dict] : m_one_to_one_proxy_fields) {

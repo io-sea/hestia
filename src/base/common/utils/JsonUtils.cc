@@ -1,5 +1,6 @@
 #include "JsonUtils.h"
 
+#include "ErrorUtils.h"
 #include "FileUtils.h"
 #include "Logger.h"
 
@@ -165,12 +166,23 @@ void JsonUtils::has_keys(
 {
     if (!std::filesystem::is_regular_file(path)) {
         found = std::vector<bool>(keys.size(), false);
+        return;
     }
 
     std::ifstream read_file(path);
 
     nlohmann::json file_content;
-    read_file >> file_content;
+
+    try {
+        read_file >> file_content;
+    }
+    catch (const std::exception& e) {
+        const auto msg =
+            SOURCE_LOC() + " | Exception checking keys: " + e.what();
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
     read_file.close();
 
     for (const auto& key : keys) {

@@ -19,7 +19,12 @@ class MockHttpClient : public hestia::HttpClient {
   public:
     MockHttpClient()
     {
-        m_service = hestia::mock::MockCrudService::create();
+        m_service            = hestia::mock::MockCrudService::create();
+        m_one_to_one_service = hestia::mock::MockCrudService::create_one_to_one(
+            m_service->m_kv_store_client.get());
+        m_service->register_child_service(
+            "mock_one_to_one_model", m_one_to_one_service.get());
+
         m_app = std::make_unique<hestia::mock::MockCrudWebApp>(m_service.get());
     }
 
@@ -42,6 +47,7 @@ class MockHttpClient : public hestia::HttpClient {
 
     std::string m_address{"127.0.0.1"};
     hestia::mock::MockCrudService::Ptr m_service;
+    hestia::mock::MockCrudService::Ptr m_one_to_one_service;
     hestia::mock::MockCrudWebApp::Ptr m_app;
 };
 

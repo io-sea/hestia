@@ -28,6 +28,11 @@ Dictionary::Dictionary(const Dictionary& other)
     copy_from(other);
 }
 
+Dictionary::Ptr create(const Dictionary& other)
+{
+    return std::make_unique<Dictionary>(other);
+}
+
 Dictionary::Ptr Dictionary::create(const Map& flat, const FormatSpec& format)
 {
     return std::make_unique<Dictionary>(flat, format);
@@ -386,6 +391,24 @@ void Dictionary::from_string(
     }
 }
 
+const Dictionary* Dictionary::get_item(std::size_t idx) const
+{
+    if (is_sequence()) {
+        if (idx >= m_sequence.size()) {
+            throw std::range_error(
+                SOURCE_LOC() + " | Out of range access attempted.");
+        }
+        return m_sequence[idx].get();
+    }
+    else {
+        if (idx > 0) {
+            throw std::range_error(
+                SOURCE_LOC() + " | Out of range access attempted.");
+        }
+        return this;
+    }
+}
+
 std::string Dictionary::get_scalar(
     const std::string& key, const std::string& delimiter) const
 {
@@ -511,10 +534,32 @@ Dictionary::get_map() const
     return m_map;
 }
 
-void Dictionary::set_map_item(
+Dictionary* Dictionary::set_map_item(
     const std::string& key, std::unique_ptr<Dictionary> item)
 {
-    m_map[key] = std::move(item);
+    if (item == nullptr) {
+        auto working_item = Dictionary::create();
+        auto raw_item     = working_item.get();
+        m_map[key]        = std::move(working_item);
+        return raw_item;
+    }
+    else {
+        auto raw_item = item.get();
+        m_map[key]    = std::move(item);
+        return raw_item;
+    }
+}
+
+void Dictionary::set_map_scalar(
+    const std::string& key,
+    const std::string& value,
+    ScalarType scalar_type,
+    const std::string& tag)
+{
+    auto entry =
+        set_map_item(key, Dictionary::create(Dictionary::Type::SCALAR));
+    entry->set_scalar(value, scalar_type);
+    entry->set_tag(tag);
 }
 
 void Dictionary::set_map(

@@ -95,8 +95,13 @@ void KeyValueCreateContext::process_one_to_one_keys(
         for (const auto& [type, name] : relation.m_one_to_one_keys) {
             auto child_dict = m_create_child_func(
                 type, output_ids[instance_count], user_context);
+
+            auto id               = child_dict->get_scalar("id");
+            auto empty_child_dict = Dictionary::create();
+            empty_child_dict->set_map_scalar(
+                "id", id, Dictionary::ScalarType::STRING);
             output_content.get_sequence()[instance_count]->set_map_item(
-                name, std::move(child_dict));
+                name, std::move(empty_child_dict));
         }
         instance_count++;
     }

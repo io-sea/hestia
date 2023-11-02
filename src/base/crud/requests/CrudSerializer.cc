@@ -97,16 +97,6 @@ void CrudSerializer::append_json(
     }
 }
 
-Model::Ptr CrudSerializer::create_template() const
-{
-    return m_model_serializer->create_template();
-}
-
-Model* CrudSerializer::get_template() const
-{
-    return m_model_serializer->get_template();
-}
-
 void CrudSerializer::append_dict(
     Dictionary::Ptr dict, CrudResponse& response, bool record_modified) const
 {
@@ -119,18 +109,7 @@ void CrudSerializer::append_dict(
     }
     else {
         if (record_modified) {
-            if (dict->is_sequence()) {
-                for (const auto& item : dict->get_sequence()) {
-                    Map flat_attrs;
-                    item->flatten(flat_attrs);
-                    response.modified_attrs().push_back(flat_attrs);
-                }
-            }
-            else {
-                Map flat_attrs;
-                dict->flatten(flat_attrs);
-                response.modified_attrs().push_back(flat_attrs);
-            }
+            response.modified_attrs() = *dict;
         }
 
         CrudIdentifier::FormatSpec id_format;
@@ -138,6 +117,16 @@ void CrudSerializer::append_dict(
             m_model_serializer->get_template()->get_primary_key_name();
         response.add_attributes(std::move(dict), id_format);
     }
+}
+
+Model::Ptr CrudSerializer::create_template() const
+{
+    return m_model_serializer->create_template();
+}
+
+Model* CrudSerializer::get_template() const
+{
+    return m_model_serializer->get_template();
 }
 
 bool CrudSerializer::matches_query(const Model& item, const Map& query) const

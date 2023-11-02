@@ -44,6 +44,15 @@ void CrudResponse::add_attributes(
     const std::string& buffer, const CrudAttributes::FormatSpec& format)
 {
     m_attributes.append(buffer, format);
+    m_ids = CrudIdentifierCollection(m_attributes.get_ids());
+}
+
+void CrudResponse::add_attributes(
+    std::unique_ptr<Dictionary> dict,
+    const CrudIdentifier::FormatSpec& id_format)
+{
+    m_ids.load(*dict, id_format);
+    m_attributes.set_body(std::move(dict));
 }
 
 void CrudResponse::add_ids(
@@ -105,14 +114,6 @@ bool CrudResponse::found() const
     return !m_items.empty() || !m_ids.empty() || has_attributes();
 }
 
-void CrudResponse::add_attributes(
-    std::unique_ptr<Dictionary> dict,
-    const CrudIdentifier::FormatSpec& id_format)
-{
-    m_ids.load(*dict, id_format);
-    m_attributes.set_body(std::move(dict));
-}
-
 void CrudResponse::set_attributes(JsonDocument::Ptr json)
 {
     m_attributes.set_body(std::move(json));
@@ -133,6 +134,26 @@ bool CrudResponse::locked() const
 {
     return m_locked;
 }
+
+CrudIdentifierCollection& CrudResponse::ids()
+{
+    return m_ids;
+}
+
+const CrudIdentifierCollection& CrudResponse::get_ids() const
+{
+    return m_ids;
+}
+
+Dictionary& CrudResponse::modified_attrs()
+{
+    return m_modified_attrs;
+};
+
+const Dictionary& CrudResponse::modified_attrs() const
+{
+    return m_modified_attrs;
+};
 
 void CrudResponse::write(
     std::string& buffer, const CrudQuery::FormatSpec& format)

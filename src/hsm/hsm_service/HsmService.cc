@@ -173,7 +173,17 @@ CrudResponse::Ptr HsmService::crud_create(
 CrudResponse::Ptr HsmService::do_crud(
     HsmItem::Type subject_type, const CrudRequest& req) const
 {
-    return m_services->get_service(subject_type)->make_request(req);
+    auto response = m_services->get_service(subject_type)->make_request(req);
+    if (subject_type == HsmItem::Type::OBJECT
+        && req.method() == CrudMethod::READ) {
+        if (m_event_feed != nullptr && !response->get_ids().empty()) {
+            CrudEvent read_event(
+                HsmItem::hsm_object_name, CrudMethod::READ, req, *response,
+                "HsmService");
+            m_event_feed->on_event(read_event);
+        }
+    }
+    return response;
 }
 
 void HsmService::do_hsm_action(
@@ -425,6 +435,7 @@ void HsmService::on_put_data_complete(
     if (extent_needs_creation) {
         extent.set_object_id(working_object.get_primary_key());
         extent.set_tier_id(get_tier_id(tier));
+        extent.set_tier_name(tier);
         extent.set_backend_id(store_id);
     }
     extent.add_extent(working_extent);
@@ -729,6 +740,7 @@ void HsmService::move_data(
         target_extent.set_object_id(working_object->get_primary_key());
         target_extent.set_tier_id(get_tier_id(req.target_tier()));
         target_extent.set_backend_id(copy_data_response->get_store_id());
+        target_extent.set_tier_name(req.target_tier());
     }
     target_extent.add_extent(working_extent);
     source_extent.remove_extent(working_extent);
@@ -828,6 +840,7 @@ void HsmService::copy_data(
         target_extent.set_object_id(working_object->get_primary_key());
         target_extent.set_tier_id(get_tier_id(req.target_tier()));
         target_extent.set_backend_id(copy_data_response->get_store_id());
+        target_extent.set_tier_name(req.target_tier());
     }
     target_extent.add_extent(working_extent);
 

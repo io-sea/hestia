@@ -52,7 +52,7 @@ const std::vector<std::string>& CrudEvent::get_ids() const
     return m_subject_ids.container();
 }
 
-const std::vector<Map>& CrudEvent::get_modified_attrs() const
+const Dictionary& CrudEvent::get_modified_attrs() const
 {
     return m_modified_attrs;
 }

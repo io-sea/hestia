@@ -55,6 +55,8 @@ class Dictionary {
 
     Dictionary(const Dictionary& other);
 
+    static Ptr create(const Dictionary& other);
+
     static Ptr create(Type type = Type::MAP);
 
     static Ptr create(const Map& flat, const FormatSpec& format);
@@ -64,7 +66,7 @@ class Dictionary {
         const std::string& value,
         ScalarType scalar_type);
 
-    void add_sequence_item(std::unique_ptr<Dictionary> item);
+    void add_sequence_item(Dictionary::Ptr item);
 
     void expand(const Map& flat_representation, const FormatSpec& format = {});
 
@@ -75,6 +77,8 @@ class Dictionary {
     void for_each_scalar(onItem func) const;
 
     Dictionary* get_map_item(const std::string& key) const;
+
+    const Dictionary* get_item(std::size_t idx) const;
 
     Dictionary::Ptr get_copy_of_item(std::size_t idx) const;
 
@@ -97,10 +101,9 @@ class Dictionary {
 
     Type get_type() const;
 
-    const std::vector<std::unique_ptr<Dictionary>>& get_sequence() const;
+    const std::vector<Dictionary::Ptr>& get_sequence() const;
 
-    const std::unordered_map<std::string, std::unique_ptr<Dictionary>>&
-    get_map() const;
+    const std::unordered_map<std::string, Dictionary::Ptr>& get_map() const;
 
     void get_map_items(
         Map& sink, const std::vector<std::string>& exclude_keys = {}) const;
@@ -122,7 +125,14 @@ class Dictionary {
 
     bool is_map() const;
 
-    void set_map_item(const std::string& key, std::unique_ptr<Dictionary> item);
+    Dictionary* set_map_item(
+        const std::string& key, Dictionary::Ptr item = nullptr);
+
+    void set_map_scalar(
+        const std::string& key,
+        const std::string& value,
+        ScalarType scalar_type,
+        const std::string& tag = {});
 
     /**
      * Set the node to be of scalar type and its value
@@ -164,8 +174,8 @@ class Dictionary {
     std::pair<std::string, std::string> m_tag;
     std::string m_scalar;
     ScalarType m_scalar_type{ScalarType::STRING};
-    std::vector<std::unique_ptr<Dictionary>> m_sequence;
-    std::unordered_map<std::string, std::unique_ptr<Dictionary>> m_map;
+    std::vector<Dictionary::Ptr> m_sequence;
+    std::unordered_map<std::string, Dictionary::Ptr> m_map;
 };
 
 }  // namespace hestia

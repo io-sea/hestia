@@ -1,6 +1,7 @@
 #include "HsmEventSink.h"
 
 #include "Dictionary.h"
+#include "ErrorUtils.h"
 #include "HashUtils.h"
 #include "Logger.h"
 #include "StringUtils.h"
@@ -83,66 +84,26 @@ void HsmEventSink::write(const std::string& content) const
     output_file << content;
 }
 
-Dictionary* HsmEventSink::add_root(Dictionary& input) const
-{
-    input.set_map_item("root", Dictionary::create());
-    return input.get_map_item("root");
-}
-
-void add_scalar(
+Dictionary* prepare_dict(
     Dictionary& dict,
-    const std::string& key,
-    const std::string& value,
-    const std::string& tag             = "",
-    Dictionary::ScalarType scalar_type = Dictionary::ScalarType::STRING)
+    const std::string& tag,
+    const std::string& id,
+    const std::string& time)
 {
-    if (value.empty()) {
-        return;
-    }
-    if (dict.get_type() != Dictionary::Type::MAP) {
-        LOG_ERROR("Dictionary must be map to set scalar by key");
-        return;
-    }
-    dict.set_map_item(key, Dictionary::create(Dictionary::Type::SCALAR));
-    dict.get_map_item(key)->set_scalar(value, scalar_type);
-    dict.get_map_item(key)->set_tag(tag);
+    auto root_dict = dict.set_map_item("root");
+    root_dict->set_tag(tag);
+    root_dict->set_map_scalar("id", id, Dictionary::ScalarType::STRING);
+    root_dict->set_map_scalar("time", time, Dictionary::ScalarType::INT);
+    return root_dict;
 }
 
-void set_string(
-    Dictionary& dict, const std::string& key, const std::string& value)
+Dictionary* prepare_dict(
+    Dictionary& dict,
+    const std::string& tag,
+    const std::string& id,
+    std::time_t time)
 {
-    add_scalar(dict, key, value, "", Dictionary::ScalarType::STRING);
-}
-
-void set_literal(
-    Dictionary& dict, const std::string& key, const std::string& value)
-{
-    add_scalar(dict, key, value, "", Dictionary::ScalarType::INT);
-}
-
-void set_xattrs(Dictionary& dict, const Map& meta, const char delim = '.')
-{
-    dict.set_map_item("attrs", Dictionary::create(Dictionary::Type::MAP));
-    auto xattrs = dict.get_map_item("attrs");
-
-    for (const auto& [key, value] : meta.data()) {
-        if (value.empty()) {
-            continue;
-        }
-        auto sub_key  = StringUtils::split_on_first(key, delim);
-        auto sub_dict = xattrs;
-        while (!sub_key.second.empty()) {
-            if (!sub_dict->has_map_item(sub_key.first)) {
-                sub_dict->set_map_item(
-                    sub_key.first, Dictionary::create(Dictionary::Type::MAP));
-            }
-            sub_dict = sub_dict->get_map_item(sub_key.first);
-            sub_key  = StringUtils::split_on_first(sub_key.second, delim);
-        }
-        add_scalar(
-            *sub_dict, sub_key.first, value, "",
-            Dictionary::ScalarType::STRING);
-    }
+    return prepare_dict(dict, tag, id, std::to_string(time));
 }
 
 void HsmEventSink::on_extent_changed(const CrudEvent& event) const
@@ -151,7 +112,7 @@ void HsmEventSink::on_extent_changed(const CrudEvent& event) const
     std::string out;
     for (const auto& id : event.get_ids()) {
         Dictionary output_dict;
-        on_extent_changed(event.get_user_context(), *add_root(output_dict), id);
+        on_extent_changed(event.get_user_context(), output_dict, id);
         YamlUtils::dict_to_yaml(output_dict, out);
     }
     write(out);
@@ -167,83 +128,154 @@ void HsmEventSink::on_extent_changed(
     const auto response = extent_service->make_request(CrudRequest{
         CrudMethod::READ,
         CrudQuery{CrudIdentifier(id), CrudQuery::BodyFormat::ITEM},
-        user_context});
+        user_context, false});
     if (!response->found()) {
-        throw std::runtime_error(
-            "Failed to find requested item in event sink check");
+        const std::string msg =
+            SOURCE_LOC()
+            + " | Failed to find requested item in event sink check: " + id;
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
 
     const auto extent    = response->get_item_as<TierExtents>();
     const auto object_id = extent->get_object_id();
 
-    const auto object_service =
-        m_hsm_service->get_service(HsmItem::Type::OBJECT);
-    const auto object_response = object_service->make_request(CrudRequest{
-        CrudMethod::READ,
-        CrudQuery{CrudIdentifier(object_id), CrudQuery::BodyFormat::ITEM},
-        user_context});
-    if (!object_response->found()) {
-        throw std::runtime_error(
-            "Failed to find requested item in event sink check");
-    }
+    on_object_update(dict, object_id, user_context);
+}
 
-    const auto object = object_response->get_item_as<HsmObject>();
+void HsmEventSink::on_object_create_or_update(
+    Dictionary& dict,
+    const HsmObject& object,
+    const CrudUserContext& user_context) const
+{
+    auto xattrs = dict.set_map_item("attrs");
 
-    dict.set_tag("update");
-    set_string(dict, "id", object_id);
-    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
+    std::size_t object_size{0};
+    auto tiers_dict = xattrs->set_map_item("tiers");
+    tiers_dict->set_type(Dictionary::Type::SEQUENCE);
 
     std::vector<std::string> tier_ids;
-    for (const auto& extent : object->tiers()) {
+    for (const auto& extent : object.tiers()) {
         tier_ids.push_back(extent.get_tier_id());
     }
 
     const auto tier_service  = m_hsm_service->get_service(HsmItem::Type::TIER);
     const auto tier_response = tier_service->make_request(CrudRequest{
         CrudMethod::READ, CrudQuery{tier_ids, CrudQuery::BodyFormat::ITEM},
-        user_context});
-    if (!tier_response->found()) {
-        throw std::runtime_error(
-            "Failed to find requested item in event sink check");
-    }
+        user_context, false});
+    if (tier_response->found()) {
+        std::unordered_map<std::string, std::string> tier_names;
+        for (const auto& tier : tier_response->items()) {
+            tier_names[tier->get_primary_key()] = tier->name();
+        }
 
-    std::unordered_map<std::string, std::string> tier_names;
-    for (const auto& tier : tier_response->items()) {
-        tier_names[tier->get_primary_key()] = tier->name();
-    }
+        for (const auto& tier_extent : object.tiers()) {
+            auto tier_dict = Dictionary::create();
 
-    Map xattrs;
-    for (const auto& tier_extent : object->tiers()) {
-        const auto tier_name = tier_names[tier_extent.get_tier_id()];
-        assert(!tier_name.empty());
-        std::string extents_str;
-        for (const auto& [offset, extent] : tier_extent.get_extents()) {
-            if (extent.empty()) {
-                continue;
+            const auto tier_name = tier_names[tier_extent.get_tier_id()];
+            tier_dict->set_map_scalar(
+                "name", tier_name, Dictionary::ScalarType::INT);
+
+            auto extents_dict = Dictionary::create(Dictionary::Type::SEQUENCE);
+            bool has_extents{false};
+            for (const auto& [offset, extent] : tier_extent.get_extents()) {
+                if (extent.empty()) {
+                    continue;
+                }
+                has_extents = true;
+
+                auto extent_dict = Dictionary::create();
+                extent_dict->set_map_scalar(
+                    "offset", std::to_string(extent.m_offset),
+                    Dictionary::ScalarType::INT);
+                extent_dict->set_map_scalar(
+                    "length", std::to_string(extent.m_length),
+                    Dictionary::ScalarType::INT);
+                const auto extent_max_size = extent.m_offset + extent.m_length;
+                if (extent_max_size > object_size) {
+                    object_size = extent_max_size;
+                }
+                extents_dict->add_sequence_item(std::move(extent_dict));
             }
-            extents_str += std::to_string(extent.m_offset) + ","
-                           + std::to_string(extent.m_length) + ";";
+            tier_dict->set_map_item("extents", std::move(extents_dict));
+            if (has_extents) {
+                tiers_dict->add_sequence_item(std::move(tier_dict));
+            }
         }
-        if (!extents_str.empty()) {
-            extents_str = extents_str.substr(0, extents_str.size() - 1);
-        }
-        xattrs.set_item("tiers." + tier_name, extents_str);
     }
-    set_xattrs(dict, xattrs);
+
+    xattrs->set_map_scalar(
+        "size", std::to_string(object_size), Dictionary::ScalarType::INT);
+
+    Dictionary::FormatSpec dict_format;
+    auto metadata_dict = xattrs->set_map_item("user_metadata");
+    for (const auto& [key, value] : object.metadata().data()) {
+        metadata_dict->set_map_scalar(
+            key, value, Dictionary::ScalarType::STRING);
+    }
+}
+
+void HsmEventSink::on_object_update(
+    Dictionary& dict,
+    const std::string& object_id,
+    const CrudUserContext& user_context) const
+{
+    const auto object_service =
+        m_hsm_service->get_service(HsmItem::Type::OBJECT);
+    const auto object_response = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(object_id), CrudQuery::BodyFormat::ITEM},
+        user_context, false});
+    if (!object_response->found()) {
+        const std::string msg =
+            SOURCE_LOC()
+            + " | Failed to find requested item in event sink check: "
+            + object_id;
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+    const auto object = object_response->get_item_as<HsmObject>();
+
+    auto root_dict = prepare_dict(
+        dict, "update", object_id, object->get_last_modified_time());
+    on_object_create_or_update(*root_dict, *object, user_context);
+}
+
+void HsmEventSink::on_object_create(
+    Dictionary& dict,
+    const std::string& id,
+    const CrudUserContext& user_context) const
+{
+    LOG_INFO("Object create");
+
+    const auto object_service =
+        m_hsm_service->get_service(HsmItem::Type::OBJECT);
+    const auto object_response = object_service->make_request(CrudRequest{
+        CrudMethod::READ,
+        CrudQuery{CrudIdentifier(id), CrudQuery::BodyFormat::ITEM},
+        user_context, false});
+    if (!object_response->found()) {
+        const std::string msg =
+            SOURCE_LOC()
+            + " | Failed to find requested item in event sink check: " + id;
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+    const auto object = object_response->get_item_as<HsmObject>();
+
+    auto root_dict =
+        prepare_dict(dict, "create", id, object->get_creation_time());
+    on_object_create_or_update(*root_dict, *object, user_context);
 }
 
 void HsmEventSink::on_object_create(const CrudEvent& event) const
 {
     LOG_INFO("Got hsm object create");
     std::string out;
-    std::size_t count{0};
-    assert(event.get_ids().size() == event.get_modified_attrs().size());
     for (const auto& id : event.get_ids()) {
         Dictionary output_dict;
-        on_object_create(
-            *add_root(output_dict), id, event.get_modified_attrs()[count]);
+        on_object_create(output_dict, id, event.get_user_context());
         YamlUtils::dict_to_yaml(output_dict, out);
-        count++;
     }
     write(out);
 }
@@ -254,31 +286,18 @@ void HsmEventSink::on_object_read(const CrudEvent& event) const
     assert(!event.get_ids().empty());
 
     Dictionary dict;
-    auto root_dict = add_root(dict);
-
-    root_dict->set_tag("read");
-
-    set_string(*root_dict, "id", event.get_ids()[0]);
-    set_literal(
-        *root_dict, "time", std::to_string(TimeUtils::get_current_time()));
+    prepare_dict(
+        dict, "read", event.get_ids()[0], TimeUtils::get_current_time());
 
     std::string out;
     YamlUtils::dict_to_yaml(dict, out);
     write(out);
 }
 
-void HsmEventSink::on_object_create(
-    Dictionary& dict, const std::string& id, const Map& metadata) const
+void HsmEventSink::on_object_remove(
+    Dictionary& dict, const std::string& id) const
 {
-    LOG_INFO("Object create");
-    dict.set_tag("create");
-
-    set_string(dict, "id", id);
-    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
-
-    Map xattrs;
-    metadata.copy_with_prefix({"dataset.id", "name"}, xattrs, {}, false);
-    set_xattrs(dict, xattrs);
+    prepare_dict(dict, "remove", id, TimeUtils::get_current_time());
 }
 
 void HsmEventSink::on_object_remove(const CrudEvent& event) const
@@ -287,18 +306,10 @@ void HsmEventSink::on_object_remove(const CrudEvent& event) const
     std::string out;
     for (const auto& id : event.get_ids()) {
         Dictionary output_dict;
-        on_object_remove(*add_root(output_dict), id);
+        on_object_remove(output_dict, id);
         YamlUtils::dict_to_yaml(output_dict, out);
     }
     write(out);
-}
-
-void HsmEventSink::on_object_remove(
-    Dictionary& dict, const std::string& id) const
-{
-    dict.set_tag("remove");
-    set_string(dict, "id", id);
-    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
 }
 
 std::string HsmEventSink::get_metadata_object_id(
@@ -311,8 +322,12 @@ std::string HsmEventSink::get_metadata_object_id(
         CrudQuery{CrudIdentifier(metadata_id), CrudQuery::BodyFormat::ITEM},
         user_context, false});
     if (!response->found()) {
-        throw std::runtime_error(
-            "Failed to find requested item in event sink check");
+        const std::string msg =
+            SOURCE_LOC()
+            + " | Failed to find requested item in event sink check: "
+            + metadata_id;
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
     return response->get_item_as<UserMetadata>()->object();
 }
@@ -320,26 +335,28 @@ std::string HsmEventSink::get_metadata_object_id(
 void HsmEventSink::on_user_metadata_update(
     const CrudUserContext& user_context,
     Dictionary& dict,
-    const std::string& id,
-    const Map& metadata) const
+    const std::string& id) const
 {
     LOG_INFO("Metadata update");
-
-    if (metadata.empty()) {
-        return;
-    }
-
     const auto object_id = get_metadata_object_id(user_context, id);
-
-    dict.set_tag("update");
-    set_string(dict, "id", object_id);
-    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
-
-    Map xattrs;
-    metadata.copy_with_prefix({"data."}, xattrs, "user_metadata.");
-    set_xattrs(dict, xattrs);
-
+    on_object_update(dict, object_id, user_context);
     LOG_INFO("Finished metadata update");
+}
+
+void HsmEventSink::on_user_metadata_update(const CrudEvent& event) const
+{
+    std::string out;
+    for (const auto& id : event.get_ids()) {
+        Dictionary output_dict;
+        on_user_metadata_update(event.get_user_context(), output_dict, id);
+        YamlUtils::dict_to_yaml(output_dict, out);
+    }
+    write(out);
+}
+
+void HsmEventSink::on_object_read(Dictionary& dict, const std::string& id) const
+{
+    prepare_dict(dict, "read", id, TimeUtils::get_current_time());
 }
 
 void HsmEventSink::on_user_metadata_read(
@@ -348,28 +365,8 @@ void HsmEventSink::on_user_metadata_read(
     const std::string& id) const
 {
     LOG_INFO("Metadata read");
-
     const auto object_id = get_metadata_object_id(user_context, id);
-
-    dict.set_tag("read");
-    set_string(dict, "id", object_id);
-    set_literal(dict, "time", std::to_string(TimeUtils::get_current_time()));
-}
-
-void HsmEventSink::on_user_metadata_update(const CrudEvent& event) const
-{
-    std::string out;
-    std::size_t count{0};
-    assert(event.get_ids().size() == event.get_modified_attrs().size());
-    for (const auto& id : event.get_ids()) {
-        Dictionary output_dict;
-        on_user_metadata_update(
-            event.get_user_context(), *add_root(output_dict), id,
-            event.get_modified_attrs()[count]);
-        YamlUtils::dict_to_yaml(output_dict, out);
-        count++;
-    }
-    write(out);
+    on_object_read(dict, object_id);
 }
 
 void HsmEventSink::on_user_metadata_read(const CrudEvent& event) const
@@ -377,8 +374,7 @@ void HsmEventSink::on_user_metadata_read(const CrudEvent& event) const
     std::string out;
     for (const auto& id : event.get_ids()) {
         Dictionary output_dict;
-        on_user_metadata_read(
-            event.get_user_context(), *add_root(output_dict), id);
+        on_user_metadata_read(event.get_user_context(), output_dict, id);
         YamlUtils::dict_to_yaml(output_dict, out);
     }
     write(out);

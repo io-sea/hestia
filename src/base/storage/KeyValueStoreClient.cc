@@ -2,6 +2,7 @@
 
 #include "RequestException.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 
 #define CATCH_FLOW()                                                           \
@@ -92,8 +93,9 @@ void KeyValueStoreClient::on_exception(
     const std::string& message) const
 {
     if (!message.empty()) {
-        const std::string msg = "Exception in " + request.method_as_string()
-                                + " method: " + message;
+        const std::string msg = SOURCE_LOC() + " | Exception in "
+                                + request.method_as_string() + " method.\n"
+                                + message;
         const CrudRequestError error(CrudErrorCode::STL_EXCEPTION, msg);
         LOG_ERROR("Error: " << error << " msg " << message);
         response->on_error(error);
@@ -112,8 +114,8 @@ void KeyValueStoreClient::on_exception(
     KeyValueStoreResponse* response,
     const RequestError<CrudErrorCode>& error) const
 {
-    const std::string msg =
-        "Error in " + request.method_as_string() + " method: ";
+    const std::string msg = SOURCE_LOC() + " | Error in "
+                            + request.method_as_string() + " method. \n";
     LOG_ERROR(msg << error);
     response->on_error(error);
 }

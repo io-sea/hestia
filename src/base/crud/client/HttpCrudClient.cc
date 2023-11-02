@@ -47,7 +47,7 @@ void HttpCrudClient::make_request(
     HttpRequest::Method method,
     CrudResponse& crud_response) const
 {
-    if (crud_request.has_ids()) {
+    if (crud_request.has_ids() && crud_request.method() != CrudMethod::CREATE) {
         std::size_t count{0};
         for (const auto& id : crud_request.get_ids().data()) {
             std::string path_suffix;

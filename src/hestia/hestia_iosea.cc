@@ -670,32 +670,14 @@ int hestia_object_locate(
 
 int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids)
 {
-    // Convert the 'tier_id' to tier unique identifier
+    // Query tier extents matching this tier name
+    std::string filter = "tier_name=" + std::to_string(tier_id);
+
     char* output{nullptr};
     int totals{0};
     int output_size{0};
 
-    auto tier_name = std::to_string(tier_id);
-
     auto rc = hestia_read(
-        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_IDS,
-        hestia_id_format_t::HESTIA_NAME, 0, 0, tier_name.c_str(),
-        tier_name.size(), hestia_io_format_t::HESTIA_IO_IDS, &output,
-        &output_size, &totals);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (output_size == 0) {
-        return hestia_error_t::HESTIA_ERROR_NOT_FOUND;
-    }
-
-    // Query tier extents matching this unique identifier
-    std::string filter = "tier.id=" + std::string(output);
-    delete[] output;
-    output = nullptr;
-
-    rc = hestia_read(
         hestia_item_t::HESTIA_TIER_EXTENT,
         hestia_query_format_t::HESTIA_QUERY_FILTER,
         hestia_id_format_t::HESTIA_NAME, 0, 0, filter.c_str(), filter.size(),
@@ -704,9 +686,19 @@ int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids)
         return rc;
     }
 
+    if (output_size == 0) {
+        *num_ids = 0;
+        return 0;
+    }
+
+    const auto output_str = std::string(output, output_size);
+    delete[] output;
+
+    std::cout << "query result is " << output_str << std::endl;
+
     // Get the object id from these extents
     Dictionary attr_dict;
-    attr_dict.from_string(std::string(output, output_size));
+    attr_dict.from_string(output_str);
 
     std::vector<std::string> object_id_strs;
     if (attr_dict.get_type() == Dictionary::Type::SEQUENCE) {

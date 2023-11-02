@@ -80,6 +80,15 @@ void KeyValueCrudClient::create(
     auto content = Dictionary::create(Dictionary::Type::SEQUENCE);
     create_context.serialize_request(crud_request, ids, *content);
 
+    // Check if any keys exist and fail if so
+    std::vector<std::string> keys;
+    create_context.get_item_keys(ids, keys);
+    auto any_found = check_keys_exist(keys, false);
+    if (any_found) {
+        throw std::runtime_error(
+            SOURCE_LOC() + "| Supplied id already exists in Create");
+    }
+
     // Prepare a dictionary to override creation-related fields (e.g. created
     // and last modified times)
     Dictionary creation_overrides;
@@ -136,6 +145,14 @@ void KeyValueCrudClient::update(
         m_serializer.get(), m_config.m_prefix, id_from_parent_id_func);
     update_context.serialize_request(crud_request, *content);
 
+    if (update_context.get_index_keys().empty()) {
+        const std::string msg =
+            SOURCE_LOC()
+            + " Attempted to Update resource without resolved primary key.";
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
     // Get the queried items from the db.
     VecModelPtr db_items;
     get_db_items(update_context.get_index_keys(), db_items);
@@ -185,13 +202,13 @@ void KeyValueCrudClient::read(
     KeyValueReadContext read_context(
         m_serializer.get(), m_config.m_prefix, db_get_item_func,
         db_get_sets_func, id_from_parent_id_func);
-    if (!read_context.serialize_request(request)) {
 
+    if (!read_context.serialize_request(request)) {
         return;
     }
 
     // Read item content from the DB
-    auto read_content = std::make_unique<Dictionary>();
+    auto read_content = Dictionary::create();
     if (!get_db_items(
             read_context.get_index_keys(), *read_content,
             request.get_query().expects_single_item())) {
@@ -215,9 +232,26 @@ void KeyValueCrudClient::read(
             get_db_items(foreign_keys), foreign_key_set_sizes,
             foreign_key_content);
     }
+    read_context.merge_proxy_content(foreign_key_content, *read_content);
 
-    read_context.merge_foreign_key_content(foreign_key_content, *read_content);
+    // Read one-to-one items
+    Dictionary one_to_one_content(Dictionary::Type::SEQUENCE);
+    if (read_context.has_one_to_one_content()) {
+        // Build db queries for one to one items
+        std::vector<std::vector<std::string>> key_ids;
+        get_db_sets(read_context.get_one_to_one_keys(), key_ids);
 
+        std::vector<std::string> foreign_keys;
+        std::vector<std::size_t> foreign_key_set_sizes;
+        read_context.get_one_to_one_key_query(
+            key_ids, foreign_keys, foreign_key_set_sizes);
+
+        // Get the foreign key content from DB
+        read_context.process_one_to_one_content(
+            get_db_items(foreign_keys), one_to_one_content);
+    }
+
+    read_context.merge_proxy_content(one_to_one_content, *read_content);
     m_serializer->append_dict(std::move(read_content), crud_response);
 }
 
@@ -227,6 +261,14 @@ void KeyValueCrudClient::remove(
     // Prepare a db GET query
     KeyValueRemoveContext remove_context(m_serializer.get(), m_config.m_prefix);
     remove_context.serialize_request(request);
+
+    if (remove_context.get_index_keys().empty()) {
+        const std::string msg =
+            SOURCE_LOC()
+            + " Attempted to Remove resource without resolved primary key.";
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 
     // Do the query - if any item not found then fail
     const auto db_items = get_db_items(remove_context.get_index_keys());
@@ -265,18 +307,7 @@ void KeyValueCrudClient::remove(
 void KeyValueCrudClient::assign_modified_attributes(
     const Dictionary& content, CrudResponse& response) const
 {
-    if (content.get_type() == Dictionary::Type::SEQUENCE) {
-        for (const auto& item : content.get_sequence()) {
-            Map flat_attrs;
-            item->flatten(flat_attrs);
-            response.modified_attrs().push_back(flat_attrs);
-        }
-    }
-    else {
-        Map flat_attrs;
-        content.flatten(flat_attrs);
-        response.modified_attrs().push_back(flat_attrs);
-    }
+    response.modified_attrs() = content;
 }
 
 std::string KeyValueCrudClient::get_db_item(const std::string& key) const
@@ -342,6 +373,27 @@ bool KeyValueCrudClient::get_db_items(
     return true;
 }
 
+bool KeyValueCrudClient::check_keys_exist(
+    std::vector<std::string>& keys, bool false_if_any_missing) const
+{
+    const auto response = m_client->make_request(
+        {KeyValueStoreRequestMethod::STRING_EXISTS, keys, m_config.m_endpoint});
+    error_check("EXISTS", response.get());
+
+    if (false_if_any_missing) {
+        const auto any_false = std::any_of(
+            response->found().begin(), response->found().end(),
+            [](bool entry) { return !entry; });
+        return !any_false;
+    }
+    else {
+        const auto all_true = std::all_of(
+            response->found().begin(), response->found().end(),
+            [](bool entry) { return entry; });
+        return all_true;
+    }
+}
+
 void KeyValueCrudClient::get_db_sets(
     const std::vector<std::string>& keys,
     std::vector<std::vector<std::string>>& values) const
@@ -403,7 +455,8 @@ void KeyValueCrudClient::error_check(
     const std::string& identifier, const BaseResponse* response) const
 {
     if (!response->ok()) {
-        const std::string msg = "Error in kv_store " + identifier + ": "
+        const std::string msg = SOURCE_LOC() + "| Error in kv_store "
+                                + identifier + ".\n"
                                 + response->get_base_error().to_string();
         LOG_ERROR(msg);
         throw RequestException<CrudRequestError>({CrudErrorCode::ERROR, msg});

@@ -21,8 +21,14 @@ class TestCrudServiceFixture {
         m_many_many_parent_service =
             hestia::mock::MockCrudService::create_many_many_parent(
                 m_service->m_kv_store_client.get());
+        m_one_to_one_service = hestia::mock::MockCrudService::create_one_to_one(
+            m_service->m_kv_store_client.get());
+
+        m_service->register_child_service(
+            "mock_one_to_one_model", m_one_to_one_service.get());
     }
     hestia::mock::MockCrudService::Ptr m_service;
+    hestia::mock::MockCrudService::Ptr m_one_to_one_service;
     hestia::mock::MockCrudService::Ptr m_mock_with_parent_service;
     hestia::mock::MockCrudService::Ptr m_parent_service;
     hestia::mock::MockCrudService::Ptr m_many_many_parent_service;
@@ -453,4 +459,43 @@ TEST_CASE_METHOD(
         updated_many_many_response
             ->get_item_as<hestia::mock::MockManyToManyTargetModel>();
     REQUIRE(updated_many_many->get_many_to_many_children().size() == 1);
+}
+
+TEST_CASE_METHOD(
+    TestCrudServiceFixture,
+    "Test Crud Service - OneToOne Realtions",
+    "[crud-service]")
+{
+    const auto create_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
+
+    REQUIRE(create_response->ok());
+    REQUIRE(create_response->items().size() == 1);
+
+    auto mock_model = create_response->get_item_as<hestia::mock::MockModel>();
+
+    REQUIRE(mock_model->get_child().get_field() == "one_to_one_field");
+
+    auto child = mock_model->get_child();
+    child.set_field("my_new_field");
+
+    const auto update_response = m_one_to_one_service->make_request(
+        hestia::TypedCrudRequest<hestia::mock::MockOneToOneModel>{
+            hestia::CrudMethod::UPDATE,
+            child,
+            {hestia::CrudQuery::BodyFormat::ITEM},
+            {}});
+
+    const auto read_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::READ,
+        {hestia::CrudIdentifier(create_response->items()[0]->get_primary_key()),
+         hestia::CrudQuery::BodyFormat::ITEM},
+        {}});
+
+    // std::cout << m_service->m_kv_store_client->dump() << std::endl;
+
+    auto updated_mock_model =
+        read_response->get_item_as<hestia::mock::MockModel>();
+
+    REQUIRE(updated_mock_model->get_child().get_field() == "my_new_field");
 }

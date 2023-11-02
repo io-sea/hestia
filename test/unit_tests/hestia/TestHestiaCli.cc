@@ -197,11 +197,13 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
     run();
     m_console->m_output.clear();
 
-    /*
     WHEN("Key value pairs are used for the update")
     {
         std::vector<std::string> args = {
-            "hestia", "metadata", "update", "1234",
+            "hestia",
+            "metadata",
+            "update",
+            "1234",
             "--id_fmt=parent_id",
             "--input_fmt=key_value",
             "--output_fmt=key_value"};
@@ -219,8 +221,8 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
             REQUIRE_FALSE(dict.get_map_item("data")->is_empty());
         }
     }
-    */
 
+    /*
     WHEN("Json is used for the update")
     {
         std::vector<std::string> args = {"hestia",
@@ -247,6 +249,7 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
             REQUIRE_FALSE(dict.get_map_item("data")->is_empty());
         }
     }
+    */
 }
 
 /*

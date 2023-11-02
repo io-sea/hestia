@@ -22,12 +22,13 @@ void TimedLock::unlock()
 
 void TimedLock::serialize(Dictionary& dict, Format) const
 {
-    std::unordered_map<std::string, std::string> data = {
-        {"active", m_active ? "true" : "false"},
-        {"locked_at", std::to_string(m_locked_at)},
-        {"max_lock_time", std::to_string(m_max_lock_time)},
-    };
-    dict.set_map(data);
+    dict.set_map_scalar(
+        "active", m_active ? "true" : "false", Dictionary::ScalarType::BOOL);
+    dict.set_map_scalar(
+        "locked_at", std::to_string(m_locked_at), Dictionary::ScalarType::INT);
+    dict.set_map_scalar(
+        "max_lock_time", std::to_string(m_max_lock_time),
+        Dictionary::ScalarType::INT);
 }
 
 void TimedLock::deserialize(const Dictionary& dict, Format)

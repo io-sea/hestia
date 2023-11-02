@@ -40,6 +40,8 @@ class TierExtents : public HsmItem, public LockableModel {
 
     void set_backend_id(const std::string& id) { m_backend.set_id(id); }
 
+    void set_tier_name(uint8_t name) { m_tier_id.update_value(name); }
+
     const std::map<std::size_t, Extent>& get_extents() const
     {
         return m_extents.container();

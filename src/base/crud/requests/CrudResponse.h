@@ -65,15 +65,13 @@ class CrudResponse : public Response<CrudErrorCode> {
 
     VecModelPtr& items();
 
-    CrudIdentifierCollection& ids() { return m_ids; }
+    CrudIdentifierCollection& ids();
 
-    const CrudIdentifierCollection& get_ids() const { return m_ids; }
+    const CrudIdentifierCollection& get_ids() const;
 
-    std::vector<std::string>& parent_ids() { return m_parent_ids; }
+    Dictionary& modified_attrs();
 
-    std::vector<Map>& modified_attrs() { return m_modified_attrs; };
-
-    const std::vector<Map>& modified_attrs() const { return m_modified_attrs; };
+    const Dictionary& modified_attrs() const;
 
     void set_attributes(JsonDocument::Ptr json);
 
@@ -89,9 +87,7 @@ class CrudResponse : public Response<CrudErrorCode> {
     CrudQuery::BodyFormat m_output_format;
 
     CrudIdentifierCollection m_ids;
-    std::vector<std::string> m_parent_ids;
-
-    std::vector<Map> m_modified_attrs;
+    Dictionary m_modified_attrs;
 
     bool m_locked{false};
     std::string m_type;

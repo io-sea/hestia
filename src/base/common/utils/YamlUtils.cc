@@ -38,8 +38,7 @@ void YamlUtils::load(const std::string& path, Dictionary& dict)
 }
 
 void YamlUtils::load_all(
-    const std::string& path,
-    std::vector<std::unique_ptr<hestia::Dictionary>>& dicts)
+    const std::string& path, std::vector<Dictionary::Ptr>& dicts)
 {
     std::vector<YAML::Node> roots = YAML::LoadAllFromFile(path);
 
@@ -138,56 +137,46 @@ void on_map_item(
 
     emitter << YAML::Value;
 
-    if (value->is_empty()) {
-        emitter << YAML::Null;
-    }
-    else {
-        switch (value->get_type()) {
-            case Dictionary::Type::MAP:
-                on_map(*value, emitter, sorted);
-                break;
-            case Dictionary::Type::SEQUENCE:
-                on_sequence(*value, emitter, sorted);
-                break;
-            case Dictionary::Type::SCALAR:
-                if (value->get_scalar_type()
-                    == Dictionary::ScalarType::STRING) {
-                    emitter << YAML::DoubleQuoted << value->get_scalar();
-                }
-                else {
-                    emitter << value->get_scalar();
-                }
-        }
+    switch (value->get_type()) {
+        case Dictionary::Type::MAP:
+            on_map(*value, emitter, sorted);
+            break;
+        case Dictionary::Type::SEQUENCE:
+            on_sequence(*value, emitter, sorted);
+            break;
+        case Dictionary::Type::SCALAR:
+            if (value->get_scalar_type() == Dictionary::ScalarType::STRING) {
+                emitter << YAML::DoubleQuoted << value->get_scalar();
+            }
+            else {
+                emitter << value->get_scalar();
+            }
     }
 }
 
 void on_map(const Dictionary& dict, YAML::Emitter& emitter, const bool sorted)
 {
-    if (dict.is_empty()) {
-        return;
-    }
     emitter << YAML::BeginMap;
+    if (!dict.is_empty()) {
+        if (sorted) {
+            std::vector<std::string> keys;
+            keys.reserve(dict.get_map().size());
 
-    if (sorted) {
-        std::vector<std::string> keys;
-        keys.reserve(dict.get_map().size());
+            for (const auto& elem : dict.get_map()) {
+                keys.push_back(elem.first);
+            }
 
-        for (const auto& elem : dict.get_map()) {
-            keys.push_back(elem.first);
+            std::sort(keys.begin(), keys.end());
+            for (const auto& key : keys) {
+                on_map_item(key, dict.get_map_item(key), emitter, sorted);
+            }
         }
-
-        std::sort(keys.begin(), keys.end());
-
-        for (const auto& key : keys) {
-            on_map_item(key, dict.get_map_item(key), emitter, sorted);
+        else {
+            for (const auto& [key, value] : dict.get_map()) {
+                on_map_item(key, value.get(), emitter, sorted);
+            }
         }
     }
-    else {
-        for (const auto& [key, value] : dict.get_map()) {
-            on_map_item(key, value.get(), emitter, sorted);
-        }
-    }
-
     emitter << YAML::EndMap;
 }
 

@@ -5,6 +5,7 @@
 #include "InMemoryStreamSource.h"
 
 #include "CacheTestFixture.h"
+#include "TestClientConfigs.h"
 
 #include <future>
 #include <iostream>
@@ -16,12 +17,13 @@ class TestHestiaClient : public hestia::HestiaClient {
 
 class HestiaClientTestFixture : public CacheTestFixture {
   public:
-    void init(const std::string& test_name)
+    HestiaClientTestFixture()
     {
-        CacheTestFixture::do_init(__FILE__, test_name);
+        hestia::Dictionary extra_config;
+        hestia::TestClientConfigs::get_hsm_memory_client_config(extra_config);
 
         m_client = std::make_unique<TestHestiaClient>();
-        m_client->initialize(m_config_path);
+        m_client->initialize({}, {}, extra_config);
     }
 
     hestia::HestiaResponse::Ptr make_request(
@@ -32,7 +34,6 @@ class HestiaClientTestFixture : public CacheTestFixture {
 
         auto completion_cb =
             [&response_promise](hestia::HestiaResponse::Ptr response) {
-                REQUIRE(response->get_status().ok());
                 response_promise.set_value(std::move(response));
             };
         m_client->make_request(req, completion_cb, stream);
@@ -69,8 +70,6 @@ class HestiaClientTestFixture : public CacheTestFixture {
 
 TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
 {
-    init("TestHestiaClient");
-
     hestia::VecCrudIdentifier ids;
     hestia::CrudAttributes attributes;
 
@@ -134,4 +133,23 @@ TEST_CASE_METHOD(HestiaClientTestFixture, "Test Hestia Client", "[hestia]")
     make_request(move_req);
 
     get_and_check(working_id, 2, content);
+}
+
+TEST_CASE_METHOD(
+    HestiaClientTestFixture,
+    "Test Hestia Client - Attempt overwrite",
+    "[hestia]")
+{
+    hestia::CrudIdentifierCollection ids;
+    ids.add_primary_key("1234");
+
+    hestia::HestiaRequest create_req(
+        hestia::HsmItem::Type::OBJECT, hestia::CrudMethod::CREATE);
+    create_req.set_ids(ids);
+
+    auto create_response = make_request(create_req);
+    REQUIRE(create_response->ok());
+
+    auto create_response2 = make_request(create_req);
+    REQUIRE_FALSE(create_response2->ok());
 }

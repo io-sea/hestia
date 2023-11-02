@@ -4,6 +4,32 @@
 #include "RelationshipField.h"
 
 namespace hestia::mock {
+
+class MockOneToOneModel : public Model {
+  public:
+    MockOneToOneModel();
+
+    MockOneToOneModel(const std::string& id);
+
+    MockOneToOneModel(const MockOneToOneModel& other);
+
+    MockOneToOneModel& operator=(const MockOneToOneModel& other);
+
+    const std::string& get_field() const;
+
+    void set_field(const std::string& field);
+
+    static std::string get_type();
+
+    static std::unique_ptr<ModelFactory> create_factory();
+
+    void init();
+
+    static constexpr char s_name[]{"mock_one_to_one_model"};
+    StringField m_my_field{"my_field", "one_to_one_field"};
+    ForeignKeyField m_parent{"parent", "mock_model"};
+};
+
 class MockModel : public Model {
   public:
     MockModel();
@@ -14,6 +40,8 @@ class MockModel : public Model {
 
     MockModel& operator=(const MockModel& other);
 
+    const MockOneToOneModel& get_child() const;
+
     static std::string get_type();
 
     static std::unique_ptr<ModelFactory> create_factory();
@@ -22,6 +50,7 @@ class MockModel : public Model {
 
     static constexpr char s_name[]{"mock_model"};
     StringField m_my_field{"my_field", "default_field"};
+    OneToOneProxyField<MockOneToOneModel> m_child{"my_one_to_one_child", true};
 };
 
 class MockModelWithParent : public Model {

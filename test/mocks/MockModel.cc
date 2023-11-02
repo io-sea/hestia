@@ -18,11 +18,17 @@ MockModel::MockModel(const MockModel& other) : Model(other)
     *this = other;
 }
 
+const MockOneToOneModel& MockModel::get_child() const
+{
+    return m_child.value();
+}
+
 MockModel& MockModel::operator=(const MockModel& other)
 {
     if (this != &other) {
         Model::operator=(other);
         m_my_field = other.m_my_field;
+        m_child    = other.m_child;
         init();
     }
     return *this;
@@ -42,6 +48,61 @@ void MockModel::init()
 {
     m_name.set_index_scope(BaseField::IndexScope::PARENT);
     register_scalar_field(&m_my_field);
+    register_one_to_one_proxy_field(&m_child);
+}
+
+MockOneToOneModel::MockOneToOneModel() : Model(s_name)
+{
+    init();
+}
+
+MockOneToOneModel::MockOneToOneModel(const std::string& id) : Model(id, s_name)
+{
+    init();
+}
+
+const std::string& MockOneToOneModel::get_field() const
+{
+    return m_my_field.get_value();
+}
+
+void MockOneToOneModel::set_field(const std::string& field)
+{
+    m_my_field.update_value(field);
+}
+
+MockOneToOneModel::MockOneToOneModel(const MockOneToOneModel& other) :
+    Model(other)
+{
+    *this = other;
+}
+
+MockOneToOneModel& MockOneToOneModel::operator=(const MockOneToOneModel& other)
+{
+    if (this != &other) {
+        Model::operator=(other);
+        m_my_field = other.m_my_field;
+        m_parent   = other.m_parent;
+        init();
+    }
+    return *this;
+}
+
+std::unique_ptr<ModelFactory> MockOneToOneModel::create_factory()
+{
+    return std::make_unique<TypedModelFactory<MockOneToOneModel>>();
+}
+
+std::string MockOneToOneModel::get_type()
+{
+    return s_name;
+}
+
+void MockOneToOneModel::init()
+{
+    m_name.set_index_scope(BaseField::IndexScope::PARENT);
+    register_scalar_field(&m_my_field);
+    register_foreign_key_field(&m_parent);
 }
 
 MockModelWithParent::MockModelWithParent() : Model(s_mock_with_parent_name)

@@ -23,8 +23,7 @@ class YamlUtils {
     /// @param path Path of YAML file to load
     /// @param dicts Vector of dictionaries to read the YAML documents to
     static void load_all(
-        const std::string& path,
-        std::vector<std::unique_ptr<hestia::Dictionary>>& dicts);
+        const std::string& path, std::vector<Dictionary::Ptr>& dicts);
 
     /// @brief Serialize a dictionary to a YAML string
     ///

@@ -34,19 +34,31 @@ class KeyValueReadContext : public KeyValueFieldContext {
 
     const std::vector<std::string>& get_foreign_key_proxy_keys() const;
 
+    const std::vector<std::string>& get_one_to_one_keys() const;
+
     void get_foreign_key_query(
+        const std::vector<std::vector<std::string>>& ids,
+        std::vector<std::string>& keys,
+        std::vector<std::size_t>& sizes) const;
+
+    void get_one_to_one_key_query(
         const std::vector<std::vector<std::string>>& ids,
         std::vector<std::string>& keys,
         std::vector<std::size_t>& sizes) const;
 
     bool has_foreign_key_content() const;
 
+    bool has_one_to_one_content() const;
+
     void process_foreign_key_content(
         const std::vector<std::string>& db_values,
         const std::vector<std::size_t>& sizes,
         Dictionary& foreign_key_dicts) const;
 
-    void merge_foreign_key_content(
+    void process_one_to_one_content(
+        const std::vector<std::string>& db_values, Dictionary& key_dicts) const;
+
+    void merge_proxy_content(
         const Dictionary& foreign_key_dict, Dictionary& read_result) const;
 
   private:
@@ -77,9 +89,15 @@ class KeyValueReadContext : public KeyValueFieldContext {
 
     void update_foreign_proxy_keys(const std::string& item_id);
 
+    void update_one_to_one_keys(const std::string& item_id);
+
     std::vector<std::string> m_index_keys;
+
     std::vector<std::string> m_foreign_key_proxy_keys;
     VecKeyValuePair m_foreign_key_proxies;
+
+    std::vector<std::string> m_one_to_one_keys;
+    VecKeyValuePair m_one_to_one_key_proxies;
 
     dbGetItemFunc m_db_get_item_func;
     dbGetSetsFunc m_db_get_sets_func;

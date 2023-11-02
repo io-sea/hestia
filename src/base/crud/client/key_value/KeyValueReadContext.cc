@@ -27,6 +27,9 @@ bool KeyValueReadContext::serialize_request(const CrudRequest& request)
     m_serializer->get_template()->get_foreign_key_proxy_fields(
         m_foreign_key_proxies);
 
+    m_serializer->get_template()->get_one_to_one_fields(
+        m_one_to_one_key_proxies);
+
     if (request.has_ids()) {
         if (!serialize_ids(request.get_ids(), request.get_user_context())) {
             return false;
@@ -132,6 +135,28 @@ void KeyValueReadContext::process_foreign_key_content(
     }
 }
 
+void KeyValueReadContext::process_one_to_one_content(
+    const std::vector<std::string>& db_values, Dictionary& key_dicts) const
+{
+    if (db_values.empty()) {
+        return;
+    }
+
+    for (std::size_t idx = 0; idx < m_index_keys.size(); idx++) {
+        auto item_dict         = Dictionary::create();
+        const auto num_proxies = m_one_to_one_key_proxies.size();
+        for (std::size_t jdx = 0; jdx < num_proxies; jdx++) {
+            const auto name            = m_one_to_one_key_proxies[jdx].second;
+            const auto index           = idx * num_proxies + jdx;
+            auto one_to_one_entry_dict = Dictionary::create();
+            JsonDocument(db_values[index]).write(*one_to_one_entry_dict);
+            item_dict->set_map_item(name, std::move(one_to_one_entry_dict));
+        }
+        key_dicts.add_sequence_item(std::move(item_dict));
+    }
+}
+
+
 void KeyValueReadContext::add_db_items_to_dict(
     const std::vector<std::string>& db_items,
     const std::string& name,
@@ -141,7 +166,7 @@ void KeyValueReadContext::add_db_items_to_dict(
 {
     assert(offset + size <= db_items.size());
 
-    auto items_dict = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
+    auto items_dict = Dictionary::create(Dictionary::Type::SEQUENCE);
     for (std::size_t idx = 0; idx < size; idx++) {
         add_db_item_to_dict(db_items[offset + idx], *items_dict);
     }
@@ -152,12 +177,13 @@ void KeyValueReadContext::add_item_id(const std::string& item_id)
 {
     m_index_keys.push_back(get_item_key(item_id));
     update_foreign_proxy_keys(item_id);
+    update_one_to_one_keys(item_id);
 }
 
 void KeyValueReadContext::add_db_item_to_dict(
     const std::string& db_item, Dictionary& dict) const
 {
-    auto item_dict = std::make_unique<Dictionary>();
+    auto item_dict = Dictionary::create();
     JsonDocument(db_item).write(*item_dict);
     dict.add_sequence_item(std::move(item_dict));
 }
@@ -171,6 +197,15 @@ void KeyValueReadContext::update_foreign_proxy_keys(const std::string& item_id)
     }
 }
 
+void KeyValueReadContext::update_one_to_one_keys(const std::string& item_id)
+{
+    for (const auto& [type, name] : m_one_to_one_key_proxies) {
+        const auto key =
+            get_proxy_key(m_serializer->get_type(), item_id) + ":" + type + "s";
+        m_one_to_one_keys.push_back(key);
+    }
+}
+
 std::string KeyValueReadContext::get_proxy_key(
     const std::string& type, const std::string& id) const
 {
@@ -181,6 +216,16 @@ const std::vector<std::string>&
 KeyValueReadContext::get_foreign_key_proxy_keys() const
 {
     return m_foreign_key_proxy_keys;
+}
+
+const std::vector<std::string>& KeyValueReadContext::get_one_to_one_keys() const
+{
+    return m_one_to_one_keys;
+}
+
+bool KeyValueReadContext::has_one_to_one_content() const
+{
+    return !m_one_to_one_keys.empty();
 }
 
 bool KeyValueReadContext::has_foreign_key_content() const
@@ -213,26 +258,51 @@ void KeyValueReadContext::get_foreign_key_query(
     }
 }
 
-void KeyValueReadContext::merge_foreign_key_content(
-    const Dictionary& foreign_key_dict, Dictionary& read_result) const
+void KeyValueReadContext::get_one_to_one_key_query(
+    const std::vector<std::vector<std::string>>& ids,
+    std::vector<std::string>& keys,
+    std::vector<std::size_t>& sizes) const
 {
-    if (foreign_key_dict.is_empty()) {
+    const auto num_proxies = m_one_to_one_key_proxies.size();
+
+    if (ids.empty()) {
+        sizes.assign(m_index_keys.size() * num_proxies, 0);
         return;
     }
-    assert(!foreign_key_dict.get_sequence().empty());
+
+    for (std::size_t idx = 0; idx < m_index_keys.size(); idx++) {
+        for (std::size_t jdx = 0; jdx < num_proxies; jdx++) {
+            const auto offset = idx * num_proxies + jdx;
+            const auto type   = m_one_to_one_key_proxies[jdx].first;
+            assert(offset < ids.size());
+            for (const auto& id : ids[offset]) {
+                keys.push_back(get_proxy_key(type, id));
+            }
+            sizes.push_back(ids[offset].size());
+        }
+    }
+}
+
+void KeyValueReadContext::merge_proxy_content(
+    const Dictionary& key_dict, Dictionary& read_result) const
+{
+    if (key_dict.is_empty()) {
+        return;
+    }
+    assert(!key_dict.get_sequence().empty());
 
     if (read_result.get_type() == Dictionary::Type::SEQUENCE) {
         assert(
             read_result.get_sequence().size()
-            == foreign_key_dict.get_sequence().size());
+            == key_dict.get_sequence().size());
         for (std::size_t idx = 0; idx < read_result.get_sequence().size();
              idx++) {
             read_result.get_sequence()[idx]->merge(
-                *foreign_key_dict.get_sequence()[idx]);
+                *key_dict.get_sequence()[idx]);
         }
     }
     else {
-        read_result.merge(*foreign_key_dict.get_sequence()[0]);
+        read_result.merge(*key_dict.get_sequence()[0]);
     }
 }
 

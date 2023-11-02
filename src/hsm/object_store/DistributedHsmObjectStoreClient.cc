@@ -138,6 +138,10 @@ HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_remote_get(
         "Remote GET complete ok from location: "
         << response->object().get_location());
 
+    if (stream->waiting_for_content()) {
+        (void)stream->reset();
+    }
+
     return response;
 }
 

@@ -193,12 +193,16 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     REQUIRE((object_tiers[0] == 0 || object_tiers[0] == 1));
     REQUIRE((object_tiers[1] == 0 || object_tiers[1] == 1));
     hestia_free_tier_ids(&object_tiers);
+
     return;
 
     HestiaId* tier_object_ids{nullptr};
     std::size_t num_tier_object_ids{0};
     rc = hestia_object_list(0, &tier_object_ids, &num_tier_object_ids);
+
     REQUIRE(rc == 0);
 
     REQUIRE(num_tier_object_ids == 1);
+
+    hestia_free_ids(&tier_object_ids);
 }

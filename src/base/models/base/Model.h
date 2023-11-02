@@ -47,6 +47,8 @@ class Model : public SerializeableWithFields {
 
     void get_default_create_one_to_one_fields(VecKeyValuePair& fields) const;
 
+    void get_one_to_one_fields(VecKeyValuePair& fields) const;
+
     bool has_owner() const;
 
     void init_creation_time(std::time_t ctime);

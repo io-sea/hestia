@@ -9,6 +9,7 @@
 namespace hestia {
 
 class HsmService;
+class HsmObject;
 
 class HsmEventSink : public EventSink {
   public:
@@ -25,8 +26,7 @@ class HsmEventSink : public EventSink {
     void on_user_metadata_update(
         const CrudUserContext& user_context,
         Dictionary& dict,
-        const std::string& id,
-        const Map& metadata) const;
+        const std::string& id) const;
 
     void on_user_metadata_read(const CrudEvent& event) const;
 
@@ -48,18 +48,30 @@ class HsmEventSink : public EventSink {
 
     void on_object_create(const CrudEvent& event) const;
 
+    void on_object_create(
+        Dictionary& dict,
+        const std::string& id,
+        const CrudUserContext& user_context) const;
+
+    void on_object_update(
+        Dictionary& dict,
+        const std::string& id,
+        const CrudUserContext& user_context) const;
+
+    void on_object_create_or_update(
+        Dictionary& dict,
+        const HsmObject& object,
+        const CrudUserContext& user_context) const;
+
     void on_object_read(const CrudEvent& event) const;
 
-    void on_object_create(
-        Dictionary& dict, const std::string& id, const Map& metadata) const;
+    void on_object_read(Dictionary& dict, const std::string& id) const;
 
     void on_object_remove(const CrudEvent& event) const;
 
     void on_object_remove(Dictionary& dict, const std::string& id) const;
 
     void write(const std::string& content) const;
-
-    Dictionary* add_root(Dictionary& input) const;
 
     HsmService* m_hsm_service{nullptr};
     std::string m_output_file;
