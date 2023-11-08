@@ -5,6 +5,7 @@
 #include "ObjectStoreResponse.h"
 #include "Stream.h"
 
+#include <functional>
 #include <vector>
 
 namespace hestia {
@@ -48,9 +49,14 @@ class ObjectStoreClient {
      * @param stream if object data is to be provided (e.g. PUT) or retrieved (e.g. GET) it will be via the Stream
      * @return a response - which can contain error info, a non-data payload and request metadata
      */
-    [[nodiscard]] virtual ObjectStoreResponse::Ptr make_request(
+
+    using completionFunc = std::function<void(ObjectStoreResponse::Ptr)>;
+    using progressFunc   = std::function<void(ObjectStoreResponse::Ptr)>;
+    virtual void make_request(
         const ObjectStoreRequest& request,
-        Stream* stream = nullptr) const noexcept;
+        completionFunc completion_func,
+        progressFunc progress_func = nullptr,
+        Stream* stream             = nullptr) const noexcept;
 
   protected:
     virtual bool exists(const StorageObject& object) const = 0;
@@ -60,12 +66,16 @@ class ObjectStoreClient {
         std::vector<StorageObject>& fetched) const = 0;
 
     virtual void get(
-        StorageObject& object, const Extent& extent, Stream* stream) const = 0;
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const = 0;
 
     virtual void put(
-        const StorageObject& object,
-        const Extent& extent,
-        Stream* stream) const = 0;
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const = 0;
 
     virtual void remove(const StorageObject& object) const = 0;
 

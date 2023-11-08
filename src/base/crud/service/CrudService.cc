@@ -47,8 +47,9 @@ CrudService::~CrudService() {}
     const CrudRequest& request, const std::string&) const noexcept
 {
     LOG_INFO(
-        "Starting Subject: " << get_type()
-                             << ", Method: " << request.method_as_string());
+        "Starting Subject: " << get_type() << ", Method: "
+                             << request.method_as_string() << " with "
+                             << request.get_ids().size() << " ids.");
 
     auto response = std::make_unique<CrudResponse>(
         request, get_type(), request.get_output_format());

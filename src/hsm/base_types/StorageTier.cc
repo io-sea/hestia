@@ -31,9 +31,10 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
 {
     if (this != &other) {
         Model::operator=(other);
-        m_backends  = other.m_backends;
-        m_capacity  = other.m_capacity;
-        m_bandwidth = other.m_bandwidth;
+        m_backends     = other.m_backends;
+        m_tier_extents = other.m_tier_extents;
+        m_capacity     = other.m_capacity;
+        m_bandwidth    = other.m_bandwidth;
         init();
     }
     return *this;
@@ -44,6 +45,7 @@ void StorageTier::init()
     m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
 
     register_foreign_key_proxy_field(&m_backends);
+    register_foreign_key_proxy_field(&m_tier_extents);
     register_scalar_field(&m_capacity);
     register_scalar_field(&m_bandwidth);
 }
@@ -61,6 +63,11 @@ std::size_t StorageTier::get_capacity() const
 std::size_t StorageTier::get_bandwidth() const
 {
     return m_bandwidth.get_value();
+}
+
+const std::vector<TierExtents>& StorageTier::get_extents() const
+{
+    return m_tier_extents.models();
 }
 
 void StorageTier::set_capacity(std::size_t capacity)

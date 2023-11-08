@@ -73,7 +73,10 @@ void MockMotrInterfaceImpl::initialize_hsm(
 }
 
 void MockMotrInterfaceImpl::put(
-    const HsmObjectStoreRequest& request, hestia::Stream* stream) const
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc) const
 {
     MotrObject motr_obj(request.object().id());
 
@@ -118,15 +121,24 @@ void MockMotrInterfaceImpl::put(
 
     auto sink = InMemoryStreamSink::create(sink_func);
     stream->set_sink(std::move(sink));
+
+    auto stream_completion_cb = [request, completion_func](StreamState state) {
+        auto response = HsmObjectStoreResponse::create(request, "");
+        if (!state.ok()) {
+            response->on_error(
+                {HsmObjectStoreErrorCode::ERROR, state.message()});
+        }
+        completion_func(std::move(response));
+    };
+    stream->set_completion_func(stream_completion_cb);
 }
 
 void MockMotrInterfaceImpl::get(
     const HsmObjectStoreRequest& request,
-    hestia::StorageObject& object,
-    hestia::Stream* stream) const
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc) const
 {
-    (void)object;
-
     MotrObject motr_obj(request.object().id());
     motr_obj.m_size = request.object().size();
 
@@ -168,9 +180,22 @@ void MockMotrInterfaceImpl::get(
 
     auto source = hestia::InMemoryStreamSource::create(source_func);
     stream->set_source(std::move(source));
+
+    auto stream_completion_cb = [request, completion_func](StreamState state) {
+        auto response = HsmObjectStoreResponse::create(request, "");
+        if (!state.ok()) {
+            response->on_error(
+                {HsmObjectStoreErrorCode::ERROR, state.message()});
+        }
+        completion_func(std::move(response));
+    };
+    stream->set_completion_func(stream_completion_cb);
 }
 
-void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
+void MockMotrInterfaceImpl::remove(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc) const
 {
     MotrObject motr_obj(request.object().id());
 
@@ -185,9 +210,13 @@ void MockMotrInterfaceImpl::remove(const HsmObjectStoreRequest& request) const
         LOG_ERROR(msg);
         throw std::runtime_error(msg);
     }
+    completion_func(HsmObjectStoreResponse::create(request, ""));
 }
 
-void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
+void MockMotrInterfaceImpl::copy(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc) const
 {
     MotrObject motr_obj(request.object().id());
     std::size_t length = request.extent().m_length;
@@ -205,9 +234,13 @@ void MockMotrInterfaceImpl::copy(const HsmObjectStoreRequest& request) const
         LOG_ERROR(msg);
         throw std::runtime_error(msg);
     }
+    completion_func(HsmObjectStoreResponse::create(request, ""));
 }
 
-void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
+void MockMotrInterfaceImpl::move(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc) const
 {
     MotrObject motr_obj(request.object().id());
     std::size_t length = request.extent().m_length;
@@ -225,5 +258,6 @@ void MockMotrInterfaceImpl::move(const HsmObjectStoreRequest& request) const
         LOG_ERROR(msg);
         throw std::runtime_error(msg);
     }
+    completion_func(HsmObjectStoreResponse::create(request, ""));
 }
 }  // namespace hestia

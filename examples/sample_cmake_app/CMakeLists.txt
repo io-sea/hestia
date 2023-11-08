@@ -13,3 +13,6 @@ endif()
 
 add_executable(hestia_sample_app_c main.c)
 target_link_libraries(hestia_sample_app_c PRIVATE hestia::hestia_lib)
+
+add_executable(hestia_sample_iosea_app_c main_iosea.c)
+target_link_libraries(hestia_sample_iosea_app_c PRIVATE hestia::hestia_lib)

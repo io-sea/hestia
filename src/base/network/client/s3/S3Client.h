@@ -12,6 +12,8 @@
 #include "S3ListObjectsRequest.h"
 #include "S3Request.h"
 
+#include <functional>
+
 namespace hestia {
 
 class S3Client {
@@ -35,19 +37,26 @@ class S3Client {
         const S3Bucket& bucket,
         const S3Request& request) const;
 
-    S3Status get_object(
+    using completionFunc = std::function<void(S3Response::Ptr response)>;
+    void get_object(
         const S3Object& object,
         const S3Bucket& bucket,
         const S3Request& request,
-        Stream* stream);
+        Stream* stream,
+        completionFunc completion_func,
+        std::size_t progress_interval          = 0,
+        HttpClient::progressFunc progress_func = nullptr);
+
+    void put_object(
+        const S3Object& object,
+        const S3Bucket& bucket,
+        const S3Request& request,
+        Stream* stream,
+        completionFunc completion_func,
+        std::size_t progress_interval          = 0,
+        HttpClient::progressFunc progress_func = nullptr);
 
     S3ListBucketResponse::Ptr list_buckets(const S3Request& request) const;
-
-    S3Status put_object(
-        const S3Object& object,
-        const S3Bucket& bucket,
-        const S3Request& request,
-        Stream* stream);
 
     S3ListObjectsResponse::Ptr list_objects(
         const S3Bucket& bucket, const S3ListObjectsRequest& request);

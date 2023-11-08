@@ -28,6 +28,10 @@ class HsmObject : public HsmItem, public LockableModel {
 
     void set_dataset_id(const std::string& id);
 
+    void set_content_modified_time(std::time_t t);
+
+    void set_content_accessed_time(std::time_t t);
+
     const std::vector<TierExtents>& tiers() const;
 
     HsmObject& operator=(const HsmObject& other);
@@ -40,5 +44,8 @@ class HsmObject : public HsmItem, public LockableModel {
     OneToOneProxyField<UserMetadata> m_metadata{"user_metadata", true};
     ForeignKeyProxyField<TierExtents> m_tier_extents{"tiers"};
     ForeignKeyField m_dataset{"dataset", HsmItem::dataset_name};
+
+    DateTimeField m_content_modified_time{"content_modified_time"};
+    DateTimeField m_content_accessed_time{"content_accessed_time"};
 };
 }  // namespace hestia

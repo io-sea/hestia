@@ -15,7 +15,8 @@ class IConsoleInterface {
 
     virtual void console_write_error(const std::string& output) const = 0;
 
-    virtual void console_read(std::string& buffer) const = 0;
+    virtual void console_read(
+        std::string& buffer, std::vector<char> break_sequence = {}) const = 0;
 };
 
 class ConsoleInterface : public IConsoleInterface {
@@ -28,6 +29,8 @@ class ConsoleInterface : public IConsoleInterface {
 
     void console_write_error(const std::string& output) const override;
 
-    void console_read(std::string& buffer) const override;
+    void console_read(
+        std::string& buffer,
+        std::vector<char> break_sequence = {}) const override;
 };
 }  // namespace hestia

@@ -39,18 +39,32 @@ class MotrInterface {
 
     void initialize(const MotrConfig& config);
 
-    void copy(const HsmObjectStoreRequest& request) const;
+    void copy(
+        const HsmObjectStoreRequest& request,
+        IMotrInterfaceImpl::completionFunc completion_func,
+        IMotrInterfaceImpl::progressFunc progress_func) const;
 
     void get(
         const HsmObjectStoreRequest& request,
-        StorageObject& object,
-        Stream* stream) const;
+        Stream* stream,
+        IMotrInterfaceImpl::completionFunc completion_func,
+        IMotrInterfaceImpl::progressFunc progress_func) const;
 
-    void move(const HsmObjectStoreRequest& request) const;
+    void move(
+        const HsmObjectStoreRequest& request,
+        IMotrInterfaceImpl::completionFunc completion_func,
+        IMotrInterfaceImpl::progressFunc progress_func) const;
 
-    void put(const HsmObjectStoreRequest& request, Stream* stream) const;
+    void put(
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        IMotrInterfaceImpl::completionFunc completion_func,
+        IMotrInterfaceImpl::progressFunc progress_func) const;
 
-    void remove(const HsmObjectStoreRequest& request) const;
+    void remove(
+        const HsmObjectStoreRequest& request,
+        IMotrInterfaceImpl::completionFunc completion_func,
+        IMotrInterfaceImpl::progressFunc progress_func) const;
 
   private:
     void validate_config(MotrConfig& config);

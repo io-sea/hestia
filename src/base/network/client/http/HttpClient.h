@@ -3,6 +3,8 @@
 #include "HttpRequest.h"
 #include "Stream.h"
 
+#include <functional>
+
 namespace hestia {
 
 /**
@@ -15,12 +17,18 @@ class HttpClient {
     virtual ~HttpClient() = default;
 
     /**
-     * Make a sync http request and wait for the response
+     * Make a http request
      * @param request the http request
      * @param stream if present will send or receive the message body
      * @return the http response
      */
-    virtual HttpResponse::Ptr make_request(
-        const HttpRequest& request, Stream* stream = nullptr) = 0;
+    using completionFunc = std::function<void(HttpResponse::Ptr response)>;
+    using progressFunc   = std::function<void(std::size_t bytes_transferred)>;
+    virtual void make_request(
+        const HttpRequest& request,
+        completionFunc completion_func,
+        Stream* stream                = nullptr,
+        std::size_t progress_interval = 0,
+        progressFunc progess_func     = nullptr) = 0;
 };
 }  // namespace hestia

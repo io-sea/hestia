@@ -219,6 +219,16 @@ void DistributedHsmService::register_self()
     }
 }
 
+const std::string& DistributedHsmService::get_controller_address() const
+{
+    return get_self_config().m_controller_address;
+}
+
+bool DistributedHsmService::is_server() const
+{
+    return get_self_config().m_is_server;
+}
+
 void DistributedHsmService::register_backends()
 {
     if (m_config.m_backends.empty()) {

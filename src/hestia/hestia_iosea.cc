@@ -1,5 +1,6 @@
 #include "hestia_iosea.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 #include "StringUtils.h"
 #include "Uuid.h"
@@ -7,6 +8,7 @@
 #include "hestia_private.h"
 
 #include <iostream>
+#include <set>
 #include <string>
 
 namespace hestia {
@@ -149,7 +151,7 @@ int hestia_object_get(
 
 int hestia_object_set_attrs(
     HestiaId* object_id,
-    const HestiaKeyValuePair* key_value_pairs,
+    const HestiaKeyValuePair key_value_pairs[],
     size_t num_key_pairs)
 {
     if (!HestiaPrivate::check_initialized()) {
@@ -157,6 +159,7 @@ int hestia_object_set_attrs(
     }
 
     if (object_id == nullptr) {
+        LOG_ERROR("Bad input");
         return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
     }
 
@@ -173,10 +176,12 @@ int hestia_object_set_attrs(
         hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
         &totals);
     if (rc != 0) {
+        LOG_ERROR("Bad read");
         return rc;
     }
 
     if (output_size == 0) {
+        LOG_ERROR("Object not found");
         return hestia_error_e::HESTIA_ERROR_NOT_FOUND;
     }
 
@@ -317,8 +322,10 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
     delete[] output;
     output = nullptr;
 
-    object->m_creation_time = get_int_map_item(attr_dict, "creation_time");
-    auto last_modified_time = get_int_map_item(attr_dict, "last_modified_time");
+    object->m_creation_time =
+        static_cast<time_t>(get_int_map_item(attr_dict, "creation_time"));
+    auto last_modified_time =
+        static_cast<time_t>(get_int_map_item(attr_dict, "last_modified_time"));
 
     const auto user_md_id = attr_dict.get_map_item("user_metadata")
                                 ->get_map_item("id")
@@ -338,8 +345,8 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
     delete[] output;
     output = nullptr;
 
-    const auto md_modified_time =
-        get_int_map_item(user_md_dict, "last_modified_time");
+    const auto md_modified_time = static_cast<time_t>(
+        get_int_map_item(user_md_dict, "last_modified_time"));
     if (md_modified_time > last_modified_time) {
         last_modified_time = md_modified_time;
     }
@@ -366,11 +373,11 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
                                      ->get_scalar();
             tier_uuids += tier_id + "\n";
             HestiaTierExtent tier_extent;
-            tier_extent.m_size = size;
-            tier_extent.m_creation_time =
-                get_int_map_item(*tier_extent_dict, "creation_time");
-            tier_extent.m_last_modified_time =
-                get_int_map_item(*tier_extent_dict, "last_modified_time");
+            tier_extent.m_size          = size;
+            tier_extent.m_creation_time = static_cast<time_t>(
+                get_int_map_item(*tier_extent_dict, "creation_time"));
+            tier_extent.m_last_modified_time = static_cast<time_t>(
+                get_int_map_item(*tier_extent_dict, "last_modified_time"));
             if (tier_extent.m_last_modified_time > last_modified_time) {
                 last_modified_time = tier_extent.m_last_modified_time;
             }
@@ -445,6 +452,8 @@ int create_if_not_existing(
         }
     }
     else if (create_mode == hestia_create_mode_t::HESTIA_CREATE) {
+        HestiaPrivate::get_client()->set_last_error(
+            SOURCE_LOC() + " | Attempted to overwrite existing object.");
         return hestia_error_e::HESTIA_ERROR_ATTEMPTED_OVERWRITE;
     }
     return 0;
@@ -457,10 +466,12 @@ int hestia_object_put(
     uint8_t tier_id)
 {
     if (!HestiaPrivate::check_initialized()) {
+        HestiaPrivate::get_client()->set_last_error("Failed init check.");
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
     if (object_id == nullptr) {
+        HestiaPrivate::get_client()->set_last_error("Bad object id input.");
         return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
     }
 
@@ -670,42 +681,59 @@ int hestia_object_locate(
 
 int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids)
 {
-    // Query tier extents matching this tier name
-    std::string filter = "tier_name=" + std::to_string(tier_id);
-
     char* output{nullptr};
     int totals{0};
     int output_size{0};
 
+    auto tier_name = std::to_string(tier_id);
+
     auto rc = hestia_read(
-        hestia_item_t::HESTIA_TIER_EXTENT,
-        hestia_query_format_t::HESTIA_QUERY_FILTER,
-        hestia_id_format_t::HESTIA_NAME, 0, 0, filter.c_str(), filter.size(),
-        hestia_io_format_t::HESTIA_IO_IDS, &output, &output_size, &totals);
+        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_IDS,
+        hestia_id_format_t::HESTIA_NAME, 0, 0, tier_name.c_str(),
+        tier_name.size(), hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output,
+        &output_size, &totals);
     if (rc != 0) {
         return rc;
     }
 
     if (output_size == 0) {
+        return hestia_error_t::HESTIA_ERROR_NOT_FOUND;
+    }
+
+    Dictionary attr_dict;
+    attr_dict.from_string(std::string(output, output_size));
+    delete[] output;
+
+    auto extents = attr_dict.get_map_item("extents");
+    if (extents == nullptr) {
         *num_ids = 0;
         return 0;
     }
 
-    const auto output_str = std::string(output, output_size);
-    delete[] output;
-
-    std::cout << "query result is " << output_str << std::endl;
-
-    // Get the object id from these extents
-    Dictionary attr_dict;
-    attr_dict.from_string(output_str);
-
-    std::vector<std::string> object_id_strs;
-    if (attr_dict.get_type() == Dictionary::Type::SEQUENCE) {
+    // Iterate object ids in extents
+    std::set<std::string> object_id_strs;
+    for (const auto& extent :
+         attr_dict.get_map_item("extents")->get_sequence()) {
+        if (extent->has_map_item("object")) {
+            object_id_strs.insert(
+                extent->get_map_item("object")->get_scalar("id"));
+        }
     }
 
-    *num_ids = object_id_strs.size();
-    (void)object_ids;
+    std::vector<Uuid> uuids;
+    for (const auto& id : object_id_strs) {
+        uuids.emplace_back(Uuid::from_string(id));
+    }
+
+    *num_ids    = uuids.size();
+    *object_ids = new HestiaId[uuids.size()];
+
+    std::size_t count{0};
+    for (const auto& uuid : uuids) {
+        (*object_ids)[count].m_lo = uuid.lo();
+        (*object_ids)[count].m_hi = uuid.hi();
+        count++;
+    }
     return 0;
 }
 }

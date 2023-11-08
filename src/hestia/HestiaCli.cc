@@ -9,6 +9,7 @@
 #include "DaemonManager.h"
 #include "ErrorUtils.h"
 #include "Logger.h"
+#include "StringUtils.h"
 #include "UuidUtils.h"
 
 #include "ProjectConfig.h"
@@ -129,29 +130,32 @@ void HestiaCli::add_crud_commands(
 {
     commands[subject] = app.add_subcommand(subject, subject + " commands");
 
+    const std::string id_format_help =
+        "Id Format Specifier. One of 'id', 'name', 'parent_id', 'parent_name'";
+    const std::string input_format_help =
+        "Input Format Specifier. One of 'none', 'id', 'json', 'key_value'.";
+    const std::string output_format_help =
+        "Output Format Specifier. One of 'none', 'id', 'json', 'key_value'.";
+
     auto create_cmd =
         commands[subject]->add_subcommand("create", "Create a " + subject);
     create_cmd->add_option(
-        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, id_format_help);
     create_cmd->add_option(
-        "--input_fmt", m_client_command.m_input_format,
-        "Input Format Specifier");
+        "--input_fmt", m_client_command.m_input_format, input_format_help);
     create_cmd->add_option(
-        "--output_fmt", m_client_command.m_output_format,
-        "Output Format Specifier");
+        "--output_fmt", m_client_command.m_output_format, output_format_help);
     create_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_create"] = create_cmd;
 
     auto update_cmd =
         commands[subject]->add_subcommand("update", "Update a " + subject);
     update_cmd->add_option(
-        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, id_format_help);
     update_cmd->add_option(
-        "--input_fmt", m_client_command.m_input_format,
-        "Input Format Specifier");
+        "--input_fmt", m_client_command.m_input_format, input_format_help);
     update_cmd->add_option(
-        "--output_fmt", m_client_command.m_output_format,
-        "Output Format Specifier");
+        "--output_fmt", m_client_command.m_output_format, output_format_help);
     update_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_update"] = update_cmd;
 
@@ -161,10 +165,9 @@ void HestiaCli::add_crud_commands(
         "--query_fmt", m_client_command.m_input_format,
         "Query Format Specifier");
     read_cmd->add_option(
-        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, id_format_help);
     read_cmd->add_option(
-        "--output_fmt", m_client_command.m_output_format,
-        "Output Format Specifier");
+        "--output_fmt", m_client_command.m_output_format, output_format_help);
     read_cmd->add_option(
         "--offset", m_client_command.m_offset, "Page start offset");
     read_cmd->add_option(
@@ -175,17 +178,16 @@ void HestiaCli::add_crud_commands(
     auto remove_cmd =
         commands[subject]->add_subcommand("remove", "Remove a " + subject);
     remove_cmd->add_option(
-        "--id_fmt", m_client_command.m_id_format, "Id Format Specifier");
+        "--id_fmt", m_client_command.m_id_format, id_format_help);
     remove_cmd->add_option("id", m_client_command.m_id, "Subject Id");
     commands[subject + "_remove"] = remove_cmd;
 
     auto identify_cmd =
         commands[subject]->add_subcommand("identify", "Identify a " + subject);
     identify_cmd->add_option(
-        "--id_fmt", m_client_command.m_id_format, "Id Format Spec");
+        "--id_fmt", m_client_command.m_id_format, id_format_help);
     identify_cmd->add_option(
-        "--output_fmt", m_client_command.m_output_format,
-        "Output Format Specifier");
+        "--output_fmt", m_client_command.m_output_format, output_format_help);
     commands[subject + "_identify"] = identify_cmd;
 }
 
@@ -233,9 +235,9 @@ void HestiaCli::parse_args(int argc, char* argv[])
             continue;
         }
 
-        command->add_flag(
-            "--verbose", m_client_command.m_is_verbose,
-            "Print extra diagnostics to Stderr");
+        command->add_option(
+            "--verbosity", m_client_command.m_verbosity,
+            "Controls verbosity level - default is 2. Value 0 stops all output.");
         command->add_option(
             "-c, --config", m_config_path, "Path to a Hestia config file.");
         command->add_option(
@@ -396,8 +398,13 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app, bool skip_init)
         }
     }
 
-    if (m_client_command.m_is_verbose) {
+    if (m_client_command.m_verbosity == 3) {
         print_info(app);
+    }
+
+    if (m_client_command.m_verbosity == 2) {
+        m_console_interface->console_write(
+            m_console_prefix + "Started Hestia Client.");
     }
 
     auto client = dynamic_cast<IHestiaClient*>(app);
@@ -411,13 +418,23 @@ OpStatus HestiaCli::run_client(IHestiaApplication* app, bool skip_init)
         HestiaRequest req(
             m_client_command.m_subject, m_client_command.get_crud_method());
         m_client_command.parse_console_inputs(*m_console_interface, req);
-        return on_client_request(*client, req);
+        const auto status = on_client_request(*client, req);
+        if (m_client_command.m_verbosity == 2) {
+            m_console_interface->console_write(
+                m_console_prefix + "Finished Hestia Client.");
+        }
+        return status;
     }
     else {
         HestiaRequest req(
             m_client_command.m_subject, m_client_command.m_action);
         m_client_command.parse_action(req);
-        return on_client_request(*client, req);
+        const auto status = on_client_request(*client, req);
+        if (m_client_command.m_verbosity == 2) {
+            m_console_interface->console_write(
+                m_console_prefix + "Finished Hestia Client.");
+        }
+        return status;
     }
 }
 
@@ -443,6 +460,33 @@ OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
     auto completion_cb = [&response_promise](HestiaResponse::Ptr response) {
         response_promise.set_value(std::move(response));
     };
+
+    if (m_client_command.m_verbosity == 2) {
+        std::string msg = m_console_prefix;
+        if (req.is_crud_request()) {
+            msg += "Doing " + req.get_crud_request().method_as_string() + " on "
+                   + StringUtils::to_upper(req.get_hsm_type_as_string());
+            if (req.get_crud_request().get_ids().size() == 1) {
+                msg += " with id: "
+                       + req.get_crud_request()
+                             .get_ids()
+                             .first()
+                             .get_primary_key();
+            }
+            else if (!req.get_crud_request().get_ids().empty()) {
+                msg += " with "
+                       + std::to_string(req.get_crud_request().get_ids().size())
+                       + " ids.";
+            }
+        }
+        else {
+            msg +=
+                "Doing HSM Action "
+                + StringUtils::to_upper(req.get_action().get_action_as_string())
+                + " on id " + req.get_action().get_subject_key();
+        }
+        m_console_interface->console_write(msg);
+    }
 
     client.make_request(req, completion_cb, &stream, progress_cb);
 
@@ -474,6 +518,24 @@ OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
         CrudQuery::FormatSpec format;
         format.m_attrs_format.m_json_format.m_collapse_single = true;
         format.m_attrs_format.m_json_format.set_indent(4);
+
+        if (m_client_command.m_verbosity == 2) {
+            std::string msg = m_console_prefix;
+            if (req.is_crud_request()) {
+                msg += "Completed " + req.get_crud_request().method_as_string()
+                       + " on "
+                       + StringUtils::to_upper(req.get_hsm_type_as_string())
+                       + ". With result:";
+            }
+            else {
+                msg += "Completed HSM Action: "
+                       + StringUtils::to_upper(
+                           req.get_action().get_action_as_string())
+                       + " on id " + req.get_action().get_subject_key()
+                       + " with action id: ";
+            }
+            m_console_interface->console_write(msg);
+        }
         m_console_interface->console_write(response->write(format));
     }
     return response->get_status();
@@ -496,6 +558,11 @@ OpStatus HestiaCli::run_server(IHestiaApplication* app)
 
     if (!status.ok()) {
         return status;
+    }
+
+    if (m_client_command.m_verbosity == 2) {
+        print_version();
+        print_info(app);
     }
 
     try {

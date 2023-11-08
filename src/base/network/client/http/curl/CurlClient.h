@@ -32,8 +32,12 @@ class CurlClient : public HttpClient {
      * @param request the http request
      * @return the http response
      */
-    HttpResponse::Ptr make_request(
-        const HttpRequest& request, Stream* stream = nullptr) override;
+    void make_request(
+        const HttpRequest& request,
+        completionFunc completion_func,
+        Stream* stream                = nullptr,
+        std::size_t progress_interval = 0,
+        progressFunc progess_func     = nullptr) override;
 
   private:
     static size_t curl_write_data(

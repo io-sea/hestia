@@ -42,6 +42,8 @@ void KeyValueCrudClient::prepare_creation_overrides(
     ModelCreationContext create_overrides(m_serializer->get_runtime_type());
     create_overrides.m_creation_time.update_value(current_time);
     create_overrides.m_last_modified_time.update_value(current_time);
+    create_overrides.m_last_accessed_time.update_value(current_time);
+
     if (m_serializer->type_has_owner()) {
         create_overrides.add_user(user_context.m_id);
     }
@@ -123,6 +125,7 @@ void KeyValueCrudClient::prepare_update_overrides(
     const auto current_time = m_time_provider->get_current_time();
     ModelUpdateContext update_context(m_serializer->get_type());
     update_context.m_last_modified_time.update_value(current_time);
+    update_context.m_last_accessed_time.update_value(current_time);
     update_context.serialize(update_overrides);
 }
 
@@ -146,11 +149,7 @@ void KeyValueCrudClient::update(
     update_context.serialize_request(crud_request, *content);
 
     if (update_context.get_index_keys().empty()) {
-        const std::string msg =
-            SOURCE_LOC()
-            + " Attempted to Update resource without resolved primary key.";
-        LOG_ERROR(msg);
-        throw std::runtime_error(msg);
+        THROW("Attempted to Update resource without resolved primary key.");
     }
 
     // Get the queried items from the db.
@@ -258,36 +257,56 @@ void KeyValueCrudClient::read(
 void KeyValueCrudClient::remove(
     const CrudRequest& request, CrudResponse& crud_response) const
 {
-    // Prepare a db GET query
+    // Need to do a full READ to identify all parent refs and children
+    CrudRequest read_request(
+        CrudMethod::READ, {request.get_ids(), CrudQuery::BodyFormat::ITEM},
+        request.get_user_context());
+    CrudResponse read_response(
+        read_request, m_serializer->get_type(), CrudQuery::BodyFormat::ITEM);
+
+    read(read_request, read_response);
+    if (!read_response.ok()) {
+        THROW(
+            "Error reading items marked for removal: "
+            << read_response.get_error());
+    }
+
+    if (read_response.items().empty()) {
+        LOG_INFO("Found no items for removal - returning.");
+        return;
+    }
+
+    std::unordered_map<std::string, std::vector<std::string>> child_refs;
+    std::vector<Model::VecForeignKeyContext> parent_refs;
+    for (const auto& item : read_response.items()) {
+        std::unordered_map<std::string, std::vector<std::string>>
+            item_child_refs;
+        item->get_child_ids_by_type(item_child_refs);
+        for (const auto& [key, values] : item_child_refs) {
+            if (child_refs.find(key) != child_refs.end()) {
+                auto& content_ref = child_refs[key];
+                content_ref.insert(
+                    content_ref.end(), values.begin(), values.end());
+            }
+            else {
+                child_refs[key] = values;
+            }
+        }
+
+        Model::VecForeignKeyContext item_parent_refs;
+        item->get_foreign_key_fields(item_parent_refs);
+        parent_refs.push_back(item_parent_refs);
+    }
+
+    // Remove children
+    remove_children(child_refs, request.get_user_context());
+
+    // Set up the db removal queries
     KeyValueRemoveContext remove_context(m_serializer.get(), m_config.m_prefix);
     remove_context.serialize_request(request);
 
-    if (remove_context.get_index_keys().empty()) {
-        const std::string msg =
-            SOURCE_LOC()
-            + " Attempted to Remove resource without resolved primary key.";
-        LOG_ERROR(msg);
-        throw std::runtime_error(msg);
-    }
-
-    // Do the query - if any item not found then fail
-    const auto db_items = get_db_items(remove_context.get_index_keys());
-
-    if (db_items.empty()) {
-        LOG_INFO("Failed to find requested key - not attempting removal");
-        return;
-    }
-    const auto any_empty = std::any_of(
-        db_items.begin(), db_items.end(),
-        [](const std::string& entry) { return entry.empty(); });
-    if (any_empty) {
-        LOG_INFO("Failed to find requested key - not attempting removal");
-        return;
-    }
-
-    // Set up the db removal queries
     std::vector<KeyValuePair> set_remove_keys;
-    remove_context.prepare_db_query(set_remove_keys);
+    remove_context.prepare_db_query(set_remove_keys, parent_refs);
 
     // Do the db removal
     const auto string_response = m_client->make_request(
@@ -341,7 +360,7 @@ void KeyValueCrudClient::get_db_items(
         response->found().begin(), response->found().end(),
         [](bool v) { return !v; });
     if (any_false) {
-        throw std::runtime_error("Attempted to get a non-existing resource");
+        THROW("Attempted to get a non-existing resource");
     }
 
     Dictionary dict;

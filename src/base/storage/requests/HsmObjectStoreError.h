@@ -6,6 +6,7 @@ namespace hestia {
 enum class HsmObjectStoreErrorCode {
     NO_ERROR,
     ERROR,
+    CONFIG_ERROR,
     STL_EXCEPTION,
     UNKNOWN_EXCEPTION,
     UNSUPPORTED_REQUEST_METHOD,

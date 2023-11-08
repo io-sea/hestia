@@ -3,6 +3,8 @@
 
 #include "hestia.h"
 
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,10 +25,9 @@ typedef enum hestia_io_type_e {
 ///
 /// A 128 bit identifier for an object divided into [hi, lo] 64 bit elements.
 ///
-
 typedef struct HestiaId {
-    uint64_t m_lo = 0;  // The lower 64 bits
-    uint64_t m_hi = 0;  // The higher 64 bits
+    uint64_t m_lo;  // The lower 64 bits
+    uint64_t m_hi;  // The higher 64 bits
 } HestiaId;
 
 /// @brief IO Context for pasing data in PUT/GET operations
@@ -35,18 +36,17 @@ typedef struct HestiaId {
 ///
 
 typedef struct HestiaIoContext {
-    hestia_io_type_t m_type =
-        hestia_io_type_t::HESTIA_IO_EMPTY;  // Type of the transfer - see
-                                            // hestia_io_type_t docstring
-    size_t m_offset = 0;  // Offset into the object to insert the bytes - not
-                          // widely supported in backends yet
-    size_t m_length = 0;  // The size of the transfer
-    void* m_buffer =
-        NULL;  // A buffer for memory based transfers. Use with HESTIA_IO_BUFFER
-    char* m_path = NULL;  // A null-terminated path to a file on the system. Use
-                          // with HESTIA_IO_PATH
-    int m_fd = 0;  // An open file descriptor to read/write from. Use with
-                   // HESTIA_IO_DESCRIPTOR
+    hestia_io_type_t m_type;  // Type of the transfer - see
+                              // hestia_io_type_t docstring
+    size_t m_offset;  // Offset into the object to insert the bytes - not
+                      // widely supported in backends yet
+    size_t m_length;  // The size of the transfer
+    void* m_buffer;   // A buffer for memory based transfers. Use with
+                      // HESTIA_IO_BUFFER
+    char* m_path;     // A null-terminated path to a file on the system. Use
+                      // with HESTIA_IO_PATH
+    int m_fd;         // An open file descriptor to read/write from. Use with
+                      // HESTIA_IO_DESCRIPTOR
 } HestiaIoContext;
 
 /// @brief Key-Value Pair helper struct
@@ -55,36 +55,36 @@ typedef struct HestiaIoContext {
 ///
 
 typedef struct HestiaKeyValuePair {
-    char* m_key   = NULL;
-    char* m_value = NULL;
+    char* m_key;
+    char* m_value;
 } HestiaKeyValuePair;
 
 /// @brief Describes object data on a specific storage tier
 ///
 
 typedef struct HestiaTierExtent {
-    uint8_t m_tier_id = 0;  // The id (0-255) of the storage tier
-    size_t m_size =
-        0;  // The size of the data on the tier (max offset + length)
-    unsigned m_creation_time = 0;  // When the data was first added to the tier
-    unsigned m_last_modified_time =
-        0;  // The last time the data on the tier was modified
+    uint8_t m_tier_id;  // The id (0-255) of the storage tier
+    size_t m_size;  // The size of the data on the tier (max offset + length)
+    time_t m_creation_time;       // When the data was first added to the tier
+    time_t m_last_modified_time;  // The last time the data on the tier was
+                                  // modified
 } HestiaTierExtent;
 
 /// @brief Description of a storage object
 ///
 
 typedef struct HestiaObject {
-    char* m_name  = NULL;  // Optional name - this can be an empty string '\0'
-    size_t m_size = 0;     // Largest size of the object across all tiers
-    unsigned m_creation_time = 0;  // When the object was created
-    unsigned m_last_modified_time =
-        0;  // The time of most recent data or metadata update, on any tier.
-    HestiaTierExtent* m_tier_extents =
-        NULL;  // List of data extents on each tier
-    size_t m_num_tier_extents   = 0;
-    HestiaKeyValuePair* m_attrs = NULL;  // List of USER provided metadata
-    size_t m_num_attrs          = 0;
+    char* m_name;            // Optional name - this can be an empty string '\0'
+    size_t m_size;           // Largest size of the object across all tiers
+    time_t m_creation_time;  // When the object was created
+    time_t m_last_modified_time;  // The time of most recent data or metadata
+                                  // update, on any tier.
+    time_t m_last_accessed_time;  // The time of most recent data or
+                                  // metadata read or update on any tier.
+    HestiaTierExtent* m_tier_extents;  // List of data extents on each tier
+    size_t m_num_tier_extents;
+    HestiaKeyValuePair* m_attrs;  // List of USER provided metadata
+    size_t m_num_attrs;
 } HestiaObject;
 
 /// @brief List all tiers in the system
@@ -166,7 +166,7 @@ int hestia_init_object(HestiaObject* object);
 
 int hestia_object_set_attrs(
     HestiaId* object_id,
-    const HestiaKeyValuePair* key_value_pairs,
+    const HestiaKeyValuePair key_value_pairs[],
     size_t num_key_pairs);
 
 /// @brief Copy an object between tiers

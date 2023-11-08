@@ -9,6 +9,7 @@
 
 #include "Logger.h"
 
+#include <future>
 #include <iostream>
 #include <sstream>
 
@@ -33,7 +34,16 @@ void apply_common_headers(
 
 HttpResponse::Ptr HttpCrudClient::make_request(const HttpRequest& req) const
 {
-    auto response = m_client->make_request(req);
+    std::promise<HttpResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto http_completion_func =
+        [&response_promise](HttpResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+    m_client->make_request(req, http_completion_func);
+
+    auto response = response_future.get();
     if (response->error()) {
         throw RequestException<CrudRequestError>(
             {CrudErrorCode::ERROR, SOURCE_LOC() + " | Error in http client: "

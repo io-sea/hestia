@@ -3,6 +3,7 @@
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 #include "ProjectConfig.h"
 
@@ -50,61 +51,103 @@ void InMemoryObjectStoreClient::migrate(
 }
 
 void InMemoryObjectStoreClient::get(
-    StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc progress_func) const
 {
-    auto md_iter = m_metadata.find(object.id());
+    auto md_iter = m_metadata.find(request.object().id());
     if (md_iter == m_metadata.end()) {
-        const std::string msg =
-            "Object " + object.id() + " not found in store.";
+        const std::string msg = SOURCE_LOC() + " | Object "
+                                + request.object().id()
+                                + " not found in store.";
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
     }
-    object.get_metadata_as_writeable().merge(md_iter->second);
 
-    if (stream != nullptr) {
-        auto source_func =
-            [this, object, extent](
-                WriteableBufferView& buffer,
-                std::size_t offset) -> InMemoryStreamSource::Status {
-            (void)offset;
-            const auto status = m_data.read(object.id(), extent, buffer);
+    auto response = ObjectStoreResponse::create(request, m_id);
+    response->object().merge_metadata(md_iter->second);
+
+    if (stream == nullptr) {
+        completion_func(std::move(response));
+    }
+    else {
+        auto source_func = [this, object_id = request.object().id(),
+                            extent = request.extent()](
+                               WriteableBufferView& buffer,
+                               std::size_t) -> InMemoryStreamSource::Status {
+            const auto status = m_data.read(object_id, extent, buffer);
             return {status.is_ok(), status.m_bytes_read};
         };
-        LOG_INFO("Getting data with size: " << extent.m_length);
+
         auto source = InMemoryStreamSource::create(source_func);
-        source->set_size(extent.m_length);
+        source->set_size(request.extent().m_length);
         stream->set_source(std::move(source));
+        auto stream_completion_func = [completion_func,
+                                       object = response->object(), request,
+                                       id     = m_id](StreamState state) {
+            auto response      = ObjectStoreResponse::create(request, id);
+            response->object() = object;
+            if (!state.ok()) {
+                response->on_error(
+                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
+            }
+            completion_func(std::move(response));
+        };
+        stream->set_completion_func(std::move(stream_completion_func));
+        stream->set_progress_func(
+            request.get_progress_interval(), progress_func);
     }
 }
 
 void InMemoryObjectStoreClient::put(
-    const StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc progress_func) const
 {
-    LOG_INFO("Starting client PUT: " + object.to_string());
-    auto md_iter = m_metadata.find(object.id());
+    LOG_INFO("Starting client PUT: " + request.object().to_string());
+    auto md_iter = m_metadata.find(request.object().id());
     if (md_iter == m_metadata.end()) {
-        m_metadata[object.id()] = object.metadata();
+        m_metadata[request.object().id()] = request.object().metadata();
     }
     else {
-        md_iter->second.merge(object.metadata());
+        md_iter->second.merge(request.object().metadata());
     }
 
-    if (stream != nullptr) {
-        LOG_INFO("Have stream - setting sink");
-        auto sink_func = [this, object, extent](
+    if (stream == nullptr) {
+        completion_func(ObjectStoreResponse::create(request, m_id));
+    }
+
+    else {
+        auto sink_func = [this, request](
                              const ReadableBufferView& buffer,
                              std::size_t offset) -> InMemoryStreamSink::Status {
             const Extent chunk_extent = {
-                extent.m_offset + offset, buffer.length()};
-            const auto status = m_data.write(object.id(), chunk_extent, buffer);
+                request.extent().m_offset + offset, buffer.length()};
+            const auto status =
+                m_data.write(request.object().id(), chunk_extent, buffer);
             return {status.is_ok(), buffer.length()};
         };
+
+        auto stream_completion_func = [completion_func, request,
+                                       id = m_id](StreamState state) {
+            auto response = ObjectStoreResponse::create(request, id);
+            if (!state.ok()) {
+                response->on_error(
+                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
+            }
+            completion_func(std::move(response));
+        };
+
         auto sink = InMemoryStreamSink::create(sink_func);
-        sink->set_size(extent.m_length);
+        sink->set_size(request.extent().m_length);
         stream->set_sink(std::move(sink));
+        stream->set_completion_func(stream_completion_func);
+        stream->set_progress_func(
+            request.get_progress_interval(), progress_func);
     }
-    LOG_INFO("Finished client PUT: " + object.to_string())
 }
 
 void InMemoryObjectStoreClient::remove(const StorageObject& object) const

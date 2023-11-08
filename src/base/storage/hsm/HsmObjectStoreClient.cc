@@ -1,58 +1,64 @@
 #include "HsmObjectStoreClient.h"
 
+#include "ErrorUtils.h"
 #include "Logger.h"
 
 #define CATCH_FLOW()                                                           \
     catch (const std::exception& e)                                            \
     {                                                                          \
         on_exception(request, response.get(), e.what());                       \
-        return response;                                                       \
+        completion_func(std::move(response));                                  \
+        return;                                                                \
     }                                                                          \
     catch (...)                                                                \
     {                                                                          \
         on_exception(request, response.get());                                 \
-        return response;                                                       \
+        completion_func(std::move(response));                                  \
+        return;                                                                \
     }
 
 namespace hestia {
 
 HsmObjectStoreClient::~HsmObjectStoreClient() {}
 
-HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
-    const HsmObjectStoreRequest& request, Stream* stream) const noexcept
+void HsmObjectStoreClient::make_request(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func,
+    Stream* stream) const noexcept
 {
     auto response = HsmObjectStoreResponse::create(request, m_id);
     switch (request.method()) {
         case HsmObjectStoreRequestMethod::GET:
             try {
-                get(request, response->object(), stream);
+                get(request, stream, completion_func, progress_func);
             }
             CATCH_FLOW();
-            break;
+            return;
         case HsmObjectStoreRequestMethod::PUT:
             try {
-                put(request, stream);
+                put(request, stream, completion_func, progress_func);
             }
             CATCH_FLOW();
-            break;
+            return;
         case HsmObjectStoreRequestMethod::MOVE:
             try {
-                move(request);
+                move(request, completion_func, progress_func);
             }
             CATCH_FLOW();
-            break;
+            return;
         case HsmObjectStoreRequestMethod::COPY:
             try {
-                copy(request);
+                copy(request, completion_func, progress_func);
             }
             CATCH_FLOW();
-            break;
+            return;
         case HsmObjectStoreRequestMethod::REMOVE:
             try {
-                remove(request);
+                remove(request, completion_func, progress_func);
             }
             CATCH_FLOW();
-            break;
+            return;
         case HsmObjectStoreRequestMethod::REMOVE_ALL:
             LOG_ERROR("Not implemented yet: ");
             break;
@@ -66,13 +72,15 @@ HsmObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
                 HsmObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
             LOG_ERROR("Error: " << error);
             response->on_error(error);
-            return response;
     }
-    return response;
+    completion_func(std::move(response));
 }
 
-ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
-    const ObjectStoreRequest& request, Stream* stream) const noexcept
+void HsmObjectStoreClient::make_request(
+    const ObjectStoreRequest& request,
+    ObjectStoreClient::completionFunc completion_func,
+    ObjectStoreClient::progressFunc progress_func,
+    Stream* stream) const noexcept
 {
     auto response = ObjectStoreResponse::create(request, m_id);
     if (!HsmObjectStoreRequest::is_hsm_supported_method(request.method())) {
@@ -80,13 +88,27 @@ ObjectStoreResponse::Ptr HsmObjectStoreClient::make_request(
             "Requested unsupported type for base object operation in HSM object store client.";
         response->on_error(
             {ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg});
-        return response;
+        completion_func(std::move(response));
     }
 
     HsmObjectStoreRequest hsm_request(request);
-    auto hsm_response = make_request(hsm_request, stream);
-    return HsmObjectStoreResponse::to_base_response(
-        hsm_request, hsm_response.get());
+
+    auto hsm_store_completion_func =
+        [completion_func,
+         hsm_request](HsmObjectStoreResponse::Ptr hsm_response) {
+            completion_func(HsmObjectStoreResponse::to_base_response(
+                hsm_request, hsm_response.get()));
+        };
+
+    auto hsm_store_progress_func =
+        [progress_func, hsm_request](HsmObjectStoreResponse::Ptr hsm_response) {
+            progress_func(HsmObjectStoreResponse::to_base_response(
+                hsm_request, hsm_response.get()));
+        };
+
+    make_request(
+        hsm_request, hsm_store_completion_func, hsm_store_progress_func,
+        stream);
 }
 
 void HsmObjectStoreClient::set_tier_names(
@@ -107,21 +129,34 @@ void HsmObjectStoreClient::list(
 }
 
 void HsmObjectStoreClient::get(
-    StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest&,
+    ObjectStoreClient::completionFunc,
+    Stream*,
+    Stream::progressFunc) const
 {
-    HsmObjectStoreRequest request(
-        object.id(), HsmObjectStoreRequestMethod::GET);
-    request.set_extent(extent);
+    throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
+    /*
+    HsmObjectStoreRequest hsm_request(
+        request.object().id(), HsmObjectStoreRequestMethod::GET);
+
+    hsm_request.set_extent(request.extent());
+
     if (const auto response = make_request(request, stream); !response->ok()) {
         const std::string msg =
             "Error in single tier GET: " + response->get_error().to_string();
         throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
+    */
 }
 
 void HsmObjectStoreClient::put(
-    const StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest&,
+    ObjectStoreClient::completionFunc,
+    Stream*,
+    Stream::progressFunc) const
 {
+    throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
+    /*
     HsmObjectStoreRequest request(
         object.id(), HsmObjectStoreRequestMethod::PUT);
     request.set_extent(extent);
@@ -130,10 +165,13 @@ void HsmObjectStoreClient::put(
             "Error in single tier PUT: " + response->get_error().to_string();
         throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
+    */
 }
 
-void HsmObjectStoreClient::remove(const StorageObject& object) const
+void HsmObjectStoreClient::remove(const StorageObject&) const
 {
+    throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
+    /*
     HsmObjectStoreRequest request(
         object.id(), HsmObjectStoreRequestMethod::REMOVE);
     if (const auto response = make_request(request); !response->ok()) {
@@ -141,6 +179,7 @@ void HsmObjectStoreClient::remove(const StorageObject& object) const
             "Error in single tier REMOVE: " + response->get_error().to_string();
         throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
     }
+    */
 }
 
 void HsmObjectStoreClient::on_exception(

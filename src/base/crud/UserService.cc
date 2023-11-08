@@ -29,6 +29,8 @@ UserService::UserService(
     if (m_token_generator == nullptr) {
         m_token_generator = std::make_unique<UserTokenGenerator>();
     }
+
+    register_child_service(m_token_service->get_type(), m_token_service.get());
 }
 
 UserService::~UserService() {}

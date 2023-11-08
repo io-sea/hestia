@@ -21,6 +21,7 @@
 #include "ReadableBufferView.h"
 #include "WriteableBufferView.h"
 
+#include <cstring>
 #include <future>
 #include <iostream>
 #include <thread>
@@ -551,6 +552,15 @@ int hestia_data_release(
     HestiaRequest req(HsmItem::Type::OBJECT, action);
     return HestiaCApi::do_hsm_action(
         *g_client, req, nullptr, activity_id, len_activity_id);
+}
+
+void hestia_get_last_error(char* message_buffer, size_t len_message_buffer)
+{
+    std::string msg;
+    g_client->get_last_error(msg);
+    msg += "\n**************\nHestia config:\n";
+    msg += g_client->get_runtime_info();
+    std::strncpy(message_buffer, msg.c_str(), len_message_buffer);
 }
 }
 }  // namespace hestia

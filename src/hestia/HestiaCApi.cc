@@ -216,12 +216,14 @@ int HestiaCApi::do_hsm_action(
             if (stream->waiting_for_content()) {
                 auto stream_status = stream->flush();
                 if (!stream_status.ok()) {
+                    client.set_last_error("Bad stream");
                     return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
                 }
             }
             else {
                 auto stream_status = stream->reset();
                 if (!stream_status.ok()) {
+                    client.set_last_error("Bad stream");
                     return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
                 }
             }
@@ -230,6 +232,7 @@ int HestiaCApi::do_hsm_action(
             if (stream->has_source()) {
                 auto stream_status = stream->flush();
                 if (!stream_status.ok()) {
+                    client.set_last_error("Bad stream");
                     return hestia_error_e::HESTIA_ERROR_BAD_STREAM;
                 }
                 if (length != nullptr) {
@@ -249,6 +252,10 @@ int HestiaCApi::do_hsm_action(
     }
     else {
         *len_activity_id = 0;
+    }
+
+    if (response->get_status().m_error_code != 0) {
+        client.set_last_error(response->get_status().message());
     }
     return response->get_status().m_error_code;
 }

@@ -46,19 +46,39 @@ class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {
     std::string dump() const;
 
   private:
-    void put(
-        const HsmObjectStoreRequest& request, Stream* stream) const override;
-
     void get(
         const HsmObjectStoreRequest& request,
-        StorageObject& object,
-        Stream* stream) const override;
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void remove(const HsmObjectStoreRequest& request) const override;
+    void put(
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void copy(const HsmObjectStoreRequest& request) const override;
+    void remove(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void move(const HsmObjectStoreRequest& request) const override;
+    void make_object_store_request(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        ObjectStoreRequestMethod method,
+        Stream* stream = nullptr) const;
+
+    void copy(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
+
+    void move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     InMemoryObjectStoreClient* get_tier_client(uint8_t tier) const;
 

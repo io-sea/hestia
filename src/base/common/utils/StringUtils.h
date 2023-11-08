@@ -69,6 +69,8 @@ class StringUtils {
      */
     static std::string to_lower(const std::string& str);
 
+    static std::string to_upper(const std::string& str);
+
     static bool starts_with(const std::string& str, const std::string& prefix);
 
     static bool ends_with(const std::string& str, const std::string& prefix);

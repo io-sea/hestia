@@ -39,7 +39,7 @@ class HestiaClientTestFixture : public CacheTestFixture {
         m_client->make_request(req, completion_cb, stream);
 
         if (stream != nullptr) {
-            (void)stream->flush();
+            stream->flush();
         }
         return response_future.get();
     }

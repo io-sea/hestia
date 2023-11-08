@@ -5,6 +5,8 @@
 #include "XmlDocument.h"
 #include "XmlElement.h"
 
+#include <future>
+
 namespace hestia {
 
 S3Client::S3Client(HttpClient* http_client) : m_http_client(http_client) {}
@@ -76,11 +78,14 @@ S3ListBucketResponse::Ptr S3Client::list_buckets(
     return std::make_unique<S3ListBucketResponse>(*do_request(http_request));
 }
 
-S3Status S3Client::put_object(
+void S3Client::put_object(
     const S3Object& object,
     const S3Bucket& bucket,
     const S3Request& s3_request,
-    Stream* stream)
+    Stream* stream,
+    completionFunc completion_func,
+    std::size_t progress_interval,
+    HttpClient::progressFunc progress_func)
 {
     const auto path = s3_request.get_resource_path(bucket.name(), object.m_key);
 
@@ -90,9 +95,36 @@ S3Status S3Client::put_object(
     s3_request.populate_authorization_headers(
         S3Request::PayloadSignatureType::UNSIGNED, http_request);
 
-    const auto response = std::make_unique<S3Response>(
-        m_http_client->make_request(http_request, stream));
-    return response->m_status;
+    auto http_completion_func = [completion_func](HttpResponse::Ptr response) {
+        completion_func(std::make_unique<S3Response>(std::move(response)));
+    };
+    m_http_client->make_request(
+        http_request, http_completion_func, stream, progress_interval,
+        progress_func);
+}
+
+void S3Client::get_object(
+    const S3Object& object,
+    const S3Bucket& bucket,
+    const S3Request& s3_request,
+    Stream* stream,
+    completionFunc completion_func,
+    std::size_t progress_interval,
+    HttpClient::progressFunc progress_func)
+{
+    const auto path = s3_request.get_resource_path(bucket.name(), object.m_key);
+
+    HttpRequest http_request(path, HttpRequest::Method::GET);
+    s3_request.populate_headers(bucket.name(), http_request.get_header());
+    s3_request.populate_authorization_headers(
+        S3Request::PayloadSignatureType::UNSIGNED, http_request);
+
+    auto http_completion_func = [completion_func](HttpResponse::Ptr response) {
+        completion_func(std::make_unique<S3Response>(std::move(response)));
+    };
+    m_http_client->make_request(
+        http_request, http_completion_func, stream, progress_interval,
+        progress_func);
 }
 
 S3Status S3Client::delete_object(
@@ -108,24 +140,6 @@ S3Status S3Client::delete_object(
         S3Request::PayloadSignatureType::SIGNED, http_request);
 
     return do_request(http_request)->m_status;
-}
-
-S3Status S3Client::get_object(
-    const S3Object& object,
-    const S3Bucket& bucket,
-    const S3Request& s3_request,
-    Stream* stream)
-{
-    const auto path = s3_request.get_resource_path(bucket.name(), object.m_key);
-
-    HttpRequest http_request(path, HttpRequest::Method::GET);
-    s3_request.populate_headers(bucket.name(), http_request.get_header());
-    s3_request.populate_authorization_headers(
-        S3Request::PayloadSignatureType::UNSIGNED, http_request);
-
-    auto response = std::make_unique<S3Response>(
-        m_http_client->make_request(http_request, stream));
-    return response->m_status;
 }
 
 S3ListObjectsResponse::Ptr S3Client::list_objects(
@@ -150,8 +164,15 @@ S3ListObjectsResponse::Ptr S3Client::list_objects(
 
 S3Response::Ptr S3Client::do_request(const HttpRequest& http_request) const
 {
-    return std::make_unique<S3Response>(
-        m_http_client->make_request(http_request));
+    std::promise<HttpResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto http_completion_func =
+        [&response_promise](HttpResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+    m_http_client->make_request(http_request, http_completion_func);
+    return std::make_unique<S3Response>(response_future.get());
 }
 
 }  // namespace hestia

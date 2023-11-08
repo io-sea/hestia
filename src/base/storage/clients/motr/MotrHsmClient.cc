@@ -29,32 +29,45 @@ void MotrHsmClient::do_intialize(
     m_motr_interface->initialize(config);
 }
 
-void MotrHsmClient::copy(const HsmObjectStoreRequest& request) const
+void MotrHsmClient::copy(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    m_motr_interface->copy(request);
+    m_motr_interface->copy(request, completion_func, progress_func);
 }
 
 void MotrHsmClient::get(
     const HsmObjectStoreRequest& request,
-    StorageObject& object,
-    Stream* stream) const
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    m_motr_interface->get(request, object, stream);
+    m_motr_interface->get(request, stream, completion_func, progress_func);
 }
 
-void MotrHsmClient::move(const HsmObjectStoreRequest& request) const
+void MotrHsmClient::move(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    m_motr_interface->move(request);
+    m_motr_interface->move(request, completion_func, progress_func);
 }
 
 void MotrHsmClient::put(
-    const HsmObjectStoreRequest& request, Stream* stream) const
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    m_motr_interface->put(request, stream);
+    m_motr_interface->put(request, stream, completion_func, progress_func);
 }
 
-void MotrHsmClient::remove(const HsmObjectStoreRequest& request) const
+void MotrHsmClient::remove(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    m_motr_interface->remove(request);
+    m_motr_interface->remove(request, completion_func, progress_func);
 }
 }  // namespace hestia

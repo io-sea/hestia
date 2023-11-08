@@ -172,6 +172,14 @@ std::string StringUtils::to_lower(const std::string& str)
     return copy_str;
 }
 
+std::string StringUtils::to_upper(const std::string& str)
+{
+    auto copy_str = str;
+    std::transform(
+        copy_str.begin(), copy_str.end(), copy_str.begin(), ::toupper);
+    return copy_str;
+}
+
 void StringUtils::to_lines(
     const std::string& input, std::vector<std::string>& lines)
 {

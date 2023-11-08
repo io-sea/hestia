@@ -27,7 +27,7 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     hestia::StorageObject fetched_obj("0000");
     get(fetched_obj);
 
-    REQUIRE(fetched_obj.metadata().get_item("mykey") == "myval");
+    REQUIRE(fetched_obj.get_metadata_item("mykey") == "myval");
 
     remove(obj);
     exists(fetched_obj, false);
@@ -35,21 +35,10 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());
 
-    hestia::Stream stream;
-    put(obj, &stream);
+    put(obj, content);
 
-    REQUIRE(stream.write(content).ok());
-    REQUIRE(stream.reset().ok());
-
-    get(obj, &stream);
-
-    std::vector<char> returned_buffer(content.length());
-    hestia::WriteableBufferView write_buffer(returned_buffer);
-    REQUIRE(stream.read(write_buffer).ok());
-    REQUIRE(stream.reset().ok());
-
-    std::string returned_content =
-        std::string(returned_buffer.begin(), returned_buffer.end());
+    std::string returned_content;
+    get(obj, returned_content, content.size());
     REQUIRE(returned_content == content);
 
     std::vector<hestia::StorageObject> fetched_objects;

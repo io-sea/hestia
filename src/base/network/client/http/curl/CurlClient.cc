@@ -11,7 +11,6 @@ CurlClient::CurlClient(const CurlClientConfig& config) : m_config(config) {}
 
 CurlClient::~CurlClient()
 {
-    LOG_INFO("Shutting Down");
     if (m_config.m_do_global_init) {
         curl_global_cleanup();
     }
@@ -195,11 +194,19 @@ void CurlClient::setup_handle(CurlHandle* handle)
     }
 }
 
-HttpResponse::Ptr CurlClient::make_request(
-    const HttpRequest& request, Stream* stream)
+void CurlClient::make_request(
+    const HttpRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    std::size_t progress_interval,
+    progressFunc progess_func)
 {
     if (!m_initialized) {
         initialize();
+    }
+
+    if (stream != nullptr) {
+        stream->set_progress_func(progress_interval, progess_func);
     }
 
     auto handle                           = std::make_unique<CurlHandle>();
@@ -253,9 +260,15 @@ HttpResponse::Ptr CurlClient::make_request(
 
     m_handles.erase(std::this_thread::get_id());
 
-    LOG_INFO("Request all done");
+    if (stream != nullptr) {
+        auto stream_state = stream->reset();
+        if (!stream_state.ok()) {
+            response = HttpResponse::create(400, stream_state.message());
+        }
+    }
 
-    return response;
+    LOG_INFO("Request all done");
+    completion_func(std::move(response));
 }
 
 }  // namespace hestia

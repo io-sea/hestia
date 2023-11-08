@@ -107,6 +107,30 @@ std::string Model::get_parent_type() const
         + get_runtime_type());
 }
 
+void Model::get_child_ids_by_type(
+    std::unordered_map<std::string, std::vector<std::string>>& child_ids)
+{
+    for (const auto& field : m_one_to_one_proxy_fields) {
+        std::vector<std::string> ids;
+        Dictionary field_dict;
+        field.second->serialize(field_dict);
+        if (field_dict.has_map_item("id")) {
+            ids.push_back(field_dict.get_map_item("id")->get_scalar());
+        }
+        child_ids[field.second->get_runtime_type()] = ids;
+    }
+
+    for (const auto& field : m_foreign_key_proxy_fields) {
+        std::vector<std::string> ids;
+        Dictionary field_dict;
+        field.second->serialize(field_dict);
+        if (field_dict.has_map_item("id")) {
+            ids.push_back(field_dict.get_map_item("id")->get_scalar());
+        }
+        child_ids[field.second->get_runtime_type()] = ids;
+    }
+}
+
 std::string Model::get_child_id_by_type(const std::string& type) const
 {
     for (const auto& field : m_one_to_one_proxy_fields) {
@@ -152,16 +176,6 @@ std::string Model::get_parent_id() const
 bool Model::has_owner() const
 {
     return m_has_owner;
-}
-
-void Model::init_creation_time(std::time_t ctime)
-{
-    m_creation_time.init_value(ctime);
-}
-
-void Model::init_modification_time(std::time_t mtime)
-{
-    m_last_modified_time.init_value(mtime);
 }
 
 const std::string& Model::name() const

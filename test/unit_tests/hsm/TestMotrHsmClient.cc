@@ -1,8 +1,6 @@
 #include <catch2/catch_all.hpp>
 
 #include "HsmObjectStoreTestWrapper.h"
-#include "InMemoryStreamSink.h"
-#include "InMemoryStreamSource.h"
 #include "TestContext.h"
 
 #include "MotrConfig.h"
@@ -16,41 +14,19 @@ class MockMotrTestFixture : public HsmObjectStoreTestWrapper {
         hestia::MotrConfig config;
 
         hestia::MotrHsmTierInfo tier0_info;
-        tier0_info.m_identifier.update_value("1");
-
+        tier0_info.set_identifier("1");
         hestia::MotrHsmTierInfo tier1_info;
-        tier1_info.m_identifier.update_value("2");
-
+        tier1_info.set_identifier("2");
         hestia::MotrHsmTierInfo tier2_info;
-        tier2_info.m_identifier.update_value("3");
+        tier2_info.set_identifier("3");
 
-        config.m_tier_info.get_container_as_writeable().push_back(tier0_info);
-        config.m_tier_info.get_container_as_writeable().push_back(tier1_info);
-        config.m_tier_info.get_container_as_writeable().push_back(tier2_info);
+        config.add_tier_info(tier0_info);
+        config.add_tier_info(tier1_info);
+        config.add_tier_info(tier2_info);
 
         hestia::Dictionary dict;
         config.serialize(dict);
         m_client->initialize("0000", {}, dict);
-    }
-
-    void get_and_check(
-        const std::string& obj_id, const std::string& content, uint8_t tier)
-    {
-        hestia::Stream stream;
-        std::vector<char> returned_buffer(content.length());
-        hestia::WriteableBufferView write_buffer(returned_buffer);
-        auto sink = hestia::InMemoryStreamSink::create(write_buffer);
-        stream.set_sink(std::move(sink));
-
-        hestia::StorageObject obj(obj_id);
-        obj.set_size(content.size());
-
-        get(obj, &stream, tier);
-        REQUIRE(stream.flush().ok());
-
-        std::string returned_content =
-            std::string(returned_buffer.begin(), returned_buffer.end());
-        REQUIRE(returned_content == content);
     }
 };
 
@@ -61,22 +37,19 @@ TEST_CASE_METHOD(MockMotrTestFixture, "Motr client write and read", "[motr]")
     hestia::StorageObject obj(uuid.to_string());
 
     std::string content = "The quick brown fox jumps over the lazy dog";
-    obj.set_size(content.size());
+    obj.set_size(content.length());
 
-    hestia::Stream stream;
-    auto source = hestia::InMemoryStreamSource::create(
-        hestia::ReadableBufferView(content));
-    stream.set_source(std::move(source));
+    put(obj, content, 1);
 
-    put(obj, &stream, 1);
-
-    REQUIRE(stream.flush().ok());
-
-    get_and_check(uuid.to_string(), content, 1);
+    std::string tier_1_content;
+    get(obj, tier_1_content, content.length(), 1);
+    REQUIRE(tier_1_content == content);
 
     copy(obj, 1, 2);
 
-    get_and_check(uuid.to_string(), content, 2);
+    std::string tier_2_content;
+    get(obj, tier_2_content, content.length(), 2);
+    REQUIRE(tier_2_content == content);
 }
 
 /*

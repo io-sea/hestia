@@ -40,10 +40,7 @@ InMemoryHsmObjectStoreClient::InMemoryHsmObjectStoreClient()
     LOG_INFO("Created");
 }
 
-InMemoryHsmObjectStoreClient::~InMemoryHsmObjectStoreClient()
-{
-    LOG_INFO("Destroyed");
-}
+InMemoryHsmObjectStoreClient::~InMemoryHsmObjectStoreClient() {}
 
 std::string InMemoryHsmObjectStoreClient::get_registry_identifier()
 {
@@ -98,71 +95,92 @@ std::string InMemoryHsmObjectStoreClient::dump() const
     return output;
 }
 
-void InMemoryHsmObjectStoreClient::put(
-    const HsmObjectStoreRequest& request, Stream* stream) const
+void InMemoryHsmObjectStoreClient::make_object_store_request(
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func,
+    ObjectStoreRequestMethod method,
+    Stream* stream) const
 {
-    assert(stream != nullptr);
+    auto tier_client = get_tier_client(
+        method == ObjectStoreRequestMethod::PUT ? request.target_tier() :
+                                                  request.source_tier());
+    auto object_store_completion_func = [completion_func, request, method](
+                                            ObjectStoreResponse::Ptr response) {
+        if (!response->ok()) {
+            const std::string msg = "Error in memory client "
+                                    + ObjectStoreRequest::to_string(method)
+                                    + ": " + response->get_error().to_string();
+            throw RequestException<HsmObjectStoreError>(
+                {HsmObjectStoreErrorCode::ERROR, msg});
+        }
+        completion_func(
+            HsmObjectStoreResponse::create(request, std::move(response)));
+    };
 
-    auto client = get_tier_client(request.target_tier());
+    auto object_store_progress_func =
+        [progress_func, request](ObjectStoreResponse::Ptr response) {
+            progress_func(
+                HsmObjectStoreResponse::create(request, std::move(response)));
+        };
+    tier_client->make_request(
+        HsmObjectStoreRequest::to_base_request(request),
+        object_store_completion_func, object_store_progress_func, stream);
+}
 
-    if (const auto response = client->make_request(
-            HsmObjectStoreRequest::to_base_request(request), stream);
-        !response->ok()) {
-        const std::string msg =
-            "Error in file client PUT: " + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
-    }
+void InMemoryHsmObjectStoreClient::put(
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc progress_func) const
+{
+    make_object_store_request(
+        request, completion_func, progress_func, ObjectStoreRequestMethod::PUT,
+        stream);
 }
 
 void InMemoryHsmObjectStoreClient::get(
-    const HsmObjectStoreRequest& request, StorageObject&, Stream* stream) const
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    assert(stream != nullptr);
-
-    LOG_INFO("Getting data");
-    auto client = get_tier_client(request.source_tier());
-
-    if (const auto response = client->make_request(
-            HsmObjectStoreRequest::to_base_request(request), stream);
-        !response->ok()) {
-        const std::string msg = "Error in file client data GET: "
-                                + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
-    }
+    make_object_store_request(
+        request, completion_func, progress_func, ObjectStoreRequestMethod::GET,
+        stream);
 }
 
 void InMemoryHsmObjectStoreClient::remove(
-    const HsmObjectStoreRequest& request) const
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc progress_func) const
 {
-    auto client = get_tier_client(request.source_tier());
-
-    if (const auto response = client->make_request(
-            HsmObjectStoreRequest::to_base_request(request));
-        !response->ok()) {
-        const std::string msg =
-            "Error in file client REMOVE: " + response->get_error().to_string();
-        throw RequestException<HsmObjectStoreError>(
-            {HsmObjectStoreErrorCode::ERROR, msg});
-    }
+    make_object_store_request(
+        request, completion_func, progress_func,
+        ObjectStoreRequestMethod::REMOVE);
 }
 
 void InMemoryHsmObjectStoreClient::copy(
-    const HsmObjectStoreRequest& request) const
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc) const
 {
     auto source_client = get_tier_client(request.source_tier());
     auto target_client = get_tier_client(request.target_tier());
-
     source_client->migrate(request.object().id(), target_client, false);
+
+    completion_func(HsmObjectStoreResponse::create(request, m_id));
 }
 
 void InMemoryHsmObjectStoreClient::move(
-    const HsmObjectStoreRequest& request) const
+    const HsmObjectStoreRequest& request,
+    completionFunc completion_func,
+    progressFunc) const
 {
     auto source_client = get_tier_client(request.source_tier());
     auto target_client = get_tier_client(request.target_tier());
-
     source_client->migrate(request.object().id(), target_client, true);
+
+    completion_func(HsmObjectStoreResponse::create(request, m_id));
 }
 }  // namespace hestia

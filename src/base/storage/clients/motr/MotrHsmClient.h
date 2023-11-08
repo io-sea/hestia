@@ -24,19 +24,32 @@ class MotrHsmClient : public HsmObjectStoreClient {
 
     virtual ~MotrHsmClient(){};
 
-    void copy(const HsmObjectStoreRequest& request) const override;
+    void copy(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     void get(
         const HsmObjectStoreRequest& request,
-        StorageObject& object,
-        Stream* stream) const override;
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void move(const HsmObjectStoreRequest& request) const override;
+    void move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     void put(
-        const HsmObjectStoreRequest& request, Stream* stream) const override;
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void remove(const HsmObjectStoreRequest& request) const override;
+    void remove(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
   protected:
     std::unique_ptr<MotrInterface> m_motr_interface;

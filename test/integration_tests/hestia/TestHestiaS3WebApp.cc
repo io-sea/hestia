@@ -63,24 +63,9 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[.s3]")
     obj.set_metadata("hestia-user_token", user_key);
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
+    put(obj, content);
 
-    hestia::ReadableBufferView read_buffer(content);
-    hestia::Stream stream;
-    stream.set_source(hestia::InMemoryStreamSource::create(read_buffer));
-
-    put(obj, &stream);
-    REQUIRE(stream.reset().ok());
-
-    std::vector<char> returned_buffer(content.length());
-    hestia::WriteableBufferView write_buffer(returned_buffer);
-    stream.set_sink(hestia::InMemoryStreamSink::create(write_buffer));
-
-    get(obj, &stream);
-    REQUIRE(stream.reset().ok());
-
-    std::string recontstructed_content(
-        returned_buffer.begin(), returned_buffer.end());
+    std::string recontstructed_content;
+    get(obj, recontstructed_content, content.size());
     REQUIRE(recontstructed_content == content);
-
-    return;
 }

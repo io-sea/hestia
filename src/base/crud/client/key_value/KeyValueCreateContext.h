@@ -16,8 +16,8 @@ class KeyValueCreateContext : public KeyValueFieldContext {
     using getOrCreateParentFunc =
         std::function<void(const std::string&, const std::string&)>;
     using createChildFunc = std::function<std::unique_ptr<Dictionary>(
-        const std::string&,
-        const std::string&,
+        const std::string& type,
+        const std::string& child_id,
         const CrudUserContext& user_context)>;
 
     KeyValueCreateContext(

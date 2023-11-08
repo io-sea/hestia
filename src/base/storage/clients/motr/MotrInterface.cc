@@ -36,33 +36,46 @@ void MotrInterface::validate_config(MotrConfig& config)
     config.m_hsm_config_path.update_value(working_path);
 }
 
-void MotrInterface::copy(const HsmObjectStoreRequest& request) const
+void MotrInterface::copy(
+    const HsmObjectStoreRequest& request,
+    IMotrInterfaceImpl::completionFunc completion_func,
+    IMotrInterfaceImpl::progressFunc progress_func) const
 {
-    m_impl->copy(request);
+    m_impl->copy(request, completion_func, progress_func);
 }
 
 void MotrInterface::get(
     const HsmObjectStoreRequest& request,
-    hestia::StorageObject& object,
-    hestia::Stream* stream) const
+    Stream* stream,
+    IMotrInterfaceImpl::completionFunc completion_func,
+    IMotrInterfaceImpl::progressFunc progress_func) const
 {
-    m_impl->get(request, object, stream);
+    m_impl->get(request, stream, completion_func, progress_func);
 }
 
-void MotrInterface::move(const HsmObjectStoreRequest& request) const
+void MotrInterface::move(
+    const HsmObjectStoreRequest& request,
+    IMotrInterfaceImpl::completionFunc completion_func,
+    IMotrInterfaceImpl::progressFunc progress_func) const
 {
-    m_impl->move(request);
+    m_impl->move(request, completion_func, progress_func);
 }
 
 void MotrInterface::put(
-    const HsmObjectStoreRequest& request, hestia::Stream* stream) const
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    IMotrInterfaceImpl::completionFunc completion_func,
+    IMotrInterfaceImpl::progressFunc progress_func) const
 {
-    m_impl->put(request, stream);
+    m_impl->put(request, stream, completion_func, progress_func);
 }
 
-void MotrInterface::remove(const HsmObjectStoreRequest& request) const
+void MotrInterface::remove(
+    const HsmObjectStoreRequest& request,
+    IMotrInterfaceImpl::completionFunc completion_func,
+    IMotrInterfaceImpl::progressFunc progress_func) const
 {
-    m_impl->remove(request);
+    m_impl->remove(request, completion_func, progress_func);
 }
 
 void MotrInterface::write_tier_info(

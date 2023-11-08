@@ -155,8 +155,17 @@ void HestiaClientCommand::read_ids_from_console(
     HestiaRequest& req,
     CrudIdentifier::InputFormat default_format) const
 {
+    if (m_verbosity == 2) {
+        console.console_write(
+            "Hestia> Enter Ids - use an empty line to finish: ");
+    }
+
     std::string body;
-    console.console_read(body);
+    console.console_read(body, {'\n', '\n'});
+
+    if (m_verbosity == 2) {
+        console.console_write("Hestia> Read Ids ok.");
+    }
 
     CrudIdentifierCollection::FormatSpec format;
     format.m_id_spec.m_input_format = read_id_format(default_format);
@@ -170,13 +179,28 @@ void HestiaClientCommand::parse_create_update_inputs(
     req.set_ids(CrudIdentifierCollection(
         m_id, read_id_format(CrudIdentifier::InputFormat::ID)));
 
-    if (const auto input_format = read_input_format(BodyFormat::NONE);
+    if (const auto input_format = read_input_format(
+            req.get_crud_request().method() == CrudMethod::CREATE ?
+                BodyFormat::NONE :
+                BodyFormat::JSON);
         input_format == BodyFormat::ID) {
         read_ids_from_console(console, req, CrudIdentifier::InputFormat::ID);
     }
     else if (input_format != BodyFormat::NONE) {
         std::string body;
-        console.console_read(body);
+        std::string str_format =
+            input_format == BodyFormat::JSON ? "json" : "key value";
+        if (m_verbosity == 2) {
+            std::string msg = "Hestia> Input body in " + str_format
+                              + " format. Finish with blank line or EOF.";
+            console.console_write(msg);
+        }
+        console.console_read(body, {'\n', '\n'});
+
+        if (m_verbosity == 2) {
+            console.console_write("Hesita> Body read ok.");
+        }
+
         CrudAttributes::FormatSpec format;
         if (input_format == BodyFormat::JSON) {
             format.set_is_json();

@@ -25,17 +25,18 @@ HsmAction& HsmAction::operator=(const HsmAction& other)
 {
     if (this != &other) {
         OwnableModel::operator=(other);
-        m_action         = other.m_action;
-        m_subject        = other.m_subject;
-        m_status         = other.m_status;
-        m_to_transfer    = other.m_to_transfer;
-        m_offset         = other.m_offset;
-        m_transferred    = other.m_transferred;
-        m_source_tier    = other.m_source_tier;
-        m_target_tier    = other.m_target_tier;
-        m_subject_key    = other.m_subject_key;
-        m_is_request     = other.m_is_request;
-        m_status_message = other.m_status_message;
+        m_action            = other.m_action;
+        m_subject           = other.m_subject;
+        m_status            = other.m_status;
+        m_to_transfer       = other.m_to_transfer;
+        m_offset            = other.m_offset;
+        m_transferred       = other.m_transferred;
+        m_source_tier       = other.m_source_tier;
+        m_target_tier       = other.m_target_tier;
+        m_subject_key       = other.m_subject_key;
+        m_is_request        = other.m_is_request;
+        m_status_message    = other.m_status_message;
+        m_progress_interval = other.m_progress_interval;
         init();
     }
     return *this;
@@ -54,6 +55,7 @@ void HsmAction::init()
     register_scalar_field(&m_subject_key);
     register_scalar_field(&m_is_request);
     register_scalar_field(&m_status_message);
+    register_scalar_field(&m_progress_interval);
 }
 
 bool HsmAction::is_crud_method() const
@@ -64,6 +66,11 @@ bool HsmAction::is_crud_method() const
 std::string HsmAction::get_type()
 {
     return HsmItem::hsm_action_name;
+}
+
+std::string HsmAction::get_action_as_string() const
+{
+    return m_action.value_as_string();
 }
 
 void HsmAction::set_source_tier(uint8_t tier)
@@ -79,6 +86,11 @@ void HsmAction::set_target_tier(uint8_t tier)
 void HsmAction::set_action(Action action)
 {
     m_action.update_value(action);
+}
+
+std::size_t HsmAction::get_progress_interval() const
+{
+    return m_progress_interval.get_value();
 }
 
 void HsmAction::on_error(const std::string& message)
@@ -174,6 +186,11 @@ void HsmAction::set_subject(HsmItem::Type subject)
 void HsmAction::set_size(std::size_t size)
 {
     m_to_transfer.update_value(size);
+}
+
+void HsmAction::set_num_transferred(std::size_t size)
+{
+    m_transferred.update_value(size);
 }
 
 std::vector<std::string> HsmAction::get_action_subjects()

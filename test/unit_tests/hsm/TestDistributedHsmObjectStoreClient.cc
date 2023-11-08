@@ -24,6 +24,7 @@
 
 #include "TestUtils.h"
 
+#include <future>
 #include <iostream>
 
 class MockHsmMiddleware : public hestia::ApplicationMiddleware {
@@ -74,9 +75,12 @@ class MockHsmHttpClient : public hestia::HttpClient {
         m_apps[address] = std::make_unique<MockHsmWebApp>(hsm_service);
     }
 
-    hestia::HttpResponse::Ptr make_request(
+    void make_request(
         const hestia::HttpRequest& request,
-        hestia::Stream* input_stream) override
+        hestia::HttpClient::completionFunc completion_func,
+        hestia::Stream* stream,
+        std::size_t,
+        progressFunc) override
     {
         LOG_INFO("Got request to: " << request.get_path());
 
@@ -93,7 +97,7 @@ class MockHsmHttpClient : public hestia::HttpClient {
         }
 
         if (working_app == nullptr) {
-            return hestia::HttpResponse::create(404, "Not Found");
+            completion_func(hestia::HttpResponse::create(404, "Not Found"));
         }
 
         auto intercepted_request = request;
@@ -119,18 +123,22 @@ class MockHsmHttpClient : public hestia::HttpClient {
                 working_app = app_iter->second.get();
             }
             if (working_app == nullptr) {
-                return hestia::HttpResponse::create(404, "Not Found");
+                completion_func(hestia::HttpResponse::create(404, "Not Found"));
+                return;
             }
             working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
         }
 
         working_app->on_event(&request_context, hestia::HttpEvent::EOM);
 
-        if (input_stream != nullptr) {
+        LOG_INFO("Has stream - proceeding? " << bool(stream));
+
+        if (stream != nullptr) {
+            LOG_INFO("Has stream - doing PUT");
             if (request.get_method() == hestia::HttpRequest::Method::PUT) {
                 std::vector<char> buffer(1024);
                 hestia::WriteableBufferView buffer_view(buffer);
-                auto read_result = input_stream->read(buffer_view);
+                auto read_result = stream->read(buffer_view);
                 if (read_result.m_num_transferred > 0) {
                     auto write_result = request_context.get_stream()->write(
                         hestia::ReadableBufferView(
@@ -139,6 +147,7 @@ class MockHsmHttpClient : public hestia::HttpClient {
                         "Wrote: " << write_result.m_num_transferred
                                   << " bytes.");
                     REQUIRE(write_result.ok());
+                    LOG_INFO("About to reset stream");
                     REQUIRE(request_context.get_stream()->reset().ok());
                 }
             }
@@ -152,7 +161,7 @@ class MockHsmHttpClient : public hestia::HttpClient {
                              << std::string(buffer.begin(), buffer.end()));
                 if (read_result.m_num_transferred > 0) {
                     auto write_result =
-                        input_stream->write(hestia::ReadableBufferView(
+                        stream->write(hestia::ReadableBufferView(
                             buffer.data(), read_result.m_num_transferred));
                     LOG_INFO(
                         "Wrote: " << write_result.m_num_transferred
@@ -165,7 +174,7 @@ class MockHsmHttpClient : public hestia::HttpClient {
             *request_context.get_response());
         LOG_INFO("Setting location header to: " << working_address);
         response->header().set_item("location", working_address);
-        return response;
+        completion_func(std::move(response));
     }
 
     std::unordered_map<std::string, std::unique_ptr<MockHsmWebApp>> m_apps;
@@ -353,6 +362,79 @@ class DistributedHsmObjectStoreClientTestFixture {
                 hestia::HsmItem::hsm_object_name);
     }
 
+    void put_data(
+        const hestia::StorageObject& obj,
+        const std::string& content,
+        uint8_t tier)
+    {
+        hestia::HsmAction action(
+            hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
+        action.set_subject_key(obj.get_primary_key());
+        action.set_target_tier(tier);
+
+        std::promise<hestia::HsmActionResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HsmActionResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
+            };
+
+        hestia::Stream stream;
+        stream.set_source(hestia::InMemoryStreamSource::create(
+            hestia::ReadableBufferView{content}));
+        m_local_dist_hsm_service->do_hsm_action(
+            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
+            &stream, completion_cb);
+
+        if (stream.waiting_for_content()) {
+            LOG_INFO("Going to flush stream");
+            REQUIRE(stream.flush().ok());
+        }
+
+        const auto response = response_future.get();
+        REQUIRE(response->ok());
+    }
+
+    void get_data(
+        const hestia::StorageObject& obj,
+        std::string& content,
+        std::size_t content_length,
+        uint8_t tier)
+    {
+        hestia::HsmAction action(
+            hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
+        action.set_subject_key(obj.get_primary_key());
+        action.set_source_tier(tier);
+
+        std::promise<hestia::HsmActionResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HsmActionResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
+            };
+
+        hestia::Stream stream;
+        std::vector<char> return_buffer(content_length);
+        hestia::WriteableBufferView writeable_buffer(return_buffer);
+        stream.set_sink(hestia::InMemoryStreamSink::create(writeable_buffer));
+
+        m_local_dist_hsm_service->do_hsm_action(
+            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
+            &stream, completion_cb);
+
+        if (stream.has_content()) {
+            LOG_INFO("Going to flush stream");
+            REQUIRE(stream.flush().ok());
+        }
+
+        const auto response = response_future.get();
+        REQUIRE(response->ok());
+
+        content = std::string(return_buffer.begin(), return_buffer.end());
+    }
+
     std::unique_ptr<hestia::InMemoryKeyValueStoreClient> m_kv_store_client;
     std::unique_ptr<MockHsmHttpClient> m_http_client;
 
@@ -386,41 +468,10 @@ TEST_CASE_METHOD(
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());
 
-    hestia::Stream stream;
-    stream.set_source(hestia::InMemoryStreamSource::create(
-        hestia::ReadableBufferView(content)));
+    put_data(obj, content, 0);
 
-    hestia::HsmAction action(
-        hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
-    action.set_subject_key(id);
-
-    auto completion_db = [](hestia::HsmActionResponse::Ptr result) {
-        LOG_INFO("cb callback fired ok");
-        REQUIRE(result->ok());
-    };
-    m_local_dist_hsm_service->do_hsm_action(
-        hestia::HsmActionRequest(action, m_test_user.get_primary_key()),
-        &stream, completion_db);
-
-    REQUIRE(stream.reset().ok());
-
-    std::vector<char> returned_buffer(content.size());
-    hestia::WriteableBufferView buffer_view(returned_buffer);
-    stream.set_sink(hestia::InMemoryStreamSink::create(buffer_view));
-
-    auto get_completion_cb = [](hestia::HsmActionResponse::Ptr result) {
-        REQUIRE(result->ok());
-    };
-
-    hestia::HsmAction get_action(
-        hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
-    get_action.set_subject_key(id);
-
-    m_local_dist_hsm_service->do_hsm_action(
-        hestia::HsmActionRequest(get_action, m_test_user.get_primary_key()),
-        &stream, get_completion_cb);
-
-    REQUIRE(returned_buffer.size() == content.size());
-    REQUIRE(
-        std::string(returned_buffer.begin(), returned_buffer.end()) == content);
+    std::string tier0_content;
+    hestia::StorageObject obj0(id);
+    get_data(obj0, tier0_content, content.length(), 0);
+    REQUIRE(tier0_content == content);
 }

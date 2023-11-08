@@ -45,7 +45,7 @@ TEST_CASE_METHOD(
 
             THEN("It retains the metadata")
             {
-                REQUIRE(fetched_obj.metadata().get_item("mykey") == "myval");
+                REQUIRE(fetched_obj.get_metadata_item("mykey") == "myval");
             }
         }
 
@@ -82,27 +82,17 @@ TEST_CASE_METHOD(
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());
 
-    hestia::Stream stream;
-    put(obj, &stream);
-
     WHEN("Content is passed in one chunk")
     {
-        REQUIRE(stream.write(content).ok());
-        REQUIRE(stream.reset().ok());
+        put(obj, content);
 
         WHEN("Content is read in one chunk")
         {
-            get(obj, &stream);
-
-            std::vector<char> returned_buffer(content.length());
-            hestia::WriteableBufferView write_buffer(returned_buffer);
-            REQUIRE(stream.read(write_buffer).ok());
-            REQUIRE(stream.reset().ok());
+            std::string returned_content;
+            get(obj, returned_content, content.length());
 
             THEN("It is the same as the original content")
             {
-                std::string returned_content =
-                    std::string(returned_buffer.begin(), returned_buffer.end());
                 REQUIRE(returned_content == content);
             }
         }
@@ -110,36 +100,15 @@ TEST_CASE_METHOD(
 
     WHEN("Content is passed in multiple chunks")
     {
-        std::size_t chunk_size = 10;
-        std::vector<char> data_chars(content.begin(), content.end());
-        std::size_t cursor = 0;
-        while (cursor < content.size()) {
-            auto chunk_end = cursor + chunk_size;
-            if (chunk_end >= content.size()) {
-                chunk_end = content.size();
-            }
-            if (chunk_end == cursor) {
-                break;
-            }
-            hestia::ReadableBufferView read_buffer(
-                &data_chars[0] + cursor, chunk_end - cursor);
-            REQUIRE(stream.write(read_buffer).ok());
-            cursor = chunk_end;
-        }
+        put(obj, content, 10);
 
         WHEN("Content is read in one chunk")
         {
-            get(obj, &stream);
-
-            std::vector<char> returned_buffer(content.length());
-            hestia::WriteableBufferView write_buffer(returned_buffer);
-            REQUIRE(stream.read(write_buffer).ok());
-            REQUIRE(stream.reset().ok());
+            std::string returned_content;
+            get(obj, returned_content, content.length());
 
             THEN("It is the same as the original content")
             {
-                std::string returned_content =
-                    std::string(returned_buffer.begin(), returned_buffer.end());
                 REQUIRE(returned_content == content);
             }
         }

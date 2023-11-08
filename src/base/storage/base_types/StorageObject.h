@@ -32,9 +32,16 @@ class StorageObject : public SerializeableWithFields {
 
     Map& get_metadata_as_writeable();
 
+    void merge_metadata(const Map& other)
+    {
+        get_metadata_as_writeable().merge(other);
+    }
+
     const Map& metadata() const;
 
     const std::string& get_location() const;
+
+    std::string get_metadata_item(const std::string& key) const;
 
     void set_metadata(const std::string& key, const std::string& value);
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Logger.h"
+
 #include <stdexcept>
 #include <string>
 
@@ -8,8 +10,11 @@ namespace hestia {
 #define SOURCE_LOC()                                                           \
     OpStatus::get_location_prefix(__FILE__, __FUNCTION__, __LINE__)
 
-#define THROW_WITH_SOURCE_LOC(msg)                                             \
-    throw std::runtime_error(SOURCE_LOC() + " | " + msg)
+#define THROW(msg)                                                             \
+    std::ostringstream hestia_errstream;                                       \
+    hestia_errstream << SOURCE_LOC() << " | " << msg;                          \
+    LOG_ERROR(hestia_errstream.str())                                          \
+    throw std::runtime_error(hestia_errstream.str())
 
 /**
  * @brief Generic 'Operation Status' for return value error handling

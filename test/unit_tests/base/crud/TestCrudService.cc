@@ -499,3 +499,27 @@ TEST_CASE_METHOD(
 
     REQUIRE(updated_mock_model->get_child().get_field() == "my_new_field");
 }
+
+TEST_CASE_METHOD(
+    TestCrudServiceFixture,
+    "Test Crud Service - Create Remove Create",
+    "[crud-service]")
+{
+    std::string id{"1"};
+
+    const auto create_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::CREATE,
+        {id, hestia::CrudQuery::BodyFormat::NONE},
+        {}});
+    REQUIRE(create_response->ok());
+
+    const auto remove_response = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::REMOVE,
+        {id, hestia::CrudQuery::BodyFormat::NONE},
+        {}});
+    REQUIRE(remove_response->ok());
+
+    const auto create_response2 = m_service->make_request(hestia::CrudRequest{
+        hestia::CrudMethod::CREATE, {hestia::CrudQuery::BodyFormat::NONE}, {}});
+    REQUIRE(create_response2->ok());
+}

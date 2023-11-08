@@ -28,6 +28,7 @@ add_module(
         http/HttpParser.cc
         http/HttpStatus.cc
         request/RequestContext.cc
+        request/Response.cc
         s3/S3Status.cc
         s3/S3Path.cc
         s3/S3Object.cc

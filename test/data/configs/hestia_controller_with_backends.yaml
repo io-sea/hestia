@@ -19,3 +19,7 @@ object_store_backends:
 
 event_feed:
   active: true
+
+
+logger:
+  level: warn

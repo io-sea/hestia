@@ -14,6 +14,7 @@
 
 #include "TestUtils.h"
 
+#include <future>
 #include <iostream>
 
 class HsmServiceTestFixture {
@@ -74,18 +75,26 @@ class HsmServiceTestFixture {
         m_hsm_service->update_tiers(m_test_user.get_primary_key());
     }
 
-    void create(const hestia::HsmObject& obj)
+    void do_crud(const hestia::HsmObject& obj, hestia::CrudMethod method)
     {
         REQUIRE(
             m_hsm_service
                 ->make_request(
                     hestia::TypedCrudRequest<hestia::HsmObject>{
-                        hestia::CrudMethod::CREATE,
-                        obj,
-                        {},
+                        method, obj,
                         hestia::CrudUserContext(m_test_user.get_primary_key())},
                     hestia::HsmItem::hsm_object_name)
                 ->ok());
+    }
+
+    void create(const hestia::HsmObject& obj)
+    {
+        do_crud(obj, hestia::CrudMethod::CREATE);
+    }
+
+    void update(const hestia::HsmObject& obj)
+    {
+        do_crud(obj, hestia::CrudMethod::UPDATE);
     }
 
     bool exists(const hestia::HsmObject& obj)
@@ -99,96 +108,105 @@ class HsmServiceTestFixture {
         return exists->found();
     }
 
-    void update(const hestia::HsmObject& obj)
-    {
-        REQUIRE(m_hsm_service
-                    ->make_request(
-                        hestia::TypedCrudRequest<hestia::HsmObject>{
-                            hestia::CrudMethod::UPDATE, obj, {}, {}},
-                        hestia::HsmItem::hsm_object_name)
-                    ->ok());
-    }
-
     void put_data(
-        const hestia::HsmObject& obj, hestia::Stream* stream, uint8_t tier)
+        const hestia::HsmObject& obj, const std::string& content, uint8_t tier)
     {
         hestia::HsmAction action(
             hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
         action.set_subject_key(obj.get_primary_key());
         action.set_target_tier(tier);
 
-        hestia::HsmActionResponse::Ptr response;
+        std::promise<hestia::HsmActionResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
         auto completion_cb =
-            [&response](hestia::HsmActionResponse::Ptr completion_response) {
-                response = std::move(completion_response);
+            [&response_promise](hestia::HsmActionResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
             };
+
+        hestia::Stream stream;
+        stream.set_source(hestia::InMemoryStreamSource::create(
+            hestia::ReadableBufferView{content}));
         m_hsm_service->do_hsm_action(
             hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
-            stream, completion_cb);
-        (void)stream->flush();
+            &stream, completion_cb);
+
+        LOG_INFO("Going to flush stream");
+        REQUIRE(stream.flush().ok());
+
+        const auto response = response_future.get();
         REQUIRE(response->ok());
     }
 
     void get_data(
-        const hestia::HsmObject& obj, hestia::Stream* stream, uint8_t tier)
+        const hestia::HsmObject& obj,
+        std::string& content,
+        std::size_t content_length,
+        uint8_t tier)
     {
         hestia::HsmAction action(
             hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
         action.set_subject_key(obj.get_primary_key());
         action.set_source_tier(tier);
 
+        std::promise<hestia::HsmActionResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HsmActionResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
+            };
+
+        hestia::Stream stream;
+        std::vector<char> return_buffer(content_length);
+        hestia::WriteableBufferView writeable_buffer(return_buffer);
+        stream.set_sink(hestia::InMemoryStreamSink::create(writeable_buffer));
+
+        m_hsm_service->do_hsm_action(
+            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
+            &stream, completion_cb);
+
+        LOG_INFO("Going to flush stream");
+        REQUIRE(stream.flush().ok());
+
+        const auto response = response_future.get();
+        REQUIRE(response->ok());
+
+        content = std::string(return_buffer.begin(), return_buffer.end());
+    }
+
+    void do_copy_or_move(
+        const hestia::HsmObject& obj, int src_tier, int tgt_tier, bool is_copy)
+    {
+        hestia::HsmAction action(
+            hestia::HsmItem::Type::OBJECT,
+            is_copy ? hestia::HsmAction::Action::COPY_DATA :
+                      hestia::HsmAction::Action::MOVE_DATA);
+        action.set_source_tier(src_tier);
+        action.set_target_tier(tgt_tier);
+        action.set_subject_key(obj.get_primary_key());
+
         hestia::HsmActionResponse::Ptr response;
         auto completion_cb =
             [&response](hestia::HsmActionResponse::Ptr completion_response) {
                 response = std::move(completion_response);
             };
+
         m_hsm_service->do_hsm_action(
             hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
-            stream, completion_cb);
-        (void)stream->flush();
+            nullptr, completion_cb);
         REQUIRE(response->ok());
     }
 
 
     void copy(const hestia::HsmObject& obj, int src_tier, int tgt_tier)
     {
-        hestia::HsmAction action(
-            hestia::HsmItem::Type::OBJECT,
-            hestia::HsmAction::Action::COPY_DATA);
-        action.set_source_tier(src_tier);
-        action.set_target_tier(tgt_tier);
-        action.set_subject_key(obj.get_primary_key());
-
-        hestia::HsmActionResponse::Ptr response;
-        auto completion_cb =
-            [&response](hestia::HsmActionResponse::Ptr completion_response) {
-                response = std::move(completion_response);
-            };
-
-        m_hsm_service->do_hsm_action(
-            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
-            nullptr, completion_cb);
-        REQUIRE(response->ok());
+        do_copy_or_move(obj, src_tier, tgt_tier, true);
     }
 
     void move(const hestia::HsmObject& obj, int src_tier, int tgt_tier)
     {
-        hestia::HsmAction action(
-            hestia::HsmItem::Type::OBJECT,
-            hestia::HsmAction::Action::MOVE_DATA);
-        action.set_source_tier(src_tier);
-        action.set_target_tier(tgt_tier);
-        action.set_subject_key(obj.get_primary_key());
-        hestia::HsmActionResponse::Ptr response;
-        auto completion_cb =
-            [&response](hestia::HsmActionResponse::Ptr completion_response) {
-                response = std::move(completion_response);
-            };
-
-        m_hsm_service->do_hsm_action(
-            hestia::HsmActionRequest(action, {m_test_user.get_primary_key()}),
-            nullptr, completion_cb);
-        REQUIRE(response->ok());
+        do_copy_or_move(obj, src_tier, tgt_tier, false);
     }
 
     /*
@@ -258,14 +276,9 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "Test HSM Service", "[hsm-service]")
 
     create(obj0);
 
-    hestia::Stream stream;
-    uint8_t tier0_id = 0;
-
+    uint8_t tier0_id          = 0;
     const std::string content = "The quick brown fox jumps over the lazy dog.";
-    stream.set_source(hestia::InMemoryStreamSource::create(
-        hestia::ReadableBufferView{content}));
-
-    put_data(obj0, &stream, tier0_id);
+    put_data(obj0, content, tier0_id);
 
     REQUIRE(exists(obj0));
 
@@ -274,26 +287,18 @@ TEST_CASE_METHOD(HsmServiceTestFixture, "Test HSM Service", "[hsm-service]")
     hestia::HsmObject obj1(id1);
     hestia::HsmObject obj2(id2);
 
-    stream.set_source(hestia::InMemoryStreamSource::create(
-        hestia::ReadableBufferView{content}));
     create(obj1);
-    put_data(obj1, &stream, tier0_id);
+    put_data(obj1, content, tier0_id);
     REQUIRE(exists(obj1));
 
-    stream.set_source(hestia::InMemoryStreamSource::create(
-        hestia::ReadableBufferView{content}));
     create(obj2);
-    put_data(obj2, &stream, tier0_id);
+    put_data(obj2, content, tier0_id);
     REQUIRE(exists(obj2));
 
-    std::vector<char> return_buffer(content.size());
-    hestia::WriteableBufferView writeable_buffer(return_buffer);
-    stream.set_sink(hestia::InMemoryStreamSink::create(writeable_buffer));
+    std::string tier0_content;
+    get_data(obj0, tier0_content, content.length(), tier0_id);
 
-    get_data(obj0, &stream, tier0_id);
-    std::string reconstructed_content(
-        return_buffer.begin(), return_buffer.end());
-    REQUIRE(reconstructed_content == content);
+    REQUIRE(tier0_content == content);
 
     uint8_t tier1_id = 1;
     copy(obj0, tier0_id, tier1_id);

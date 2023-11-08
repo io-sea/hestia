@@ -28,8 +28,16 @@ class BaseObjectStoreRequest : public BaseRequest {
 
     const StorageObject& object() const { return m_object; }
 
+    std::size_t get_progress_interval() const { return m_progress_interval; }
+
+    void set_progress_interval(std::size_t interval)
+    {
+        m_progress_interval = interval;
+    }
+
   protected:
     StorageObject m_object;
+    std::size_t m_progress_interval{0};
 
   private:
     Extent m_extent;

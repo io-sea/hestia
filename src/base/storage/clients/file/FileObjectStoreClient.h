@@ -19,6 +19,8 @@ class FileObjectStoreClientConfig : public SerializeableWithFields {
         register_scalar_field(&m_mode);
     }
 
+    void set_mode(Mode mode) { m_mode.init_value(mode); }
+
     EnumField<Mode, Mode_enum_string_converter> m_mode{"mode", Mode::DATA_ONLY};
     StringField m_root{"root", "object_store"};
 };
@@ -54,11 +56,17 @@ class FileObjectStoreClient : public ObjectStoreClient {
     // ObjectStoreClient API
     bool exists(const StorageObject& object) const override;
 
-    void get(StorageObject& object, const Extent& extent, Stream* stream)
-        const override;
+    void get(
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const override;
 
-    void put(const StorageObject& object, const Extent& extent, Stream* stream)
-        const override;
+    void put(
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const override;
 
     void remove(const StorageObject& object) const override;
 

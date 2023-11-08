@@ -1,7 +1,11 @@
 #include "HsmObjectStoreTestWrapper.h"
 
+#include "InMemoryStreamSink.h"
+#include "InMemoryStreamSource.h"
 #include "Logger.h"
 #include "TestContext.h"
+
+#include <future>
 
 #include <catch2/catch_all.hpp>
 
@@ -33,24 +37,90 @@ HsmObjectStoreTestWrapper::Ptr HsmObjectStoreTestWrapper::create(
 }
 
 void HsmObjectStoreTestWrapper::put(
-    const hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
+    const hestia::StorageObject& obj, const std::string& content, uint8_t tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::PUT);
     request.set_target_tier(tier);
-    REQUIRE(m_client->make_request(request, stream)->ok());
+
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    if (!content.empty()) {
+        hestia::Stream stream;
+        auto source = hestia::InMemoryStreamSource::create(
+            hestia::ReadableBufferView(content));
+        stream.set_source(std::move(source));
+
+        m_client->make_request(request, completion_cb, nullptr, &stream);
+
+        REQUIRE(stream.flush().ok());
+    }
+    else {
+        m_client->make_request(request, completion_cb);
+    }
+
+    const auto response = response_future.get();
+    REQUIRE(response->ok());
 }
 
-void HsmObjectStoreTestWrapper::get(
-    hestia::StorageObject& obj, hestia::Stream* stream, uint8_t tier)
+void HsmObjectStoreTestWrapper::get(hestia::StorageObject& obj)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::GET);
-    LOG_INFO("Getting object with size: " << request.object().size());
+
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
+    REQUIRE(response->ok());
+    obj = response->object();
+}
+
+void HsmObjectStoreTestWrapper::get(
+    hestia::StorageObject& obj,
+    std::string& content,
+    std::size_t content_length,
+    uint8_t tier)
+{
+    hestia::HsmObjectStoreRequest request(
+        obj, hestia::HsmObjectStoreRequestMethod::GET);
     request.set_source_tier(tier);
-    auto repsonse = m_client->make_request(request, stream);
-    REQUIRE(repsonse->ok());
-    obj = repsonse->object();
+
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    hestia::Stream stream;
+    std::vector<char> returned_buffer(content_length);
+    hestia::WriteableBufferView write_buffer(returned_buffer);
+    auto sink = hestia::InMemoryStreamSink::create(write_buffer);
+    stream.set_sink(std::move(sink));
+
+    m_client->make_request(request, completion_cb, nullptr, &stream);
+
+    REQUIRE(stream.flush().ok());
+
+    auto response = response_future.get();
+    REQUIRE(response->ok());
+
+    content = std::string(returned_buffer.begin(), returned_buffer.end());
+    obj     = response->object();
 }
 
 void HsmObjectStoreTestWrapper::exists(
@@ -58,7 +128,17 @@ void HsmObjectStoreTestWrapper::exists(
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::EXISTS);
-    const auto response = m_client->make_request(request);
+
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
     REQUIRE(response->ok());
     REQUIRE(response->object_found() == should_exist);
 }
@@ -70,7 +150,16 @@ void HsmObjectStoreTestWrapper::copy(
         obj, hestia::HsmObjectStoreRequestMethod::COPY);
     request.set_source_tier(source_tier);
     request.set_target_tier(target_tier);
-    const auto response = m_client->make_request(request);
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
     REQUIRE(response->ok());
 }
 
@@ -81,7 +170,17 @@ void HsmObjectStoreTestWrapper::move(
         obj, hestia::HsmObjectStoreRequestMethod::MOVE);
     request.set_source_tier(source_tier);
     request.set_target_tier(target_tier);
-    const auto response = m_client->make_request(request);
+
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
     REQUIRE(response->ok());
 }
 
@@ -90,7 +189,16 @@ void HsmObjectStoreTestWrapper::list(
     std::vector<hestia::StorageObject>& result)
 {
     hestia::HsmObjectStoreRequest request(query);
-    const auto response = m_client->make_request(request);
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
     REQUIRE(response->ok());
     result = response->objects();
 }
@@ -99,5 +207,15 @@ void HsmObjectStoreTestWrapper::remove(const hestia::StorageObject& obj)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::REMOVE);
-    REQUIRE(m_client->make_request(request)->ok());
+    std::promise<hestia::HsmObjectStoreResponse::Ptr> response_promise;
+    auto response_future = response_promise.get_future();
+
+    auto completion_cb =
+        [&response_promise](hestia::HsmObjectStoreResponse::Ptr response) {
+            response_promise.set_value(std::move(response));
+        };
+
+    m_client->make_request(request, completion_cb);
+    auto response = response_future.get();
+    REQUIRE(response->ok());
 }

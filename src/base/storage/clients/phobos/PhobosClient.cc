@@ -29,10 +29,7 @@ std::unique_ptr<PhobosClient> PhobosClient::create(
     return std::make_unique<PhobosClient>(std::move(phobos_interface));
 }
 
-PhobosClient::~PhobosClient()
-{
-    LOG_INFO("Destroying Phobos Client");
-}
+PhobosClient::~PhobosClient() {}
 
 std::string PhobosClient::get_registry_identifier()
 {
@@ -40,10 +37,11 @@ std::string PhobosClient::get_registry_identifier()
 }
 
 void PhobosClient::put(
-    const StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc) const
 {
-    (void)extent;
-
     if (stream != nullptr) {
         auto fifo     = FifoStreamSink::create();
         auto fifo_ptr = fifo.get();
@@ -51,22 +49,28 @@ void PhobosClient::put(
         const auto fd = fifo->get_read_descriptor();
         stream->set_sink(std::move(fifo));
 
-        auto read_op = [this, object, fd]() {
-            m_phobos_interface->put(object, fd);
+        auto read_op = [this, request, fd, completion_func, id = m_id]() {
+            auto response = ObjectStoreResponse::create(request, m_id);
+            m_phobos_interface->put(request.object(), fd);
+            completion_func(std::move(response));
             return 0;
         };
         fifo_ptr->set_producer(std::async(std::launch::async, read_op));
     }
     else {
-        m_phobos_interface->put(object, -1);
+        auto response = ObjectStoreResponse::create(request, m_id);
+        m_phobos_interface->put(request.object(), -1);
+        completion_func(std::move(response));
     }
 }
 
 void PhobosClient::get(
-    StorageObject& object, const Extent& extent, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc) const
 {
-    (void)extent;
-
+    StorageObject object = request.object();
     m_phobos_interface->get_metadata(object);
 
     if (stream != nullptr) {
@@ -76,11 +80,20 @@ void PhobosClient::get(
         auto fd = fifo->get_write_descriptor();
         stream->set_source(std::move(fifo));
 
-        auto write_op = [this, object, fd]() {
+        auto write_op = [this, object, request, fd, completion_func,
+                         id = m_id]() {
+            auto response = ObjectStoreResponse::create(request, m_id);
             m_phobos_interface->get(object, fd);
+            response->object() = object;
+            completion_func(std::move(response));
             return 0;
         };
         fifo_ptr->set_producer(std::async(std::launch::async, write_op));
+    }
+    else {
+        auto response      = ObjectStoreResponse::create(request, m_id);
+        response->object() = object;
+        completion_func(std::move(response));
     }
 }
 

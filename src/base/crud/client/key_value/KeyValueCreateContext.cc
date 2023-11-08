@@ -222,8 +222,7 @@ void KeyValueCreateContext::process_foreign_keys(
             const auto parent_type =
                 m_serializer->get_template()->get_parent_type();
             if (parent_type.empty()) {
-                THROW_WITH_SOURCE_LOC(
-                    "Have empty foreign key id and missing parent type");
+                THROW("Have empty foreign key id and missing parent type");
             }
 
             if (!relations.m_parent_id.empty()) {

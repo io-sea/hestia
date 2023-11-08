@@ -114,7 +114,7 @@ bool BasicHttpServer::on_body_chunk(
     body_count += write_result.m_num_transferred;
     last_event = HttpEvent::BODY;
 
-    LOG_INFO(
+    LOG_DEBUG(
         "Body count is: " << body_count
                           << " expected_body_size is: " << expected_body_size);
 

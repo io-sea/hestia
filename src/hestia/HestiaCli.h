@@ -71,6 +71,7 @@ class HestiaCli {
     unsigned m_server_port{8080};
     AppCommand m_app_command{AppCommand::UNKNOWN};
     HestiaClientCommand m_client_command;
+    std::string m_console_prefix{"Hestia> "};
     std::unique_ptr<IConsoleInterface> m_console_interface;
 };
 }  // namespace hestia

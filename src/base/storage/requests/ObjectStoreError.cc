@@ -27,6 +27,8 @@ std::string ObjectStoreError::code_to_string(ObjectStoreErrorCode code)
             return "ERROR";
         case ObjectStoreErrorCode::STL_EXCEPTION:
             return "STL_EXCEPTION";
+        case ObjectStoreErrorCode::BAD_STREAM:
+            return "BAD_STREAM";
         case ObjectStoreErrorCode::UNKNOWN_EXCEPTION:
             return "UNKNOWN_EXCEPTION";
         case ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD:

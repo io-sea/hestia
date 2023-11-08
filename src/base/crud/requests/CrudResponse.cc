@@ -148,12 +148,12 @@ const CrudIdentifierCollection& CrudResponse::get_ids() const
 Dictionary& CrudResponse::modified_attrs()
 {
     return m_modified_attrs;
-};
+}
 
 const Dictionary& CrudResponse::modified_attrs() const
 {
     return m_modified_attrs;
-};
+}
 
 void CrudResponse::write(
     std::string& buffer, const CrudQuery::FormatSpec& format)

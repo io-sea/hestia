@@ -61,9 +61,9 @@ Dictionary::Ptr CrudClient::create_child(
 {
     const auto child_service_iter = m_child_services.find(type);
     if (child_service_iter == m_child_services.end()) {
-        THROW_WITH_SOURCE_LOC(
-            "Attempted to find child service for type: " + type
-            + " but it is not registered.");
+        THROW(
+            "Attempted to find child service for type: "
+            << type << " but it is not registered.");
     }
 
     CrudIdentifier id;
@@ -71,12 +71,39 @@ Dictionary::Ptr CrudClient::create_child(
     auto create_response = child_service_iter->second->make_request(CrudRequest{
         CrudMethod::CREATE, {id, CrudQuery::BodyFormat::DICT}, user_context});
     if (!create_response->ok()) {
-        throw std::runtime_error(
-            "Failed to create default child: "
-            + create_response->get_error().to_string());
+        THROW(
+            "Failed to create default child: " << create_response->get_error());
     }
     return std::make_unique<Dictionary>(
         *create_response->get_attributes().get_dict()->get_sequence()[0]);
+}
+
+void CrudClient::remove_children(
+    const std::unordered_map<std::string, std::vector<std::string>>& child_refs,
+    const CrudUserContext& user_context) const
+{
+    for (const auto& [type, ids] : child_refs) {
+        if (ids.empty()) {
+            continue;
+        }
+
+        const auto child_service_iter = m_child_services.find(type);
+        if (child_service_iter == m_child_services.end()) {
+            THROW(
+                "Attempted to find child service for type: "
+                << type << " but it is not registered.");
+        }
+
+        auto remove_response =
+            child_service_iter->second->make_request(CrudRequest{
+                CrudMethod::REMOVE,
+                {CrudIdentifierCollection(ids), CrudQuery::BodyFormat::NONE},
+                user_context});
+        if (!remove_response->ok()) {
+            THROW(
+                "Failed to remove children: " << remove_response->get_error());
+        }
+    }
 }
 
 std::string CrudClient::get_id_from_parent_id(
@@ -87,18 +114,16 @@ std::string CrudClient::get_id_from_parent_id(
 {
     const auto parent_service_iter = m_parent_services.find(parent_type);
     if (parent_service_iter == m_parent_services.end()) {
-        THROW_WITH_SOURCE_LOC(
-            "Attempted to find parent of type: " + parent_type
-            + " but parent service not registered.");
+        THROW(
+            "Attempted to find parent of type: "
+            << parent_type << " but parent service not registered.");
     }
 
     auto get_response = parent_service_iter->second->make_request(CrudRequest{
         CrudMethod::READ, CrudQuery{id, CrudQuery::BodyFormat::ITEM},
         user_context});
     if (!get_response->ok()) {
-        throw std::runtime_error(
-            "Failed to get default parent: "
-            + get_response->get_error().to_string());
+        THROW("Failed to get default parent: " << get_response->get_error());
     }
 
     if (get_response->found()) {
@@ -124,9 +149,9 @@ void CrudClient::get_or_create_default_parent(
 
     const auto parent_service_iter = m_parent_services.find(type);
     if (parent_service_iter == m_parent_services.end()) {
-        THROW_WITH_SOURCE_LOC(
-            "Attempted to find default parent for type: " + type
-            + " but parent service not registered.");
+        THROW(
+            "Attempted to find default parent for type: "
+            << type << " but parent service not registered.");
     }
 
     if (type == User::get_type() && !user_id.empty()) {
@@ -136,9 +161,9 @@ void CrudClient::get_or_create_default_parent(
         auto parent_default_name =
             parent_service_iter->second->get_default_name();
         if (parent_default_name.empty()) {
-            THROW_WITH_SOURCE_LOC(
-                "Attempted to find default parent for type: " + type
-                + " but no default name set");
+            THROW(
+                "Attempted to find default parent for type: "
+                << type << " but no default name set");
         }
         LOG_INFO(
             "Searching for default parent with name: " << parent_default_name);
@@ -149,9 +174,7 @@ void CrudClient::get_or_create_default_parent(
     auto get_response = parent_service_iter->second->make_request(CrudRequest{
         CrudMethod::READ, CrudQuery{id, CrudQuery::BodyFormat::ID}, user_id});
     if (!get_response->ok()) {
-        throw std::runtime_error(
-            "Failed to get default parent: "
-            + get_response->get_error().to_string());
+        THROW("Failed to get default parent: " << get_response->get_error());
     }
 
     if (get_response->found()) {
@@ -167,9 +190,9 @@ void CrudClient::get_or_create_default_parent(
             parent_service_iter->second->make_request(CrudRequest{
                 CrudMethod::CREATE, {id, CrudQuery::BodyFormat::ID}, user_id});
         if (!create_response->ok()) {
-            throw std::runtime_error(
+            THROW(
                 "Failed to create default parent: "
-                + create_response->get_error().to_string());
+                << create_response->get_error());
         }
         assert(!create_response->ids().empty());
         LOG_INFO(

@@ -38,6 +38,9 @@ class Model : public SerializeableWithFields {
 
     std::string get_child_id_by_type(const std::string& type) const;
 
+    void get_child_ids_by_type(
+        std::unordered_map<std::string, std::vector<std::string>>& ids);
+
     void get_foreign_key_fields(VecForeignKeyContext& fields) const;
 
     void get_foreign_key_proxy_fields(VecKeyValuePair& fields) const;
@@ -50,10 +53,6 @@ class Model : public SerializeableWithFields {
     void get_one_to_one_fields(VecKeyValuePair& fields) const;
 
     bool has_owner() const;
-
-    void init_creation_time(std::time_t ctime);
-
-    void init_modification_time(std::time_t mtime);
 
     const std::string& name() const;
 
@@ -97,6 +96,7 @@ class ModelCreationContext : public SerializeableWithFields {
     {
         register_scalar_field(&m_creation_time);
         register_scalar_field(&m_last_modified_time);
+        register_scalar_field(&m_last_accessed_time);
     }
 
     void add_user(const std::string& user_id)
@@ -108,6 +108,7 @@ class ModelCreationContext : public SerializeableWithFields {
     ForeignKeyField m_created_by{"created_by", "user"};
     DateTimeField m_creation_time{"creation_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
+    DateTimeField m_last_accessed_time{"last_accessed_time"};
 };
 
 class ModelUpdateContext : public SerializeableWithFields {
@@ -115,7 +116,9 @@ class ModelUpdateContext : public SerializeableWithFields {
     ModelUpdateContext(const std::string& type) : SerializeableWithFields(type)
     {
         register_scalar_field(&m_last_modified_time);
+        register_scalar_field(&m_last_accessed_time);
     }
+    DateTimeField m_last_accessed_time{"last_accessed_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
 };
 

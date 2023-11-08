@@ -40,6 +40,8 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     Action get_action() const;
 
+    std::string get_action_as_string() const;
+
     uint8_t get_source_tier() const;
 
     uint8_t get_target_tier() const;
@@ -47,6 +49,8 @@ class HsmAction : public HsmItem, public OwnableModel {
     std::size_t get_offset() const;
 
     std::size_t get_size() const;
+
+    std::size_t get_progress_interval() const;
 
     std::size_t get_num_transferred() const;
 
@@ -78,6 +82,8 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     void set_size(std::size_t size);
 
+    void set_num_transferred(std::size_t size);
+
     HsmAction& operator=(const HsmAction& other);
 
   private:
@@ -92,6 +98,7 @@ class HsmAction : public HsmItem, public OwnableModel {
     UIntegerField m_transferred{"transferred"};
     UIntegerField m_source_tier{"source_tier"};
     UIntegerField m_target_tier{"target_tier"};
+    UIntegerField m_progress_interval{"progess_interval", 0};
     StringField m_subject_key{"subject_key"};
     StringField m_status_message{"status_message"};
     BooleanField m_is_request{"is_request", false};

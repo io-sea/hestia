@@ -44,6 +44,8 @@ std::string HsmObjectStoreError::code_to_string(HsmObjectStoreErrorCode code)
             return "ERROR";
         case HsmObjectStoreErrorCode::STL_EXCEPTION:
             return "STL_EXCEPTION";
+        case HsmObjectStoreErrorCode::CONFIG_ERROR:
+            return "CONFIG_ERROR";
         case HsmObjectStoreErrorCode::UNKNOWN_EXCEPTION:
             return "UNKNOWN_EXCEPTION";
         case HsmObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD:

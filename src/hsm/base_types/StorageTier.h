@@ -2,6 +2,7 @@
 
 #include "HsmItem.h"
 #include "ObjectStoreBackend.h"
+#include "TierExtents.h"
 #include <string>
 
 namespace hestia {
@@ -19,6 +20,8 @@ class StorageTier : public HsmItem, public Model {
     static std::string get_type();
 
     const std::vector<ObjectStoreBackend>& get_backends() const;
+
+    const std::vector<TierExtents>& get_extents() const;
 
     std::size_t get_capacity() const;
 
@@ -38,5 +41,6 @@ class StorageTier : public HsmItem, public Model {
     UIntegerField m_capacity{"capacity"};
     UIntegerField m_bandwidth{"bandwidth"};
     ForeignKeyProxyField<ObjectStoreBackend> m_backends{"backends"};
+    ForeignKeyProxyField<TierExtents> m_tier_extents{"extents"};
 };
 }  // namespace hestia

@@ -19,7 +19,26 @@ class TestConsoleInterface : public hestia::IConsoleInterface {
         m_err_output += output;
     }
 
-    void console_read(std::string& buffer) const override { buffer = m_input; }
+    void console_read(
+        std::string& buffer,
+        std::vector<char> break_sequence = {}) const override
+    {
+        std::size_t break_sequence_index = 0;
+        for (auto c : m_input) {
+            if (!break_sequence.empty()) {
+                if (c == break_sequence[break_sequence_index]) {
+                    break_sequence_index++;
+                    if (break_sequence_index == break_sequence.size()) {
+                        break;
+                    }
+                }
+                else {
+                    break_sequence_index = 0;
+                }
+            }
+            buffer += c;
+        }
+    }
 
     void console_write(const std::vector<std::string>& output) const override
     {
@@ -83,7 +102,8 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
 {
     WHEN("The default create arg is used")
     {
-        std::vector<std::string> args = {"hestia", "object", "create"};
+        std::vector<std::string> args = {
+            "hestia", "object", "create", "--verbosity", "1"};
         parse_args(args);
         run();
 
@@ -95,7 +115,8 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
 
     WHEN("The create arg is used with an id")
     {
-        std::vector<std::string> args = {"hestia", "object", "create", "1234"};
+        std::vector<std::string> args = {
+            "hestia", "object", "create", "1234", "--verbosity=1"};
         parse_args(args);
         run();
 
@@ -111,7 +132,8 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
     WHEN("The create arg is used with json output")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "1234", "--output_fmt=json"};
+            "hestia",       "object", "create", "1234", "--output_fmt=json",
+            "--verbosity=1"};
         parse_args(args);
         run();
 
@@ -127,8 +149,12 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
 
     WHEN("The create arg is used with key value output")
     {
-        std::vector<std::string> args = {
-            "hestia", "object", "create", "1234", "--output_fmt=key_value"};
+        std::vector<std::string> args = {"hestia",
+                                         "object",
+                                         "create",
+                                         "1234",
+                                         "--output_fmt=key_value",
+                                         "--verbosity=1"};
         parse_args(args);
         run();
 
@@ -145,7 +171,7 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
     WHEN(" We create with multiple ids passed through std in")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "--input_fmt=id"};
+            "hestia", "object", "create", "--input_fmt=id", "--verbosity=1"};
         m_console->m_input = "id0\nid1";
 
         parse_args(args);
@@ -164,8 +190,12 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
     WHEN(" We create with kv pairs and an id through std in")
     {
         std::vector<std::string> args = {
-            "hestia", "object", "create", "--input_fmt=key_value",
-            "--output_fmt=key_value"};
+            "hestia",
+            "object",
+            "create",
+            "--input_fmt=key_value",
+            "--output_fmt=key_value",
+            "--verbosity=1"};
         m_console->m_input = R"(
             name=my_object
             id=1234
@@ -192,7 +222,7 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
 {
     std::vector<std::string> create_args = {
-        "hestia", "object", "create", "1234"};
+        "hestia", "object", "create", "1234", "--verbosity=1"};
     parse_args(create_args);
     run();
     m_console->m_output.clear();
@@ -222,17 +252,18 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
         }
     }
 
-    /*
     WHEN("Json is used for the update")
     {
-        std::vector<std::string> args = {"hestia",
-                                         "metadata",
-                                         "update",
-                                         "1234",
-                                         "--id_fmt=parent_id",
-                                         "--input_fmt=json",
-                                         "--output_fmt=json"};
-        m_console->m_input            = R"(
+        std::vector<std::string> args = {
+            "hestia",
+            "metadata",
+            "update",
+            "1234",
+            "--id_fmt=parent_id",
+            "--input_fmt=json",
+            "--output_fmt=json",
+            "--verbosity=1"};
+        m_console->m_input = R"(
             {"data" : { "my_key0" : "my_value0",
                         "my_key1" : "my_value1"}}
                         )";
@@ -249,7 +280,6 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
             REQUIRE_FALSE(dict.get_map_item("data")->is_empty());
         }
     }
-    */
 }
 
 /*
@@ -267,3 +297,25 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Read", "[hestia]")
     REQUIRE_FALSE(output_lines.empty());
 }
 */
+
+
+TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Remove", "[hestia]")
+{
+    std::vector<std::string> create_args = {
+        "hestia", "object", "create", "1234", "--verbosity=1"};
+    parse_args(create_args);
+    run();
+    m_console->m_output.clear();
+
+    std::vector<std::string> remove_args = {
+        "hestia", "object", "remove", "1234", "--verbosity=1"};
+    parse_args(remove_args);
+    run();
+    m_console->m_output.clear();
+
+    std::vector<std::string> empty_create_args = {
+        "hestia", "object", "create", "--verbosity=1"};
+    parse_args(empty_create_args);
+    run();
+    m_console->m_output.clear();
+}

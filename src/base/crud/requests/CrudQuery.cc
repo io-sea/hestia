@@ -181,6 +181,10 @@ void CrudQuery::append(
     const std::string& body, const CrudAttributes::FormatSpec& format)
 {
     m_attributes.append(body, format);
+
+    if (m_ids.empty()) {
+        m_ids = CrudIdentifierCollection(m_attributes.get_ids());
+    }
 }
 
 

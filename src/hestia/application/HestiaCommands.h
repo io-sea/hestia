@@ -43,7 +43,7 @@ class HestiaClientCommand {
     uint8_t m_source_tier{0};
     uint8_t m_target_tier{0};
 
-    bool m_is_verbose{false};
+    unsigned m_verbosity{2};
     bool m_is_version{false};
 
     HestiaType m_subject;

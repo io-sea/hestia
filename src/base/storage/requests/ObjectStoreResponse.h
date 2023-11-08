@@ -34,7 +34,15 @@ class BaseObjectStoreResponse : public Response<ErrorCode> {
 
     bool object_is_remote() const { return !m_object.get_location().empty(); }
 
+    void set_bytes_transferred(std::size_t bytes)
+    {
+        m_bytes_transferred = bytes;
+    }
+
+    std::size_t get_bytes_transferred() const { return m_bytes_transferred; }
+
   protected:
+    std::size_t m_bytes_transferred{0};
     StorageObject m_object;
     std::string m_store_id;
 

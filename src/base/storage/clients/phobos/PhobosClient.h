@@ -18,13 +18,19 @@ class PhobosClient : public ObjectStoreClient {
     static std::string get_registry_identifier();
 
   private:
-    void get(StorageObject& object, const Extent& extent, Stream* stream)
-        const override;
+    void get(
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const override;
 
     bool exists(const StorageObject& object) const override;
 
-    void put(const StorageObject& object, const Extent& extent, Stream* stream)
-        const override;
+    void put(
+        const ObjectStoreRequest& request,
+        completionFunc completion_func,
+        Stream* stream                     = nullptr,
+        Stream::progressFunc progress_func = nullptr) const override;
 
     void remove(const StorageObject& object) const override;
 

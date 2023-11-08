@@ -91,40 +91,105 @@ class HsmService : public CrudService {
         actionCompletionFunc completion_func,
         actionProgressFunc progress_func) const;
 
-    void on_put_data_complete(
-        const BaseRequest& req,
-        const CrudUserContext& user_context,
-        const HsmObject& working_object,
-        uint8_t tier,
-        const Extent& extent,
-        const std::string& store_id,
-        const HsmAction& working_action,
-        actionCompletionFunc completion_func) const;
+    struct ActionContext {
+        ActionContext() = default;
 
-    void on_get_data_complete(
-        const BaseRequest& req,
-        const CrudUserContext& user_context,
-        const HsmAction& working_action,
-        const Extent& extent,
-        bool db_update,
-        actionCompletionFunc completion_func) const;
+        ActionContext(
+            const HsmActionRequest& req,
+            actionCompletionFunc completion_func,
+            actionProgressFunc progress_func) :
+            m_action(req.get_action()),
+            m_req(req),
+            m_user_context(req.get_user_context()),
+            m_completion_func(completion_func),
+            m_progress_func(progress_func),
+            m_source_tier(req.source_tier()),
+            m_target_tier(req.target_tier()),
+            m_extent(req.extent())
+        {
+        }
+
+        HsmAction m_action;
+        BaseRequest m_req;
+        CrudUserContext m_user_context;
+        actionCompletionFunc m_completion_func;
+        actionProgressFunc m_progress_func;
+        uint8_t m_source_tier{0};
+        uint8_t m_target_tier{0};
+        std::string m_store_id;
+        Extent m_extent;
+        bool m_needs_db_update{false};
+    };
+
+    void make_object_store_request(
+        HsmObjectStoreRequestMethod method,
+        const ActionContext& action_context,
+        Stream* stream = nullptr) const;
+
+    void on_object_store_response(
+        HsmObjectStoreRequestMethod method,
+        HsmObjectStoreResponse::Ptr object_store_response,
+        const ActionContext& action_context) const;
+
+    void on_db_update(
+        HsmObjectStoreRequestMethod method,
+        const std::string& store_id,
+        const ActionContext& action_context) const;
+
+    std::size_t get_object_size_on_tier(
+        const ActionContext& action_context) const;
+
+    void init_extent(
+        TierExtents& extent,
+        const HsmService::ActionContext& action_context,
+        const std::string& tier_id,
+        const std::string& store_id) const;
+
+    void get_action(
+        const ActionContext& action_context, HsmAction& action) const;
+
+    void get_object(
+        const ActionContext& action_context, HsmObject& object) const;
+
+    bool get_tier_extent(
+        const std::string& tier_id,
+        const HsmObject& object,
+        TierExtents& extents) const;
+
+    void update_object(
+        const ActionContext& action_context, const HsmObject& object) const;
+
+    void update_action(
+        const ActionContext& action_context, const HsmAction& action) const;
 
     CrudResponsePtr get_or_create_action(
         const HsmActionRequest& req, HsmAction& working_action) const;
 
+    void create_or_update_extent(
+        const ActionContext& action_context,
+        const TierExtents& extent,
+        bool do_create) const;
+
+    void remove_or_update_extent(
+        const ActionContext& action_context, const TierExtents& extent) const;
+
     const std::string& get_tier_id(uint8_t tier) const;
 
     void set_action_error(
-        const CrudUserContext& user_context,
-        const std::string& action_id,
-        const std::string& message);
+        const ActionContext& action_context, const std::string& message) const;
 
     void set_action_finished_ok(
-        const CrudUserContext& user_context,
-        const std::string& action_id,
-        std::size_t bytes) const;
+        const ActionContext& action_context, std::size_t bytes) const;
 
-    void set_action_progress(const std::string& action_id, std::size_t bytes);
+    void set_action_progress(
+        const ActionContext& action_context, std::size_t bytes) const;
+
+    void respond_ok(const ActionContext& action_context) const;
+
+    void respond_error(
+        const ActionContext& action_context,
+        HsmActionErrorCode code,
+        const std::string& message) const;
 
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;

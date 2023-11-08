@@ -121,6 +121,11 @@ bool Stream::has_source() const
     return bool(m_source);
 }
 
+bool Stream::supports_progress_func() const
+{
+    return m_progress_func != nullptr && m_transfer_interval > 0;
+}
+
 StreamState Stream::flush(std::size_t block_size) noexcept
 {
     LOG_INFO("Starting stream flush");
@@ -151,10 +156,11 @@ StreamState Stream::flush(std::size_t block_size) noexcept
         }
 
         m_transfer_progress += write_result.m_num_transferred;
-        if (m_progress_func
+        if (supports_progress_func()
             && m_transfer_progress
                    >= m_transfer_interval + m_last_progress_call) {
             m_last_progress_call = m_transfer_progress.load();
+            LOG_INFO("About to call progress func");
             m_progress_func(m_transfer_progress);
         }
 
@@ -167,10 +173,6 @@ StreamState Stream::flush(std::size_t block_size) noexcept
     if (auto reset_state = reset(); !reset_state.ok()) {
         state = reset_state;
     }
-    LOG_INFO(
-        "Finished stream flush with state: " << state.to_string()
-                                             << " and num transferred: "
-                                             << state.get_num_transferred());
     return state;
 }
 
@@ -188,7 +190,7 @@ IOResult Stream::read(WriteableBufferView& buffer) noexcept
     }
 
     m_transfer_progress += result.m_num_transferred;
-    if (m_progress_func
+    if (supports_progress_func()
         && m_transfer_progress >= m_transfer_interval + m_last_progress_call) {
         m_last_progress_call = m_transfer_progress.load();
         m_progress_func(m_transfer_progress);
@@ -210,7 +212,7 @@ IOResult Stream::write(const ReadableBufferView& buffer) noexcept
     }
 
     m_transfer_progress += result.m_num_transferred;
-    if (m_progress_func
+    if (supports_progress_func()
         && m_transfer_progress >= m_transfer_interval + m_last_progress_call) {
         m_last_progress_call = m_transfer_progress.load();
         m_progress_func(m_transfer_progress);

@@ -13,19 +13,15 @@ class BaseResponse {
     enum class State { OK, ERROR };
     using Ptr = std::unique_ptr<BaseResponse>;
 
-    BaseResponse(const BaseRequest& request) : m_request_id(request.get_id()) {}
+    BaseResponse(const BaseRequest& request);
 
     virtual ~BaseResponse() = default;
 
-    virtual bool ok() const { return m_state == State::OK; }
+    const BaseRequestError& get_base_error() const;
 
-    const BaseRequestError& get_base_error() const { return m_base_error; }
+    virtual bool ok() const;
 
-    void on_base_error(const BaseRequestError& error)
-    {
-        m_base_error = error;
-        m_state      = State::ERROR;
-    }
+    void on_base_error(const BaseRequestError& error);
 
   protected:
     std::string m_request_id;

@@ -14,13 +14,16 @@ class HsmObjectStoreTestWrapper {
 
     void put(
         const hestia::StorageObject& obj,
-        hestia::Stream* stream = nullptr,
-        uint8_t tier           = 0);
+        const std::string& content,
+        uint8_t tier = 0);
+
+    void get(hestia::StorageObject& obj);
 
     void get(
         hestia::StorageObject& obj,
-        hestia::Stream* stream = nullptr,
-        uint8_t tier           = 0);
+        std::string& content,
+        std::size_t content_length,
+        uint8_t tier = 0);
 
     void exists(const hestia::StorageObject& obj, bool should_exist);
 

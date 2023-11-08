@@ -26,6 +26,7 @@
 #include "TestUtils.h"
 
 #include <filesystem>
+#include <future>
 #include <iostream>
 
 class TestHestiaWebAppFixture {
@@ -111,6 +112,20 @@ class TestHestiaWebAppFixture {
         m_http_client = std::make_unique<hestia::CurlClient>(http_config);
     }
 
+    hestia::HttpResponse::Ptr make_request(
+        const hestia::HttpRequest& request, hestia::Stream* stream = nullptr)
+    {
+        std::promise<hestia::HttpResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HttpResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
+            };
+        m_http_client->make_request(request, completion_cb, stream);
+        return response_future.get();
+    }
+
     ~TestHestiaWebAppFixture() { m_server->stop(); }
 
     void get_objects(std::vector<hestia::Model::Ptr>& objects)
@@ -118,7 +133,7 @@ class TestHestiaWebAppFixture {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::GET);
         req.get_header().set_content_type("application/json");
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
 
         hestia::Dictionary dict;
@@ -132,7 +147,7 @@ class TestHestiaWebAppFixture {
         hestia::HttpRequest req(path, hestia::HttpRequest::Method::GET);
         req.get_header().set_content_type("application/json");
 
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
 
         std::vector<hestia::HsmObject::Ptr> objects;
@@ -159,7 +174,7 @@ class TestHestiaWebAppFixture {
         m_object_adapter->to_dict(put_objects, input_dict);
         hestia::JsonDocument(input_dict).write(req.body());
 
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
 
         std::vector<hestia::HsmObject::Ptr> objects;
@@ -194,7 +209,7 @@ class TestHestiaWebAppFixture {
         req.get_header().set_auth_token(
             m_user_service->get_current_user().tokens()[0].value());
         req.body()    = content;
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
     }
 
@@ -228,7 +243,7 @@ class TestHestiaWebAppFixture {
         req.get_header().set_auth_token(
             m_user_service->get_current_user().tokens()[0].value());
 
-        auto response = m_http_client->make_request(req, &stream);
+        auto response = make_request(req, &stream);
         REQUIRE(!response->error());
     }
 
@@ -236,7 +251,7 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "tiers", hestia::HttpRequest::Method::GET);
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
 
         hestia::Dictionary dict;
@@ -256,7 +271,7 @@ class TestHestiaWebAppFixture {
         m_tier_adapter->to_dict(put_tiers, input_dict);
         hestia::JsonDocument(input_dict).write(req.body());
 
-        auto response = m_http_client->make_request(req);
+        auto response = make_request(req);
         REQUIRE(!response->error());
     }
 

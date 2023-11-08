@@ -134,10 +134,13 @@ bool FileObjectStoreClient::exists(const StorageObject& object) const
 }
 
 void FileObjectStoreClient::put(
-    const StorageObject& object, const Extent&, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc progress_func) const
 {
     if (needs_metadata()) {
-        auto path = get_metadata_path(object.id());
+        auto path = get_metadata_path(request.object().id());
         FileUtils::create_if_not_existing(path);
 
         std::ofstream meta_file(path);
@@ -145,41 +148,76 @@ void FileObjectStoreClient::put(
             [&meta_file](const std::string& key, const std::string& value) {
                 meta_file << key << " " << value << "\n";
             };
-        object.metadata().for_each_item(for_item);
+        request.object().metadata().for_each_item(for_item);
     }
 
-    if (needs_data()) {
-        LOG_INFO("Adding to sink: " << get_data_path(object.id()));
-        if (stream != nullptr) {
-            auto stream_sink =
-                std::make_unique<FileStreamSink>(get_data_path(object.id()));
-            stream->set_sink(std::move(stream_sink));
-        }
+    if (needs_data() && stream != nullptr) {
+        auto stream_sink = std::make_unique<FileStreamSink>(
+            get_data_path(request.object().id()));
+        stream->set_sink(std::move(stream_sink));
+        stream->set_progress_func(
+            request.get_progress_interval(), progress_func);
+
+
+        auto stream_completion_func = [completion_func, request,
+                                       id = m_id](StreamState state) mutable {
+            auto response = ObjectStoreResponse::create(request, id);
+            if (!state.ok()) {
+                response->on_error(
+                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
+            }
+            completion_func(std::move(response));
+        };
+        stream->set_completion_func(stream_completion_func);
+    }
+    else {
+        completion_func(ObjectStoreResponse::create(request, m_id));
     }
 }
 
 void FileObjectStoreClient::get(
-    StorageObject& object, const Extent&, Stream* stream) const
+    const ObjectStoreRequest& request,
+    completionFunc completion_func,
+    Stream* stream,
+    Stream::progressFunc progress_func) const
 {
-    if (!exists(object)) {
+    if (!exists(request.object())) {
         const std::string msg =
-            "Requested object: " + object.id()
-            + " not found in: " + get_data_path(object.id()).string();
+            "Requested object: " + request.object().id()
+            + " not found in: " + get_data_path(request.object().id()).string();
         LOG_ERROR(msg);
         throw ObjectStoreException(
             {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
     }
 
+    auto response = ObjectStoreResponse::create(request, m_id);
+
     if (needs_metadata()) {
-        read_metadata(object);
+        read_metadata(response->object());
     }
 
-    if (needs_data()) {
-        if (stream != nullptr) {
-            auto stream_source =
-                std::make_unique<FileStreamSource>(get_data_path(object.id()));
-            stream->set_source(std::move(stream_source));
-        }
+    if (needs_data() && stream != nullptr) {
+        auto stream_source = std::make_unique<FileStreamSource>(
+            get_data_path(request.object().id()));
+        stream->set_source(std::move(stream_source));
+        stream->set_progress_func(
+            request.get_progress_interval(), progress_func);
+
+        auto stream_completion_func = [completion_func,
+                                       object = response->object(), request,
+                                       id     = m_id](StreamState state) {
+            auto response      = ObjectStoreResponse::create(request, id);
+            response->object() = object;
+            if (!state.ok()) {
+                response->on_error(
+                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
+            }
+            completion_func(std::move(response));
+        };
+        stream->set_completion_func(stream_completion_func);
+    }
+    else {
+        completion_func(std::move(response));
     }
 }
 

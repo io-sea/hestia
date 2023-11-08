@@ -17,6 +17,15 @@ class TypedCrudRequest : public CrudRequest {
         m_items.emplace_back(std::make_unique<ItemT>(item));
     };
 
+    TypedCrudRequest(
+        CrudMethod method,
+        const ItemT& item,
+        const CrudUserContext& user_context) :
+        CrudRequest(method, user_context)
+    {
+        m_items.emplace_back(std::make_unique<ItemT>(item));
+    };
+
     virtual ~TypedCrudRequest() = default;
 };
 }  // namespace hestia

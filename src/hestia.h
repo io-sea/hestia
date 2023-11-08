@@ -377,6 +377,9 @@ int hestia_data_release(
     char** activity_id,
     int* len_activity_id);
 
+/// @brief Add the last set error message to the preallocated buffer
+void hestia_get_last_error(char* message_buffer, size_t len_message_buffer);
+
 #ifdef __cplusplus
 }
 #endif

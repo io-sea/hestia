@@ -2,6 +2,7 @@
 
 #include "HsmObjectStoreClient.h"
 #include "HsmObjectStoreClientFactory.h"
+#include "HttpRequest.h"
 
 #include <memory>
 
@@ -37,69 +38,111 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
     void do_initialize(
         const std::string& cache_path, DistributedHsmService* hsm_service);
 
-    [[nodiscard]] HsmObjectStoreResponse::Ptr make_request(
+    void make_request(
         const HsmObjectStoreRequest& request,
-        Stream* stream = nullptr) const noexcept override;
+        completionFunc completion_func,
+        progressFunc progress_func = nullptr,
+        Stream* stream             = nullptr) const noexcept override;
 
   private:
-    HsmObjectStoreResponse::Ptr do_remote_get(
-        const HsmObjectStoreRequest& request, Stream* stream) const;
+    void do_remote_get(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        Stream* stream) const;
 
-    HsmObjectStoreResponse::Ptr do_remote_put(
-        const HsmObjectStoreRequest& request, Stream* stream) const;
+    void do_remote_put(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        Stream* stream) const;
 
-    HsmObjectStoreResponse::Ptr do_remote_copy_or_move(
-        const HsmObjectStoreRequest& request, bool is_copy) const;
+    void do_remote_copy_or_move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        bool is_copy) const;
 
-    HsmObjectStoreResponse::Ptr do_remote_release(
-        const HsmObjectStoreRequest& request) const;
+    void do_remote_release(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const;
+
+    void do_remote_op(
+        const HttpRequest http_request,
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        const std::string& endpoint,
+        Stream* stream = nullptr) const;
+
+    void do_local_op(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        Stream* stream,
+        uint8_t tier) const;
 
     HsmObjectStoreResponse::Ptr do_local_op(
         const HsmObjectStoreRequest& request,
         Stream* stream,
         uint8_t tier) const;
 
-    HsmObjectStoreResponse::Ptr do_local_copy_or_move(
-        const HsmObjectStoreRequest& request, bool is_copy) const;
+    bool check_remote_config(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func) const;
 
-    HsmObjectStoreResponse::Ptr do_remote_copy_or_move_with_local_source(
-        const HsmObjectStoreRequest& request, bool is_copy) const;
+    void do_local_copy_or_move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        bool is_copy) const;
 
-    HsmObjectStoreResponse::Ptr do_remote_copy_or_move_with_local_target(
-        const HsmObjectStoreRequest& request, bool is_copy) const;
+    void do_remote_copy_or_move_with_local_source(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        bool is_copy) const;
+
+    void do_remote_copy_or_move_with_local_target(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func,
+        bool is_copy) const;
+
+    void do_local_release(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const;
 
     bool is_controller_node() const;
 
-    void copy(const HsmObjectStoreRequest& request) const override
-    {
-        (void)request;
-    };
-
     void get(
         const HsmObjectStoreRequest& request,
-        StorageObject& object,
-        Stream* stream) const override
-    {
-        (void)request;
-        (void)object, (void)stream;
-    };
-
-    void move(const HsmObjectStoreRequest& request) const override
-    {
-        (void)request;
-    };
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     void put(
-        const HsmObjectStoreRequest& request, Stream* stream) const override
-    {
-        (void)request;
-        (void)stream;
-    };
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void remove(const HsmObjectStoreRequest& request) const override
-    {
-        (void)request;
-    };
+    void copy(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
+
+    void move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
+
+    void remove(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     DistributedHsmService* m_hsm_service{nullptr};
     HttpClient* m_http_client{nullptr};

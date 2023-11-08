@@ -28,8 +28,12 @@ class MockHttpClient : public hestia::HttpClient {
         m_app = std::make_unique<hestia::mock::MockCrudWebApp>(m_service.get());
     }
 
-    hestia::HttpResponse::Ptr make_request(
-        const hestia::HttpRequest& request, hestia::Stream*) override
+    void make_request(
+        const hestia::HttpRequest& request,
+        hestia::HttpClient::completionFunc completion_func,
+        hestia::Stream*,
+        std::size_t,
+        hestia::HttpClient::progressFunc) override
     {
         auto intercepted_request = request;
         intercepted_request.overwrite_path(
@@ -41,8 +45,9 @@ class MockHttpClient : public hestia::HttpClient {
             hestia::StringUtils::remove_prefix(request.get_path(), m_address));
 
         m_app->on_event(&request_context, hestia::HttpEvent::EOM);
-        return std::make_unique<hestia::HttpResponse>(
-            *request_context.get_response());
+
+        completion_func(std::make_unique<hestia::HttpResponse>(
+            *request_context.get_response()));
     }
 
     std::string m_address{"127.0.0.1"};

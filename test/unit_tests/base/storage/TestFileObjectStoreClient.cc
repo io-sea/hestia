@@ -25,7 +25,7 @@ class FileObjectStoreTestFixture {
 
         hestia::FileObjectStoreClientConfig config;
         config.m_root = store_path;
-        config.m_mode.init_value(
+        config.set_mode(
             hestia::FileObjectStoreClientConfig::Mode::DATA_AND_METADATA);
 
         hestia::Dictionary dict;
@@ -57,22 +57,12 @@ TEST_CASE_METHOD(
     m_client->get(new_obj);
 
     std::string objdata = "The quick brown fox jumps over the lazy dog.";
-    std::vector<char> buffer(objdata.begin(), objdata.end());
+    m_client->put(obj, objdata);
 
-    hestia::Stream stream;
-    stream.set_source(hestia::InMemoryStreamSource::create(buffer));
+    std::string fetched_data;
+    m_client->get(obj, fetched_data, objdata.size());
 
-    m_client->put(obj, &stream);
-    REQUIRE(stream.flush().ok());
-
-    std::vector<char> input_buffer(buffer.size());
-    stream.set_sink(hestia::InMemoryStreamSink::create(input_buffer));
-
-    m_client->get(obj, &stream);
-    REQUIRE(stream.flush().ok());
-
-    std::string obj_content(input_buffer.begin(), input_buffer.end());
-    REQUIRE(obj_content == objdata);
+    REQUIRE(fetched_data == objdata);
 
     m_client->exists(obj, true);
 

@@ -37,6 +37,7 @@ class HestiaHLCApiTestFixture {
     {
         HestiaId hestia_id;
         hestia_id.m_lo = id;
+        hestia_id.m_hi = 0;
 
         const auto create_mode = overwrite ?
                                      hestia_create_mode_t::HESTIA_UPDATE :
@@ -61,12 +62,14 @@ class HestiaHLCApiTestFixture {
     {
         HestiaId hestia_id;
         hestia_id.m_lo = id;
+        hestia_id.m_hi = 0;
 
         std::vector<char> buffer(content.length());
         HestiaIoContext io_context;
         io_context.m_type   = hestia_io_type_t::HESTIA_IO_BUFFER;
         io_context.m_length = content.length();
         io_context.m_buffer = buffer.data();
+        io_context.m_offset = 0;
 
         const auto rc = hestia_object_get(&hestia_id, &io_context, tier);
         content       = std::string(buffer.begin(), buffer.end());
@@ -77,33 +80,34 @@ class HestiaHLCApiTestFixture {
     {
         HestiaId hestia_id;
         hestia_id.m_lo = id;
+        hestia_id.m_hi = 0;
         auto rc        = hestia_object_get_attrs(&hestia_id, &object);
         REQUIRE(rc == 0);
     }
 
     void set_attrs(
         unsigned id,
-        const std::vector<std::pair<std::string, std::string>>& attrs)
+        const std::vector<std::pair<std::string, std::string>>& attrs,
+        std::size_t)
     {
         HestiaId hestia_id;
         hestia_id.m_lo = id;
+        hestia_id.m_hi = 0;
 
-        HestiaKeyValuePair* kv_pairs = new HestiaKeyValuePair[attrs.size()];
-        for (std::size_t idx = 0; idx < attrs.size(); idx++) {
+        HestiaKeyValuePair kv_pairs[3];
+        for (std::size_t idx = 0; idx < 3; idx++) {
             hestia::StringUtils::to_char(
                 attrs[idx].first, &kv_pairs[idx].m_key);
             hestia::StringUtils::to_char(
                 attrs[idx].second, &kv_pairs[idx].m_value);
         }
-        auto rc = hestia_object_set_attrs(&hestia_id, kv_pairs, attrs.size());
+        auto rc = hestia_object_set_attrs(&hestia_id, kv_pairs, 3);
         REQUIRE(rc == 0);
 
-        for (std::size_t idx = 0; idx < attrs.size(); idx++) {
+        for (std::size_t idx = 0; idx < 3; idx++) {
             delete[] kv_pairs[idx].m_key;
             delete[] kv_pairs[idx].m_value;
         }
-        delete[] kv_pairs;
-        REQUIRE(rc == 0);
     }
 
     void list_tiers(std::vector<uint8_t>& tiers)
@@ -135,9 +139,10 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     // Check we have one of each of 0, 1, 2, 3, 4 by summing them
     REQUIRE(std::accumulate(tiers.begin(), tiers.end(), 0) == 10);
 
+    std::size_t num_attrs                                     = 3;
     std::vector<std::pair<std::string, std::string>> kv_pairs = {
         {"my_key0", "my_val0"}, {"my_key1", "my_val1"}, {"my_key2", "my_val2"}};
-    set_attrs(id0, kv_pairs);
+    set_attrs(id0, kv_pairs, num_attrs);
 
     std::string content("The quick brown fox jumps over the lazy dog");
     do_put(id0, 0, true, content);
@@ -163,6 +168,7 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
 
     HestiaId hestia_id;
     hestia_id.m_lo = id0;
+    hestia_id.m_hi = 0;
     hestia_object_copy(&hestia_id, 0, 1);
 
     get_attrs(id0, object);
@@ -194,8 +200,6 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     REQUIRE((object_tiers[1] == 0 || object_tiers[1] == 1));
     hestia_free_tier_ids(&object_tiers);
 
-    return;
-
     HestiaId* tier_object_ids{nullptr};
     std::size_t num_tier_object_ids{0};
     rc = hestia_object_list(0, &tier_object_ids, &num_tier_object_ids);
@@ -203,6 +207,7 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     REQUIRE(rc == 0);
 
     REQUIRE(num_tier_object_ids == 1);
-
+    REQUIRE(tier_object_ids[0].m_lo == hestia_id.m_lo);
+    REQUIRE(tier_object_ids[0].m_hi == hestia_id.m_hi);
     hestia_free_ids(&tier_object_ids);
 }

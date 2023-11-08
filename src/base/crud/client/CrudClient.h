@@ -70,6 +70,11 @@ class CrudClient {
         const std::string& parent_id,
         const CrudUserContext& user_context) const;
 
+    void remove_children(
+        const std::unordered_map<std::string, std::vector<std::string>>&
+            child_refs,
+        const CrudUserContext& user_context) const;
+
     std::string get_default_parent_id(const std::string& type) const;
 
     void set_default_parent_id(const std::string& type, const std::string& id);

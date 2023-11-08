@@ -1,5 +1,7 @@
 #include "KeyValueReadContext.h"
 
+#include "ErrorUtils.h"
+#include "Logger.h"
 #include <iostream>
 
 namespace hestia {
@@ -164,7 +166,14 @@ void KeyValueReadContext::add_db_items_to_dict(
     std::size_t size,
     Dictionary& dict) const
 {
-    assert(offset + size <= db_items.size());
+    if (offset + size > db_items.size()) {
+        std::string msg =
+            SOURCE_LOC()
+            + " | Critical: DB is corrupt. Attempting to access field item: "
+            + name;
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
 
     auto items_dict = Dictionary::create(Dictionary::Type::SEQUENCE);
     for (std::size_t idx = 0; idx < size; idx++) {

@@ -18,6 +18,11 @@ class MotrHsmTierInfo : public SerializeableWithFields {
         register_scalar_field(&m_description);
     }
 
+    void set_identifier(const std::string& id)
+    {
+        m_identifier.update_value(id);
+    }
+
     StringField m_name{"name"};
     StringField m_identifier{"identifier"};
     StringField m_description{"description"};
@@ -31,6 +36,11 @@ class MotrConfig : public SerializeableWithFields {
 
     static std::string get_tier_info_for_m0hsm(
         const std::vector<MotrHsmTierInfo>& tier_info);
+
+    void add_tier_info(const MotrHsmTierInfo& tier_info)
+    {
+        m_tier_info.get_container_as_writeable().push_back(tier_info);
+    }
 
     StringField m_local_address{"local_address"};
     StringField m_ha_address{"ha_address"};

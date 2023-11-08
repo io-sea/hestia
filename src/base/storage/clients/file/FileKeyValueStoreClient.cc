@@ -14,10 +14,7 @@
 namespace hestia {
 FileKeyValueStoreClient::FileKeyValueStoreClient() {}
 
-FileKeyValueStoreClient::~FileKeyValueStoreClient()
-{
-    LOG_INFO("Destroyed FileKeyValueStoreClient");
-}
+FileKeyValueStoreClient::~FileKeyValueStoreClient() {}
 
 void FileKeyValueStoreClient::initialize(
     const std::string& cache_path, const Dictionary& config_data)

@@ -9,7 +9,6 @@ add_module(
         curl/CurlClient.h
         curl/CurlHandle.h
     SOURCES
-        HttpClient.cc 
         curl/CurlClient.cc
         curl/CurlHandle.cc
     INTERNAL_INCLUDE_DIRS

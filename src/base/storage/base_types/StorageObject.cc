@@ -52,6 +52,11 @@ const std::string& StorageObject::get_location() const
     return m_location.get_value();
 }
 
+std::string StorageObject::get_metadata_item(const std::string& key) const
+{
+    return m_metadata.get_map().get_item(key);
+}
+
 void StorageObject::set_metadata(
     const std::string& key, const std::string& value)
 {

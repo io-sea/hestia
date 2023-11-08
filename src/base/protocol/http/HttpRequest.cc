@@ -162,6 +162,11 @@ const HttpHeader& HttpRequest::get_header() const
     return m_header;
 }
 
+void HttpRequest::set_content_length(std::size_t size)
+{
+    get_header().set_item("content-length", std::to_string(size));
+}
+
 std::string HttpRequest::to_string() const
 {
     std::string ret;

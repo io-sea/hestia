@@ -14,6 +14,7 @@
 #include "ProxygenTestUtils.h"
 #include "TestUtils.h"
 
+#include <future>
 #include <iostream>
 #include <memory>
 
@@ -66,6 +67,20 @@ class TestCurlClientFixture {
         m_redirect_server->wait_until_bound();
     }
 
+    hestia::HttpResponse::Ptr make_request(
+        const hestia::HttpRequest& request, hestia::Stream* stream = nullptr)
+    {
+        std::promise<hestia::HttpResponse::Ptr> response_promise;
+        auto response_future = response_promise.get_future();
+
+        auto completion_cb =
+            [&response_promise](hestia::HttpResponse::Ptr response) {
+                response_promise.set_value(std::move(response));
+            };
+        m_client->make_request(request, completion_cb, stream);
+        return response_future.get();
+    }
+
     ~TestCurlClientFixture() { m_server->stop(); }
 
     const std::string m_url          = "127.0.0.1:8000/";
@@ -87,15 +102,15 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Default", "[curl]")
 {
     hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
 
-    auto get_response = m_client->make_request(get_request);
+    auto get_response = make_request(get_request);
     REQUIRE(get_response->body() == "No data set!");
 
     hestia::HttpRequest put_request(m_url, hestia::HttpRequest::Method::PUT);
     put_request.body() = "The quick brown fox jumps over the lazy dog.";
 
-    auto put_response = m_client->make_request(put_request);
+    auto put_response = make_request(put_request);
 
-    auto get_response1 = m_client->make_request(get_request);
+    auto get_response1 = make_request(get_request);
     REQUIRE(
         get_response1->body()
         == "The quick brown fox jumps over the lazy dog.");
@@ -112,7 +127,7 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
         hestia::ReadableBufferView(content));
     stream.set_source(std::move(source));
 
-    auto put_response = m_client->make_request(put_request, &stream);
+    auto put_response = make_request(put_request, &stream);
     REQUIRE(!put_response->error());
 
     REQUIRE(stream.reset().ok());
@@ -124,7 +139,7 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Curl client - Streams", "[curl]")
     stream.set_sink(std::move(sink));
 
     hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
-    auto get_response = m_client->make_request(get_request, &stream);
+    auto get_response = make_request(get_request, &stream);
     REQUIRE(!get_response->error());
 
     std::string reconstructed_response(
@@ -146,7 +161,7 @@ TEST_CASE_METHOD(
         hestia::ReadableBufferView(content));
     stream.set_source(std::move(source));
 
-    auto put_response = m_client->make_request(put_request, &stream);
+    auto put_response = make_request(put_request, &stream);
     REQUIRE(!put_response->error());
 
     REQUIRE(stream.reset().ok());
@@ -158,7 +173,7 @@ TEST_CASE_METHOD(
     stream.set_sink(std::move(sink));
 
     hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
-    auto get_response = m_client->make_request(get_request, &stream);
+    auto get_response = make_request(get_request, &stream);
     REQUIRE(!get_response->error());
 
     std::string reconstructed_response(
@@ -173,15 +188,15 @@ TEST_CASE_METHOD(TestCurlClientFixture, "Test Redirect", "[.curl]")
     hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
     get_request.get_header().set_item("redirect_me", m_redirect_url);
 
-    auto get_response = m_client->make_request(get_request);
+    auto get_response = make_request(get_request);
     REQUIRE(get_response->body() == "No data set!");
 
     hestia::HttpRequest put_request(m_url, hestia::HttpRequest::Method::PUT);
     put_request.get_header().set_item("redirect_me", m_redirect_url);
     put_request.body() = "The quick brown fox jumps over the lazy dog.";
-    auto put_response  = m_client->make_request(put_request);
+    auto put_response  = make_request(put_request);
 
-    auto get_response1 = m_client->make_request(get_request);
+    auto get_response1 = make_request(get_request);
     REQUIRE(
         get_response1->body()
         == "The quick brown fox jumps over the lazy dog.");
@@ -204,7 +219,7 @@ TEST_CASE_METHOD(
         hestia::ReadableBufferView(content));
     stream.set_source(std::move(source));
 
-    auto put_response = m_client->make_request(put_request, &stream);
+    auto put_response = make_request(put_request, &stream);
     REQUIRE(!put_response->error());
 
     REQUIRE(stream.reset().ok());
@@ -218,7 +233,7 @@ TEST_CASE_METHOD(
     hestia::HttpRequest get_request(m_url, hestia::HttpRequest::Method::GET);
     get_request.get_header().set_item("redirect_me", m_redirect_url);
 
-    auto get_response = m_client->make_request(get_request, &stream);
+    auto get_response = make_request(get_request, &stream);
     REQUIRE(!get_response->error());
 
     std::string reconstructed_response(

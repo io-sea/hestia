@@ -49,6 +49,8 @@ class HttpRequest {
 
     void set_tracking_id(const std::string& id);
 
+    void set_content_length(std::size_t size);
+
     const std::string& get_tracking_id() const;
 
   private:

@@ -59,6 +59,10 @@ class DistributedHsmService {
 
     const DistributedHsmServiceConfig& get_self_config() const;
 
+    bool is_server() const;
+
+    const std::string& get_controller_address() const;
+
     std::string get_backend_address(
         uint8_t tier_name, const std::string& object_id = {}) const;
 

@@ -19,19 +19,32 @@ class MotrInterfaceImpl : public IMotrInterfaceImpl {
   public:
     void initialize(const MotrConfig& config) override;
 
-    void copy(const HsmObjectStoreRequest& request) const override;
+    void copy(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
     void get(
         const HsmObjectStoreRequest& request,
-        hestia::StorageObject& object,
-        hestia::Stream* stream) const override;
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void move(const HsmObjectStoreRequest& request) const override;
+    void move(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void put(const HsmObjectStoreRequest& request, hestia::Stream* stream)
-        const override;
+    void put(
+        const HsmObjectStoreRequest& request,
+        Stream* stream,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
-    void remove(const HsmObjectStoreRequest& request) const override;
+    void remove(
+        const HsmObjectStoreRequest& request,
+        completionFunc completion_func,
+        progressFunc progress_func) const override;
 
   private:
     void finish();

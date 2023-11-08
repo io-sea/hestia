@@ -7,11 +7,16 @@ class MockHttpClientForS3 : public hestia::HttpClient {
   public:
     MockHttpClientForS3() {}
 
-    hestia::HttpResponse::Ptr make_request(
-        const hestia::HttpRequest& request, hestia::Stream*) override
+    void make_request(
+        const hestia::HttpRequest& request,
+        hestia::HttpClient::completionFunc completion_func,
+        hestia::Stream*,
+        std::size_t,
+        hestia::HttpClient::progressFunc) override
     {
         m_last_request = request;
-        return std::make_unique<hestia::HttpResponse>(m_next_response);
+        completion_func(
+            std::make_unique<hestia::HttpResponse>(m_next_response));
     }
 
     hestia::HttpRequest m_last_request;

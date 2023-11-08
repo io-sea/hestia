@@ -6,12 +6,8 @@
 #include <iostream>
 
 int MockPhobos::phobos_put(
-    pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
+    pho_xfer_desc* xfers, size_t, pho_completion_cb_t, void*)
 {
-    (void)n;
-    (void)cb;
-    (void)udata;
-
     auto fd   = xfers[0].xd_fd;
     auto size = xfers[0].xd_put_params.size;
     auto id   = xfers[0].xd_objid;
@@ -34,12 +30,8 @@ int MockPhobos::phobos_put(
 }
 
 int MockPhobos::phobos_get(
-    pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
+    pho_xfer_desc* xfers, size_t, pho_completion_cb_t, void*)
 {
-    (void)n;
-    (void)cb;
-    (void)udata;
-
     auto id   = xfers[0].xd_objid;
     auto iter = m_data_cache.find(id);
     if (iter == m_data_cache.end()) {
@@ -58,12 +50,8 @@ int MockPhobos::phobos_get(
 }
 
 int MockPhobos::phobos_getmd(
-    pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
+    pho_xfer_desc* xfers, size_t, pho_completion_cb_t, void*)
 {
-    (void)n;
-    (void)cb;
-    (void)udata;
-
     auto id   = xfers[0].xd_objid;
     auto iter = m_metadata_cache.find(id);
     if (iter == m_metadata_cache.end()) {
@@ -74,10 +62,8 @@ int MockPhobos::phobos_getmd(
     return 0;
 }
 
-int MockPhobos::phobos_delete(pho_xfer_desc* xfers, size_t num_xfers)
+int MockPhobos::phobos_delete(pho_xfer_desc* xfers, size_t)
 {
-    (void)num_xfers;
-
     auto id = xfers[0].xd_objid;
 
     auto meta_iter = m_metadata_cache.find(id);
@@ -106,29 +92,21 @@ int MockPhobos::phobos_attrs_foreach(
 
 void MockPhobos::pho_xfer_desc_destroy(pho_xfer_desc*) {}
 
-void MockPhobos::phobos_store_object_list_free(object_info* objs, int n_objs)
+void MockPhobos::phobos_store_object_list_free(object_info* objs, int)
 {
-    (void)objs;
-    (void)n_objs;
-
     delete objs;
 }
 
 int MockPhobos::phobos_store_object_list(
-    const char** res,
-    int n_res,
-    bool is_pattern,
+    const char**,
+    int,
+    bool,
     const char** metadata,
     int n_metadata,
-    bool deprecated,
+    bool,
     object_info** objs,
     int* n_objs)
 {
-    (void)res;
-    (void)n_res;
-    (void)is_pattern;
-    (void)deprecated;
-
     *n_objs = 0;
 
     for (const auto& entry : m_metadata_cache) {

@@ -12,6 +12,7 @@ enum class ObjectStoreErrorCode {
     NO_ERROR,
     ERROR,
     STL_EXCEPTION,
+    BAD_STREAM,
     UNKNOWN_EXCEPTION,
     UNSUPPORTED_REQUEST_METHOD,
     OBJECT_NOT_FOUND,

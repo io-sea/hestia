@@ -27,13 +27,13 @@ class CliTests(BaseTestFixture):
         if last_event.tag != tag:
             raise ValueError("Unexpected last event type in event feed: " + last_event.tag)
         if last_event.id != id:
-            raise ValueError("Unexpected last event id in event feed: " + last_event.id)
+            raise ValueError("Unexpected last event id in event feed: " + last_event.id + " expected " + id)
         
     def process_shell_result(self, result):
         return result[0].decode("utf-8").rstrip()
         
     def create_object(self, id: str = None):
-        create_cmd = f"hestia object create"
+        create_cmd = f"hestia object create --verbosity 1"
         if id is not None:
             create_cmd += " " + id
         created_id = self.process_shell_result(self.run_ops([create_cmd]))
@@ -44,7 +44,7 @@ class CliTests(BaseTestFixture):
         temp_attr_path = self.runtime_path / "temp_attrs.dat"
         self.write_temp_attrs(temp_attr_path, attrs)
 
-        update_cmd = f"hestia metadata update --input_fmt=key_value --id_fmt=parent_id {id} < {temp_attr_path}"
+        update_cmd = f"hestia metadata update --verbosity 1 --input_fmt=key_value --id_fmt=parent_id {id} < {temp_attr_path}"
         results = self.run_ops([update_cmd])
         os.remove(temp_attr_path)
 
@@ -52,12 +52,12 @@ class CliTests(BaseTestFixture):
         return self.process_shell_result(results)
     
     def read_action(self, id: str):
-        read_cmd = f"hestia action read --output_fmt=json {id}"
+        read_cmd = f"hestia action read --verbosity 1 --output_fmt=json {id}"
         results = self.run_ops([read_cmd])
         return json.loads(self.process_shell_result(results))
 
     def put_data(self, id: str, path: Path):
-        put_cmd = f"hestia object put_data {id} --file={path}"
+        put_cmd = f"hestia object put_data --verbosity 1 {id} --file={path}"
         results = self.run_ops([put_cmd])
         action_id = self.process_shell_result(results)
 
@@ -67,7 +67,7 @@ class CliTests(BaseTestFixture):
         return action_id
     
     def get_data(self, id: str, path: Path, tier: int = 0):
-        get_cmd = f"hestia object get_data {id} --file={path} --tier={tier}"
+        get_cmd = f"hestia object get_data --verbosity 1 {id} --file={path} --tier={tier}"
         results = self.run_ops([get_cmd])
         action_id = self.process_shell_result(results)
 
@@ -77,7 +77,7 @@ class CliTests(BaseTestFixture):
         return action_id
     
     def copy_data(self, id: str, source_tier: int, target_tier: int):
-        copy_cmd = f"hestia object copy_data {id} --source={source_tier} --target={target_tier}"
+        copy_cmd = f"hestia object copy_data --verbosity 1 {id} --source={source_tier} --target={target_tier}"
         results = self.run_ops([copy_cmd])
         action_id = self.process_shell_result(results)
 
@@ -87,7 +87,7 @@ class CliTests(BaseTestFixture):
         return action_id
     
     def move_data(self, id: str, source_tier: int, target_tier: int):
-        copy_cmd = f"hestia object move_data {id} --source={source_tier} --target={target_tier}"
+        copy_cmd = f"hestia object move_data --verbosity 1 {id} --source={source_tier} --target={target_tier}"
         results = self.run_ops([copy_cmd])
         action_id = self.process_shell_result(results)
 
@@ -97,7 +97,7 @@ class CliTests(BaseTestFixture):
         return action_id
     
     def release_data(self, id: str, tier: int):
-        release_cmd = f"hestia object release_data {id} --tier={tier}"
+        release_cmd = f"hestia object release_data --verbosity 1 {id} --tier={tier}"
         results = self.run_ops([release_cmd])
         action_id = self.process_shell_result(results)
 
