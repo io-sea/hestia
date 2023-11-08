@@ -16,3 +16,4 @@ libpq-devel
 postgresql
 postgresql-contrib
 postgresql-server
+xxhash-devel
