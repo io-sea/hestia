@@ -38,21 +38,10 @@ TEST_CASE_METHOD(
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());
 
-    hestia::Stream stream;
-    put(obj, &stream);
+    put(obj, content);
 
-    REQUIRE(stream.write(content).ok());
-    REQUIRE(stream.reset().ok());
-
-    get(obj, &stream);
-
-    std::vector<char> returned_buffer(content.length());
-    hestia::WriteableBufferView write_buffer(returned_buffer);
-    REQUIRE(stream.read(write_buffer).ok());
-    REQUIRE(stream.reset().ok());
-
-    std::string returned_content =
-        std::string(returned_buffer.begin(), returned_buffer.end());
+    std::string returned_content;
+    get(obj, returned_content, content.length());
     REQUIRE(returned_content == content);
 
     std::vector<hestia::StorageObject> fetched_objects;
