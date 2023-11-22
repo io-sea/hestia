@@ -21,13 +21,49 @@ typedef enum hestia_io_type_e {
     HESTIA_IO_DESCRIPTOR  // Do a PUT/GET with an open file descriptor
 } hestia_io_type_t;
 
-/// @brief 128 bit identifier
+/// @brief Hestia Identifier
 ///
-/// A 128 bit identifier for an object divided into [hi, lo] 64 bit elements.
+/// An identifier for the object resource.
+///
+/// Hestia internally uses a 128 bit universally unique identifier for objects.
+/// It is intended to be unique in the whole system. In APIs it is
+/// interchangeably represented using a hex-based or decimal format - with a
+/// one-to-one conversion possible between these representations. '0' is treated
+/// as a special 'null' identifier.
+///
+/// Since a user may prefer to create an object using a 'name' or 'key' this is
+/// supported also - however since clashes are possible in a multi-user system
+/// (i.e. 'myobject123' used by multiple users) this must be scoped to a 'user'
+/// and, as per the intent of the IO-SEA project to enable large scale
+/// addressing via namespacing, a 'dataset'.
+///
+/// The hex format is a 'uuid string' in 8-4-4-4-12 format (e.g.
+/// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), i.e. each 'x' is 4 bits. The decimal
+/// format is divided into [hi, lo] 64 bit decimal elements.
+///
+/// The 'name' or 'key' is a string defined in the scope of a 'user' (identified
+/// by the token passed in 'hestia_initialize') and (for now) a default dataset.
+/// In future the ability to address a specific dataset may be added
+/// - the low-level API in hestia.h currently supports that if needed.
+///
+/// If you provide only a name to 'PUT' you can call 'hestia_object_get_attrs'
+/// to get the generated unique identifier for use in subsequent API calls.
+///
+/// NOTE: You must call 'hestia_init_id' on this struct before using it.
+/// You should free any 'char' arrays you allocate yourself when finished.
 ///
 typedef struct HestiaId {
-    uint64_t m_lo;  // The lower 64 bits
-    uint64_t m_hi;  // The higher 64 bits
+    uint64_t m_lo;  // The lower 64 bits of the decimal format of the identifier
+                    // - will only be used if no hex version provided
+    uint64_t
+        m_hi;      // The higher 64 bits of the decimal format of the identifier
+    char* m_uuid;  // The hex format of the identifier - must be in 8-4-4-4-12
+                   // format as per the main docstring.
+    char* m_name;  // An optional 'name' - can only be used in PUT and
+                   // SET/GET_ATTR calls. Use the uuid from
+                   // hestia_object_get_attrs otherwise.
+    int m_valid;   // Sanity flag for internal use - catches cases where
+                   // hestia_init_id not called first.
 } HestiaId;
 
 /// @brief IO Context for pasing data in PUT/GET operations
@@ -75,6 +111,7 @@ typedef struct HestiaTierExtent {
 
 typedef struct HestiaObject {
     char* m_name;            // Optional name - this can be an empty string '\0'
+    char* m_uuid;            // Uuid in hex format
     size_t m_size;           // Largest size of the object across all tiers
     time_t m_creation_time;  // When the object was created
     time_t m_last_modified_time;  // The time of most recent data or metadata
@@ -85,7 +122,19 @@ typedef struct HestiaObject {
     size_t m_num_tier_extents;
     HestiaKeyValuePair* m_attrs;  // List of USER provided metadata
     size_t m_num_attrs;
+    int m_valid;  // Sanity flag for internal use - catches cases where
+                  // hestia_init_object not called first.
 } HestiaObject;
+
+/// @brief Initialize the HestiaId struct
+///
+/// Sets suitable default values on the HestiaId struct - you can populate it
+/// after. This doesn't 'reset' the id if it already has values, you should free
+/// chars you have assinged yourself if indenting to re-use the struct.
+///
+/// @param id Id to initialize
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_init_id(HestiaId* id);
 
 /// @brief List all tiers in the system
 ///

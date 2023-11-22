@@ -36,8 +36,8 @@ class HestiaHLCApiTestFixture {
         const std::string& content = {})
     {
         HestiaId hestia_id;
+        hestia_init_id(&hestia_id);
         hestia_id.m_lo = id;
-        hestia_id.m_hi = 0;
 
         const auto create_mode = overwrite ?
                                      hestia_create_mode_t::HESTIA_UPDATE :
@@ -61,8 +61,8 @@ class HestiaHLCApiTestFixture {
     void do_get(unsigned id, uint8_t tier, std::string& content)
     {
         HestiaId hestia_id;
+        hestia_init_id(&hestia_id);
         hestia_id.m_lo = id;
-        hestia_id.m_hi = 0;
 
         std::vector<char> buffer(content.length());
         HestiaIoContext io_context;
@@ -79,8 +79,8 @@ class HestiaHLCApiTestFixture {
     void get_attrs(unsigned id, HestiaObject& object)
     {
         HestiaId hestia_id;
+        hestia_init_id(&hestia_id);
         hestia_id.m_lo = id;
-        hestia_id.m_hi = 0;
         auto rc        = hestia_object_get_attrs(&hestia_id, &object);
         REQUIRE(rc == 0);
     }
@@ -91,8 +91,8 @@ class HestiaHLCApiTestFixture {
         std::size_t)
     {
         HestiaId hestia_id;
+        hestia_init_id(&hestia_id);
         hestia_id.m_lo = id;
-        hestia_id.m_hi = 0;
 
         HestiaKeyValuePair kv_pairs[3];
         for (std::size_t idx = 0; idx < 3; idx++) {
@@ -167,8 +167,8 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     REQUIRE(content == returned_content);
 
     HestiaId hestia_id;
+    hestia_init_id(&hestia_id);
     hestia_id.m_lo = id0;
-    hestia_id.m_hi = 0;
     hestia_object_copy(&hestia_id, 0, 1);
 
     get_attrs(id0, object);

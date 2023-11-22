@@ -129,6 +129,27 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Create", "[hestia]")
         }
     }
 
+    WHEN("The create arg is used with a name")
+    {
+        std::vector<std::string> args = {"hestia",       "object",
+                                         "create",       "--id_fmt=name",
+                                         "my_obj",       "--output_fmt=json",
+                                         "--verbosity=1"};
+        parse_args(args);
+        run();
+
+        THEN("We get just an output id")
+        {
+            std::vector<std::string> output_lines;
+            hestia::StringUtils::to_lines(m_console->m_output, output_lines);
+
+            hestia::Dictionary dict;
+            hestia::JsonDocument(m_console->m_output).write(dict);
+            REQUIRE(dict.has_map_item("name"));
+            REQUIRE(dict.get_map_item("name")->get_scalar() == "my_obj");
+        }
+    }
+
     WHEN("The create arg is used with json output")
     {
         std::vector<std::string> args = {

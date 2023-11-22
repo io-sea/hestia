@@ -33,7 +33,11 @@ namespace hestia {
 #define DO_EXCEPT(msg)                                                         \
     LOG_ERROR(msg) throw std::runtime_error(SOURCE_LOC() + " | " + msg)
 
-HestiaApplication::~HestiaApplication() {}
+HestiaApplication::~HestiaApplication()
+{
+
+    Logger::get_instance().get_modifiable_context().m_config.set_active(false);
+}
 
 OpStatus HestiaApplication::initialize(
     const std::string& config_path,

@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     // Create an object with some initial data - if running the example multiple times
     // you need to clear the cache or change subsequent 'puts' to use the HESTIA_UPDATE flag.
     HestiaId object_id;
+    hestia_init_id(&object_id);
     object_id.m_lo = 1234;
-    object_id.m_hi = 0;
 
     char content[] = "The quick brown fox jumps over the lazy dog";
     HestiaIoContext input_context;
