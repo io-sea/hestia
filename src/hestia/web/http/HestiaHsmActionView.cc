@@ -30,6 +30,12 @@ HttpResponse::Ptr HestiaHsmActionView::on_get(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     auto path = StringUtils::split_on_first(
                     request.get_path(),
                     "/" + std::string(HsmItem::hsm_action_name) + "s")
@@ -61,6 +67,12 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     auto path = StringUtils::split_on_first(
                     request.get_path(),
                     "/" + std::string(HsmItem::hsm_action_name) + "s")
@@ -98,12 +110,24 @@ HttpResponse::Ptr HestiaHsmActionView::on_delete(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     return CrudWebView::on_delete(request, event, auth);
 }
 
 HttpResponse::Ptr HestiaHsmActionView::on_head(
-    const HttpRequest& request, HttpEvent, const AuthorizationContext&)
+    const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     const auto path =
         StringUtils::split_on_first(request.get_path(), "/objects").second;
     if (path.empty() || path == "/") {
@@ -155,11 +179,11 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
                 }
             }
             else {
-                LOG_ERROR(
-                    "Error in data action \n"
-                    << response_ret->get_error().to_string());
-                request_context->set_response(
-                    HttpResponse::create(500, "Internal Server Error."));
+                const std::string msg = "Error in data action \n"
+                                        + response_ret->get_error().to_string();
+                LOG_ERROR(msg);
+                request_context->set_response(HttpResponse::create(
+                    {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg}));
             }
         };
 
@@ -173,6 +197,11 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
             "Location", "http://" + redirect_location + m_path);
     }
 
+    if (request.get_context()->has_response()
+        && request.get_context()->get_response()->error()) {
+        return std::make_unique<HttpResponse>(
+            *request.get_context()->get_response());
+    }
     return response;
 }
 

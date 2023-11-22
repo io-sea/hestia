@@ -62,6 +62,11 @@ HttpResponse::Ptr WebView::on_head(
     return on_not_supported(request);
 }
 
+void WebView::set_needs_auth(bool needs_auth)
+{
+    m_needs_auth = needs_auth;
+}
+
 HttpResponse::Ptr WebView::on_not_supported(const HttpRequest& request)
 {
     const auto msg =
@@ -71,6 +76,6 @@ HttpResponse::Ptr WebView::on_not_supported(const HttpRequest& request)
         + request.get_method_as_string());
     LOG_INFO(request.get_header().to_string());
     LOG_INFO(request.body());
-    return HttpResponse::create(400, "Bad method", msg);
+    return HttpResponse::create({HttpStatus::Code::_400_BAD_REQUEST, msg});
 }
 }  // namespace hestia

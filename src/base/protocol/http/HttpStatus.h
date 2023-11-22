@@ -12,6 +12,7 @@ class HttpStatus {
         _201_CREATED,
         _204_NO_CONTENT,
         _400_BAD_REQUEST,
+        _401_UNAUTHORIZED,
         _403_FORBIDDEN,
         _404_NOT_FOUND,
         _409_CONFLICT,

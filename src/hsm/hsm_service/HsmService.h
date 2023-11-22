@@ -55,7 +55,7 @@ class HsmService : public CrudService {
         actionCompletionFunc completion_func,
         actionProgressFunc progress_func = nullptr) const noexcept;
 
-    void update_tiers(const std::string& user_id);
+    void update_tiers(const CrudUserContext& user_id);
 
   private:
     CrudResponse::Ptr do_crud(
@@ -183,13 +183,6 @@ class HsmService : public CrudService {
 
     void set_action_progress(
         const ActionContext& action_context, std::size_t bytes) const;
-
-    void respond_ok(const ActionContext& action_context) const;
-
-    void respond_error(
-        const ActionContext& action_context,
-        HsmActionErrorCode code,
-        const std::string& message) const;
 
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;

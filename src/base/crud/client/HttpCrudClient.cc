@@ -32,7 +32,8 @@ void apply_common_headers(
         crud_request.get_user_context().m_token);
 }
 
-HttpResponse::Ptr HttpCrudClient::make_request(const HttpRequest& req) const
+HttpResponse::Ptr HttpCrudClient::make_request(
+    const HttpRequest& req, bool except_on_error) const
 {
     std::promise<HttpResponse::Ptr> response_promise;
     auto response_future = response_promise.get_future();
@@ -44,7 +45,7 @@ HttpResponse::Ptr HttpCrudClient::make_request(const HttpRequest& req) const
     m_client->make_request(req, http_completion_func);
 
     auto response = response_future.get();
-    if (response->error()) {
+    if (response->error() && except_on_error) {
         throw RequestException<CrudRequestError>(
             {CrudErrorCode::ERROR, SOURCE_LOC() + " | Error in http client: "
                                        + response->to_string()});
@@ -55,7 +56,8 @@ HttpResponse::Ptr HttpCrudClient::make_request(const HttpRequest& req) const
 void HttpCrudClient::make_request(
     const CrudRequest& crud_request,
     HttpRequest::Method method,
-    CrudResponse& crud_response) const
+    CrudResponse& crud_response,
+    bool except_on_error) const
 {
     if (crud_request.has_ids() && crud_request.method() != CrudMethod::CREATE) {
         std::size_t count{0};
@@ -69,9 +71,8 @@ void HttpCrudClient::make_request(
             m_serializer->to_json(crud_request, req.body(), count);
 
             const auto response = make_request(req);
-
-            m_serializer->append_json(response->body(), crud_response);
             count++;
+            m_serializer->append_json(response->body(), crud_response);
         }
     }
     else {
@@ -80,8 +81,11 @@ void HttpCrudClient::make_request(
 
         m_serializer->to_json(crud_request, req.body());
 
-        const auto response = make_request(req);
+        const auto response = make_request(req, except_on_error);
 
+        if (!except_on_error && response->code() == 404) {
+            return;
+        }
         m_serializer->append_json(response->body(), crud_response);
     }
 }
@@ -109,7 +113,8 @@ void HttpCrudClient::read(
 {
     if (crud_request.get_query().is_id()
         && crud_request.get_query().get_ids().size() != 1) {
-        make_request(crud_request, HttpRequest::Method::GET, crud_response);
+        make_request(
+            crud_request, HttpRequest::Method::GET, crud_response, false);
     }
     else {
         std::string path = get_item_path();
@@ -118,8 +123,10 @@ void HttpCrudClient::read(
         HttpRequest request(path, HttpRequest::Method::GET);
         apply_common_headers(crud_request, request);
 
-        const auto response = make_request(request);
-
+        const auto response = make_request(request, false);
+        if (response->code() == 404) {
+            return;
+        }
         m_serializer->append_json(response->body(), crud_response);
     }
 }

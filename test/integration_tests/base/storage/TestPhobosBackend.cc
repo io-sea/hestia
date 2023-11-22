@@ -12,7 +12,7 @@ class PhobosStoreTestFixture : public ObjectStoreTestWrapper {
 
 
 TEST_CASE_METHOD(
-    PhobosStoreTestFixture, "Test phobos backend integration", "[phobos]")
+    PhobosStoreTestFixture, "Test phobos backend integration", "[.phobos]")
 {
     hestia::DefaultIdGenerator uuid_generator;
     std::string obj_id = uuid_generator.get_id("phobos_test");

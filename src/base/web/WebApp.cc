@@ -74,11 +74,16 @@ void WebApp::on_event(
                 request_context->get_auth_context());
         }
         catch (const std::exception& e) {
-            LOG_ERROR("Unhandled exception in view: " << e.what());
+            const std::string msg =
+                "Unhandled exception in view: " + std::string(e.what());
+            LOG_ERROR(msg);
+            response = HttpResponse::create(
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg});
         }
         catch (...) {
-            LOG_ERROR("Uknown exception in view");
-            response = HttpResponse::create(500, "Internal Server Error");
+            const std::string msg = "Uknown exception in view";
+            response              = HttpResponse::create(
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg});
         }
     }
     else {
@@ -88,13 +93,17 @@ void WebApp::on_event(
                 request_context->get_request(), event);
         }
         catch (const std::exception& e) {
-            LOG_ERROR(
-                "Unhandled exception in view or middleware: " << e.what());
-            response = HttpResponse::create(500, "Internal Server Error");
+            const std::string msg =
+                "Unhandled exception in view or middleware: "
+                + std::string(e.what());
+            LOG_ERROR(msg);
+            response = HttpResponse::create(
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg});
         }
         catch (...) {
-            LOG_ERROR("Uknown exception in view or middleware");
-            response = HttpResponse::create(500, "Internal Server Error");
+            const std::string msg = "Uknown exception in view or middleware";
+            response              = HttpResponse::create(
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg});
         }
     }
 
@@ -117,9 +126,10 @@ void WebApp::on_event(
     request_context->set_response(std::move(response));
 }
 
-HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest&) const
+HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& req) const
 {
-    return HttpResponse::create(404, "Not Found");
+    return HttpResponse::create(
+        {HttpStatus::Code::_404_NOT_FOUND, req.get_path() + " Not Found"});
 }
 
 HttpResponse::Ptr WebApp::on_middleware_layer(

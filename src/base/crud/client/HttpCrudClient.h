@@ -61,8 +61,10 @@ class HttpCrudClient : public CrudClient {
     void make_request(
         const CrudRequest& req,
         HttpRequest::Method method,
-        CrudResponse& crud_response) const;
+        CrudResponse& crud_response,
+        bool except_on_error = true) const;
 
-    HttpResponse::Ptr make_request(const HttpRequest& req) const;
+    HttpResponse::Ptr make_request(
+        const HttpRequest& req, bool except_on_error = true) const;
 };
 }  // namespace hestia

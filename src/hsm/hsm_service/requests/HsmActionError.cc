@@ -26,6 +26,10 @@ std::string HsmActionError::code_to_string(HsmActionErrorCode code)
             return "ERROR";
         case HsmActionErrorCode::STL_EXCEPTION:
             return "STL_EXCEPTION";
+        case HsmActionErrorCode::CRUD_ERROR:
+            return "CRUD_ERROR";
+        case HsmActionErrorCode::OBJECT_STORE_ERROR:
+            return "OBJECT_STORE_ERROR";
         case HsmActionErrorCode::UNKNOWN_EXCEPTION:
             return "UNKNOWN_EXCEPTION";
         case HsmActionErrorCode::UNSUPPORTED_REQUEST_METHOD:

@@ -54,6 +54,8 @@ class TestHestiaWebAppFixture {
             m_user_service->authenticate_user("my_admin", "my_admin_password");
         REQUIRE(auth_response->ok());
 
+        m_user_token = m_user_service->get_current_user_context().m_token;
+
         hestia::ObjectStoreBackend object_store_backend(
             hestia::ObjectStoreBackend::Type::MEMORY_HSM);
 
@@ -133,6 +135,8 @@ class TestHestiaWebAppFixture {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::GET);
         req.get_header().set_content_type("application/json");
+        req.get_header().set_auth_token(m_user_token);
+
         auto response = make_request(req);
         REQUIRE(!response->error());
 
@@ -146,6 +150,7 @@ class TestHestiaWebAppFixture {
         const auto path = m_base_url + "objects/" + id;
         hestia::HttpRequest req(path, hestia::HttpRequest::Method::GET);
         req.get_header().set_content_type("application/json");
+        req.get_header().set_auth_token(m_user_token);
 
         auto response = make_request(req);
         REQUIRE(!response->error());
@@ -163,8 +168,7 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "objects", hestia::HttpRequest::Method::PUT);
-        req.get_header().set_auth_token(
-            m_user_service->get_current_user().tokens()[0].value());
+        req.get_header().set_auth_token(m_user_token);
         req.get_header().set_content_type("application/json");
 
         std::vector<hestia::HsmObject::Ptr> put_objects;
@@ -206,8 +210,7 @@ class TestHestiaWebAppFixture {
         action_map.add_key_prefix("hestia.hsm_action.");
 
         req.get_header().set_items(action_map);
-        req.get_header().set_auth_token(
-            m_user_service->get_current_user().tokens()[0].value());
+        req.get_header().set_auth_token(m_user_token);
         req.body()    = content;
         auto response = make_request(req);
         REQUIRE(!response->error());
@@ -240,8 +243,7 @@ class TestHestiaWebAppFixture {
         action_map.add_key_prefix("hestia.hsm_action.");
 
         req.get_header().set_items(action_map);
-        req.get_header().set_auth_token(
-            m_user_service->get_current_user().tokens()[0].value());
+        req.get_header().set_auth_token(m_user_token);
 
         auto response = make_request(req, &stream);
         REQUIRE(!response->error());
@@ -251,6 +253,8 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "tiers", hestia::HttpRequest::Method::GET);
+        req.get_header().set_auth_token(m_user_token);
+
         auto response = make_request(req);
         REQUIRE(!response->error());
 
@@ -263,6 +267,7 @@ class TestHestiaWebAppFixture {
     {
         hestia::HttpRequest req(
             m_base_url + "tiers", hestia::HttpRequest::Method::PUT);
+        req.get_header().set_auth_token(m_user_token);
 
         std::vector<hestia::StorageTier::Ptr> put_tiers;
         put_tiers.push_back(std::make_unique<hestia::StorageTier>(tier));
@@ -289,6 +294,7 @@ class TestHestiaWebAppFixture {
 
     std::string m_base_url   = "127.0.0.1:8000/api/v1/";
     std::string m_store_path = {};
+    std::string m_user_token;
 };
 
 TEST_CASE_METHOD(
@@ -297,7 +303,6 @@ TEST_CASE_METHOD(
     std::vector<hestia::Model::Ptr> objects;
     get_objects(objects);
     REQUIRE(objects.empty());
-    return;
 
     hestia::HsmObject obj;
     put_object(obj);

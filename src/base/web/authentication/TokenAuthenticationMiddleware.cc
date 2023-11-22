@@ -26,6 +26,12 @@ HttpResponse::Ptr TokenAuthenticationMiddleware::call(
             auth.m_user_id = auth_response->get_item()->get_primary_key();
             LOG_INFO("Authenticated user: " + auth.m_user_id);
         }
+        else {
+            LOG_INFO("User not found.");
+        }
+    }
+    else {
+        LOG_INFO("Auth token not specified.");
     }
     return func(request);
 }

@@ -125,7 +125,7 @@ bool HestiaApplication::uses_local_storage() const
 void setup_tiers(
     CrudService* tier_service,
     const std::vector<StorageTier>& tiers,
-    const std::string& current_user_id)
+    const CrudUserContext& user_context)
 {
     if (tiers.empty()) {
         return;
@@ -135,7 +135,7 @@ void setup_tiers(
     CrudQuery query(CrudQuery::BodyFormat::ITEM);
 
     auto tiers_list_response = tier_service->make_request(
-        CrudRequest{CrudMethod::READ, query, current_user_id});
+        CrudRequest{CrudMethod::READ, query, user_context});
 
     for (const auto& config_tier : tiers) {
         bool found{false};
@@ -150,7 +150,7 @@ void setup_tiers(
                 "Adding tier: " << config_tier.name() << " to Tier service");
             if (auto response =
                     tier_service->make_request(TypedCrudRequest<StorageTier>{
-                        CrudMethod::CREATE, config_tier, {}, current_user_id});
+                        CrudMethod::CREATE, config_tier, {}, user_context});
                 !response->ok()) {
                 LOG_ERROR("Failed to PUT tier in initialization.");
                 return;
@@ -210,13 +210,13 @@ void HestiaApplication::setup_hsm_service(
             ->set_default_name("hestia_default_dataset");
     }
 
-    const auto current_user_id =
-        m_user_service->get_current_user().get_primary_key();
+    const auto current_user_context =
+        m_user_service->get_current_user_context();
 
     if (uses_local_storage()) {
         setup_tiers(
             hsm_services->get_service(HsmItem::Type::TIER),
-            m_config.get_storage_tiers(), current_user_id);
+            m_config.get_storage_tiers(), current_user_context);
     }
 
     auto dpe = DataPlacementEngineFactory::get_engine(
@@ -228,7 +228,7 @@ void HestiaApplication::setup_hsm_service(
         hsm_service_config, std::move(hsm_services),
         m_object_store_client.get(), std::move(dpe), m_event_feed.get());
     m_hsm_service = hsm_service.get();
-    m_hsm_service->update_tiers(current_user_id);
+    m_hsm_service->update_tiers(current_user_context);
 
     if (m_event_feed->is_active() && uses_local_storage()) {
         const auto output_path =

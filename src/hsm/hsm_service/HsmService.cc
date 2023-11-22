@@ -26,40 +26,35 @@
 
 #include <iostream>
 
-#define ERROR_CHECK(response, action_context)                                  \
-    if (!response->ok()) {                                                     \
-        LOG_ERROR(SOURCE_LOC() << " | " << response->get_error())              \
-        auto action_response = hestia::HsmActionResponse::create(              \
-            action_context.m_req, action_context.m_action,                     \
-            std::move(response));                                              \
-        action_context.m_completion_func(std::move(action_response));          \
-        return;                                                                \
-    }
-
 #define CRUD_ERROR_CHECK(response, action_context)                             \
     if (!response->ok()) {                                                     \
-        LOG_ERROR(SOURCE_LOC() << " | " << response->get_error())              \
-        auto action_response = HsmActionResponse::create(                      \
-            action_context.m_req, action_context.m_action);                    \
-        action_response->on_error(                                             \
-            {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
-        action_context.m_completion_func(std::move(action_response));          \
-        return;                                                                \
+        const std::string msg = response->get_error().to_string();             \
+        throw RequestException<HsmActionError>(                                \
+            {HsmActionErrorCode::CRUD_ERROR, msg});                            \
     }
 
-#define CRUD_ERROR_CHECK_RETURN(response, working_action)                      \
-    if (!response->ok()) {                                                     \
-        LOG_ERROR(SOURCE_LOC() << " | " << response->get_error())              \
-        auto action_response = HsmActionResponse::create(req, working_action); \
-        action_response->on_error(                                             \
-            {HsmActionErrorCode::ERROR, response->get_error().to_string()});   \
-        return action_response;                                                \
+#define CATCH_FLOW()                                                           \
+    catch (const RequestException<HsmActionError>& e)                          \
+    {                                                                          \
+        const std::string msg = SOURCE_LOC() + " | Exception: " + e.what();    \
+        LOG_ERROR(msg);                                                        \
+        response->on_error(e.get_error());                                     \
+        completion_func(std::move(response));                                  \
+    }                                                                          \
+    catch (const std::exception& e)                                            \
+    {                                                                          \
+        const std::string msg = SOURCE_LOC() + " | Exception: " + e.what();    \
+        LOG_ERROR(msg);                                                        \
+        response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});          \
+        completion_func(std::move(response));                                  \
+    }                                                                          \
+    catch (...)                                                                \
+    {                                                                          \
+        const std::string msg = SOURCE_LOC() + " | Unknown Exception.";        \
+        LOG_ERROR(msg);                                                        \
+        response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});          \
+        completion_func(std::move(response));                                  \
     }
-
-#define ON_ERROR(code, message, working_action)                                \
-    auto response = hestia::HsmActionResponse::create(req, working_action);    \
-    response->on_error({hestia::HsmActionErrorCode::code, msg});               \
-    return response;
 
 namespace hestia {
 
@@ -199,61 +194,31 @@ void HsmService::do_hsm_action(
             try {
                 copy_data(req, completion_func, progress_func);
             }
-            catch (const std::exception& e) {
-                const std::string msg =
-                    SOURCE_LOC() + " | Exception in COPY_DATA: " + e.what();
-                LOG_ERROR(msg);
-                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
-                completion_func(std::move(response));
-            }
+            CATCH_FLOW()
             return;
         case HsmAction::Action::MOVE_DATA:
             try {
                 move_data(req, completion_func, progress_func);
             }
-            catch (const std::exception& e) {
-                const std::string msg =
-                    SOURCE_LOC() + " | Exception in MOVE_DATA: " + e.what();
-                LOG_ERROR(msg);
-                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
-                completion_func(std::move(response));
-            }
+            CATCH_FLOW()
             return;
         case HsmAction::Action::RELEASE_DATA:
             try {
                 release_data(req, completion_func, progress_func);
             }
-            catch (const std::exception& e) {
-                const std::string msg =
-                    SOURCE_LOC() + " | Exception in RELEASE_DATA: " + e.what();
-                LOG_ERROR(msg);
-                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
-                completion_func(std::move(response));
-            }
+            CATCH_FLOW()
             return;
         case HsmAction::Action::PUT_DATA:
             try {
                 put_data(req, stream, completion_func, progress_func);
             }
-            catch (const std::exception& e) {
-                const std::string msg =
-                    SOURCE_LOC() + " | Exception in PUT_DATA: " + e.what();
-                LOG_ERROR(msg);
-                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
-                completion_func(std::move(response));
-            }
+            CATCH_FLOW()
             return;
         case HsmAction::Action::GET_DATA:
             try {
                 get_data(req, stream, completion_func, progress_func);
             }
-            catch (const std::exception& e) {
-                const std::string msg =
-                    SOURCE_LOC() + " | Exception in GET_DATA: " + e.what();
-                LOG_ERROR(msg);
-                response->on_error({HsmActionErrorCode::STL_EXCEPTION, msg});
-                completion_func(std::move(response));
-            }
+            CATCH_FLOW()
             return;
         case HsmAction::Action::CRUD:
         case HsmAction::Action::NONE:
@@ -264,25 +229,6 @@ void HsmService::do_hsm_action(
             completion_func(std::move(response));
             return;
     }
-}
-
-void HsmService::respond_ok(const ActionContext& action_context) const
-{
-    LOG_INFO("Finished HSM Action ok");
-    auto response = HsmActionResponse::create(
-        action_context.m_req, action_context.m_action);
-    action_context.m_completion_func(std::move(response));
-}
-
-void HsmService::respond_error(
-    const ActionContext& action_context,
-    HsmActionErrorCode code,
-    const std::string& message) const
-{
-    auto response = HsmActionResponse::create(
-        action_context.m_req, action_context.m_action);
-    response->on_error({code, message});
-    action_context.m_completion_func(std::move(response));
 }
 
 void HsmService::get_object(
@@ -297,22 +243,22 @@ void HsmService::get_object(
     CRUD_ERROR_CHECK(get_response, action_context);
 
     if (!get_response->found()) {
-        std::string msg =
-            SOURCE_LOC() + " | Object " + object_id + " not found";
-        LOG_ERROR(msg);
-        respond_error(action_context, HsmActionErrorCode::ITEM_NOT_FOUND, msg);
-        return;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::ITEM_NOT_FOUND,
+             SOURCE_LOC() + " | Object " + object_id + " not found."});
     }
     object = *get_response->get_item_as<HsmObject>();
 }
 
-void HsmService::update_tiers(const std::string& user_id)
+void HsmService::update_tiers(const CrudUserContext& user_id)
 {
     auto tier_service = m_services->get_service(HsmItem::Type::TIER);
     auto get_response = tier_service->make_request(CrudRequest(
         CrudMethod::READ, CrudQuery{CrudQuery::BodyFormat::ITEM}, user_id));
     if (!get_response->ok()) {
-        THROW("Failed listing tiers in cache request");
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::CRUD_ERROR,
+             SOURCE_LOC() + "Failed listing tiers in cache request"});
     }
     for (const auto& item : get_response->items()) {
         auto tier_item = dynamic_cast<StorageTier*>(item.get());
@@ -330,7 +276,9 @@ CrudResponsePtr HsmService::get_or_create_action(
                 CrudMethod::CREATE, working_action, CrudQuery::BodyFormat::ITEM,
                 req.get_user_context()});
         if (!action_response->ok()) {
-            return action_response;
+            throw RequestException<HsmActionError>(
+                {HsmActionErrorCode::CRUD_ERROR,
+                 SOURCE_LOC() + "Failed to create action"});
         }
         working_action = *action_response->get_item_as<HsmAction>();
     }
@@ -395,9 +343,13 @@ void HsmService::on_object_store_response(
 {
     LOG_INFO("Got object store response");
     if (!object_store_response->ok()) {
-        respond_error(
-            action_context, HsmActionErrorCode::ERROR,
-            object_store_response->get_error().to_string());
+        auto response = HsmActionResponse::create(
+            action_context.m_req, action_context.m_action);
+        const std::string msg =
+            SOURCE_LOC() + " | Object store error.\n"
+            + object_store_response->get_error().to_string();
+        response->on_error({HsmActionErrorCode::OBJECT_STORE_ERROR, msg});
+        action_context.m_completion_func(std::move(response));
         return;
     }
 
@@ -421,7 +373,11 @@ void HsmService::on_object_store_response(
         m_event_feed->on_event(read_event);
     }
 
-    respond_ok(action_context);
+    // respond ok
+    LOG_INFO("Finished HSM Action ok");
+    auto response = HsmActionResponse::create(
+        action_context.m_req, action_context.m_action);
+    action_context.m_completion_func(std::move(response));
 }
 
 void HsmService::on_db_update(
@@ -643,10 +599,10 @@ void HsmService::create_or_update_extent(
             do_create ? CrudMethod::CREATE : CrudMethod::UPDATE, extent,
             action_context.m_user_context));
     if (!response->ok()) {
-        respond_error(
-            action_context, HsmActionErrorCode::ERROR,
-            response->get_error().to_string());
-        return;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::CRUD_ERROR,
+             SOURCE_LOC() + " | Creating or updating extent. \n"
+                 + response->get_error().to_string()});
     }
 }
 

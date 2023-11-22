@@ -115,7 +115,7 @@ void init_request(
 
     req.get_header().set_items(flat_dict);
     if (!user_token.empty()) {
-        req.get_header().set_item("Authorisation", user_token);
+        req.get_header().set_item("Authorization", user_token);
     }
 }
 

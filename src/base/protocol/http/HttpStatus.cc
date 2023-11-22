@@ -9,6 +9,7 @@ static std::unordered_map<HttpStatus::Code, HttpStatus::CodeAndId> errors = {
     {HttpStatus::Code::_201_CREATED, {201, "Created"}},
     {HttpStatus::Code::_204_NO_CONTENT, {201, "No Content"}},
     {HttpStatus::Code::_400_BAD_REQUEST, {400, "Bad Request"}},
+    {HttpStatus::Code::_401_UNAUTHORIZED, {401, "Unauthorized"}},
     {HttpStatus::Code::_403_FORBIDDEN, {403, "Forbidden"}},
     {HttpStatus::Code::_404_NOT_FOUND, {404, "Not Found"}},
     {HttpStatus::Code::_409_CONFLICT, {409, "Conflict"}},

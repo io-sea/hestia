@@ -10,6 +10,8 @@ namespace hestia {
 CrudWebView::CrudWebView(CrudService* service, const std::string& type_name) :
     WebView(), m_service(service), m_type_name(type_name)
 {
+    m_needs_auth = true;
+
     m_readable_format.m_attrs_format.set_is_json();
     m_readable_format.m_attrs_format.m_json_format.m_indent      = true;
     m_readable_format.m_attrs_format.m_json_format.m_indent_size = 4;
@@ -30,6 +32,12 @@ HttpResponse::Ptr CrudWebView::on_get(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     if (event != HttpEvent::EOM) {
         return HttpResponse::create(
             HttpResponse::CompletionStatus::AWAITING_EOM);
@@ -101,6 +109,12 @@ HttpResponse::Ptr CrudWebView::on_delete(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     if (event != HttpEvent::EOM) {
         return HttpResponse::create(
             HttpResponse::CompletionStatus::AWAITING_EOM);
@@ -130,6 +144,12 @@ HttpResponse::Ptr CrudWebView::on_put(
     HttpEvent event,
     const AuthorizationContext& auth)
 {
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
     if (event != HttpEvent::EOM) {
         return HttpResponse::create(
             HttpResponse::CompletionStatus::AWAITING_EOM);

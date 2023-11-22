@@ -28,6 +28,8 @@ OpStatus error(const RequestError<HsmActionErrorCode>& error)
         case HsmActionErrorCode::NO_ERROR:
             return {};
         case HsmActionErrorCode::ERROR:
+        case HsmActionErrorCode::CRUD_ERROR:
+        case HsmActionErrorCode::OBJECT_STORE_ERROR:
         case HsmActionErrorCode::STL_EXCEPTION:
         case HsmActionErrorCode::UNKNOWN_EXCEPTION:
         case HsmActionErrorCode::UNSUPPORTED_REQUEST_METHOD:

@@ -91,7 +91,9 @@ void RequestContext::flush_stream()
     while (true) {
         const auto result = m_stream->read(writeable_buffer);
         if (!result.ok()) {
-            m_response = HttpResponse::create(500, "Internal Server Error");
+            m_response = HttpResponse::create(
+                {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
+                 "Stream read error"});
             break;
         }
 
@@ -104,7 +106,9 @@ void RequestContext::flush_stream()
     }
 
     if (const auto stream_state = m_stream->reset(); !stream_state.ok()) {
-        m_response = HttpResponse::create(500, "Internal Server Error");
+        m_response = HttpResponse::create(
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
+             stream_state.message()});
     }
 
     if (m_on_output_complete) {
@@ -122,7 +126,9 @@ IOResult RequestContext::write_to_stream(const ReadableBufferView& buffer)
 void RequestContext::on_input_complete()
 {
     if (const auto stream_state = m_stream->reset(); !stream_state.ok()) {
-        m_response = HttpResponse::create(500, "Internal Server Error");
+        m_response = HttpResponse::create(
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR,
+             stream_state.message()});
     }
     else {
         if (m_on_input_complete) {

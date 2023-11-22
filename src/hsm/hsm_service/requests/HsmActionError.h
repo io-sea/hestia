@@ -6,6 +6,8 @@ namespace hestia {
 enum class HsmActionErrorCode {
     NO_ERROR,
     ERROR,
+    CRUD_ERROR,
+    OBJECT_STORE_ERROR,
     STL_EXCEPTION,
     UNKNOWN_EXCEPTION,
     UNSUPPORTED_REQUEST_METHOD,

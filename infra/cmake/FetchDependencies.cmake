@@ -41,6 +41,9 @@ macro(fetch_spdlog)
         FIND_PACKAGE_ARGS
         )
         FetchContent_MakeAvailable(spdlog)
+        if(CMAKE_BUILD_TYPE MATCHES Debug AND HESTIA_ENABLE_SANITIZERS)
+            target_link_libraries(spdlog PRIVATE sanitizer_flags)
+        endif()    
 endmacro()
 
 # https://github.com/jbeder/yaml-cpp
@@ -61,8 +64,7 @@ macro(fetch_yaml_cpp)
         FetchContent_MakeAvailable(yaml-cpp)
         if(CMAKE_BUILD_TYPE MATCHES Debug AND HESTIA_ENABLE_SANITIZERS)
             target_link_libraries(yaml-cpp PRIVATE sanitizer_flags)
-        endif()
-        
+        endif()      
 endmacro()
 
 # https://github.com/madler/zlib
