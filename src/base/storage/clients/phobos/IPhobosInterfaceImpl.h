@@ -13,6 +13,10 @@ class IPhobosInterfaceImpl {
 
     virtual ~IPhobosInterfaceImpl();
 
+    virtual void init(){};
+
+    virtual void finish(){};
+
     virtual void get(const StorageObject& obj, int fd) = 0;
 
     virtual void put(const StorageObject& obj, int fd) = 0;

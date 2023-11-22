@@ -9,11 +9,19 @@
 #include <unistd.h>
 
 namespace hestia {
+void PhobosInterfaceImpl::init()
+{
+    phobos_init_cpp();
+}
+
+void PhobosInterfaceImpl::finish()
+{
+    phobos_fini_cpp();
+}
+
 void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{obj.id(), PhobosDescriptor::Operation::GET, fd};
-
-    PhobosDescriptor desc(info);
+    PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
     ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
     if (fd > 0) {
         ::close(fd);
@@ -26,14 +34,11 @@ void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor::Info info{obj.id(), PhobosDescriptor::Operation::PUT};
-
+    PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::PUT});
     if (fd > -1) {
-        info.m_fd   = fd;
-        info.m_size = obj.size();
+        desc.set_fd(fd);
+        desc.set_size(obj.size());
     }
-
-    PhobosDescriptor desc(info);
 
     auto each_item = [&desc](const std::string& key, const std::string& value) {
         int rc = pho_attr_set(
@@ -63,9 +68,8 @@ void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
 
 void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.id(), PhobosDescriptor::Operation::GET_MD};
-
-    PhobosDescriptor descriptor(info);
+    PhobosDescriptor descriptor(
+        {obj.id(), PhobosDescriptor::Operation::GET_MD});
 
     int rc = phobos_getmd_cpp(&descriptor.get_handle(), 1, nullptr, nullptr);
     if (rc != 0) {
@@ -87,9 +91,8 @@ void PhobosInterfaceImpl::get_metadata(StorageObject& obj)
 
 bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.id(), PhobosDescriptor::Operation::GET_MD};
-
-    PhobosDescriptor descriptor(info);
+    PhobosDescriptor descriptor(
+        {obj.id(), PhobosDescriptor::Operation::GET_MD});
     bool exists =
         phobos_getmd_cpp(&descriptor.get_handle(), 1, nullptr, nullptr) == 0;
     return exists;
@@ -97,9 +100,7 @@ bool PhobosInterfaceImpl::exists(const StorageObject& obj)
 
 void PhobosInterfaceImpl::remove(const StorageObject& obj)
 {
-    PhobosDescriptor::Info info{obj.id(), PhobosDescriptor::Operation::DEL};
-
-    PhobosDescriptor descriptor(info);
+    PhobosDescriptor descriptor({obj.id(), PhobosDescriptor::Operation::DEL});
 
     phobos_delete_cpp(&descriptor.get_handle(), 1);
 }

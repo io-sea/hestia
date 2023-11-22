@@ -14,7 +14,7 @@ class PhobosDescriptor {
 
     struct Info {
         Info(
-            const std::string object_id,
+            const std::string& object_id,
             Operation op,
             int fd           = -1,
             std::size_t size = 0) :
@@ -34,6 +34,10 @@ class PhobosDescriptor {
 
     ~PhobosDescriptor();
 
+    void set_fd(int fd);
+
+    void set_size(std::size_t size);
+
     pho_xfer_desc& get_handle();
 
   private:
@@ -42,7 +46,7 @@ class PhobosDescriptor {
 
     void set_up_object_operation(const Info& info);
 
-    std::string m_layout_type{"dir"};
+    rsc_family m_layout_type{rsc_family::PHO_RSC_DIR};
     pho_xfer_desc m_handle;
 };
 

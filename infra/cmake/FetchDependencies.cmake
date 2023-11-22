@@ -193,7 +193,7 @@ endmacro()
 macro(build_phobos)
     ExternalProject_Add(phobos
     GIT_REPOSITORY https://github.com/cea-hpc/phobos
-    GIT_TAG 2c32a8d7a56b14312ad0fb327d77f4b7430a27b7
+    GIT_TAG dd12752722b99420084e907848005ffe8119d81e # v1.95
     UPDATE_DISCONNECTED 1
     BUILD_IN_SOURCE 1
     PATCH_COMMAND   patch -p1 --forward < ${PROJECT_SOURCE_DIR}/infra/cmake/patches/phobos_ldm_common_page_size.patch 

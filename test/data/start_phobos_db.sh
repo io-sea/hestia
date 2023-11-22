@@ -23,7 +23,7 @@ su postgres -c "initdb -D /home/postgres/data"
 su postgres -c "postgres -D /home/postgres/data&"
 su postgres -c "PYTHONPATH=${PYTHONPATH} python3 -m phobos.db setup_db -s -p phobos"
 
-export PHOBOSD_PID_FILEPATH="$test_dir/phobosd.pid"
+export DAEMON_PID_FILEPATH="$test_dir/phobosd.pid"
 export PHOBOS_LRS_lock_file="$test_dir/phobosd.lock"
 
 phobosd

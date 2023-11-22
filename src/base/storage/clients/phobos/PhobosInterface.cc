@@ -41,6 +41,16 @@ void PhobosInterface::put(const StorageObject& object, int fd)
     m_impl->put(object, fd);
 }
 
+void PhobosInterface::init()
+{
+    m_impl->init();
+}
+
+void PhobosInterface::finish()
+{
+    m_impl->finish();
+}
+
 void PhobosInterface::get(const StorageObject& object, int fd)
 {
     m_impl->get(object, fd);

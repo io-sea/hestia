@@ -40,6 +40,16 @@ pho_xfer_desc& PhobosDescriptor::get_handle()
     return m_handle;
 }
 
+void PhobosDescriptor::set_fd(int fd)
+{
+    m_handle.xd_fd = fd;
+}
+
+void PhobosDescriptor::set_size(std::size_t size)
+{
+    m_handle.xd_params.put.size = size;
+}
+
 void PhobosDescriptor::set_up_object_operation(const Info& info)
 {
     clear_object_id();
@@ -52,11 +62,10 @@ void PhobosDescriptor::set_up_object_operation(const Info& info)
 
     switch (info.m_op) {
         case Operation::PUT:
-            m_handle.xd_op = PHO_XFER_OP_PUT;
-            m_handle.xd_params.put.family =
-                str2rsc_family(m_layout_type.c_str());
-            m_handle.xd_params.put.size = info.m_size;
-            m_handle.xd_fd              = info.m_fd;
+            m_handle.xd_op                = PHO_XFER_OP_PUT;
+            m_handle.xd_params.put.family = m_layout_type;
+            m_handle.xd_params.put.size   = info.m_size;
+            m_handle.xd_fd                = info.m_fd;
             break;
         case Operation::GET:
             m_handle.xd_op = PHO_XFER_OP_GET;

@@ -19,6 +19,10 @@ class PhobosInterface {
     static PhobosInterface::Ptr create(
         std::unique_ptr<IPhobosInterfaceImpl> impl = nullptr);
 
+    void init();
+
+    void finish();
+
     void get(const StorageObject& object, int fd);
 
     void put(const StorageObject& object, int fd);

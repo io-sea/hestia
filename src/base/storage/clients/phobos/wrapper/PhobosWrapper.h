@@ -12,32 +12,14 @@
  * Families can be seen here as storage technologies.
  */
 enum rsc_family {
-    PHO_RSC_INVAL = -1,
-    PHO_RSC_DISK  = 0, /**< Not supported yet */
-    PHO_RSC_TAPE  = 1, /**< Tape, drive tape or tape library */
-    PHO_RSC_DIR   = 2, /**< Directory */
+    PHO_RSC_NONE       = -2,
+    PHO_RSC_INVAL      = -1,
+    PHO_RSC_TAPE       = 0, /**< Tape, drive tape or tape library */
+    PHO_RSC_DIR        = 1, /**< Directory */
+    PHO_RSC_RADOS_POOL = 2, /**< Ceph RADOS pools*/
     PHO_RSC_LAST,
     PHO_RSC_UNSPEC = PHO_RSC_LAST,
 };
-
-static const char* const rsc_family_names[] = {"disk", "tape", "dir"};
-
-static inline const char* rsc_family2str(enum rsc_family family)
-{
-    if (family >= PHO_RSC_LAST || family < 0) {
-        return nullptr;
-    }
-    return rsc_family_names[family];
-}
-
-static inline enum rsc_family str2rsc_family(const char* str)
-{
-    int i;
-    for (i = 0; i < PHO_RSC_LAST; i++) {
-        if (!strcmp(str, rsc_family_names[i])) return rsc_family(i);  // NOLINT
-    }
-    return PHO_RSC_INVAL;
-}
 
 /**
  * A simple array of tags (strings)
@@ -148,6 +130,10 @@ struct object_info {
     char* user_md;
     struct timeval deprec_time;
 };
+
+int phobos_init_cpp();
+
+void phobos_fini_cpp();
 
 /**
  * Put N files to the object store with minimal overhead.

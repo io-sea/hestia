@@ -7,6 +7,10 @@
 namespace hestia {
 class PhobosInterfaceImpl : public IPhobosInterfaceImpl {
   public:
+    void init() override;
+
+    void finish() override;
+
     void get(const StorageObject& obj, int fd) override;
 
     void put(const StorageObject& obj, int fd) override;

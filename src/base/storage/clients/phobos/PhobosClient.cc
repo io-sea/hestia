@@ -21,6 +21,7 @@ PhobosClient::PhobosClient(PhobosInterface::Ptr phobos_interface)
     else {
         m_phobos_interface = PhobosInterface::create();
     }
+    m_phobos_interface->init();
 }
 
 std::unique_ptr<PhobosClient> PhobosClient::create(
@@ -29,7 +30,10 @@ std::unique_ptr<PhobosClient> PhobosClient::create(
     return std::make_unique<PhobosClient>(std::move(phobos_interface));
 }
 
-PhobosClient::~PhobosClient() {}
+PhobosClient::~PhobosClient()
+{
+    m_phobos_interface->finish();
+}
 
 std::string PhobosClient::get_registry_identifier()
 {

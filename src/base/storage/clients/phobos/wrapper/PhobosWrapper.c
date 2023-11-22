@@ -2,6 +2,16 @@
 #include "pho_attrs.h"
 #include "phobos_store.h"
 
+int phobos_init_cpp()
+{
+    return phobos_init();
+}
+
+void phobos_fini_cpp()
+{
+    phobos_fini();
+}
+
 int phobos_put_cpp(struct pho_xfer_desc* xfers, size_t n, pho_completion_cb_t cb, void* udata)
 {
     return phobos_put(xfers, n, cb, udata);
