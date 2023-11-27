@@ -4,6 +4,7 @@
 #include "ErrorUtils.h"
 #include "HestiaConfig.h"
 #include "S3Client.h"
+#include "Service.h"
 
 #include <memory>
 

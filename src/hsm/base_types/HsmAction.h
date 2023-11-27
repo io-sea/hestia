@@ -46,6 +46,10 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     uint8_t get_target_tier() const;
 
+    const std::string& get_source_tier_id() const;
+
+    const std::string& get_target_tier_id() const;
+
     std::size_t get_offset() const;
 
     std::size_t get_size() const;
@@ -53,6 +57,10 @@ class HsmAction : public HsmItem, public OwnableModel {
     std::size_t get_progress_interval() const;
 
     std::size_t get_num_transferred() const;
+
+    bool has_source_tier_id() const;
+
+    bool has_target_tier_id() const;
 
     bool is_crud_method() const;
 
@@ -73,6 +81,10 @@ class HsmAction : public HsmItem, public OwnableModel {
     void set_source_tier(uint8_t tier);
 
     void set_target_tier(uint8_t tier);
+
+    void set_source_tier_id(const std::string& id);
+
+    void set_target_tier_id(const std::string& id);
 
     void set_offset(std::size_t offset);
 
@@ -96,8 +108,16 @@ class HsmAction : public HsmItem, public OwnableModel {
     UIntegerField m_to_transfer{"to_transfer"};
     UIntegerField m_offset{"offset"};
     UIntegerField m_transferred{"transferred"};
-    UIntegerField m_source_tier{"source_tier"};
-    UIntegerField m_target_tier{"target_tier"};
+    UIntegerField m_source_tier{
+        "source_tier"}; /*!< The source tier - referenced by priority */
+    UIntegerField m_target_tier{
+        "target_tier"}; /*!< The target tier - referenced by priority */
+    StringField m_source_tier_id{
+        "source_tier_id"}; /*!< The source tier - referenced by unique
+                              identifier */
+    StringField m_target_tier_id{
+        "target_tier_id"}; /*!< The target tier - referenced by unique
+                              identifier */
     UIntegerField m_progress_interval{"progess_interval", 0};
     StringField m_subject_key{"subject_key"};
     StringField m_status_message{"status_message"};

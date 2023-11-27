@@ -81,12 +81,12 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
         completionFunc completion_func,
         progressFunc progress_func,
         Stream* stream,
-        uint8_t tier) const;
+        const std::string& tier) const;
 
     HsmObjectStoreResponse::Ptr do_local_op(
         const HsmObjectStoreRequest& request,
         Stream* stream,
-        uint8_t tier) const;
+        const std::string& tier) const;
 
     bool check_remote_config(
         const HsmObjectStoreRequest& request,

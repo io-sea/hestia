@@ -213,14 +213,15 @@ void HestiaClient::load_object_store_defaults()
     LOG_INFO("Loading fallback file based object store and tiers");
     ObjectStoreBackend backend(ObjectStoreBackend::Type::FILE_HSM);
 
-    std::vector<std::string> tier_names;
+    std::vector<std::string> tier_ids;
     for (uint8_t idx = 0; idx < 5; idx++) {
 
-        StorageTier tier(idx);
-        tier_names.push_back(std::to_string(idx));
+        StorageTier tier(std::to_string(1 + idx));
+        tier.set_priority(idx);
+        tier_ids.push_back(tier.id());
         m_config.add_storage_tier(tier);
     }
-    backend.set_tier_names(tier_names);
+    backend.set_tier_ids(tier_ids);
     m_config.add_object_store_backend(backend);
 }
 

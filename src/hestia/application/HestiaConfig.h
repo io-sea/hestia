@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DataPlacementEngineFactory.h"
 #include "EventFeed.h"
 #include "KeyValueStoreClientFactory.h"
 #include "LoggerConfig.h"

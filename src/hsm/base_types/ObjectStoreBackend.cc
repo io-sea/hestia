@@ -34,10 +34,8 @@ ObjectStoreBackend& ObjectStoreBackend::operator=(
         m_config            = other.m_config;
         m_plugin_path       = other.m_plugin_path;
         m_custom_identifier = other.m_custom_identifier;
-        m_tier_names        = other.m_tier_names;
-
-        m_node  = other.m_node;
-        m_tiers = other.m_tiers;
+        m_node              = other.m_node;
+        m_tiers             = other.m_tiers;
         init();
     }
     return *this;
@@ -50,7 +48,6 @@ void ObjectStoreBackend::init()
     register_map_field(&m_config);
 
     register_scalar_field(&m_custom_identifier);
-    register_sequence_field(&m_tier_names);
 
     register_foreign_key_field(&m_node);
     register_many_to_many_field(&m_tiers);
@@ -82,25 +79,14 @@ std::string ObjectStoreBackend::get_backend_as_string() const
         m_backend_type.get_value());
 }
 
-void ObjectStoreBackend::set_tier_names(
-    const std::vector<std::string>& tier_names)
+bool ObjectStoreBackend::has_tier(const std::string& tier_id) const
 {
-    m_tier_names.get_container_as_writeable() = tier_names;
-}
-
-bool ObjectStoreBackend::has_tier_name(const std::string& name) const
-{
-    for (const auto& tier_name : m_tier_names.container()) {
-        if (tier_name == name) {
+    for (const auto& id : m_tiers.get_ids()) {
+        if (tier_id == id) {
             return true;
         }
     }
     return false;
-}
-
-const std::vector<std::string>& ObjectStoreBackend::get_tier_names() const
-{
-    return m_tier_names.container();
 }
 
 void ObjectStoreBackend::set_node_id(const std::string& id)

@@ -39,16 +39,16 @@ TEST_CASE_METHOD(MockMotrTestFixture, "Motr client write and read", "[motr]")
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.length());
 
-    put(obj, content, 1);
+    put(obj, content, "1");
 
     std::string tier_1_content;
-    get(obj, tier_1_content, content.length(), 1);
+    get(obj, tier_1_content, content.length(), "1");
     REQUIRE(tier_1_content == content);
 
-    copy(obj, 1, 2);
+    copy(obj, "1", "2");
 
     std::string tier_2_content;
-    get(obj, tier_2_content, content.length(), 2);
+    get(obj, tier_2_content, content.length(), "2");
     REQUIRE(tier_2_content == content);
 }
 

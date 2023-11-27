@@ -13,8 +13,6 @@ class StorageTier : public HsmItem, public Model {
 
     StorageTier(const std::string& id);
 
-    StorageTier(uint8_t id);
-
     StorageTier(const StorageTier& other);
 
     static std::string get_type();
@@ -27,17 +25,20 @@ class StorageTier : public HsmItem, public Model {
 
     std::size_t get_bandwidth() const;
 
-    uint8_t id_uint() const;
+    uint8_t get_priority() const;
 
     void set_capacity(std::size_t capacity);
 
     void set_bandwidth(std::size_t bandwidth);
+
+    void set_priority(uint8_t priority);
 
     StorageTier& operator=(const StorageTier& other);
 
   private:
     void init();
 
+    UIntegerField m_priority{"priority", 255};
     UIntegerField m_capacity{"capacity"};
     UIntegerField m_bandwidth{"bandwidth"};
     ForeignKeyProxyField<ObjectStoreBackend> m_backends{"backends"};

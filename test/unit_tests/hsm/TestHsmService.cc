@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include "BasicDataPlacementEngine.h"
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 #include "InMemoryStreamSink.h"
@@ -49,9 +48,10 @@ class HsmServiceTestFixture {
 
         hestia::InMemoryObjectStoreClientConfig object_store_config;
 
-        std::vector<std::string> tier_names;
+        std::vector<std::string> tier_ids;
         for (std::size_t idx = 0; idx < 5; idx++) {
-            hestia::StorageTier tier(idx);
+            hestia::StorageTier tier(std::to_string(idx));
+            tier.set_priority(idx);
 
             auto response = tier_service->make_request(
                 hestia::TypedCrudRequest<hestia::StorageTier>{
@@ -60,13 +60,12 @@ class HsmServiceTestFixture {
                     {},
                     m_test_user.get_primary_key()});
             REQUIRE(response->ok());
-
-            tier_names.push_back(std::to_string(idx));
+            tier_ids.push_back(std::to_string(idx));
         }
 
         m_object_store_client =
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
-        m_object_store_client->set_tier_names(tier_names);
+        m_object_store_client->set_tier_ids(tier_ids);
         m_object_store_client->do_initialize("0000", {}, object_store_config);
 
         m_hsm_service = std::make_unique<hestia::HsmService>(

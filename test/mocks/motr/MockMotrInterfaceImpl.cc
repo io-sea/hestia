@@ -81,8 +81,8 @@ void MockMotrInterfaceImpl::put(
     MotrObject motr_obj(request.object().id());
 
     auto rc = m_hsm.m0hsm_create(
-        motr_obj.get_motr_id(), motr_obj.get_motr_obj(), request.target_tier(),
-        false);
+        motr_obj.get_motr_id(), motr_obj.get_motr_obj(),
+        get_tier_index(request.target_tier()), false);
     if (rc < 0) {
         const std::string msg =
             "Failed to create object: " + std::to_string(rc);
@@ -91,7 +91,7 @@ void MockMotrInterfaceImpl::put(
     }
 
     rc = m_hsm.m0hsm_set_write_tier(
-        motr_obj.get_motr_id(), request.target_tier());
+        motr_obj.get_motr_id(), get_tier_index(request.target_tier()));
     if (rc < 0) {
         const std::string msg =
             "Failed to set write tier: " + std::to_string(rc);
@@ -143,7 +143,7 @@ void MockMotrInterfaceImpl::get(
     motr_obj.m_size = request.object().size();
 
     auto rc = m_hsm.m0hsm_set_read_tier(
-        motr_obj.get_motr_id(), request.source_tier());
+        motr_obj.get_motr_id(), get_tier_index(request.source_tier()));
     if (rc < 0) {
         const std::string msg =
             "Failed to set read tier: " + std::to_string(rc);
@@ -204,7 +204,8 @@ void MockMotrInterfaceImpl::remove(
     mock::motr::hsm_rls_flags flags =
         mock::motr::hsm_rls_flags::HSM_KEEP_LATEST;
     auto rc = m_hsm.m0hsm_release(
-        motr_obj.get_motr_id(), request.source_tier(), offset, length, flags);
+        motr_obj.get_motr_id(), get_tier_index(request.source_tier()), offset,
+        length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_release" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -227,8 +228,9 @@ void MockMotrInterfaceImpl::copy(
     mock::motr::Hsm::hsm_cp_flags flags =
         mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
     auto rc = m_hsm.m0hsm_copy(
-        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+        motr_obj.get_motr_id(), get_tier_index(request.source_tier()),
+        get_tier_index(request.target_tier()), request.extent().m_offset,
+        length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -251,8 +253,9 @@ void MockMotrInterfaceImpl::move(
     mock::motr::Hsm::hsm_cp_flags flags =
         mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     auto rc = m_hsm.m0hsm_copy(
-        motr_obj.get_motr_id(), request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+        motr_obj.get_motr_id(), get_tier_index(request.source_tier()),
+        get_tier_index(request.target_tier()), request.extent().m_offset,
+        length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
         LOG_ERROR(msg);

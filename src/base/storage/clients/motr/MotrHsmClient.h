@@ -22,6 +22,8 @@ class MotrHsmClient : public HsmObjectStoreClient {
         const std::string& cache_path,
         const Dictionary& config) override;
 
+    void set_tier_ids(const std::vector<std::string>& tier_ids) override;
+
     virtual ~MotrHsmClient(){};
 
     void copy(

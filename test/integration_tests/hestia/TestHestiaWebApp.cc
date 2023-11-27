@@ -11,7 +11,6 @@
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 
-#include "DataPlacementEngine.h"
 #include "DistributedHsmService.h"
 #include "EventFeed.h"
 #include "HestiaWebApp.h"
@@ -39,7 +38,7 @@ class TestHestiaWebAppFixture {
             std::make_unique<hestia::InMemoryHsmObjectStoreClient>();
 
         hestia::InMemoryObjectStoreClientConfig obj_store_config;
-        m_obj_store_client->set_tier_names({"0", "1"});
+        m_obj_store_client->set_tier_ids({"0", "1"});
         m_obj_store_client->do_initialize("0000", {}, obj_store_config);
 
         hestia::KeyValueStoreCrudServiceBackend backend(
@@ -69,7 +68,8 @@ class TestHestiaWebAppFixture {
         auto tier_service =
             hsm_child_services->get_service(hestia::HsmItem::Type::TIER);
         for (uint8_t idx = 0; idx < 2; idx++) {
-            hestia::StorageTier tier(idx);
+            hestia::StorageTier tier(std::to_string(idx));
+            tier.set_priority(idx);
             auto create_response = tier_service->make_request(
                 hestia::TypedCrudRequest<hestia::StorageTier>{
                     hestia::CrudMethod::CREATE,

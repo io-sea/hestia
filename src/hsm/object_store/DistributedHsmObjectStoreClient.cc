@@ -66,8 +66,9 @@ void DistributedHsmObjectStoreClient::do_initialize(
     for (const auto& item : response->items()) {
         const auto tier = dynamic_cast<const StorageTier*>(item.get());
         LOG_INFO(
-            "Adding tier: " << std::to_string(tier->id_uint())
-                            << " with id: " << tier->get_primary_key());
+            "Adding tier with priority: "
+            << std::to_string(tier->get_priority())
+            << " with id: " << tier->get_primary_key());
         tiers.emplace_back(*tier);
     }
 
@@ -91,8 +92,8 @@ void on_error(
 void init_action(HsmAction& action, const HsmObjectStoreRequest& request)
 {
     action.set_subject_key(request.object().get_primary_key());
-    action.set_source_tier(request.source_tier());
-    action.set_target_tier(request.target_tier());
+    action.set_source_tier_id(request.source_tier());
+    action.set_target_tier_id(request.target_tier());
     action.set_primary_key(request.get_action_id());
     action.set_size(request.extent().m_length);
     action.set_offset(request.extent().m_offset);
@@ -338,7 +339,7 @@ void DistributedHsmObjectStoreClient::do_local_op(
     completionFunc completion_func,
     progressFunc progress_func,
     Stream* stream,
-    uint8_t tier) const
+    const std::string& tier) const
 {
     if (auto hsm_client = m_client_manager->get_hsm_client(tier);
         hsm_client != nullptr) {
@@ -364,7 +365,9 @@ void DistributedHsmObjectStoreClient::do_local_op(
 }
 
 HsmObjectStoreResponse::Ptr DistributedHsmObjectStoreClient::do_local_op(
-    const HsmObjectStoreRequest& request, Stream* stream, uint8_t tier) const
+    const HsmObjectStoreRequest& request,
+    Stream* stream,
+    const std::string& tier) const
 {
     HsmObjectStoreResponse::Ptr outer_response;
     if (auto hsm_client = m_client_manager->get_hsm_client(tier);
@@ -550,11 +553,10 @@ void DistributedHsmObjectStoreClient::make_request(
     if (request.method() == HsmObjectStoreRequestMethod::GET
         || request.method() == HsmObjectStoreRequestMethod::EXISTS
         || request.method() == HsmObjectStoreRequestMethod::REMOVE) {
-        const std::string tier_str = std::to_string(request.source_tier());
         if (m_client_manager->has_client(request.source_tier())) {
             LOG_INFO(
                 "Found local client for source tier: "
-                << static_cast<int>(request.source_tier()));
+                << request.source_tier());
             do_local_op(
                 request, completion_func, progress_func, stream,
                 request.source_tier());
@@ -562,14 +564,14 @@ void DistributedHsmObjectStoreClient::make_request(
         }
         else if (request.method() == HsmObjectStoreRequestMethod::GET) {
             LOG_INFO(
-                "Did not find client for source tier " + tier_str
+                "Did not find client for source tier " + request.source_tier()
                 + "- creating remote get");
             do_remote_get(request, completion_func, progress_func, stream);
             return;
         }
         else if (request.method() == HsmObjectStoreRequestMethod::REMOVE) {
             LOG_INFO(
-                "Did not find client for source tier " + tier_str
+                "Did not find client for source tier " + request.source_tier()
                 + "- creating remote release");
             do_remote_release(request, completion_func, progress_func);
             return;
@@ -585,8 +587,7 @@ void DistributedHsmObjectStoreClient::make_request(
         }
         else if (request.method() == HsmObjectStoreRequestMethod::PUT) {
             LOG_INFO(
-                "Did not find client for target tier "
-                + std::to_string(request.target_tier())
+                "Did not find client for target tier " + request.target_tier()
                 + " - creating remote put");
             do_remote_put(request, completion_func, progress_func, stream);
             return;

@@ -29,6 +29,12 @@ void MotrHsmClient::do_intialize(
     m_motr_interface->initialize(config);
 }
 
+void MotrHsmClient::set_tier_ids(const std::vector<std::string>& tier_ids)
+{
+    m_tier_ids = tier_ids;
+    m_motr_interface->set_tier_ids(tier_ids);
+}
+
 void MotrHsmClient::copy(
     const HsmObjectStoreRequest& request,
     completionFunc completion_func,

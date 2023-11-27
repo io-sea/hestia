@@ -109,7 +109,7 @@ class ManyToManyField : public DictField {
     }
 
   private:
-    ScalarSequenceField<std::vector<std::string>> m_uuids{"ids"};
+    StringSequenceField m_uuids{"ids"};
 };
 
 }  // namespace hestia

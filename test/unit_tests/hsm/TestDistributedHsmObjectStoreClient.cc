@@ -5,7 +5,6 @@
 #include "DistributedHsmService.h"
 
 #include "ApplicationMiddleware.h"
-#include "DataPlacementEngine.h"
 #include "HestiaHsmActionView.h"
 #include "PingView.h"
 #include "RequestContext.h"
@@ -263,7 +262,8 @@ class DistributedHsmObjectStoreClientTestFixture {
             hsm_child_services->get_service(hestia::HsmItem::Type::TIER);
 
         for (std::size_t idx = 0; idx < 5; idx++) {
-            hestia::StorageTier tier(idx);
+            hestia::StorageTier tier(std::to_string(idx));
+            tier.set_priority(idx);
             auto response = tier_service->make_request(hestia::TypedCrudRequest{
                 hestia::CrudMethod::CREATE,
                 tier,
@@ -335,7 +335,7 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         hestia::ObjectStoreBackend object_store_backend(
             hestia::ObjectStoreBackend::Type::MEMORY_HSM);
-        object_store_backend.set_tier_names({"0", "1", "2", "3", "4"});
+        object_store_backend.set_tier_ids({"0", "1", "2", "3", "4"});
         object_store_backend.set_config(serialized_config);
 
         dist_hsm_config.m_backends = {object_store_backend};

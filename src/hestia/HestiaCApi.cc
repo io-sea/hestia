@@ -134,7 +134,6 @@ int HestiaCApi::do_crud_request(
     auto response_future = response_promise.get_future();
 
     auto completion_cb = [&response_promise](HestiaResponse::Ptr response) {
-        LOG_INFO("cb fired");
         response_promise.set_value(std::move(response));
     };
 

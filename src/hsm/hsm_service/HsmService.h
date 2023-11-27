@@ -4,7 +4,7 @@
 
 #include "EventFeed.h"
 
-#include "HsmActionResponse.h"
+#include "HsmActionContext.h"
 #include "HsmObject.h"
 #include "HsmServicesFactory.h"
 
@@ -18,7 +18,6 @@ class HsmObjectStoreClient;
 class HsmEventSink;
 class KeyValueStoreClient;
 
-class DataPlacementEngine;
 class UserService;
 
 class HsmService : public CrudService {
@@ -29,8 +28,7 @@ class HsmService : public CrudService {
         const ServiceConfig& config,
         HsmServiceCollection::Ptr service_collection,
         HsmObjectStoreClient* object_store,
-        std::unique_ptr<DataPlacementEngine> placement_engine = {},
-        EventFeed* event_feed                                 = nullptr);
+        EventFeed* event_feed = nullptr);
 
     static Ptr create(
         const ServiceConfig& config,
@@ -41,12 +39,6 @@ class HsmService : public CrudService {
 
     virtual ~HsmService();
 
-    CrudService* get_service(HsmItem::Type type) const;
-
-    [[nodiscard]] CrudResponse::Ptr make_request(
-        const CrudRequest& request,
-        const std::string& type = {}) const noexcept override;
-
     using actionCompletionFunc = std::function<void(HsmActionResponse::Ptr)>;
     using actionProgressFunc   = std::function<void(HsmActionResponse::Ptr)>;
     void do_hsm_action(
@@ -54,6 +46,14 @@ class HsmService : public CrudService {
         Stream* stream,
         actionCompletionFunc completion_func,
         actionProgressFunc progress_func = nullptr) const noexcept;
+
+    CrudService* get_service(HsmItem::Type type) const;
+
+    const std::string& get_tier_id(uint8_t tier) const;
+
+    [[nodiscard]] CrudResponse::Ptr make_request(
+        const CrudRequest& request,
+        const std::string& type = {}) const noexcept override;
 
     void update_tiers(const CrudUserContext& user_id);
 
@@ -91,65 +91,35 @@ class HsmService : public CrudService {
         actionCompletionFunc completion_func,
         actionProgressFunc progress_func) const;
 
-    struct ActionContext {
-        ActionContext() = default;
-
-        ActionContext(
-            const HsmActionRequest& req,
-            actionCompletionFunc completion_func,
-            actionProgressFunc progress_func) :
-            m_action(req.get_action()),
-            m_req(req),
-            m_user_context(req.get_user_context()),
-            m_completion_func(completion_func),
-            m_progress_func(progress_func),
-            m_source_tier(req.source_tier()),
-            m_target_tier(req.target_tier()),
-            m_extent(req.extent())
-        {
-        }
-
-        HsmAction m_action;
-        BaseRequest m_req;
-        CrudUserContext m_user_context;
-        actionCompletionFunc m_completion_func;
-        actionProgressFunc m_progress_func;
-        uint8_t m_source_tier{0};
-        uint8_t m_target_tier{0};
-        std::string m_store_id;
-        Extent m_extent;
-        bool m_needs_db_update{false};
-    };
-
     void make_object_store_request(
         HsmObjectStoreRequestMethod method,
-        const ActionContext& action_context,
+        const HsmActionContext& action_context,
         Stream* stream = nullptr) const;
 
     void on_object_store_response(
         HsmObjectStoreRequestMethod method,
         HsmObjectStoreResponse::Ptr object_store_response,
-        const ActionContext& action_context) const;
+        const HsmActionContext& action_context) const;
 
     void on_db_update(
         HsmObjectStoreRequestMethod method,
         const std::string& store_id,
-        const ActionContext& action_context) const;
+        const HsmActionContext& action_context) const;
 
     std::size_t get_object_size_on_tier(
-        const ActionContext& action_context) const;
+        const HsmActionContext& action_context) const;
 
     void init_extent(
         TierExtents& extent,
-        const HsmService::ActionContext& action_context,
+        const HsmActionContext& action_context,
         const std::string& tier_id,
         const std::string& store_id) const;
 
     void get_action(
-        const ActionContext& action_context, HsmAction& action) const;
+        const HsmActionContext& action_context, HsmAction& action) const;
 
     void get_object(
-        const ActionContext& action_context, HsmObject& object) const;
+        const HsmActionContext& action_context, HsmObject& object) const;
 
     bool get_tier_extent(
         const std::string& tier_id,
@@ -157,36 +127,35 @@ class HsmService : public CrudService {
         TierExtents& extents) const;
 
     void update_object(
-        const ActionContext& action_context, const HsmObject& object) const;
+        const HsmActionContext& action_context, const HsmObject& object) const;
 
     void update_action(
-        const ActionContext& action_context, const HsmAction& action) const;
+        const HsmActionContext& action_context, const HsmAction& action) const;
 
     CrudResponsePtr get_or_create_action(
         const HsmActionRequest& req, HsmAction& working_action) const;
 
     void create_or_update_extent(
-        const ActionContext& action_context,
+        const HsmActionContext& action_context,
         const TierExtents& extent,
         bool do_create) const;
 
     void remove_or_update_extent(
-        const ActionContext& action_context, const TierExtents& extent) const;
-
-    const std::string& get_tier_id(uint8_t tier) const;
+        const HsmActionContext& action_context,
+        const TierExtents& extent) const;
 
     void set_action_error(
-        const ActionContext& action_context, const std::string& message) const;
+        const HsmActionContext& action_context,
+        const std::string& message) const;
 
     void set_action_finished_ok(
-        const ActionContext& action_context, std::size_t bytes) const;
+        const HsmActionContext& action_context, std::size_t bytes) const;
 
     void set_action_progress(
-        const ActionContext& action_context, std::size_t bytes) const;
+        const HsmActionContext& action_context, std::size_t bytes) const;
 
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
-    std::unique_ptr<DataPlacementEngine> m_placement_engine;
     std::unordered_map<uint8_t, std::string> m_tier_cache;
     EventFeed* m_event_feed{nullptr};
 };

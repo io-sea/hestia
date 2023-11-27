@@ -96,7 +96,12 @@ void load_node_to_dict(const YAML::Node& root, Dictionary& dict)
         on_sequence(root, *raw_dict);
     }
     else if (root.IsMap()) {
-        auto map_dict = Dictionary::create(Dictionary::Type::MAP);
+        auto map_dict  = Dictionary::create(Dictionary::Type::MAP);
+        const auto tag = root.Tag();
+        if (!tag.empty()) {
+            map_dict->set_tag(tag);
+        }
+
         auto raw_dict = map_dict.get();
         dict.set_map_item("root", std::move(map_dict));
         on_map(root, *raw_dict);

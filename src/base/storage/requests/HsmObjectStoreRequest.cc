@@ -140,12 +140,12 @@ std::string HsmObjectStoreRequest::to_string(
     }
 }
 
-uint8_t HsmObjectStoreRequest::source_tier() const
+const std::string& HsmObjectStoreRequest::source_tier() const
 {
     return m_source_tier;
 }
 
-uint8_t HsmObjectStoreRequest::target_tier() const
+const std::string& HsmObjectStoreRequest::target_tier() const
 {
     return m_target_tier;
 }

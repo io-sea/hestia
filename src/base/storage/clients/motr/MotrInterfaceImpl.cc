@@ -485,7 +485,8 @@ void MotrInterfaceImpl::put(
     LOG_INFO(
         "Creating object with id: [" << motr_obj->m_uuid.to_string() << "]");
     auto rc = m0hsm_create(
-        motr_obj->m_motr_id, &motr_obj->m_handle, request.target_tier(), true);
+        motr_obj->m_motr_id, &motr_obj->m_handle,
+        get_tier_index(request.target_tier()), true);
     if (rc < 0) {
         const std::string msg =
             "Failed to create object: " + std::to_string(rc);
@@ -564,7 +565,8 @@ void MotrInterfaceImpl::remove(
     std::size_t offset{0};
     std::size_t length{IMotrInterfaceImpl::max_obj_length};
     enum hsm_rls_flags flags = hsm_rls_flags::HSM_KEEP_LATEST;
-    auto rc = m0hsm_release(id, request.source_tier(), offset, length, flags);
+    auto rc                  = m0hsm_release(
+        id, get_tier_index(request.source_tier()), offset, length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_release" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -593,8 +595,9 @@ void MotrInterfaceImpl::copy(
     // mock::motr::Hsm::hsm_cp_flags::HSM_KEEP_OLD_VERS;
     enum hsm_cp_flags flags = hsm_cp_flags::HSM_KEEP_OLD_VERS;
     auto rc                 = m0hsm_copy(
-        id, request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+        id, get_tier_index(request.source_tier()),
+        get_tier_index(request.target_tier()), request.extent().m_offset,
+        length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy" + std::to_string(rc);
         LOG_ERROR(msg);
@@ -624,8 +627,9 @@ void MotrInterfaceImpl::move(
     // mock::motr::Hsm::hsm_cp_flags::HSM_MOVE;
     enum hsm_cp_flags flags = hsm_cp_flags::HSM_MOVE;
     auto rc                 = m0hsm_copy(
-        id, request.source_tier(), request.target_tier(),
-        request.extent().m_offset, length, flags);
+        id, get_tier_index(request.source_tier()),
+        get_tier_index(request.target_tier()), request.extent().m_offset,
+        length, flags);
     if (rc < 0) {
         std::string msg = "Error in  m0hsm_copy - move " + std::to_string(rc);
         LOG_ERROR(msg);

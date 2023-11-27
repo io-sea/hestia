@@ -209,5 +209,5 @@ TEST_CASE_METHOD(HestiaHLCApiTestFixture, "Test Hestia HL C API", "[hestia]")
     REQUIRE(num_tier_object_ids == 1);
     REQUIRE(tier_object_ids[0].m_lo == hestia_id.m_lo);
     REQUIRE(tier_object_ids[0].m_hi == hestia_id.m_hi);
-    hestia_free_ids(&tier_object_ids);
+    hestia_free_ids(&tier_object_ids, num_tier_object_ids);
 }

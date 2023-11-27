@@ -28,6 +28,8 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     ObjectStoreBackend(const ObjectStoreBackend& other);
 
+    void add_tier_id(const std::string& id);
+
     const Dictionary& get_config() const;
 
     Type get_backend() const;
@@ -40,6 +42,8 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     static std::string get_type();
 
+    bool has_tier(const std::string& tier_id) const;
+
     bool is_hsm() const;
 
     bool is_plugin() const;
@@ -50,10 +54,6 @@ class ObjectStoreBackend : public HsmItem, public Model {
 
     std::string get_plugin_path() const;
 
-    const std::vector<std::string>& get_tier_names() const;
-
-    bool has_tier_name(const std::string& name) const;
-
     std::string to_string() const;
 
     void set_config(const Dictionary& dict) { m_config.update_value(dict); }
@@ -61,10 +61,6 @@ class ObjectStoreBackend : public HsmItem, public Model {
     void set_node_id(const std::string& id);
 
     void set_tier_ids(const std::vector<std::string>& ids);
-
-    void set_tier_names(const std::vector<std::string>& tier_names);
-
-    void add_tier_id(const std::string& id);
 
     ObjectStoreBackend& operator=(const ObjectStoreBackend& other);
 
@@ -78,7 +74,6 @@ class ObjectStoreBackend : public HsmItem, public Model {
     StringField m_custom_identifier{"custom_identifier"};
     StringField m_plugin_path{"plugin_path"};
     RawDictField m_config{"config"};
-    ScalarSequenceField<std::vector<std::string>> m_tier_names{"tier_names"};
 
     ManyToManyField m_tiers{"tiers", HsmItem::tier_name};
     ForeignKeyField m_node{"node", HsmItem::hsm_node_name, true};

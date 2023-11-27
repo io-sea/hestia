@@ -12,6 +12,7 @@ target_include_directories(hestia_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CU
 add_subdirectory(base)
 add_subdirectory(hsm)
 add_subdirectory(hestia)
+add_subdirectory(integrations)
 
 add_module(
     MODULE_NAME lib

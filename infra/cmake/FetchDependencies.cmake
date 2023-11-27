@@ -153,6 +153,18 @@ macro(fetch_hiredis)
         endif()
 endmacro()
 
+macro(fetch_sqlite)
+    FetchContent_Declare(sqlite
+    URL https://www.sqlite.org/2023/sqlite-amalgamation-3440100.zip
+    URL_HASH          SHA256=cc6545b71ca188e245d5d668543c01f61175f0228a0e1b4ced76fabc75ea6b2e
+    SYSTEM
+    FIND_PACKAGE_ARGS
+    )
+    if(NOT sqlite_POPULATED)
+        FetchContent_Populate(sqlite)
+    endif()
+endmacro()
+
 macro(build_openssl)
     ExternalProject_Add(openssl
     URL https://www.openssl.org/source/openssl-1.1.1w.tar.gz

@@ -144,14 +144,13 @@ void setup_tiers(
     for (const auto& config_tier : tiers) {
         bool found{false};
         for (const auto& tier : tiers_list_response->items()) {
-            if (tier->name() == config_tier.name()) {
+            if (tier->id() == config_tier.id()) {
                 found = true;
                 break;
             }
         }
         if (!found) {
-            LOG_INFO(
-                "Adding tier: " << config_tier.name() << " to Tier service");
+            LOG_INFO("Adding tier: " << config_tier.id() << " to Tier service");
             if (auto response =
                     tier_service->make_request(TypedCrudRequest<StorageTier>{
                         CrudMethod::CREATE, config_tier, {}, user_context});
@@ -223,14 +222,10 @@ void HestiaApplication::setup_hsm_service(
             m_config.get_storage_tiers(), current_user_context);
     }
 
-    auto dpe = DataPlacementEngineFactory::get_engine(
-        PlacementEngineType::BASIC,
-        hsm_services->get_service(HsmItem::Type::TIER));
-
     ServiceConfig hsm_service_config;
     auto hsm_service = std::make_unique<HsmService>(
         hsm_service_config, std::move(hsm_services),
-        m_object_store_client.get(), std::move(dpe), m_event_feed.get());
+        m_object_store_client.get(), m_event_feed.get());
     m_hsm_service = hsm_service.get();
     m_hsm_service->update_tiers(current_user_context);
 

@@ -23,17 +23,19 @@ void TestClientConfigs::get_hsm_memory_client_config(Dictionary& config)
     kv_config.serialize(*kv_config_dict);
 
     auto tiers = std::make_unique<Dictionary>(Dictionary::Type::SEQUENCE);
-    std::vector<std::string> tier_names{"0", "1", "2", "3", "4"};
-    for (const auto& name : tier_names) {
-        StorageTier tier(std::stoul(name));
+    std::vector<std::string> tier_ids;
+    for (std::size_t idx = 0; idx < 5; idx++) {
+        StorageTier tier(std::to_string(idx + 1));
+        tier.set_priority(idx);
         auto tier_dict = std::make_unique<Dictionary>();
         tier.serialize(*tier_dict);
+        tier_ids.push_back(tier.id());
         tiers->add_sequence_item(std::move(tier_dict));
     }
 
     ObjectStoreBackend object_store_config(
         ObjectStoreBackend::Type::MEMORY_HSM);
-    object_store_config.set_tier_names(tier_names);
+    object_store_config.set_tier_ids(tier_ids);
 
     InMemoryObjectStoreClientConfig in_memory_store_config;
 

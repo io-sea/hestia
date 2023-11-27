@@ -90,12 +90,11 @@ class TypedDictField : public DictField {
 /**
  * @brief A Field with multiple items.
  */
-template<typename T>
-class ScalarSequenceField : public DictField {
+class StringSequenceField : public DictField {
   public:
-    ScalarSequenceField(const std::string& name) : DictField(name) {}
+    StringSequenceField(const std::string& name) : DictField(name) {}
 
-    virtual ~ScalarSequenceField() = default;
+    virtual ~StringSequenceField() = default;
 
     void serialize(
         Dictionary& dict, Format format = Format::FULL) const override
@@ -120,16 +119,16 @@ class ScalarSequenceField : public DictField {
         }
     }
 
-    const T& container() const { return m_container; }
+    const std::vector<std::string>& container() const { return m_container; }
 
-    T& get_container_as_writeable()
+    std::vector<std::string>& get_container_as_writeable()
     {
         m_modified = true;
         return m_container;
     }
 
   protected:
-    T m_container;
+    std::vector<std::string> m_container;
 };
 
 /**
@@ -272,7 +271,7 @@ class IntKeyedSequenceField : public BaseKeyedSequenceField<T> {
         typename BaseKeyedSequenceField<T>::IterT& iter_out) override
     {
         const auto& [iter, existed] =
-            this->m_container.try_emplace(std::stoi(key));
+            this->m_container.try_emplace(std::stoll(key));
         iter_out = iter;
     }
 };

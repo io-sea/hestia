@@ -22,6 +22,7 @@ HsmObjectStoreTestWrapper::HsmObjectStoreTestWrapper(
     m_client_plugin_owner =
         TestContext::get().get_hsm_object_store_plugin(plugin_name);
     m_client = m_client_plugin_owner->get_client();
+    m_client->set_tier_ids({"1", "2", "3", "4"});
 }
 
 HsmObjectStoreTestWrapper::Ptr HsmObjectStoreTestWrapper::create(
@@ -37,7 +38,9 @@ HsmObjectStoreTestWrapper::Ptr HsmObjectStoreTestWrapper::create(
 }
 
 void HsmObjectStoreTestWrapper::put(
-    const hestia::StorageObject& obj, const std::string& content, uint8_t tier)
+    const hestia::StorageObject& obj,
+    const std::string& content,
+    const std::string& tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::PUT);
@@ -92,7 +95,7 @@ void HsmObjectStoreTestWrapper::get(
     hestia::StorageObject& obj,
     std::string& content,
     std::size_t content_length,
-    uint8_t tier)
+    const std::string& tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::GET);
@@ -144,7 +147,9 @@ void HsmObjectStoreTestWrapper::exists(
 }
 
 void HsmObjectStoreTestWrapper::copy(
-    const hestia::StorageObject& obj, uint8_t source_tier, uint8_t target_tier)
+    const hestia::StorageObject& obj,
+    const std::string& source_tier,
+    const std::string& target_tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::COPY);
@@ -164,7 +169,9 @@ void HsmObjectStoreTestWrapper::copy(
 }
 
 void HsmObjectStoreTestWrapper::move(
-    const hestia::StorageObject& obj, uint8_t source_tier, uint8_t target_tier)
+    const hestia::StorageObject& obj,
+    const std::string& source_tier,
+    const std::string& target_tier)
 {
     hestia::HsmObjectStoreRequest request(
         obj, hestia::HsmObjectStoreRequestMethod::MOVE);

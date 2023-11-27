@@ -44,9 +44,9 @@ TEST_CASE("Test Storage Tier", "[hsm]")
     REQUIRE(
         deserialized_tier.get_backends().size() == tier.get_backends().size());
 
-    hestia::StorageTier tier_with_id(3);
-    REQUIRE(tier_with_id.id_uint() == 3);
-    REQUIRE(tier_with_id.name() == "3");
+    hestia::StorageTier tier_with_id("1234");
+    tier_with_id.set_priority(3);
+    REQUIRE(tier_with_id.get_priority() == 3);
 }
 
 TEST_CASE("Sequencefield with tiers", "[hsm], [common]")

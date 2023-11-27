@@ -58,15 +58,15 @@ int get_tier_ids(const std::string& uuids, std::vector<uint8_t>& ids)
 
     if (tier_attr_dict.get_type() == Dictionary::Type::SEQUENCE) {
         for (const auto& item : tier_attr_dict.get_sequence()) {
-            if (!item->has_map_item("name")) {
+            if (!item->has_map_item("priority")) {
                 set_last_error(
-                    "Tier is missing a 'name' - possible config issue.");
+                    "Tier is missing a 'priority' - possible config issue.");
                 return -1;
             }
 
-            const auto name = item->get_map_item("name")->get_scalar();
-            if (!name.empty()) {
-                ids.push_back(std::stoi(name));
+            const auto priority = item->get_map_item("priority")->get_scalar();
+            if (!priority.empty()) {
+                ids.push_back(std::stoi(priority));
             }
             else {
                 ids.push_back(0);
@@ -74,13 +74,15 @@ int get_tier_ids(const std::string& uuids, std::vector<uint8_t>& ids)
         }
     }
     else {
-        if (!tier_attr_dict.has_map_item("name")) {
-            set_last_error("Tier is missing a 'name' - possible config issue.");
+        if (!tier_attr_dict.has_map_item("priority")) {
+            set_last_error(
+                "Tier is missing a 'priority' - possible config issue.");
             return -1;
         }
-        const auto name = tier_attr_dict.get_map_item("name")->get_scalar();
-        if (!name.empty()) {
-            ids.push_back(std::stoi(name));
+        const auto priority =
+            tier_attr_dict.get_map_item("priority")->get_scalar();
+        if (!priority.empty()) {
+            ids.push_back(std::stoi(priority));
         }
         else {
             ids.push_back(0);
@@ -135,6 +137,7 @@ std::pair<int, std::string> create_if_not_existing(
     }
 
     int rc = 0;
+
     if (is_name) {
         std::string query{"name="};
         query += id;
@@ -144,14 +147,15 @@ std::pair<int, std::string> create_if_not_existing(
             hestia_id_format_t::HESTIA_ID, 0, 0, query.c_str(), query.size(),
             hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
             &totals);
-
         if (output_size != 0) {
             Dictionary dict;
             dict.from_string(std::string(output, output_size));
             if (dict.is_sequence()) {
+                LOG_INFO("Updating id");
                 id = dict.get_sequence()[0]->get_map_item("id")->get_scalar();
             }
             else {
+                LOG_INFO("Updating id");
                 id = dict.get_map_item("id")->get_scalar();
             }
         }
@@ -169,6 +173,7 @@ std::pair<int, std::string> create_if_not_existing(
     }
 
     delete[] output;
+    output = nullptr;
 
     if (output_size == 0) {
         if (create_mode == hestia_create_mode_t::HESTIA_UPDATE) {
@@ -178,7 +183,21 @@ std::pair<int, std::string> create_if_not_existing(
             rc = hestia_create(
                 hestia_item_t::HESTIA_OBJECT, hestia_io_format_t::HESTIA_IO_IDS,
                 hestia_id_format_t::HESTIA_NAME, id.c_str(), id.size(),
-                hestia_io_format_t::HESTIA_IO_NONE, nullptr, 0);
+                hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size);
+            if (output_size != 0) {
+                Dictionary dict;
+                dict.from_string(std::string(output, output_size));
+                if (dict.is_sequence()) {
+                    LOG_INFO("Updating id");
+                    id = dict.get_sequence()[0]
+                             ->get_map_item("id")
+                             ->get_scalar();
+                }
+                else {
+                    LOG_INFO("Updating id");
+                    id = dict.get_map_item("id")->get_scalar();
+                }
+            }
         }
         else {
             rc = hestia_create(
@@ -210,6 +229,17 @@ int hestia_init_id(HestiaId* id)
     return 0;
 }
 
+int hestia_init_io_ctx(HestiaIoContext* io_ctx)
+{
+    io_ctx->m_type   = hestia_io_type_t::HESTIA_IO_EMPTY;
+    io_ctx->m_offset = 0;
+    io_ctx->m_length = 0;
+    io_ctx->m_buffer = nullptr;
+    io_ctx->m_path   = nullptr;
+    io_ctx->m_fd     = -1;
+    return 0;
+}
+
 int hestia_init_object(HestiaObject* object)
 {
     if (object->m_num_attrs > 0) {
@@ -237,8 +267,12 @@ int hestia_init_object(HestiaObject* object)
     return 0;
 }
 
-int hestia_free_ids(HestiaId** ids)
+int hestia_free_ids(HestiaId** ids, size_t num_ids)
 {
+    for (std::size_t idx = 0; idx < num_ids; idx++) {
+        delete[] ids[idx]->m_uuid;
+    }
+
     delete[] (*ids);
     *ids = nullptr;
     return 0;
@@ -279,17 +313,18 @@ int hestia_list_tiers(uint8_t** tier_ids, size_t* num_ids)
 
     std::size_t count = 0;
     for (const auto& item : attr_dict.get_sequence()) {
-        if (!item->has_map_item("name")) {
-            set_last_error("Tier is missing a 'name' - possible config issue.");
+        if (!item->has_map_item("priority")) {
+            set_last_error(
+                "Tier is missing a 'priority' - possible config issue.");
             return -1;
         }
-        const auto name = item->get_map_item("name")->get_scalar();
+        const auto name = item->get_map_item("priority")->get_scalar();
         try {
             (*tier_ids)[count] = std::stoi(name);
         }
         catch (const std::exception& e) {
             set_last_error(
-                "Failed to convert tier name to int - tier config issue.");
+                "Failed to convert tier priority to int - tier config issue.");
             return -1;
         }
         count++;
@@ -914,12 +949,12 @@ int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids)
     int totals{0};
     int output_size{0};
 
-    auto tier_name = std::to_string(tier_id);
+    auto tier_query = "priority=" + std::to_string(tier_id);
 
     auto rc = hestia_read(
-        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_IDS,
-        hestia_id_format_t::HESTIA_NAME, 0, 0, tier_name.c_str(),
-        tier_name.size(), hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output,
+        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_FILTER,
+        hestia_id_format_t::HESTIA_ID, 0, 0, tier_query.c_str(),
+        tier_query.size(), hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output,
         &output_size, &totals);
     if (rc != 0) {
         return rc;
@@ -962,6 +997,7 @@ int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids)
         hestia_init_id(&(*object_ids)[count]);
         (*object_ids)[count].m_lo = uuid.lo();
         (*object_ids)[count].m_hi = uuid.hi();
+        StringUtils::to_char(uuid.to_string(), &(*object_ids)[count].m_uuid);
         count++;
     }
     return 0;

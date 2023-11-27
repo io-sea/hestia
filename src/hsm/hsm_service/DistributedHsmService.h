@@ -64,7 +64,7 @@ class DistributedHsmService {
     const std::string& get_controller_address() const;
 
     std::string get_backend_address(
-        uint8_t tier_name, const std::string& object_id = {}) const;
+        const std::string& tier_id, const std::string& object_id = {}) const;
 
     void register_self();
 

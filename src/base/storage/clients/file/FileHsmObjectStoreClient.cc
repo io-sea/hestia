@@ -99,7 +99,7 @@ void FileHsmObjectStoreClient::do_initialize(
     }
 
     if (config.get_mode() != FileObjectStoreClientConfig::Mode::METADATA_ONLY) {
-        for (const auto& tier_id : m_tier_names) {
+        for (const auto& tier_id : m_tier_ids) {
             FileObjectStoreClientConfig file_config;
             file_config.m_mode.init_value(
                 FileObjectStoreClientConfig::Mode::DATA_ONLY);
@@ -109,7 +109,7 @@ void FileHsmObjectStoreClient::do_initialize(
             auto tier_client = std::make_unique<FileObjectStoreClient>();
             tier_client->do_initialize(id, {}, file_config);
 
-            m_tier_clients[std::stoul(tier_id)] = std::move(tier_client);
+            m_tier_clients[tier_id] = std::move(tier_client);
         }
     }
 
@@ -122,9 +122,11 @@ void FileHsmObjectStoreClient::do_initialize(
     }
 }
 
-FileObjectStoreClient* FileHsmObjectStoreClient::get_client(uint8_t tier) const
+FileObjectStoreClient* FileHsmObjectStoreClient::get_client(
+    const std::string& tier_id) const
 {
-    if (auto iter = m_tier_clients.find(tier); iter != m_tier_clients.end()) {
+    if (auto iter = m_tier_clients.find(tier_id);
+        iter != m_tier_clients.end()) {
         return iter->second.get();
     }
     throw std::runtime_error("Unexpected tier input in file hsm client");
@@ -223,9 +225,9 @@ void FileHsmObjectStoreClient::remove(
 }
 
 std::filesystem::path FileHsmObjectStoreClient::get_tier_path(
-    uint8_t tier) const
+    const std::string& tier_id) const
 {
-    return m_store / ("tier" + std::to_string(tier));
+    return m_store / ("tier" + tier_id);
 }
 
 void FileHsmObjectStoreClient::copy(

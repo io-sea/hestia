@@ -12,47 +12,44 @@ class TierExtents : public HsmItem, public LockableModel {
   public:
     TierExtents();
 
-    TierExtents(uint8_t tier_id, const Extent& extent);
+    TierExtents(uint8_t tier_priority, const Extent& extent);
 
     TierExtents(const TierExtents& other);
 
     virtual ~TierExtents();
 
-    std::size_t get_size() const;
-
-    static std::string get_type();
-
-    const std::string& get_tier_id() const { return m_tier.get_id(); }
-
-    const std::string& get_object_id() const { return m_object.get_id(); }
-
-    const std::string& get_backend_id() const { return m_backend.get_id(); }
-
     void add_extent(const Extent& extent);
 
     bool empty() const;
 
+    const std::map<std::size_t, Extent>& get_extents() const;
+
+    std::size_t get_size() const;
+
+    static std::string get_type();
+
+    const std::string& get_tier_id() const;
+
+    const std::string& get_object_id() const;
+
+    const std::string& get_backend_id() const;
+
     void remove_extent(const Extent& extent);
 
-    void set_object_id(const std::string& id) { m_object.set_id(id); }
+    void set_object_id(const std::string& id);
 
-    void set_tier_id(const std::string& id) { m_tier.set_id(id); }
+    void set_tier_id(const std::string& id);
 
-    void set_backend_id(const std::string& id) { m_backend.set_id(id); }
+    void set_backend_id(const std::string& id);
 
-    void set_tier_name(uint8_t name) { m_tier_id.update_value(name); }
-
-    const std::map<std::size_t, Extent>& get_extents() const
-    {
-        return m_extents.container();
-    }
+    void set_tier_priority(uint8_t priority);
 
     TierExtents& operator=(const TierExtents& other);
 
   private:
     void init();
 
-    UIntegerField m_tier_id{"tier_name", 0};
+    UIntegerField m_tier_priority{"tier_priority", 0};
     IntKeyedSequenceField<std::map<std::size_t, Extent>> m_extents{
         "extents", "offset"};
 

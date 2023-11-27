@@ -33,7 +33,7 @@ class CrudEvent : public Model {
     void init();
 
     static constexpr char s_type[]{"event"};
-    ScalarSequenceField<std::vector<std::string>> m_subject_ids{"subject_ids"};
+    StringSequenceField m_subject_ids{"subject_ids"};
     ScalarMapField m_updated_fields{"updated_fields"};
     StringField m_updated_attr_string{"updated_attr_string"};
     StringField m_subject_type{"subject_type"};

@@ -16,11 +16,11 @@ void DistributedHsmServiceTestWrapper::init(
 {
     hestia::InMemoryObjectStoreClientConfig hsm_memory_client_config;
 
-    std::vector<std::string> tier_names;
+    std::vector<std::string> tier_ids;
     for (std::size_t idx = 0; idx < num_tiers; idx++) {
-        tier_names.push_back(std::to_string(idx));
+        tier_ids.push_back(std::to_string(idx));
     }
-    m_obj_store_client.set_tier_names(tier_names);
+    m_obj_store_client.set_tier_ids(tier_ids);
 
     hestia::Dictionary serialized_config;
     hsm_memory_client_config.serialize(serialized_config);
@@ -28,7 +28,7 @@ void DistributedHsmServiceTestWrapper::init(
 
     hestia::ObjectStoreBackend object_store_backend(
         hestia::ObjectStoreBackend::Type::MEMORY_HSM);
-    object_store_backend.set_tier_names(tier_names);
+    object_store_backend.set_tier_ids(tier_ids);
     object_store_backend.set_config(serialized_config);
 
     hestia::KeyValueStoreCrudServiceBackend crud_backend(&m_kv_store_client);
@@ -55,7 +55,8 @@ void DistributedHsmServiceTestWrapper::init(
     auto tier_service = hsm_service->get_service(hestia::HsmItem::Type::TIER);
 
     for (std::size_t idx = 0; idx < 5; idx++) {
-        hestia::StorageTier tier(idx);
+        hestia::StorageTier tier(std::to_string(idx));
+        tier.set_priority(idx);
         auto response = tier_service->make_request(hestia::TypedCrudRequest{
             hestia::CrudMethod::CREATE,
             tier,

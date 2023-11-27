@@ -34,17 +34,14 @@ typedef enum hestia_io_type_e {
 /// Since a user may prefer to create an object using a 'name' or 'key' this is
 /// supported also - however since clashes are possible in a multi-user system
 /// (i.e. 'myobject123' used by multiple users) this must be scoped to a 'user'
-/// and, as per the intent of the IO-SEA project to enable large scale
-/// addressing via namespacing, a 'dataset'.
+/// and a particular 'dataset'.
 ///
 /// The hex format is a 'uuid string' in 8-4-4-4-12 format (e.g.
 /// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), i.e. each 'x' is 4 bits. The decimal
 /// format is divided into [hi, lo] 64 bit decimal elements.
 ///
-/// The 'name' or 'key' is a string defined in the scope of a 'user' (identified
-/// by the token passed in 'hestia_initialize') and (for now) a default dataset.
-/// In future the ability to address a specific dataset may be added
-/// - the low-level API in hestia.h currently supports that if needed.
+/// The 'name' or 'key' is a string defined in the scope of a 'user' and a
+/// dataset, itself addressed via a user-scoped 'dataset_name'.
 ///
 /// If you provide only a name to 'PUT' you can call 'hestia_object_get_attrs'
 /// to get the generated unique identifier for use in subsequent API calls.
@@ -135,6 +132,13 @@ typedef struct HestiaObject {
 /// @param id Id to initialize
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_init_id(HestiaId* id);
+
+/// @brief Initialize the HestiaIoContext struct
+///
+/// Sets suitable default values on the HestiaIoContext struct
+/// @param io_ctx The struct to initialize
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_init_io_ctx(HestiaIoContext* io_ctx);
 
 /// @brief List all tiers in the system
 ///
@@ -292,9 +296,10 @@ int hestia_object_list(uint8_t tier_id, HestiaId** object_ids, size_t* num_ids);
 /// Free a list of HestiaIds, e.g. from hestia_object_list()
 ///
 /// @param ids Ids to be free'd
+/// @param num_ids number of ids to be free'd
 /// @return 0 on success, hestia_error_e value on failure
 
-int hestia_free_ids(HestiaId** ids);
+int hestia_free_ids(HestiaId** ids, size_t num_ids);
 
 #ifdef __cplusplus
 }

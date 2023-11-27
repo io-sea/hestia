@@ -48,6 +48,11 @@ const HsmAction& HsmActionRequest::get_action() const
     return m_action;
 }
 
+HsmItem::Type HsmActionRequest::get_subject() const
+{
+    return m_action.get_subject();
+}
+
 uint8_t HsmActionRequest::source_tier() const
 {
     return m_action.get_source_tier();
@@ -61,6 +66,46 @@ uint8_t HsmActionRequest::target_tier() const
 Extent HsmActionRequest::extent() const
 {
     return {m_action.get_offset(), m_action.get_size()};
+}
+
+bool HsmActionRequest::is_release_data_action() const
+{
+    return m_action.get_action() == HsmAction::Action::RELEASE_DATA;
+}
+
+bool HsmActionRequest::is_copy_data_action() const
+{
+    return m_action.get_action() == HsmAction::Action::COPY_DATA;
+}
+
+bool HsmActionRequest::is_move_data_action() const
+{
+    return m_action.get_action() == HsmAction::Action::MOVE_DATA;
+}
+
+bool HsmActionRequest::is_put_data_action() const
+{
+    return m_action.get_action() == HsmAction::Action::PUT_DATA;
+}
+
+bool HsmActionRequest::is_get_data_action() const
+{
+    return m_action.get_action() == HsmAction::Action::GET_DATA;
+}
+
+bool HsmActionRequest::is_copy_or_move_data_action() const
+{
+    return is_copy_data_action() || is_move_data_action();
+}
+
+const std::string& HsmActionRequest::source_tier_id() const
+{
+    return m_action.get_source_tier_id();
+}
+
+const std::string& HsmActionRequest::target_tier_id() const
+{
+    return m_action.get_target_tier_id();
 }
 
 std::string HsmActionRequest::to_string() const

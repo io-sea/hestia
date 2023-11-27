@@ -29,16 +29,16 @@ class HsmObjectStoreRequest :
 
     std::string method_as_string() const override;
 
-    void set_source_tier(uint8_t tier) { m_source_tier = tier; }
+    void set_source_tier(std::string tier) { m_source_tier = tier; }
 
-    void set_target_tier(uint8_t tier) { m_target_tier = tier; }
+    void set_target_tier(std::string tier) { m_target_tier = tier; }
 
     void set_action_id(const std::string& id) { m_action_id = id; }
 
     const std::string& get_action_id() const { return m_action_id; }
 
-    uint8_t source_tier() const;
-    uint8_t target_tier() const;
+    const std::string& source_tier() const;
+    const std::string& target_tier() const;
 
     std::string to_string() const;
 
@@ -55,8 +55,8 @@ class HsmObjectStoreRequest :
     static ObjectStoreRequestMethod to_base_method(
         HsmObjectStoreRequestMethod method);
 
-    uint8_t m_target_tier{0};
-    uint8_t m_source_tier{0};
+    std::string m_target_tier{0};
+    std::string m_source_tier{0};
     std::string m_action_id;
 };
 }  // namespace hestia

@@ -4,6 +4,8 @@
 #include "MotrInterfaceImpl.h"
 #endif
 
+#include "Logger.h"
+
 #include <fstream>
 
 namespace hestia {
@@ -76,6 +78,12 @@ void MotrInterface::remove(
     IMotrInterfaceImpl::progressFunc progress_func) const
 {
     m_impl->remove(request, completion_func, progress_func);
+}
+
+void MotrInterface::set_tier_ids(const std::vector<std::string>& ids)
+{
+    LOG_INFO("Setting tier ids");
+    m_impl->set_tier_ids(ids);
 }
 
 void MotrInterface::write_tier_info(

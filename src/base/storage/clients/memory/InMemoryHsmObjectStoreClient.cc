@@ -69,19 +69,19 @@ void InMemoryHsmObjectStoreClient::do_initialize(
 {
     m_id = id;
 
-    for (const auto& tier_id : m_tier_names) {
+    for (const auto& tier_id : m_tier_ids) {
         m_tiers[tier_id] = std::make_unique<InMemoryObjectStoreClient>();
     }
 }
 
 InMemoryObjectStoreClient* InMemoryHsmObjectStoreClient::get_tier_client(
-    uint8_t tier) const
+    const std::string& tier_id) const
 {
-    if (auto iter = m_tiers.find(std::to_string(tier)); iter != m_tiers.end()) {
+    if (auto iter = m_tiers.find(tier_id); iter != m_tiers.end()) {
         return iter->second.get();
     }
     throw std::runtime_error(
-        SOURCE_LOC() + " | Client not found for tier " + std::to_string(tier)
+        SOURCE_LOC() + " | Client not found for tier " + tier_id
         + " - it is missing from the input config.");
 }
 

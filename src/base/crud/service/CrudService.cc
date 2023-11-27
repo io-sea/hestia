@@ -46,7 +46,7 @@ CrudService::~CrudService() {}
 [[nodiscard]] CrudResponse::Ptr CrudService::make_request(
     const CrudRequest& request, const std::string&) const noexcept
 {
-    LOG_INFO(
+    LOG_DEBUG(
         "Starting Subject: " << get_type() << ", Method: "
                              << request.method_as_string() << " with "
                              << request.get_ids().size() << " ids.");
@@ -121,7 +121,7 @@ CrudService::~CrudService() {}
             return response;
     }
 
-    LOG_INFO(
+    LOG_DEBUG(
         "Finished Subject: " << get_type()
                              << ", Method: " << request.method_as_string());
 
@@ -218,16 +218,17 @@ void CrudService::on_exception(
     const std::string& message) const
 {
     if (!message.empty()) {
-        const std::string msg = SOURCE_LOC() + " | Exception in "
-                                + request.method_as_string() + " method.\n"
-                                + message;
+        const std::string msg =
+            SOURCE_LOC() + " | Exception in " + request.method_as_string()
+            + " method for type: " + get_type() + ".\n" + message;
         const CrudRequestError error(CrudErrorCode::STL_EXCEPTION, msg);
         LOG_ERROR("Error: " << error << " " << msg);
         response->on_error(error);
     }
     else {
         const std::string msg = SOURCE_LOC() + " | Uknown Exception in "
-                                + request.method_as_string() + " method.";
+                                + request.method_as_string()
+                                + " method for type: " + get_type() + ".";
         const CrudRequestError error(CrudErrorCode::UNKNOWN_EXCEPTION, msg);
         LOG_ERROR("Error: " << error);
         response->on_error(error);

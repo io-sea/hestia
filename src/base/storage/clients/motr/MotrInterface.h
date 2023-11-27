@@ -66,6 +66,8 @@ class MotrInterface {
         IMotrInterfaceImpl::completionFunc completion_func,
         IMotrInterfaceImpl::progressFunc progress_func) const;
 
+    void set_tier_ids(const std::vector<std::string>& ids);
+
   private:
     void validate_config(MotrConfig& config);
 

@@ -102,13 +102,13 @@ add_module(
     INTERNAL_INCLUDE_DIRS 
         base_types
         buffer
+        concurrency
         json
         plugins
         random
         serialization
         streams
         streams/impls
-        concurrency
         utils
         xml
     PRIVATE_DEPENDENCIES

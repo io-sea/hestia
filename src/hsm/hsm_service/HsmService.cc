@@ -1,7 +1,5 @@
 #include "HsmService.h"
 
-#include "BasicDataPlacementEngine.h"
-#include "DataPlacementEngine.h"
 #include "HsmObjectStoreClient.h"
 
 #include "CrudClient.h"
@@ -62,12 +60,10 @@ HsmService::HsmService(
     const ServiceConfig& config,
     HsmServiceCollection::Ptr service_collection,
     HsmObjectStoreClient* object_store,
-    std::unique_ptr<DataPlacementEngine> placement_engine,
     EventFeed* event_feed) :
     CrudService(config),
     m_services(std::move(service_collection)),
     m_object_store(object_store),
-    m_placement_engine(std::move(placement_engine)),
     m_event_feed(event_feed)
 {
     LOG_INFO("Creating HsmService");
@@ -86,12 +82,8 @@ HsmService::Ptr HsmService::create(
     services->create_default_services(
         config, &backend, user_service, event_feed);
 
-    auto placement_engine = std::make_unique<BasicDataPlacementEngine>(
-        services->get_service(HsmItem::Type::TIER));
-
     return std::make_unique<HsmService>(
-        config, std::move(services), object_store, std::move(placement_engine),
-        event_feed);
+        config, std::move(services), object_store, event_feed);
 }
 
 HsmService::~HsmService() {}
@@ -232,7 +224,7 @@ void HsmService::do_hsm_action(
 }
 
 void HsmService::get_object(
-    const ActionContext& action_context, HsmObject& object) const
+    const HsmActionContext& action_context, HsmObject& object) const
 {
     const auto object_id = action_context.m_action.get_subject_key();
 
@@ -262,7 +254,7 @@ void HsmService::update_tiers(const CrudUserContext& user_id)
     }
     for (const auto& item : get_response->items()) {
         auto tier_item = dynamic_cast<StorageTier*>(item.get());
-        m_tier_cache[tier_item->id_uint()] = tier_item->get_primary_key();
+        m_tier_cache[tier_item->get_priority()] = tier_item->get_primary_key();
     }
 }
 
@@ -288,7 +280,7 @@ CrudResponsePtr HsmService::get_or_create_action(
 
 void HsmService::make_object_store_request(
     HsmObjectStoreRequestMethod method,
-    const ActionContext& action_context,
+    const HsmActionContext& action_context,
     Stream* stream) const
 {
     const auto object_id = action_context.m_action.get_subject_key();
@@ -304,8 +296,8 @@ void HsmService::make_object_store_request(
         "hestia-user_token", action_context.m_user_context.m_token);
 
     HsmObjectStoreRequest req(storage_object, method);
-    req.set_target_tier(action_context.m_target_tier);
-    req.set_source_tier(action_context.m_source_tier);
+    req.set_target_tier(action_context.m_target_tier_id);
+    req.set_source_tier(action_context.m_source_tier_id);
     req.set_action_id(action_context.m_action.get_primary_key());
     req.set_extent(action_context.m_extent);
 
@@ -339,7 +331,7 @@ void HsmService::make_object_store_request(
 void HsmService::on_object_store_response(
     HsmObjectStoreRequestMethod method,
     HsmObjectStoreResponse::Ptr object_store_response,
-    const ActionContext& action_context) const
+    const HsmActionContext& action_context) const
 {
     LOG_INFO("Got object store response");
     if (!object_store_response->ok()) {
@@ -383,7 +375,7 @@ void HsmService::on_object_store_response(
 void HsmService::on_db_update(
     HsmObjectStoreRequestMethod method,
     const std::string& store_id,
-    const ActionContext& action_context) const
+    const HsmActionContext& action_context) const
 {
     LOG_INFO("Starting DB Update");
 
@@ -393,14 +385,14 @@ void HsmService::on_db_update(
     if (method == HsmObjectStoreRequestMethod::PUT
         || method == HsmObjectStoreRequestMethod::COPY
         || method == HsmObjectStoreRequestMethod::MOVE) {
-        const auto target_tier_id = get_tier_id(action_context.m_target_tier);
 
         TierExtents target_extent;
-        bool extent_found =
-            get_tier_extent(target_tier_id, working_object, target_extent);
+        bool extent_found = get_tier_extent(
+            action_context.m_target_tier_id, working_object, target_extent);
         if (!extent_found) {
             init_extent(
-                target_extent, action_context, target_tier_id, store_id);
+                target_extent, action_context, action_context.m_target_tier_id,
+                store_id);
         }
         target_extent.add_extent(action_context.m_extent);
         create_or_update_extent(action_context, target_extent, !extent_found);
@@ -410,10 +402,9 @@ void HsmService::on_db_update(
         }
 
         if (method == HsmObjectStoreRequestMethod::MOVE) {
-            const auto source_tier_id =
-                get_tier_id(action_context.m_source_tier);
             TierExtents source_extent;
-            get_tier_extent(source_tier_id, working_object, source_extent);
+            get_tier_extent(
+                action_context.m_source_tier_id, working_object, source_extent);
             source_extent.remove_extent(action_context.m_extent);
             remove_or_update_extent(action_context, source_extent);
         }
@@ -421,9 +412,9 @@ void HsmService::on_db_update(
         working_object.set_content_modified_time(TimeUtils::get_current_time());
     }
     else if (method == HsmObjectStoreRequestMethod::REMOVE) {
-        const auto source_tier_id = get_tier_id(action_context.m_source_tier);
         TierExtents source_extent;
-        get_tier_extent(source_tier_id, working_object, source_extent);
+        get_tier_extent(
+            action_context.m_source_tier_id, working_object, source_extent);
         source_extent.remove_extent(action_context.m_extent);
         remove_or_update_extent(action_context, source_extent);
 
@@ -442,13 +433,13 @@ void HsmService::on_db_update(
 
 void HsmService::init_extent(
     TierExtents& extent,
-    const ActionContext& action_context,
+    const HsmActionContext& action_context,
     const std::string& tier_id,
     const std::string& store_id) const
 {
     extent.set_object_id(action_context.m_action.get_subject_key());
     extent.set_tier_id(tier_id);
-    extent.set_tier_name(action_context.m_target_tier);
+    extent.set_tier_priority(action_context.m_target_tier_prio);
     extent.set_backend_id(store_id);
 }
 
@@ -467,7 +458,7 @@ bool HsmService::get_tier_extent(
 }
 
 void HsmService::remove_or_update_extent(
-    const ActionContext& action_context, const TierExtents& extent) const
+    const HsmActionContext& action_context, const TierExtents& extent) const
 {
     CrudResponsePtr extent_response;
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
@@ -490,17 +481,18 @@ void HsmService::put_data(
     actionCompletionFunc completion_func,
     actionProgressFunc progress_func) const
 {
-    ActionContext action_context(req, completion_func, progress_func);
+    HsmActionContext action_context(req, completion_func, progress_func);
+    if (action_context.m_target_tier_id.empty()) {
+        action_context.m_target_tier_id =
+            get_tier_id(action_context.m_target_tier_prio);
+    }
+
     auto action_get_response =
         get_or_create_action(req, action_context.m_action);
     CRUD_ERROR_CHECK(action_get_response, action_context);
 
     HsmObject working_object;
     get_object(action_context, working_object);
-    if (m_placement_engine != nullptr) {
-        action_context.m_target_tier = m_placement_engine->choose_tier(
-            working_object.size(), req.target_tier());
-    }
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, stream->get_source_size()};
     }
@@ -514,7 +506,12 @@ void HsmService::get_data(
     actionCompletionFunc completion_func,
     actionProgressFunc progress_func) const
 {
-    ActionContext action_context(req, completion_func, progress_func);
+    HsmActionContext action_context(req, completion_func, progress_func);
+    if (action_context.m_source_tier_id.empty()) {
+        action_context.m_source_tier_id =
+            get_tier_id(action_context.m_source_tier_prio);
+    }
+
     auto action_response = get_or_create_action(req, action_context.m_action);
     CRUD_ERROR_CHECK(action_response, action_context);
 
@@ -530,7 +527,16 @@ void HsmService::copy_data(
     actionCompletionFunc completion_func,
     actionProgressFunc progress_func) const
 {
-    ActionContext action_context(req, completion_func, progress_func);
+    HsmActionContext action_context(req, completion_func, progress_func);
+    if (action_context.m_source_tier_id.empty()) {
+        action_context.m_source_tier_id =
+            get_tier_id(action_context.m_source_tier_prio);
+    }
+    if (action_context.m_target_tier_id.empty()) {
+        action_context.m_target_tier_id =
+            get_tier_id(action_context.m_target_tier_prio);
+    }
+
     const auto action_response =
         get_or_create_action(req, action_context.m_action);
     CRUD_ERROR_CHECK(action_response, action_context);
@@ -546,7 +552,16 @@ void HsmService::move_data(
     actionCompletionFunc completion_func,
     actionProgressFunc progress_func) const
 {
-    ActionContext action_context(req, completion_func, progress_func);
+    HsmActionContext action_context(req, completion_func, progress_func);
+    if (action_context.m_source_tier_id.empty()) {
+        action_context.m_source_tier_id =
+            get_tier_id(action_context.m_source_tier_prio);
+    }
+    if (action_context.m_target_tier_id.empty()) {
+        action_context.m_target_tier_id =
+            get_tier_id(action_context.m_target_tier_prio);
+    }
+
     const auto action_response =
         get_or_create_action(req, action_context.m_action);
     CRUD_ERROR_CHECK(action_response, action_context);
@@ -562,7 +577,12 @@ void HsmService::release_data(
     actionCompletionFunc completion_func,
     actionProgressFunc progress_func) const
 {
-    ActionContext action_context(req, completion_func, progress_func);
+    HsmActionContext action_context(req, completion_func, progress_func);
+    if (action_context.m_source_tier_id.empty()) {
+        action_context.m_source_tier_id =
+            get_tier_id(action_context.m_source_tier_prio);
+    }
+
     auto action_response = get_or_create_action(req, action_context.m_action);
     CRUD_ERROR_CHECK(action_response, action_context);
     if (action_context.m_extent.empty()) {
@@ -573,13 +593,12 @@ void HsmService::release_data(
 }
 
 std::size_t HsmService::get_object_size_on_tier(
-    const ActionContext& action_context) const
+    const HsmActionContext& action_context) const
 {
     HsmObject working_object;
     get_object(action_context, working_object);
-    const auto tier_id = get_tier_id(action_context.m_source_tier);
     for (const auto& tier_extent : working_object.tiers()) {
-        if (tier_id == tier_extent.get_tier_id()) {
+        if (action_context.m_source_tier_id == tier_extent.get_tier_id()) {
             return tier_extent.get_size();
         }
     }
@@ -587,7 +606,7 @@ std::size_t HsmService::get_object_size_on_tier(
 }
 
 void HsmService::create_or_update_extent(
-    const ActionContext& action_context,
+    const HsmActionContext& action_context,
     const TierExtents& extent,
     bool do_create) const
 {
@@ -607,7 +626,7 @@ void HsmService::create_or_update_extent(
 }
 
 void HsmService::update_object(
-    const ActionContext& action_context, const HsmObject& object) const
+    const HsmActionContext& action_context, const HsmObject& object) const
 {
     auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     auto object_put_response =
@@ -626,7 +645,7 @@ const std::string& HsmService::get_tier_id(uint8_t tier) const
 }
 
 void HsmService::get_action(
-    const ActionContext& action_context, HsmAction& action) const
+    const HsmActionContext& action_context, HsmAction& action) const
 {
     auto action_service    = get_service(HsmItem::Type::ACTION);
     const auto action_read = action_service->make_request(CrudRequest{
@@ -645,7 +664,7 @@ void HsmService::get_action(
 }
 
 void HsmService::update_action(
-    const ActionContext& action_context, const HsmAction& action) const
+    const HsmActionContext& action_context, const HsmAction& action) const
 {
     auto action_service = get_service(HsmItem::Type::ACTION);
     const auto action_update =
@@ -657,7 +676,7 @@ void HsmService::update_action(
 }
 
 void HsmService::set_action_error(
-    const ActionContext& action_context, const std::string& message) const
+    const HsmActionContext& action_context, const std::string& message) const
 {
     LOG_INFO("Action error");
 
@@ -668,7 +687,7 @@ void HsmService::set_action_error(
 }
 
 void HsmService::set_action_finished_ok(
-    const ActionContext& action_context, std::size_t bytes) const
+    const HsmActionContext& action_context, std::size_t bytes) const
 {
     LOG_INFO("Action finished ok");
 
@@ -679,7 +698,7 @@ void HsmService::set_action_finished_ok(
 }
 
 void HsmService::set_action_progress(
-    const ActionContext& action_context, std::size_t bytes) const
+    const HsmActionContext& action_context, std::size_t bytes) const
 {
     LOG_INFO("Action progress");
 

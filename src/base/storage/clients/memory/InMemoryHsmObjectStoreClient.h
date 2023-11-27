@@ -80,7 +80,8 @@ class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {
         completionFunc completion_func,
         progressFunc progress_func) const override;
 
-    InMemoryObjectStoreClient* get_tier_client(uint8_t tier) const;
+    InMemoryObjectStoreClient* get_tier_client(
+        const std::string& tier_id) const;
 
     std::unordered_map<std::string, std::unique_ptr<InMemoryObjectStoreClient>>
         m_tiers;

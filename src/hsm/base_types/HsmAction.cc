@@ -33,6 +33,8 @@ HsmAction& HsmAction::operator=(const HsmAction& other)
         m_transferred       = other.m_transferred;
         m_source_tier       = other.m_source_tier;
         m_target_tier       = other.m_target_tier;
+        m_source_tier_id    = other.m_source_tier_id;
+        m_target_tier_id    = other.m_target_tier_id;
         m_subject_key       = other.m_subject_key;
         m_is_request        = other.m_is_request;
         m_status_message    = other.m_status_message;
@@ -52,6 +54,8 @@ void HsmAction::init()
     register_scalar_field(&m_transferred);
     register_scalar_field(&m_source_tier);
     register_scalar_field(&m_target_tier);
+    register_scalar_field(&m_source_tier_id);
+    register_scalar_field(&m_target_tier_id);
     register_scalar_field(&m_subject_key);
     register_scalar_field(&m_is_request);
     register_scalar_field(&m_status_message);
@@ -71,6 +75,26 @@ std::string HsmAction::get_type()
 std::string HsmAction::get_action_as_string() const
 {
     return m_action.value_as_string();
+}
+
+const std::string& HsmAction::get_source_tier_id() const
+{
+    return m_source_tier_id.get_value();
+}
+
+const std::string& HsmAction::get_target_tier_id() const
+{
+    return m_target_tier_id.get_value();
+}
+
+bool HsmAction::has_source_tier_id() const
+{
+    return !m_source_tier_id.get_value().empty();
+}
+
+bool HsmAction::has_target_tier_id() const
+{
+    return !m_target_tier_id.get_value().empty();
 }
 
 void HsmAction::set_source_tier(uint8_t tier)
@@ -186,6 +210,16 @@ void HsmAction::set_subject(HsmItem::Type subject)
 void HsmAction::set_size(std::size_t size)
 {
     m_to_transfer.update_value(size);
+}
+
+void HsmAction::set_source_tier_id(const std::string& id)
+{
+    m_source_tier_id.update_value(id);
+}
+
+void HsmAction::set_target_tier_id(const std::string& id)
+{
+    m_target_tier_id.update_value(id);
 }
 
 void HsmAction::set_num_transferred(std::size_t size)

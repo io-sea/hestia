@@ -15,7 +15,7 @@ class HsmObjectStoreTestWrapper {
     void put(
         const hestia::StorageObject& obj,
         const std::string& content,
-        uint8_t tier = 0);
+        const std::string& tier);
 
     void get(hestia::StorageObject& obj);
 
@@ -23,7 +23,7 @@ class HsmObjectStoreTestWrapper {
         hestia::StorageObject& obj,
         std::string& content,
         std::size_t content_length,
-        uint8_t tier = 0);
+        const std::string& tier);
 
     void exists(const hestia::StorageObject& obj, bool should_exist);
 
@@ -33,13 +33,13 @@ class HsmObjectStoreTestWrapper {
 
     void copy(
         const hestia::StorageObject& obj,
-        uint8_t source_tier,
-        uint8_t target_tier);
+        const std::string& source_tier,
+        const std::string& target_tier);
 
     void move(
         const hestia::StorageObject& obj,
-        uint8_t source_tier,
-        uint8_t target_tier);
+        const std::string& source_tier,
+        const std::string& target_tier);
 
     void remove(const hestia::StorageObject& obj);
 

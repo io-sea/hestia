@@ -21,37 +21,21 @@ class HsmActionRequest :
 
     const HsmAction& get_action() const;
 
+    HsmItem::Type get_subject() const;
+
     const CrudUserContext& get_user_context() const;
 
-    bool is_release_data_action() const
-    {
-        return m_action.get_action() == HsmAction::Action::RELEASE_DATA;
-    }
+    bool is_release_data_action() const;
 
-    bool is_copy_data_action() const
-    {
-        return m_action.get_action() == HsmAction::Action::COPY_DATA;
-    }
+    bool is_copy_data_action() const;
 
-    bool is_move_data_action() const
-    {
-        return m_action.get_action() == HsmAction::Action::MOVE_DATA;
-    }
+    bool is_move_data_action() const;
 
-    bool is_put_data_action() const
-    {
-        return m_action.get_action() == HsmAction::Action::PUT_DATA;
-    }
+    bool is_put_data_action() const;
 
-    bool is_get_data_action() const
-    {
-        return m_action.get_action() == HsmAction::Action::GET_DATA;
-    }
+    bool is_get_data_action() const;
 
-    bool is_copy_or_move_data_action() const
-    {
-        return is_copy_data_action() || is_move_data_action();
-    }
+    bool is_copy_or_move_data_action() const;
 
     std::string method_as_string() const override;
 
@@ -63,9 +47,11 @@ class HsmActionRequest :
 
     uint8_t target_tier() const;
 
-    std::string to_string() const;
+    const std::string& source_tier_id() const;
 
-    HsmItem::Type get_subject() const { return m_action.get_subject(); }
+    const std::string& target_tier_id() const;
+
+    std::string to_string() const;
 
   private:
     CrudUserContext m_user_context;

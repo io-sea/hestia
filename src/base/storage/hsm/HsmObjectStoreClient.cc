@@ -3,6 +3,9 @@
 #include "ErrorUtils.h"
 #include "Logger.h"
 
+#include <algorithm>
+#include <stdexcept>
+
 #define CATCH_FLOW()                                                           \
     catch (const std::exception& e)                                            \
     {                                                                          \
@@ -111,10 +114,20 @@ void HsmObjectStoreClient::make_request(
         stream);
 }
 
-void HsmObjectStoreClient::set_tier_names(
-    const std::vector<std::string>& tier_names)
+void HsmObjectStoreClient::set_tier_ids(
+    const std::vector<std::string>& tier_ids)
 {
-    m_tier_names = tier_names;
+    m_tier_ids = tier_ids;
+}
+
+std::size_t HsmObjectStoreClient::get_tier_index(const std::string& id) const
+{
+    auto it = std::find(m_tier_ids.begin(), m_tier_ids.end(), id);
+    if (it == m_tier_ids.end()) {
+        throw std::runtime_error(
+            "Requested tier id " + id + "not found in object store cache.");
+    }
+    return std::distance(m_tier_ids.begin(), it);
 }
 
 bool HsmObjectStoreClient::exists(const StorageObject&) const
@@ -135,18 +148,6 @@ void HsmObjectStoreClient::get(
     Stream::progressFunc) const
 {
     throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
-    /*
-    HsmObjectStoreRequest hsm_request(
-        request.object().id(), HsmObjectStoreRequestMethod::GET);
-
-    hsm_request.set_extent(request.extent());
-
-    if (const auto response = make_request(request, stream); !response->ok()) {
-        const std::string msg =
-            "Error in single tier GET: " + response->get_error().to_string();
-        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
-    }
-    */
 }
 
 void HsmObjectStoreClient::put(
@@ -156,30 +157,11 @@ void HsmObjectStoreClient::put(
     Stream::progressFunc) const
 {
     throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
-    /*
-    HsmObjectStoreRequest request(
-        object.id(), HsmObjectStoreRequestMethod::PUT);
-    request.set_extent(extent);
-    if (const auto response = make_request(request, stream); !response->ok()) {
-        const std::string msg =
-            "Error in single tier PUT: " + response->get_error().to_string();
-        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
-    }
-    */
 }
 
 void HsmObjectStoreClient::remove(const StorageObject&) const
 {
     throw std::runtime_error(SOURCE_LOC() + " | Not implemented.");
-    /*
-    HsmObjectStoreRequest request(
-        object.id(), HsmObjectStoreRequestMethod::REMOVE);
-    if (const auto response = make_request(request); !response->ok()) {
-        const std::string msg =
-            "Error in single tier REMOVE: " + response->get_error().to_string();
-        throw ObjectStoreException({ObjectStoreErrorCode::ERROR, msg});
-    }
-    */
 }
 
 void HsmObjectStoreClient::on_exception(

@@ -23,7 +23,7 @@ class HsmObjectStoreClient : public ObjectStoreClient {
         progressFunc progress_func = nullptr,
         Stream* stream             = nullptr) const noexcept;
 
-    void set_tier_names(const std::vector<std::string>& tier_names);
+    virtual void set_tier_ids(const std::vector<std::string>& tier_ids);
 
   protected:
     void make_request(
@@ -79,7 +79,9 @@ class HsmObjectStoreClient : public ObjectStoreClient {
     void list(const KeyValuePair& query, std::vector<StorageObject>& fetched)
         const override;
 
-    std::vector<std::string> m_tier_names;
+    std::size_t get_tier_index(const std::string& id) const;
+
+    std::vector<std::string> m_tier_ids;
 
   private:
     void on_exception(

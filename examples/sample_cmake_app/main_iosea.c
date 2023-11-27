@@ -172,7 +172,7 @@ int main(int argc, char** argv)
         printf("Expected object id %llu on tier 0 but got %llu.", object_id.m_lo, object_ids[0].m_lo);
         return -1;
     }
-    hestia_free_ids(&object_ids);
+    hestia_free_ids(&object_ids, num_object_ids);
 
     printf("Example completed ok\n");
     return 0;

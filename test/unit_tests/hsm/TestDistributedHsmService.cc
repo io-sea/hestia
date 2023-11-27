@@ -1,7 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include "BasicDataPlacementEngine.h"
-#include "DataPlacementEngine.h"
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 

@@ -198,6 +198,7 @@ Unit_test:
     CMAKE_BUILD_TYPE: "Debug"
     CXX: "clang++"
     CC: "clang"
+    ASAN_OPTIONS: "detect_odr_violation=0" # Issue with plugins https://github.com/google/sanitizers/issues/1017
     HESTIA_BUILD_TESTS: "ON"
     HESTIA_TEST_REDIS: "ON"
   before_script:

@@ -88,13 +88,13 @@ class FileHsmObjectStoreClient : public HsmObjectStoreClient {
         ObjectStoreRequestMethod method,
         Stream* stream = nullptr) const;
 
-    std::filesystem::path get_tier_path(uint8_t tier) const;
+    std::filesystem::path get_tier_path(const std::string& tier_id) const;
 
-    FileObjectStoreClient* get_client(uint8_t tier) const;
+    FileObjectStoreClient* get_client(const std::string& tier_id) const;
 
     std::filesystem::path m_store{"hsm_object_store"};
 
     FileObjectStoreClient::Ptr m_metadata_client;
-    std::unordered_map<uint8_t, FileObjectStoreClient::Ptr> m_tier_clients;
+    std::unordered_map<std::string, FileObjectStoreClient::Ptr> m_tier_clients;
 };
 }  // namespace hestia

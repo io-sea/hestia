@@ -14,13 +14,6 @@ StorageTier::StorageTier() :
     init();
 }
 
-StorageTier::StorageTier(uint8_t name) :
-    HsmItem(HsmItem::Type::TIER), Model(HsmItem::tier_name)
-{
-    m_name.update_value(std::to_string(name));
-    init();
-}
-
 StorageTier::StorageTier(const StorageTier& other) :
     HsmItem(HsmItem::Type::TIER), Model(other)
 {
@@ -33,6 +26,7 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
         Model::operator=(other);
         m_backends     = other.m_backends;
         m_tier_extents = other.m_tier_extents;
+        m_priority     = other.m_priority;
         m_capacity     = other.m_capacity;
         m_bandwidth    = other.m_bandwidth;
         init();
@@ -42,12 +36,13 @@ StorageTier& StorageTier::operator=(const StorageTier& other)
 
 void StorageTier::init()
 {
-    m_name.set_index_scope(BaseField::IndexScope::GLOBAL);
+    m_priority.set_index_scope(BaseField::IndexScope::GLOBAL);
 
     register_foreign_key_proxy_field(&m_backends);
     register_foreign_key_proxy_field(&m_tier_extents);
     register_scalar_field(&m_capacity);
     register_scalar_field(&m_bandwidth);
+    register_scalar_field(&m_priority);
 }
 
 std::string StorageTier::get_type()
@@ -80,12 +75,14 @@ void StorageTier::set_bandwidth(std::size_t bandwidth)
     m_bandwidth.update_value(bandwidth);
 }
 
-uint8_t StorageTier::id_uint() const
+uint8_t StorageTier::get_priority() const
 {
-    if (m_name.get_value().empty()) {
-        return 0;
-    }
-    return std::stoul(m_name.get_value());
+    return m_priority.get_value();
+}
+
+void StorageTier::set_priority(uint8_t priority)
+{
+    m_priority.update_value(priority);
 }
 
 const std::vector<ObjectStoreBackend>& StorageTier::get_backends() const
