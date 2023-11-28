@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<head>
+    <style>
+        table{
+        border-collapse:collapse;
+        margin:auto;
+        }
+        td{
+            border: 2px solid lightgray;
+            width: 175px;
+            text-align: center;
+        }
+        th{
+            color: navy;
+        }
+        tr:hover {background-color: lightgoldenrodyellow;}
+
+        .listViewTable {
+            color: blue;
+        }
+        .typeNavButton{
+            all: unset;
+            margin: 5px;
+            width: 70px;
+            border-radius: 2px;
+            background-color:lightskyblue;
+            vertical-align: middle;
+            padding: 3px;
+            box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+        }
+        .typeNavButton:focus{background-color:lightgray;}
+        .typeNavButton:hover{
+            background-color: aliceblue;
+        }
+        .typeNavButton:active{
+            background-color: lightblue;
+        }
+        #usernameLabel{
+            font-weight: bold;
+        }
+        #contentView{
+            background-color: ghostwhite;
+            width:100%;
+            border-radius: 2px;
+            padding: 5px;
+        }
+    </style>
+
+    <script>
+        const base_url = 'api/v1/';
+
+        const item_list_keys = {"objects" : ["id", "name", "size", "", ""],
+                                "tiers" : ["id", "priority"],
+                                "nodes" : ["id", "tag"],
+                                "datasets" : ["id"],
+                                "users" : ["id", "name"],
+                                };
+        var user = null;
+
+        function firstToUpper(input){
+            return input.charAt(0).toUpperCase() + input.slice(1);
+        }
+
+        async function loadItems(itemType) {
+            const response = await fetch(base_url + itemType, 
+                {headers: {"Authorization": user.tokens[0].value}});
+            displayItems(itemType, await response.json());
+        }
+
+        function displayItems(itemType, items){
+            let item_div = document.getElementById("contentView");
+            let item_table = document.createElement("table");
+
+            let header_row = document.createElement("tr");
+            for (const key of item_list_keys[itemType])
+            {
+                let header_entry = document.createElement("th");
+                let content = document.createTextNode(firstToUpper(key));
+                header_entry.appendChild(content);
+                header_row.appendChild(header_entry);
+            }
+            item_table.appendChild(header_row);
+
+            console.log(items.length)
+            items.forEach(item => {
+                let table_row = document.createElement("tr");
+                for (const key of item_list_keys[itemType]) 
+                {
+                    let row_entry = document.createElement("td");
+                    let item_value = item[key];
+                    if (typeof item_value !== 'undefined')
+                    {
+                        let content = document.createTextNode(item_value);
+                        row_entry.appendChild(content);
+                    }
+                    table_row.appendChild(row_entry);
+                }
+                item_table.appendChild(table_row);
+            });
+            item_div.replaceChildren(item_table);
+        }
+
+        function add_nav_button(container, label)
+        {
+            let button = document.createElement("button");
+            var button_content = document.createTextNode(firstToUpper(label));
+            button.appendChild(button_content);
+            button.classList.add('typeNavButton');
+            button.onclick = function(){loadItems(label)};
+            container.appendChild(button);
+        }
+
+        function onLoggedIn(){
+            var login_view = document.getElementById("loginView");
+            login_view.style.display='none';
+
+            let user_label = document.getElementById("usernameLabel");
+            var username_content = document.createTextNode(user.name);
+            user_label.replaceChildren(username_content);
+
+            var nav_container = document.getElementById("contentLeftNav");
+            for (const key of Object.keys(item_list_keys))
+            {
+                add_nav_button(nav_container, key);
+            }
+
+            var logged_in_view = document.getElementById("loggedInView");
+            logged_in_view.style.visibility='visible';
+        }
+
+        function onRegister(){
+            onAuthenticate("api/v1/register");
+        }
+
+        function onLogin(){
+            onAuthenticate("api/v1/login");
+        }
+
+        async function onAuthenticate(url){
+            var username = document.getElementById("login_username").value;
+            var password = document.getElementById("login_password").value;
+            body = "user=" + username + "&password=" + password;
+            try{
+                const response = await fetch(url, {
+                    method: "POST", 
+                    body: body, 
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"}
+                });
+                user = await response.json();
+                console.log("Got user: " + user.id);
+                onLoggedIn();
+
+            }catch(error)
+            {
+                console.log("Got error: " + error);
+                return;
+            }
+        }
+    </script>
+</head>
+
+<body style="margin:auto;width:1200px;font-family: Arial, Helvetica, sans-serif;">
+<h1>Hestia</h1>
+
+<div id="loginView">
+    <h2 style="text-align: center;">Login</h2>
+    <div id="loginForm" style="margin:auto;width:300px;vertical-align: middle;">
+        <div style="display:flex;flex-direction:row;margin:5px">
+            <label for="login_username" style="margin:5px">Username:</label>
+            <input id="login_username" type="text" name="username" />
+        </div>
+        <div style="display:flex;flex-direction:row;margin:5px">
+            <label for="login_password" style="margin:5px">Password:</label>
+            <input id="login_password" type="password" name="password" />
+        </div>
+        <button id='register_button' onclick='onRegister()'>Register</button>
+        <button id='login_button' onclick='onLogin()'>Login</button>
+    </div>
+</div>
+
+<div id="loggedInView" style="margin:auto;visibility:hidden;width:100%">
+    <p>User: <span id="usernameLabel"></span></p>
+    <div id="contentContainer" style="margin:auto;display:flex;flex-direction:row;">
+        <div id="contentLeftNav" style="width: 80px">
+        </div>
+        <div id="contentView" style="width:50%">
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -464,8 +464,18 @@ OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
     if (m_client_command.m_verbosity == 2) {
         std::string msg = m_console_prefix;
         if (req.is_crud_request()) {
-            msg += "Doing " + req.get_crud_request().method_as_string() + " on "
-                   + StringUtils::to_upper(req.get_hsm_type_as_string());
+
+            if (req.is_hsm_type()) {
+                msg += "Doing " + req.get_crud_request().method_as_string()
+                       + " on "
+                       + StringUtils::to_upper(req.get_hsm_type_as_string());
+            }
+            else {
+                std::string system_type = req.is_user_type() ? "user" : "node";
+                msg += "Doing " + req.get_crud_request().method_as_string()
+                       + " on " + system_type;
+            }
+
             if (req.get_crud_request().get_ids().size() == 1) {
                 msg += " with id: "
                        + req.get_crud_request()

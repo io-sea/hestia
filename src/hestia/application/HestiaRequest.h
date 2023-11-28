@@ -26,6 +26,8 @@ class HestiaRequest : public BaseRequest {
 
     CrudQuery::BodyFormat get_output_format() const;
 
+    std::string get_hsm_type_as_string() const;
+
     bool is_crud_request() const;
 
     bool is_hsm_action() const;
@@ -59,8 +61,6 @@ class HestiaRequest : public BaseRequest {
     bool supports_stream_source() const;
 
     bool supports_stream_sink() const;
-
-    std::string get_hsm_type_as_string() const;
 
   private:
     HestiaType m_subject;

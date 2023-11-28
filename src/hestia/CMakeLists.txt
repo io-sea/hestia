@@ -1,5 +1,8 @@
 include(AddModule)
 
+file(READ web/http/index.html HESTIA_LANDING_PAGE)
+configure_file(web/http/HestiaWebPages.h.in ${PROJECT_BINARY_DIR}/HestiaWebPages.h)
+
 add_module(
     MODULE_NAME app
     HEADERS

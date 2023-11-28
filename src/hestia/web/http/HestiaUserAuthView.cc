@@ -45,19 +45,25 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
 
     CrudResponse::Ptr response;
 
-    if (StringUtils::ends_with(path, "/register")) {
+    const bool is_register_flow = StringUtils::ends_with(path, "/register");
+    if (is_register_flow) {
         response = m_user_service->register_user(username, password);
     }
     else {
         response = m_user_service->authenticate_user(username, password);
     }
     if (!response->ok()) {
-        return HttpResponse::create(500, "Server Error");
+        const auto msg = "Server Error In User registration: "
+                         + response->get_error().to_string();
+        return HttpResponse::create(
+            {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg});
     }
-    LOG_INFO("Found user ok - responding with user body");
+    if (!is_register_flow && !response->found()) {
+        const auto msg = "Requested user: " + username + " not found.";
+        return HttpResponse::create({HttpStatus::Code::_404_NOT_FOUND, msg});
+    }
 
     auto http_response = HttpResponse::create();
-    std::string body;
 
     auto adapter = std::make_unique<ModelSerializer>(
         std::make_unique<TypedModelFactory<User>>());
@@ -65,6 +71,9 @@ HttpResponse::Ptr HestiaUserAuthView::on_post(
     Dictionary dict;
     adapter->to_dict(response->items(), dict);
     http_response->set_body(JsonDocument(dict).to_string());
+
+    LOG_INFO(
+        "Found user ok - responding with user body: " << http_response->body());
     return http_response;
 }
 

@@ -1,0 +1,13 @@
+#pragma once
+
+#include <string>
+
+namespace hestia {
+class HestiaWebPages {
+  public:
+    static std::string get_default_index_view()
+    {
+         return R"(@HESTIA_LANDING_PAGE@)";
+    }
+};
+}  // namespace hestia
