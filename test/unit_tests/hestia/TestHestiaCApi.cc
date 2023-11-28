@@ -56,6 +56,20 @@ class HestiaCApiTestFixture {
         delete[] output;
     }
 
+    void do_create_name(const std::string& name)
+    {
+        char* output{nullptr};
+        int len_output{0};
+
+        int rc = hestia_create(
+            HESTIA_OBJECT, HESTIA_IO_IDS, HESTIA_NAME, name.c_str(),
+            name.size(), HESTIA_IO_IDS, &output, &len_output);
+        REQUIRE(rc == 0);
+        REQUIRE(len_output > 0);
+        REQUIRE(output != nullptr);
+        delete[] output;
+    }
+
     void do_read(std::string& id)
     {
         char* output{nullptr};
@@ -70,6 +84,24 @@ class HestiaCApiTestFixture {
         REQUIRE(output != nullptr);
 
         id = std::string(output, len_output);
+        delete[] output;
+    }
+
+    void do_read_name(const std::string& name)
+    {
+        char* output{nullptr};
+        int len_output{0};
+        int total_count{0};
+
+        const auto rc = hestia_read(
+            HESTIA_OBJECT, HESTIA_QUERY_IDS, HESTIA_NAME, 0, 10, name.c_str(),
+            name.size(), HESTIA_IO_IDS, &output, &len_output, &total_count);
+        REQUIRE(rc == 0);
+        REQUIRE(len_output > 0);
+        REQUIRE(output != nullptr);
+
+        const auto id = std::string(output, len_output);
+        REQUIRE(id.size() == 36);  // uuid
         delete[] output;
     }
 
@@ -126,3 +158,14 @@ TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API", "[hestia]")
     do_get(id, returned_content);
     REQUIRE(content == returned_content);
 }
+
+/*
+TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API with names",
+"[hestia]")
+{
+    std::string name{"my_object"};
+    do_create_name(name);
+
+    do_read_name(name);
+}
+*/

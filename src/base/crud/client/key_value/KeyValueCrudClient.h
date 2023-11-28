@@ -62,9 +62,7 @@ class KeyValueCrudClient : public CrudClient {
         const std::vector<std::string>& keys, VecModelPtr& items) const;
 
     bool get_db_items(
-        const std::vector<std::string>& keys,
-        Dictionary& db_content,
-        bool expects_single = false) const;
+        const std::vector<std::string>& keys, Dictionary& db_content) const;
 
     std::string get_db_item(const std::string& key) const;
 

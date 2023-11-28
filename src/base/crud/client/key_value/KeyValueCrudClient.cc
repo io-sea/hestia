@@ -191,6 +191,9 @@ void KeyValueCrudClient::read(
             std::vector<std::vector<std::string>>& response) {
             return get_db_sets(keys, response);
         };
+    auto default_parent_id_func = [this](const std::string& type) {
+        return get_default_parent_id(type);
+    };
     auto id_from_parent_id_func = [this](
                                       const std::string& parent_type,
                                       const std::string& child_type,
@@ -200,7 +203,7 @@ void KeyValueCrudClient::read(
     };
     KeyValueReadContext read_context(
         m_serializer.get(), m_config.m_prefix, db_get_item_func,
-        db_get_sets_func, id_from_parent_id_func);
+        db_get_sets_func, default_parent_id_func, id_from_parent_id_func);
 
     if (!read_context.serialize_request(request)) {
         return;
@@ -208,9 +211,7 @@ void KeyValueCrudClient::read(
 
     // Read item content from the DB
     auto read_content = Dictionary::create();
-    if (!get_db_items(
-            read_context.get_index_keys(), *read_content,
-            request.get_query().expects_single_item())) {
+    if (!get_db_items(read_context.get_index_keys(), *read_content)) {
         return;
     }
 
@@ -369,9 +370,7 @@ void KeyValueCrudClient::get_db_items(
 }
 
 bool KeyValueCrudClient::get_db_items(
-    const std::vector<std::string>& keys,
-    Dictionary& db_content,
-    bool expects_single) const
+    const std::vector<std::string>& keys, Dictionary& db_content) const
 {
     const auto response = m_client->make_request(
         {KeyValueStoreRequestMethod::STRING_GET, keys, m_config.m_endpoint});
@@ -387,7 +386,6 @@ bool KeyValueCrudClient::get_db_items(
         return false;
     }
 
-    (void)expects_single;
     JsonDocument(response->items()).write(db_content);
     return true;
 }

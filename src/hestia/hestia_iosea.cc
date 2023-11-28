@@ -19,6 +19,36 @@ void set_last_error(const std::string& msg)
     HestiaPrivate::get_client()->set_last_error(msg);
 }
 
+int check_object_id(HestiaId* object_id, bool should_be_init)
+{
+    if (object_id == nullptr) {
+        set_last_error("Passed in null object id");
+        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
+    }
+
+    if (should_be_init && object_id->m_user_initialized != 2) {
+        set_last_error(
+            "HestiaId is not initialized - possible missing call to: hestia_init_id()");
+        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
+    }
+    return 0;
+}
+
+int validate_uuid(HestiaId* object_id)
+{
+    if (object_id->m_uuid != nullptr) {
+        try {
+            Uuid::from_string(object_id->m_uuid);
+        }
+        catch (const std::exception& e) {
+            set_last_error(
+                "Uuid not in expected format - should look like: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'");
+            return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
+        }
+    }
+    return 0;
+}
+
 std::size_t get_int_map_item(const Dictionary& dict, const std::string& key)
 {
     return std::stoull(dict.get_map_item(key)->get_scalar());
@@ -118,96 +148,49 @@ std::pair<int, std::string> create_if_not_existing(
     HestiaId* object_id, hestia_create_mode_t create_mode)
 {
     char* output{nullptr};
-    int totals{0};
     int output_size{0};
+    int totals{0};
 
     std::string id;
-    bool is_name{false};
-    if (object_id->m_uuid == nullptr) {
-        if (object_id->m_lo == 0 && object_id->m_hi == 0) {
-            id      = object_id->m_name;
-            is_name = true;
-        }
-        else {
+    if (object_id->m_user_initialized == 2) {
+        if (object_id->m_uuid == nullptr) {
             id = Uuid(object_id->m_lo, object_id->m_hi).to_string();
         }
-    }
-    else {
-        id = object_id->m_uuid;
-    }
-
-    int rc = 0;
-
-    if (is_name) {
-        std::string query{"name="};
-        query += id;
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_FILTER,
-            hestia_id_format_t::HESTIA_ID, 0, 0, query.c_str(), query.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-        if (output_size != 0) {
-            Dictionary dict;
-            dict.from_string(std::string(output, output_size));
-            if (dict.is_sequence()) {
-                LOG_INFO("Updating id");
-                id = dict.get_sequence()[0]->get_map_item("id")->get_scalar();
+        else {
+            if (auto rc = validate_uuid(object_id); rc != 0) {
+                return {rc, {}};
             }
-            else {
-                LOG_INFO("Updating id");
-                id = dict.get_map_item("id")->get_scalar();
-            }
+            id = object_id->m_uuid;
         }
-    }
-    else {
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_IDS,
-            hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-    }
-    if (rc != 0) {
-        return {rc, {}};
-    }
 
-    delete[] output;
-    output = nullptr;
+        if (auto rc = hestia_read(
+                hestia_item_t::HESTIA_OBJECT,
+                hestia_query_format_t::HESTIA_QUERY_IDS,
+                hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
+                hestia_io_format_t::HESTIA_IO_IDS, &output, &output_size,
+                &totals);
+            rc != 0) {
+            return {rc, {}};
+        }
+        delete[] output;
+        output = nullptr;
+    }
 
     if (output_size == 0) {
         if (create_mode == hestia_create_mode_t::HESTIA_UPDATE) {
             return {hestia_error_e::HESTIA_ERROR_NOT_FOUND, {}};
         }
-        if (is_name) {
-            rc = hestia_create(
-                hestia_item_t::HESTIA_OBJECT, hestia_io_format_t::HESTIA_IO_IDS,
-                hestia_id_format_t::HESTIA_NAME, id.c_str(), id.size(),
-                hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size);
-            if (output_size != 0) {
-                Dictionary dict;
-                dict.from_string(std::string(output, output_size));
-                if (dict.is_sequence()) {
-                    LOG_INFO("Updating id");
-                    id = dict.get_sequence()[0]
-                             ->get_map_item("id")
-                             ->get_scalar();
-                }
-                else {
-                    LOG_INFO("Updating id");
-                    id = dict.get_map_item("id")->get_scalar();
-                }
-            }
-        }
-        else {
-            rc = hestia_create(
-                hestia_item_t::HESTIA_OBJECT, hestia_io_format_t::HESTIA_IO_IDS,
-                hestia_id_format_t::HESTIA_ID, id.c_str(), id.size(),
-                hestia_io_format_t::HESTIA_IO_NONE, nullptr, 0);
-        }
+        auto rc = hestia_create(
+            hestia_item_t::HESTIA_OBJECT, hestia_io_format_t::HESTIA_IO_IDS,
+            hestia_id_format_t::HESTIA_ID, id.c_str(), id.size(),
+            hestia_io_format_t::HESTIA_IO_IDS, &output, &output_size);
         if (rc != 0) {
             return {rc, {}};
         }
+        if (id.empty()) {
+            id = std::string(output, output_size);
+        }
+        delete[] output;
     }
     else if (create_mode == hestia_create_mode_t::HESTIA_CREATE) {
         set_last_error(
@@ -221,11 +204,17 @@ extern "C" {
 
 int hestia_init_id(HestiaId* id)
 {
-    id->m_lo    = 0;
-    id->m_hi    = 0;
-    id->m_uuid  = nullptr;
-    id->m_name  = nullptr;
-    id->m_valid = 1;
+    id->m_lo               = 0;
+    id->m_hi               = 0;
+    id->m_uuid             = nullptr;
+    id->m_user_initialized = 2;
+    return 0;
+}
+
+int hestia_free_id(HestiaId* id)
+{
+    delete[] id->m_uuid;
+    id->m_uuid = nullptr;
     return 0;
 }
 
@@ -267,12 +256,18 @@ int hestia_init_object(HestiaObject* object)
     return 0;
 }
 
+int hestia_init_tier(HestiaTier* tier)
+{
+    tier->m_index            = 0;
+    tier->m_user_initialized = 2;
+    return 0;
+}
+
 int hestia_free_ids(HestiaId** ids, size_t num_ids)
 {
     for (std::size_t idx = 0; idx < num_ids; idx++) {
         delete[] ids[idx]->m_uuid;
     }
-
     delete[] (*ids);
     *ids = nullptr;
     return 0;
@@ -285,55 +280,7 @@ int hestia_free_tier_ids(uint8_t** tier_ids)
     return 0;
 }
 
-int hestia_list_tiers(uint8_t** tier_ids, size_t* num_ids)
-{
-    if (!HestiaPrivate::check_initialized()) {
-        set_last_error("Missing call to hestia_initialize()");
-        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
-    }
-
-    char* output{nullptr};
-    int totals{0};
-    int output_size{0};
-
-    const auto rc = hestia_read(
-        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_NONE,
-        hestia_id_format_t::HESTIA_ID_NONE, 0, 0, nullptr, 0,
-        hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-        &totals);
-    if (rc != 0) {
-        return rc;
-    }
-
-    Dictionary attr_dict;
-    attr_dict.from_string(std::string(output, output_size));
-
-    *num_ids  = attr_dict.get_sequence().size();
-    *tier_ids = new uint8_t[*num_ids];
-
-    std::size_t count = 0;
-    for (const auto& item : attr_dict.get_sequence()) {
-        if (!item->has_map_item("priority")) {
-            set_last_error(
-                "Tier is missing a 'priority' - possible config issue.");
-            return -1;
-        }
-        const auto name = item->get_map_item("priority")->get_scalar();
-        try {
-            (*tier_ids)[count] = std::stoi(name);
-        }
-        catch (const std::exception& e) {
-            set_last_error(
-                "Failed to convert tier priority to int - tier config issue.");
-            return -1;
-        }
-        count++;
-    }
-    delete[] output;
-    return 0;
-}
-
-int check_io_context(HestiaIoContext* io_context, bool)
+int check_io_context(HestiaIoContext* io_context)
 {
     if (io_context == nullptr) {
         set_last_error("Provided io_context is null");
@@ -355,59 +302,18 @@ int check_io_context(HestiaIoContext* io_context, bool)
     return 0;
 }
 
-int check_object_id(HestiaId* object_id, bool supports_name = false)
-{
-    if (object_id == nullptr) {
-        set_last_error("Passed in null object id");
-        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
-    }
-    if (object_id->m_valid != 1) {
-        set_last_error("Missing hestia_init_id() call on id");
-        return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
-    }
-
-    if (object_id->m_uuid == nullptr) {
-        if (object_id->m_lo == 0 && object_id->m_hi == 0) {
-            if (supports_name) {
-                if (object_id->m_name == nullptr) {
-                    set_last_error(
-                        "Object name (or key) expected but not suppled.");
-                    return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
-                }
-            }
-            else {
-                set_last_error(
-                    "Null id value '0' supplied - missing id assignment.");
-                return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
-            }
-        }
-    }
-    else {
-        try {
-            Uuid::from_string(object_id->m_uuid);
-        }
-        catch (const std::exception& e) {
-            set_last_error(
-                "Uuid not in expected format - should look like: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'");
-            return hestia_error_e::HESTIA_ERROR_BAD_INPUT_ID;
-        }
-    }
-    return 0;
-}
-
 int hestia_object_get(
-    HestiaId* object_id, HestiaIoContext* io_context, uint8_t tier_id)
+    HestiaId* object_id, HestiaIoContext* io_context, HestiaTier* tier)
 {
+    // NOLINTBEGIN
     if (!HestiaPrivate::check_initialized()) {
         set_last_error("Missing call to hestia_initialize()");
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
-    auto rc = check_object_id(object_id);
-    if (rc != 0) {
+    if (auto rc = check_object_id(object_id, true); rc != 0) {
         return rc;
     }
-    rc = check_io_context(io_context, true);
-    if (rc != 0) {
+    if (auto rc = check_io_context(io_context); rc != 0) {
         return rc;
     }
 
@@ -416,11 +322,36 @@ int hestia_object_get(
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
+    }
+
+    uint8_t tier_id{255};
+    if (tier->m_user_initialized == 2) {
+        tier_id = tier->m_index;
+    }
+    else {
+        uint8_t* tier_ids{nullptr};
+        std::size_t num_tier_ids{0};
+        auto rc = hestia_object_locate(object_id, &tier_ids, &num_tier_ids);
+        if (rc != 0) {
+            return rc;
+        }
+        if (num_tier_ids > 0) {
+            for (std::size_t idx = 0; idx < num_tier_ids; idx++) {
+                if (tier_ids && tier_ids[idx] < tier_id) {
+                    tier_id = tier_ids[idx];
+                }
+            }
+            hestia_free_tier_ids(&tier_ids);
+        }
     }
 
     char* activity_id{nullptr};
     int len_activity_id{0};
+    int rc{0};
     if (io_context->m_type == hestia_io_type_t::HESTIA_IO_BUFFER) {
         rc = hestia_data_get(
             uuid.c_str(), io_context->m_buffer, &io_context->m_length,
@@ -450,8 +381,7 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
         set_last_error("Missing call to hestia_initialize()");
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
-    auto rc = check_object_id(object_id, true);
-    if (rc != 0) {
+    if (auto rc = check_object_id(object_id, true); rc != 0) {
         return rc;
     }
 
@@ -460,38 +390,20 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
     int output_size{0};
 
     std::string id;
-    bool is_name{false};
     if (object_id->m_uuid == nullptr) {
-        if (object_id->m_lo == 0 && object_id->m_hi == 0) {
-            id      = object_id->m_name;
-            is_name = true;
-        }
-        else {
-            id = Uuid(object_id->m_lo, object_id->m_hi).to_string();
-        }
+        id = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         id = object_id->m_uuid;
     }
-
-    if (is_name) {
-        std::string query{"name="};
-        query += id;
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_FILTER,
-            hestia_id_format_t::HESTIA_ID, 0, 0, query.c_str(), query.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-    }
-    else {
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_IDS,
-            hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-    }
+    auto rc = hestia_read(
+        hestia_item_t::HESTIA_OBJECT, hestia_query_format_t::HESTIA_QUERY_IDS,
+        hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
+        hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
+        &totals);
     if (rc != 0) {
         return rc;
     }
@@ -586,7 +498,7 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
             if (extents[idx].m_size > max_size) {
                 max_size = extents[idx].m_size;
             }
-            extents[idx].m_tier_id = tier_ids[idx];
+            extents[idx].m_tier_index = tier_ids[idx];
         }
 
         object->m_tier_extents = new HestiaTierExtent[extents.size()];
@@ -606,6 +518,7 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
     }
     StringUtils::to_char(
         attr_dict.get_map_item("id")->get_scalar(), &object->m_uuid);
+    // NOLINTEND
     return 0;
 }
 
@@ -619,8 +532,7 @@ int hestia_object_set_attrs(
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id, true);
-    if (rc != 0) {
+    if (auto rc = check_object_id(object_id, true); rc != 0) {
         return rc;
     }
 
@@ -629,38 +541,21 @@ int hestia_object_set_attrs(
     int output_size{0};
 
     std::string id;
-    bool is_name{false};
     if (object_id->m_uuid == nullptr) {
-        if (object_id->m_lo == 0 && object_id->m_hi == 0) {
-            id      = object_id->m_name;
-            is_name = true;
-        }
-        else {
-            id = Uuid(object_id->m_lo, object_id->m_hi).to_string();
-        }
+        id = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         id = object_id->m_uuid;
     }
 
-    if (is_name) {
-        std::string query{"name="};
-        query += id;
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_FILTER,
-            hestia_id_format_t::HESTIA_ID, 0, 0, query.c_str(), query.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-    }
-    else {
-        rc = hestia_read(
-            hestia_item_t::HESTIA_OBJECT,
-            hestia_query_format_t::HESTIA_QUERY_IDS,
-            hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
-            hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-            &totals);
-    }
+    auto rc = hestia_read(
+        hestia_item_t::HESTIA_OBJECT, hestia_query_format_t::HESTIA_QUERY_IDS,
+        hestia_id_format_t::HESTIA_ID, 0, 0, id.c_str(), id.size(),
+        hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
+        &totals);
 
     if (rc != 0) {
         LOG_ERROR("Error reading objects");
@@ -698,19 +593,19 @@ int hestia_object_put(
     HestiaId* object_id,
     hestia_create_mode_t create_mode,
     HestiaIoContext* io_context,
-    uint8_t tier_id)
+    HestiaTier* tier)
 {
     if (!HestiaPrivate::check_initialized()) {
         set_last_error("Failed init check.");
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id, true);
+    auto rc = check_object_id(object_id, false);
     if (rc != 0) {
         return rc;
     }
 
-    rc = check_io_context(io_context, false);
+    rc = check_io_context(io_context);
     if (rc != 0) {
         return rc;
     }
@@ -719,6 +614,41 @@ int hestia_object_put(
     std::tie(rc, id) = create_if_not_existing(object_id, create_mode);
     if (rc != 0) {
         return rc;
+    }
+
+    if (object_id->m_user_initialized != 2) {
+        StringUtils::to_char(id, &object_id->m_uuid);
+    }
+
+    uint8_t tier_id{255};
+    if (io_context->m_type != hestia_io_type_t::HESTIA_IO_EMPTY) {
+        if (tier->m_user_initialized == 2) {
+            tier_id = tier->m_index;
+        }
+        else {
+            LOG_INFO("Tier unset - listing system tiers");
+            uint8_t* tiers{nullptr};
+            std::size_t num_tiers{0};
+            if (const auto rc = hestia_list_tiers(&tiers, &num_tiers);
+                rc != 0) {
+                hestia_free_tier_ids(&tiers);
+                return rc;
+            }
+            if (num_tiers == 0) {
+                set_last_error(
+                    "Attempted to put data but no tiers found on system.");
+                {
+                    return -1;
+                }
+            }
+
+            for (std::size_t idx = 0; idx < num_tiers; idx++) {
+                if (tiers[idx] < tier_id) {
+                    tier_id = tiers[idx];
+                }
+            }
+            hestia_free_tier_ids(&tiers);
+        }
     }
 
     char* activity_id{nullptr};
@@ -757,7 +687,7 @@ int hestia_object_copy(
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id);
+    auto rc = check_object_id(object_id, true);
     if (rc != 0) {
         return rc;
     }
@@ -767,6 +697,9 @@ int hestia_object_copy(
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
     }
 
@@ -786,7 +719,7 @@ int hestia_object_move(
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id);
+    auto rc = check_object_id(object_id, true);
     if (rc != 0) {
         return rc;
     }
@@ -796,6 +729,9 @@ int hestia_object_move(
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
     }
 
@@ -815,7 +751,7 @@ int hestia_object_release(
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id);
+    auto rc = check_object_id(object_id, true);
     if (rc != 0) {
         return rc;
     }
@@ -825,6 +761,9 @@ int hestia_object_release(
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
     }
     char* action_id{nullptr};
@@ -846,7 +785,7 @@ int hestia_object_remove(HestiaId* object_id)
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id);
+    auto rc = check_object_id(object_id, true);
     if (rc != 0) {
         return rc;
     }
@@ -856,6 +795,9 @@ int hestia_object_remove(HestiaId* object_id)
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
     }
 
@@ -868,11 +810,13 @@ int hestia_object_remove(HestiaId* object_id)
 int hestia_object_locate(
     HestiaId* object_id, uint8_t** tier_ids, size_t* num_ids)
 {
+    *num_ids = 0;
+
     if (!HestiaPrivate::check_initialized()) {
         return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
     }
 
-    auto rc = check_object_id(object_id);
+    auto rc = check_object_id(object_id, true);
     if (rc != 0) {
         return rc;
     }
@@ -882,6 +826,9 @@ int hestia_object_locate(
         uuid = Uuid(object_id->m_lo, object_id->m_hi).to_string();
     }
     else {
+        if (auto rc = validate_uuid(object_id); rc != 0) {
+            return rc;
+        }
         uuid = object_id->m_uuid;
     }
 
@@ -909,7 +856,6 @@ int hestia_object_locate(
 
     auto extents = attr_dict.get_map_item("tiers");
     if (extents == nullptr) {
-        *num_ids = 0;
         return 0;
     }
 
@@ -926,7 +872,6 @@ int hestia_object_locate(
     }
 
     if (tier_uuids.empty()) {
-        *num_ids = 0;
         return 0;
     }
     std::vector<uint8_t> ids;
@@ -935,11 +880,65 @@ int hestia_object_locate(
         return rc;
     }
 
-    *num_ids  = ids.size();
-    *tier_ids = new uint8_t[ids.size()];
-    for (std::size_t idx = 0; idx < ids.size(); idx++) {
-        (*tier_ids)[idx] = ids[idx];
+    *num_ids = ids.size();
+    if (!ids.empty()) {
+        *tier_ids = new uint8_t[ids.size()];
+        for (std::size_t idx = 0; idx < ids.size(); idx++) {
+            (*tier_ids)[idx] = ids[idx];
+        }
     }
+    else {
+        *tier_ids = nullptr;
+    }
+
+    return 0;
+}
+
+int hestia_list_tiers(uint8_t** tier_ids, size_t* num_ids)
+{
+    if (!HestiaPrivate::check_initialized()) {
+        set_last_error("Missing call to hestia_initialize()");
+        return hestia_error_e::HESTIA_ERROR_CLIENT_STATE;
+    }
+
+    char* output{nullptr};
+    int totals{0};
+    int output_size{0};
+
+    const auto rc = hestia_read(
+        hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_NONE,
+        hestia_id_format_t::HESTIA_ID_NONE, 0, 0, nullptr, 0,
+        hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
+        &totals);
+    if (rc != 0) {
+        return rc;
+    }
+
+    Dictionary attr_dict;
+    attr_dict.from_string(std::string(output, output_size));
+
+    *num_ids  = attr_dict.get_sequence().size();
+    *tier_ids = new uint8_t[*num_ids];
+
+    std::size_t count = 0;
+    for (const auto& item : attr_dict.get_sequence()) {
+        if (!item->has_map_item("priority")) {
+            set_last_error(
+                "Tier is missing a 'priority' - possible config issue.");
+            return -1;
+        }
+        const auto name = item->get_map_item("priority")->get_scalar();
+        try {
+            (*tier_ids)[count] = std::stoi(name);
+        }
+        catch (const std::exception& e) {
+            set_last_error(
+                "Failed to convert tier priority to int - tier config issue.");
+            return -1;
+        }
+        count++;
+    }
+    delete[] output;
     return 0;
 }
 

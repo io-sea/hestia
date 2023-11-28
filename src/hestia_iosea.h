@@ -26,41 +26,31 @@ typedef enum hestia_io_type_e {
 /// An identifier for the object resource.
 ///
 /// Hestia internally uses a 128 bit universally unique identifier for objects.
-/// It is intended to be unique in the whole system. In APIs it is
-/// interchangeably represented using a hex-based or decimal format - with a
-/// one-to-one conversion possible between these representations. '0' is treated
-/// as a special 'null' identifier.
-///
-/// Since a user may prefer to create an object using a 'name' or 'key' this is
-/// supported also - however since clashes are possible in a multi-user system
-/// (i.e. 'myobject123' used by multiple users) this must be scoped to a 'user'
-/// and a particular 'dataset'.
+/// In APIs it is interchangeably represented using a hex-based or decimal
+/// format - with a one-to-one conversion possible between these
+/// representations.
 ///
 /// The hex format is a 'uuid string' in 8-4-4-4-12 format (e.g.
 /// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), i.e. each 'x' is 4 bits. The decimal
 /// format is divided into [hi, lo] 64 bit decimal elements.
 ///
-/// The 'name' or 'key' is a string defined in the scope of a 'user' and a
-/// dataset, itself addressed via a user-scoped 'dataset_name'.
+/// For the PUT method you are free to pass either:
+/// 1) an unitialized HestiaId. The 'm_uuid' field will be populated with a
+/// Hestia-generated uuid and should be cleaned with hestia_free_id(). OR 2) a
+/// HestiaId initialized with hestia_init_id(). Any subsequent memory
+/// allocations on the struct should be free'd by the caller. hestia_free_id()
+/// should not be used.
 ///
-/// If you provide only a name to 'PUT' you can call 'hestia_object_get_attrs'
-/// to get the generated unique identifier for use in subsequent API calls.
-///
-/// NOTE: You must call 'hestia_init_id' on this struct before using it.
-/// You should free any 'char' arrays you allocate yourself when finished.
-///
+/// Option (2) is required for all other methods.
+
 typedef struct HestiaId {
-    uint64_t m_lo;  // The lower 64 bits of the decimal format of the identifier
+    uint64_t m_lo;  // The lower 64 bits of the decimal form of the identifier
                     // - will only be used if no hex version provided
-    uint64_t
-        m_hi;      // The higher 64 bits of the decimal format of the identifier
-    char* m_uuid;  // The hex format of the identifier - must be in 8-4-4-4-12
-                   // format as per the main docstring.
-    char* m_name;  // An optional 'name' - can only be used in PUT and
-                   // SET/GET_ATTR calls. Use the uuid from
-                   // hestia_object_get_attrs otherwise.
-    int m_valid;   // Sanity flag for internal use - catches cases where
-                   // hestia_init_id not called first.
+    uint64_t m_hi;  // The higher 64 bits of the decimal form of the identifier
+    char* m_uuid;   // The hex format of the identifier - must be in 8-4-4-4-12
+                    // format as per the main docstring.
+    int m_user_initialized;  // For internal use. Whether the user has
+                             // initialized the id, or Hestia should
 } HestiaId;
 
 /// @brief IO Context for pasing data in PUT/GET operations
@@ -96,7 +86,7 @@ typedef struct HestiaKeyValuePair {
 ///
 
 typedef struct HestiaTierExtent {
-    uint8_t m_tier_id;  // The id (0-255) of the storage tier
+    uint8_t m_tier_index;  // The index (0-255) of the storage tier
     size_t m_size;  // The size of the data on the tier (max offset + length)
     time_t m_creation_time;       // When the data was first added to the tier
     time_t m_last_modified_time;  // The last time the data on the tier was
@@ -123,6 +113,11 @@ typedef struct HestiaObject {
                   // hestia_init_object not called first.
 } HestiaObject;
 
+typedef struct HestiaTier {
+    uint8_t m_index;         // The tier index (0-255)
+    int m_user_initialized;  // Internal - whether the tier has been initialized
+} HestiaTier;
+
 /// @brief Initialize the HestiaId struct
 ///
 /// Sets suitable default values on the HestiaId struct - you can populate it
@@ -133,12 +128,38 @@ typedef struct HestiaObject {
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_init_id(HestiaId* id);
 
+/// @brief Free the HestiaId struct - only if Hestia has populated a uuid
+///
+/// Only call this if you passed an uninitialized HestiaId to PUT
+/// Hestia will have allocated a uuid string, which it will free here.
+///
+/// @param id Id to free
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_free_id(HestiaId* id);
+
 /// @brief Initialize the HestiaIoContext struct
 ///
 /// Sets suitable default values on the HestiaIoContext struct
 /// @param io_ctx The struct to initialize
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_init_io_ctx(HestiaIoContext* io_ctx);
+
+/// @brief Reset an object attributes struct
+///
+/// Reset an object attributes struct - populated by
+/// 'hestia_object_get_attrs()';
+///
+/// @param object Object structure to be (re)initialized
+/// @return 0 on success, hestia_error_e value on failure
+
+int hestia_init_object(HestiaObject* object);
+
+/// @brief  Initialize the Storage tier
+///
+/// Sets suitable default values on the HestiaTier struct
+/// @param tier The struct to initialize
+/// @return 0 on success, hestia_error_e value on failure
+int hestia_init_tier(HestiaTier* tier);
 
 /// @brief List all tiers in the system
 ///
@@ -165,11 +186,12 @@ int hestia_free_tier_ids(uint8_t** tier_ids);
 ///
 /// @param object_id Id of object to get data from
 /// @param io_context Details on the io setup
-/// @param tier_id tier to get the data from
+/// @param tier tier to get the data from - can be left unitialized for default 'hottest' tier
+/// or given a value after a call to 'hestia_init_tier()'.
 /// @return 0 on success, hestia_error_e value on failure
 
 int hestia_object_get(
-    HestiaId* object_id, HestiaIoContext* io_context, uint8_t tier_id);
+    HestiaId* object_id, HestiaIoContext* io_context, HestiaTier* tier);
 
 /// @brief Create or update an object - optionally add data
 ///
@@ -178,14 +200,15 @@ int hestia_object_get(
 /// @param object_id Id of object to create or update
 /// @param create_mode specifies whether we are doing a create or update - to prevent accidental overwrites
 /// @param io_context Details on the io setup - this can specify an 'empty' case for no data
-/// @param tier_id tier to put the data to
+/// @param tier tier to put the data to - can be left unitialized for default 'hottest' tier
+/// or given a value after a call to 'hestia_init_tier()'.
 /// @return 0 on success, hestia_error_e value on failure
 
 int hestia_object_put(
     HestiaId* object_id,
     hestia_create_mode_t create_mode,
     HestiaIoContext* io_context,
-    uint8_t tier_id);
+    HestiaTier* tier);
 
 /// @brief Get object attributes
 ///
@@ -196,16 +219,6 @@ int hestia_object_put(
 /// @return 0 on success, hestia_error_e value on failure
 
 int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object);
-
-/// @brief Reset an object attributes struct
-///
-/// Reset an object attributes struct - populated by
-/// 'hestia_object_get_attrs()';
-///
-/// @param object Object structure to be (re)initialized
-/// @return 0 on success, hestia_error_e value on failure
-
-int hestia_init_object(HestiaObject* object);
 
 /// @brief Set object USER attributes
 ///

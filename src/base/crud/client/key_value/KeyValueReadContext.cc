@@ -11,10 +11,12 @@ KeyValueReadContext::KeyValueReadContext(
     const std::string& key_prefix,
     dbGetItemFunc db_get_item_func,
     dbGetSetsFunc db_get_sets_func,
+    defaultParentIdFunc default_parent_id_func,
     idFromParentIdFunc id_from_parent_id_func) :
     KeyValueFieldContext(serializer, key_prefix),
     m_db_get_item_func(db_get_item_func),
     m_db_get_sets_func(db_get_sets_func),
+    m_default_parent_id_func(default_parent_id_func),
     m_id_from_parent_id_func(id_from_parent_id_func)
 {
 }
@@ -67,7 +69,6 @@ bool KeyValueReadContext::serialize_ids(
                 m_serializer->get_type(), id.get_parent_primary_key(),
                 user_context);
         }
-
         if (working_id.empty()) {
             return false;
         }
@@ -105,6 +106,11 @@ std::string KeyValueReadContext::get_id_from_name(
     std::string field_prefix;
     if (id.has_parent_primary_key()) {
         field_prefix += id.get_parent_primary_key() + "::";
+    }
+    else {
+        // field_prefix +=
+        // m_default_parent_id_func(m_serializer->get_template()->get_parent_type())
+        // + "::";
     }
     return m_db_get_item_func(
         get_field_key(field_prefix + "name", id.get_name()));

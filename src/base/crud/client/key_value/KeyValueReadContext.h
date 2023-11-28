@@ -11,21 +11,23 @@
 namespace hestia {
 class KeyValueReadContext : public KeyValueFieldContext {
   public:
-    using dbGetItemFunc      = std::function<std::string(const std::string&)>;
-    using dbGetSetsFunc      = std::function<void(
+    using dbGetItemFunc       = std::function<std::string(const std::string&)>;
+    using dbGetSetsFunc       = std::function<void(
         const std::vector<std::string>&,
         std::vector<std::vector<std::string>>&)>;
-    using idFromParentIdFunc = std::function<std::string(
+    using idFromParentIdFunc  = std::function<std::string(
         const std::string&,
         const std::string&,
         const std::string&,
         const CrudUserContext&)>;
+    using defaultParentIdFunc = std::function<std::string(const std::string&)>;
 
     KeyValueReadContext(
         const CrudSerializer* serializer,
         const std::string& key_prefix,
         dbGetItemFunc db_get_item_func,
         dbGetSetsFunc db_get_sets_func,
+        defaultParentIdFunc default_parent_id_func,
         idFromParentIdFunc id_from_parent_id_func);
 
     bool serialize_request(const CrudRequest& request);
@@ -101,6 +103,7 @@ class KeyValueReadContext : public KeyValueFieldContext {
 
     dbGetItemFunc m_db_get_item_func;
     dbGetSetsFunc m_db_get_sets_func;
+    defaultParentIdFunc m_default_parent_id_func;
     idFromParentIdFunc m_id_from_parent_id_func;
 };
 }  // namespace hestia

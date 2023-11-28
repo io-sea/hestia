@@ -19,9 +19,9 @@ endif()
 target_include_directories(hestia_policy_engine SYSTEM PRIVATE ${sqlite_SOURCE_DIR})
 
 set_target_properties(hestia_policy_engine PROPERTIES OUTPUT_NAME hestia_policy_engine)
-set_target_properties(hestia_policy_engine PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(hestia_policy_engine PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(hestia_policy_engine PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")
+#set_target_properties(hestia_policy_engine PROPERTIES SKIP_BUILD_RPATH FALSE)
+#set_target_properties(hestia_policy_engine PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+#set_target_properties(hestia_policy_engine PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")
 
 add_executable(hestia_sync_tool
     sync_main.cc 
@@ -36,9 +36,9 @@ if(NOT APPLE)
 endif()
 
 set_target_properties(hestia_sync_tool PROPERTIES OUTPUT_NAME hestia_sync_tool)
-set_target_properties(hestia_sync_tool PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(hestia_sync_tool PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(hestia_sync_tool PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")
+#set_target_properties(hestia_sync_tool PROPERTIES SKIP_BUILD_RPATH FALSE)
+#set_target_properties(hestia_sync_tool PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+#set_target_properties(hestia_sync_tool PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")
 
 add_executable(hestia_datamover
     datamover_main.cc 
@@ -53,6 +53,6 @@ if(NOT APPLE)
 endif()
 
 set_target_properties(hestia_datamover PROPERTIES OUTPUT_NAME hestia_datamover)
-set_target_properties(hestia_datamover PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(hestia_datamover PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(hestia_datamover PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")
+#set_target_properties(hestia_datamover PROPERTIES SKIP_BUILD_RPATH FALSE)
+#set_target_properties(hestia_datamover PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+#set_target_properties(hestia_datamover PROPERTIES INSTALL_RPATH "${RPATH_ORIGIN_VAR}/../lib/${PROJECT_NAME};${RPATH_ORIGIN_VAR}/../lib")

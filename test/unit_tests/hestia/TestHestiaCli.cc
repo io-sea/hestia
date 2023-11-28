@@ -303,22 +303,66 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Update", "[hestia]")
     }
 }
 
-/*
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Read", "[hestia]")
 {
-    std::vector<std::string> args = {
-        "hestia", "object", "read", "--query_fmt=id", "--output_fmt=json",
-        "abc"};
+    WHEN("The object is created by id")
+    {
+        std::vector<std::string> create_args = {
+            "hestia", "object", "create", "1234", "--verbosity=1"};
+        parse_args(create_args);
+        run();
+        m_console->m_output.clear();
 
-    parse_args(args);
-    run();
+        WHEN("The object is read by id")
+        {
+            std::vector<std::string> args = {
+                "hestia", "object", "read", "1234", "--verbosity=1"};
+            parse_args(args);
+            run(true);
 
-    std::vector<std::string> output_lines;
-    hestia::StringUtils::to_lines(m_console->m_output, output_lines);
-    REQUIRE_FALSE(output_lines.empty());
+            THEN("The object is found ok")
+            {
+                REQUIRE_FALSE(m_console->m_output.empty());
+                hestia::Dictionary dict;
+                hestia::JsonDocument(m_console->m_output).write(dict);
+                REQUIRE(dict.has_map_item("id"));
+                REQUIRE(dict.get_map_item("id")->get_scalar() == "1234");
+            }
+        }
+    }
+
+    /*
+    WHEN("The object is created by name")
+    {
+        std::vector<std::string> create_args = {
+            "hestia", "object", "create", "--id_fmt=name", "my_object",
+    "--verbosity=1"}; parse_args(create_args); run();
+        m_console->m_output.clear();
+
+        WHEN("The object is read by name")
+        {
+            std::vector<std::string> args = {
+                "hestia", "object", "read",
+                "--id_fmt=name",
+                "--query_fmt=id",
+                "my_object",
+                "--output_fmt=json",
+                "--verbosity=1"};
+            parse_args(args);
+            run(true);
+
+            THEN("The object is found ok")
+            {
+                REQUIRE_FALSE(m_console->m_output.empty());
+                hestia::Dictionary dict;
+                hestia::JsonDocument(m_console->m_output).write(dict);
+                REQUIRE(dict.has_map_item("name"));
+                REQUIRE(dict.get_map_item("name")->get_scalar() == "my_object");
+            }
+        }
+    }
+    */
 }
-*/
-
 
 TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Remove", "[hestia]")
 {
@@ -331,12 +375,12 @@ TEST_CASE_METHOD(HestiaCliTestFixture, "Test Hestia CLI - Remove", "[hestia]")
     std::vector<std::string> remove_args = {
         "hestia", "object", "remove", "1234", "--verbosity=1"};
     parse_args(remove_args);
-    run();
+    run(true);
     m_console->m_output.clear();
 
     std::vector<std::string> empty_create_args = {
         "hestia", "object", "create", "--verbosity=1"};
     parse_args(empty_create_args);
-    run();
+    run(true);
     m_console->m_output.clear();
 }

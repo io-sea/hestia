@@ -200,12 +200,9 @@ int hestia_read(
     hestia_io_format_t output_format,
     char** response_body,
     int* len_response,
-    int* total_count)
+    int*)
 {
     STATE_CHECK
-
-        (void)
-    total_count;
 
     HestiaRequest req(HestiaCApi::to_subject(subject), CrudMethod::READ);
 
@@ -221,6 +218,7 @@ int hestia_read(
         CrudIdentifierCollection::FormatSpec format;
         format.m_id_spec.m_input_format =
             HestiaCApi::to_crud_id_format(id_format);
+        body = std::string(query, len_query);
         req.set_ids({body, format});
     }
     else if (query_format == HESTIA_QUERY_FILTER) {

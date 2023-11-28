@@ -1,6 +1,7 @@
 #include "CrudIdentifier.h"
 
 #include "StringUtils.h"
+#include <iostream>
 #include <sstream>
 
 namespace hestia {

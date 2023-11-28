@@ -122,8 +122,9 @@ CrudService::~CrudService() {}
     }
 
     LOG_DEBUG(
-        "Finished Subject: " << get_type()
-                             << ", Method: " << request.method_as_string());
+        "Finished Subject: " << get_type() << ", Method: "
+                             << request.method_as_string() << " with "
+                             << response->get_ids().size() << " ids.");
 
     try {
         if (m_event_feed != nullptr && request.should_update_event_feed()) {

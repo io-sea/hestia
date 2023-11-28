@@ -6,6 +6,7 @@
 #include "StringUtils.h"
 #include "YamlUtils.h"
 
+#include <algorithm>
 #include <chrono>
 #include <thread>
 
@@ -172,17 +173,15 @@ void PolicyEngine::do_initial_sync()
                 return;
             }
             obj_insert_stmt += get_object_insert_values(object);
+            obj_insert_stmt += ",\n";
             hestia_init_object(&object);
         }
-        hestia_free_ids(&object_ids, num_obj_ids);
-        if (tier_objects_found && idx < num_tiers - 1) {
-            obj_insert_stmt += ",\n";
-        }
-        else if (tier_objects_found) {
-            obj_insert_stmt += ";\n";
-        }
+        // hestia_free_ids(&object_ids, num_obj_ids);
     }
     if (objects_found) {
+        if (obj_insert_stmt[obj_insert_stmt.size() - 2] == ',') {
+            obj_insert_stmt[obj_insert_stmt.size() - 2] = ';';
+        }
         do_db_op(obj_insert_stmt);
     }
     hestia_free_tier_ids(&tiers);
@@ -309,10 +308,26 @@ void PolicyEngine::on_update(const Dictionary& event)
 
     std::string obj_update_stmt =
         "UPDATE objects SET " + get_object_update_values(object);
-    hestia_init_object(&object);
 
-    obj_update_stmt += " WHERE id = " + object_uuid + ";";
+    obj_update_stmt += " WHERE id = '" + object_uuid + "';";
     do_db_op(obj_update_stmt);
+
+    check_for_hints(object);
+
+    hestia_init_object(&object);
+}
+
+void PolicyEngine::check_for_hints(const HestiaObject& object)
+{
+    std::vector<std::string> known_hints{"trigger_migration"};
+
+    for (std::size_t idx = 0; idx < object.m_num_attrs; idx++) {
+        std::string key = object.m_attrs[idx].m_key;
+        if (std::find(known_hints.begin(), known_hints.end(), key)
+            != known_hints.end()) {
+            on_hint(object.m_uuid, key, object.m_attrs[idx].m_value);
+        }
+    }
 }
 
 void PolicyEngine::on_read(const Dictionary& event)
@@ -339,5 +354,39 @@ void PolicyEngine::on_remove(const Dictionary& event)
     do_db_op(obj_delete_stmt);
 }
 
-void PolicyEngine::on_hint() {}
+void PolicyEngine::on_hint(
+    const std::string& object_id,
+    const std::string& key,
+    const std::string& value)
+{
+    if (key == "trigger_migration") {
+        if (value.empty()) {
+            return;
+        }
+
+        // Remove the hint
+        HestiaId id;
+        hestia_init_id(&id);
+        StringUtils::to_char(object_id, &id.m_uuid);
+
+        auto kv_pairs = new HestiaKeyValuePair[1];
+        StringUtils::to_char(key, &kv_pairs[0].m_key);
+        StringUtils::to_char("", &kv_pairs[0].m_value);
+        auto rc = hestia_object_set_attrs(&id, kv_pairs, 1);
+        if (rc != 0) {
+            LOG_ERROR("Error getting object attributes: " + object_id);
+            return;
+        }
+
+        delete[] kv_pairs[0].m_key;
+        delete[] kv_pairs[0].m_value;
+        delete[] kv_pairs;
+
+        // Complete the action
+        const auto& [src, tgt] = StringUtils::split_on_first(value, ",");
+        hestia_object_move(&id, std::stoul(src), std::stoul(tgt));
+
+        delete[] id.m_uuid;
+    }
+}
 }  // namespace hestia

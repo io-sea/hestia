@@ -20,19 +20,20 @@ class SyncTool {
   public:
     SyncTool(const std::filesystem::path& sync_dir);
 
-    void archive(const std::string& dataset_name);
+    ~SyncTool();
 
-    void restore(const std::string& dataset_name);
+    void archive();
+
+    void restore(const std::string& dataset_id);
 
   private:
     void take_snapshot(FilesystemSnapshot& snapshot);
 
-    void archive(
-        const FilesystemSnapshot& snapshot, const std::string& dataset_name);
+    int archive(const FilesystemSnapshot& snapshot);
 
     std::string archive_file(const FilesystemEntry& fs_entry);
 
-    void restore_object(const std::string& id);
+    void restore_object(const std::string& id, const std::string& path);
 
     FilesystemSnapshot m_current_snapshot;
     std::filesystem::path m_sync_dir;

@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <sqlite3.h>
 
+struct HestiaObject;
+
 namespace hestia {
 class PolicyEngine {
   public:
@@ -31,7 +33,12 @@ class PolicyEngine {
 
     void on_read(const Dictionary& event);
 
-    void on_hint();
+    void on_hint(
+        const std::string& object_id,
+        const std::string& key,
+        const std::string& value);
+
+    void check_for_hints(const HestiaObject& object);
 
     void do_db_op(const std::string& statement);
 

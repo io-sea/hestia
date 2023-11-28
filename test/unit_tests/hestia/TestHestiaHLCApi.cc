@@ -31,7 +31,7 @@ class HestiaHLCApiTestFixture {
 
     void do_put(
         unsigned id,
-        uint8_t tier,
+        uint8_t tier_id,
         bool overwrite             = false,
         const std::string& content = {})
     {
@@ -42,27 +42,36 @@ class HestiaHLCApiTestFixture {
         const auto create_mode = overwrite ?
                                      hestia_create_mode_t::HESTIA_UPDATE :
                                      hestia_create_mode_t::HESTIA_CREATE;
+
+        HestiaTier tier;
+        hestia_init_tier(&tier);
+        tier.m_index = tier_id;
+
         HestiaIoContext io_context;
         int rc = 0;
         if (content.empty()) {
             io_context.m_type = hestia_io_type_t::HESTIA_IO_EMPTY;
-            rc = hestia_object_put(&hestia_id, create_mode, &io_context, tier);
+            rc = hestia_object_put(&hestia_id, create_mode, &io_context, &tier);
         }
         else {
             io_context.m_type   = hestia_io_type_t::HESTIA_IO_BUFFER;
             io_context.m_length = content.size();
             std::vector<char> data(content.begin(), content.end());
             io_context.m_buffer = data.data();
-            rc = hestia_object_put(&hestia_id, create_mode, &io_context, tier);
+            rc = hestia_object_put(&hestia_id, create_mode, &io_context, &tier);
         }
         REQUIRE(rc == 0);
     }
 
-    void do_get(unsigned id, uint8_t tier, std::string& content)
+    void do_get(unsigned id, uint8_t tier_id, std::string& content)
     {
         HestiaId hestia_id;
         hestia_init_id(&hestia_id);
         hestia_id.m_lo = id;
+
+        HestiaTier tier;
+        hestia_init_tier(&tier);
+        tier.m_index = tier_id;
 
         std::vector<char> buffer(content.length());
         HestiaIoContext io_context;
@@ -71,7 +80,7 @@ class HestiaHLCApiTestFixture {
         io_context.m_buffer = buffer.data();
         io_context.m_offset = 0;
 
-        const auto rc = hestia_object_get(&hestia_id, &io_context, tier);
+        const auto rc = hestia_object_get(&hestia_id, &io_context, &tier);
         content       = std::string(buffer.begin(), buffer.end());
         REQUIRE(rc == 0);
     }
