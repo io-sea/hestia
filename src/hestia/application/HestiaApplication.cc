@@ -206,7 +206,7 @@ void HestiaApplication::setup_hsm_service(
     auto hsm_services = std::make_unique<HsmServiceCollection>();
 
     hsm_services->create_default_services(
-        config, backend, m_user_service.get(), m_event_feed.get());
+        config, backend, m_user_service.get());
 
     if (m_config.default_dataset_enabled()) {
         hsm_services->get_service(HsmItem::Type::DATASET)

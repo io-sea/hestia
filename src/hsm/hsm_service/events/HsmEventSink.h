@@ -17,36 +17,10 @@ class HsmEventSink : public EventSink {
 
     void on_event(const CrudEvent& event) override;
 
-    bool will_handle(
-        const std::string& subject_type, CrudMethod method) const override;
-
   private:
-    void on_user_metadata_update(const CrudEvent& event) const;
-
-    void on_user_metadata_update(
-        const CrudUserContext& user_context,
-        Dictionary& dict,
-        const std::string& id) const;
-
-    void on_user_metadata_read(const CrudEvent& event) const;
-
-    void on_user_metadata_read(
-        const CrudUserContext& user_context,
-        Dictionary& dict,
-        const std::string& id) const;
-
-    void on_extent_changed(const CrudEvent& event) const;
-
-    void on_extent_changed(
-        const CrudUserContext& user_context,
-        Dictionary& dict,
-        const std::string& id) const;
-
-    std::string get_metadata_object_id(
-        const CrudUserContext& user_context,
-        const std::string& metadata_id) const;
-
     void on_object_create(const CrudEvent& event) const;
+
+    void on_object_update(const CrudEvent& event) const;
 
     void on_object_create(
         Dictionary& dict,
@@ -56,7 +30,8 @@ class HsmEventSink : public EventSink {
     void on_object_update(
         Dictionary& dict,
         const std::string& id,
-        const CrudUserContext& user_context) const;
+        const CrudUserContext& user_context,
+        std::time_t update_time) const;
 
     void on_object_create_or_update(
         Dictionary& dict,
@@ -64,8 +39,6 @@ class HsmEventSink : public EventSink {
         const CrudUserContext& user_context) const;
 
     void on_object_read(const CrudEvent& event) const;
-
-    void on_object_read(Dictionary& dict, const std::string& id) const;
 
     void on_object_remove(const CrudEvent& event) const;
 

@@ -1,7 +1,6 @@
 #include "CrudService.h"
 
 #include "CrudClient.h"
-#include "EventFeed.h"
 #include "IdGenerator.h"
 #include "TimeProvider.h"
 
@@ -30,11 +29,9 @@ namespace hestia {
 CrudService::CrudService(
     const ServiceConfig& config,
     std::unique_ptr<CrudClient> client,
-    EventFeed* event_feed,
     std::unique_ptr<IdGenerator> id_generator,
     std::unique_ptr<TimeProvider> time_provider) :
     Service<CrudRequest, CrudResponse, CrudErrorCode>(config),
-    m_event_feed(event_feed),
     m_client(std::move(client)),
     m_id_generator(std::move(id_generator)),
     m_time_provider(std::move(time_provider))
@@ -54,16 +51,10 @@ CrudService::~CrudService() {}
     auto response = std::make_unique<CrudResponse>(
         request, get_type(), request.get_output_format());
 
-    bool record_modified_attrs{false};
-    if (m_event_feed != nullptr) {
-        record_modified_attrs =
-            m_event_feed->will_handle(get_type(), request.method());
-    }
-
     switch (request.method()) {
         case CrudMethod::CREATE:
             try {
-                create_crud(request, *response, record_modified_attrs);
+                create_crud(request, *response);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -75,7 +66,7 @@ CrudService::~CrudService() {}
             break;
         case CrudMethod::UPDATE:
             try {
-                update(request, *response, record_modified_attrs);
+                update(request, *response);
             }
             HESTIA_CRUD_SERVICE_CATCH_FLOW();
             break;
@@ -125,24 +116,13 @@ CrudService::~CrudService() {}
         "Finished Subject: " << get_type() << ", Method: "
                              << request.method_as_string() << " with "
                              << response->get_ids().size() << " ids.");
-
-    try {
-        if (m_event_feed != nullptr && request.should_update_event_feed()) {
-            m_event_feed->on_event(
-                CrudEvent(get_type(), request.method(), request, *response));
-        }
-    }
-    HESTIA_CRUD_SERVICE_CATCH_FLOW();
-
     return response;
 }
 
 void CrudService::create_crud(
-    const CrudRequest& request,
-    CrudResponse& response,
-    bool record_modified_attrs) const
+    const CrudRequest& request, CrudResponse& response) const
 {
-    m_client->create(request, response, record_modified_attrs);
+    m_client->create(request, response);
 }
 
 void CrudService::read(const CrudRequest& request, CrudResponse& response) const
@@ -156,11 +136,9 @@ void CrudService::set_default_name(const std::string& name)
 }
 
 void CrudService::update(
-    const CrudRequest& request,
-    CrudResponse& response,
-    bool record_modified_attrs) const
+    const CrudRequest& request, CrudResponse& response) const
 {
-    m_client->update(request, response, record_modified_attrs);
+    m_client->update(request, response);
 }
 
 void CrudService::remove(

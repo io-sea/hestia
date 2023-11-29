@@ -9,14 +9,12 @@ namespace hestia {
 class CrudClient;
 class IdGenerator;
 class TimeProvider;
-class EventFeed;
 
 class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
   public:
     CrudService(
         const ServiceConfig& config,
         std::unique_ptr<CrudClient> client          = {},
-        EventFeed* event_feed                       = nullptr,
         std::unique_ptr<IdGenerator> id_generator   = nullptr,
         std::unique_ptr<TimeProvider> time_provider = nullptr);
 
@@ -40,16 +38,12 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
 
   protected:
     virtual void create_crud(
-        const CrudRequest& request,
-        CrudResponse& response,
-        bool record_modified_attrs) const;
+        const CrudRequest& request, CrudResponse& response) const;
 
     virtual void read(const CrudRequest& request, CrudResponse& response) const;
 
     virtual void update(
-        const CrudRequest& request,
-        CrudResponse& response,
-        bool record_modified_attrs) const;
+        const CrudRequest& request, CrudResponse& response) const;
 
     virtual void remove(
         const CrudRequest& request, CrudResponse& response) const;
@@ -75,7 +69,6 @@ class CrudService : public Service<CrudRequest, CrudResponse, CrudErrorCode> {
         CrudResponse* response,
         const RequestError<CrudErrorCode>& error) const override;
 
-    EventFeed* m_event_feed{nullptr};
     std::unique_ptr<CrudClient> m_client;
     std::unique_ptr<IdGenerator> m_id_generator;
     std::unique_ptr<TimeProvider> m_time_provider;

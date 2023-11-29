@@ -38,7 +38,7 @@ class HsmServiceTestFixture {
         auto hsm_child_services =
             std::make_unique<hestia::HsmServiceCollection>();
         hsm_child_services->create_default_services(
-            {}, &crud_backend, m_user_service.get(), nullptr);
+            {}, &crud_backend, m_user_service.get());
 
         hsm_child_services->get_service(hestia::HsmItem::Type::DATASET)
             ->set_default_name("test_default_dataset");

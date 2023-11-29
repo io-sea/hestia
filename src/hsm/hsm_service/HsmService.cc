@@ -79,8 +79,7 @@ HsmService::Ptr HsmService::create(
     KeyValueStoreCrudServiceBackend backend(client);
 
     auto services = std::make_unique<HsmServiceCollection>();
-    services->create_default_services(
-        config, &backend, user_service, event_feed);
+    services->create_default_services(config, &backend, user_service);
 
     return std::make_unique<HsmService>(
         config, std::move(services), object_store, event_feed);
@@ -102,7 +101,16 @@ CrudResponse::Ptr HsmService::make_request(
     switch (req.method()) {
         case CrudMethod::CREATE:
             try {
-                response = crud_create(HsmItem::from_name(type), req);
+                const auto hsm_type = HsmItem::from_name(type);
+                response            = crud_create(hsm_type, req);
+                if (m_event_feed != nullptr
+                    && hsm_type == HsmItem::Type::OBJECT) {
+                    std::vector<std::string> ids;
+                    for (const auto& id : response->get_ids().data()) {
+                        ids.push_back(id.get_primary_key());
+                    }
+                    on_object_create(ids, req.get_user_context());
+                }
             }
             catch (const std::exception& e) {
                 const std::string msg =
@@ -112,9 +120,47 @@ CrudResponse::Ptr HsmService::make_request(
             }
             return response;
         case CrudMethod::UPDATE:
+            try {
+                const auto hsm_type = HsmItem::from_name(type);
+                response            = do_crud(hsm_type, req);
+                if (m_event_feed != nullptr
+                    && hsm_type == HsmItem::Type::METADATA) {
+                    std::vector<std::string> ids;
+                    for (const auto& id : response->get_ids().data()) {
+                        ids.push_back(id.get_primary_key());
+                    }
+                    on_metadata_update(ids, req.get_user_context());
+                }
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in CRUD: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({CrudErrorCode::STL_EXCEPTION, msg});
+            }
+            return response;
+        case CrudMethod::REMOVE:
+            try {
+                const auto hsm_type = HsmItem::from_name(type);
+                response            = do_crud(hsm_type, req);
+                if (m_event_feed != nullptr
+                    && hsm_type == HsmItem::Type::OBJECT) {
+                    std::vector<std::string> ids;
+                    for (const auto& id : response->get_ids().data()) {
+                        ids.push_back(id.get_primary_key());
+                    }
+                    on_object_removed(ids, req.get_user_context());
+                }
+            }
+            catch (const std::exception& e) {
+                const std::string msg =
+                    SOURCE_LOC() + " | Exception in CRUD: " + e.what();
+                LOG_ERROR(msg);
+                response->on_error({CrudErrorCode::STL_EXCEPTION, msg});
+            }
+            return response;
         case CrudMethod::READ:
         case CrudMethod::IDENTIFY:
-        case CrudMethod::REMOVE:
             try {
                 response = do_crud(HsmItem::from_name(type), req);
             }
@@ -133,6 +179,99 @@ CrudResponse::Ptr HsmService::make_request(
                 {CrudErrorCode::UNSUPPORTED_REQUEST_METHOD,
                  "Locking not supported yet."});
             return response;
+    }
+}
+
+void HsmService::on_object_removed(
+    const std::vector<std::string>& ids, const CrudUserContext&) const
+{
+    for (const auto& id : ids) {
+        CrudEvent event(HsmItem::hsm_object_name, CrudMethod::REMOVE, {id});
+        m_event_feed->on_event(event);
+    }
+}
+
+void HsmService::on_object_create(
+    const std::vector<std::string>& ids, const CrudUserContext& user) const
+{
+    for (const auto& id : ids) {
+        const auto object_service =
+            m_services->get_service(HsmItem::Type::OBJECT);
+        const auto get_response = object_service->make_request(CrudRequest{
+            CrudMethod::READ, CrudQuery(id, CrudQuery::BodyFormat::ITEM),
+            user});
+        if (!get_response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to read object for event feed");
+        }
+        if (!get_response->found()) {
+            throw RequestException<HsmActionError>(
+                {HsmActionErrorCode::ITEM_NOT_FOUND,
+                 SOURCE_LOC() + " | Object " + id + " not found."});
+        }
+        auto object = *get_response->get_item_as<HsmObject>();
+        object.set_content_modified_time(object.get_last_modified_time());
+        object.set_content_accessed_time(object.get_last_modified_time());
+
+        auto object_put_response = object_service->make_request(
+            TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, object, user});
+        if (!object_put_response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to update object for event feed");
+        }
+        CrudEvent event(
+            HsmItem::hsm_object_name, CrudMethod::CREATE,
+            {object.get_primary_key()}, object.get_creation_time());
+        m_event_feed->on_event(event);
+    }
+}
+
+void HsmService::on_metadata_update(
+    const std::vector<std::string>& ids, const CrudUserContext& user) const
+{
+    auto md_service = get_service(HsmItem::Type::METADATA);
+    for (const auto& id : ids) {
+        auto response = md_service->make_request(CrudRequest(
+            CrudMethod::READ, {id, CrudQuery::BodyFormat::ITEM}, user));
+        if (!response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to read metadata for event feed");
+        }
+        if (!response->found()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to find metadata for event feed");
+        }
+        const auto object_id = response->get_item_as<UserMetadata>()->object();
+
+        const auto object_service =
+            m_services->get_service(HsmItem::Type::OBJECT);
+        const auto get_response = object_service->make_request(CrudRequest{
+            CrudMethod::READ, CrudQuery(object_id, CrudQuery::BodyFormat::ITEM),
+            user});
+        if (!get_response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to read object for event feed");
+        }
+        if (!get_response->found()) {
+            throw RequestException<HsmActionError>(
+                {HsmActionErrorCode::ITEM_NOT_FOUND,
+                 SOURCE_LOC() + " | Object " + object_id + " not found."});
+        }
+        auto object = *get_response->get_item_as<HsmObject>();
+
+        const auto modified_time = TimeUtils::get_current_time();
+        object.set_content_modified_time(modified_time);
+
+        auto object_put_response = object_service->make_request(
+            TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, object, user});
+        if (!object_put_response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to update object for event feed");
+        }
+        CrudEvent event(
+            HsmItem::hsm_object_name, CrudMethod::UPDATE,
+            {object.get_primary_key()}, modified_time);
+        m_event_feed->on_event(event);
     }
 }
 
@@ -161,15 +300,6 @@ CrudResponse::Ptr HsmService::do_crud(
     HsmItem::Type subject_type, const CrudRequest& req) const
 {
     auto response = m_services->get_service(subject_type)->make_request(req);
-    if (subject_type == HsmItem::Type::OBJECT
-        && req.method() == CrudMethod::READ) {
-        if (m_event_feed != nullptr && !response->get_ids().empty()) {
-            CrudEvent read_event(
-                HsmItem::hsm_object_name, CrudMethod::READ, req, *response,
-                "HsmService");
-            m_event_feed->on_event(read_event);
-        }
-    }
     return response;
 }
 
@@ -345,24 +475,34 @@ void HsmService::on_object_store_response(
         return;
     }
 
+    const auto action_time = TimeUtils::get_current_time();
+
     if (!object_store_response->object_is_remote()) {
         on_db_update(
-            method, object_store_response->get_store_id(), action_context);
+            method, object_store_response->get_store_id(), action_context,
+            action_time);
     }
 
     // Update the event feed
-    if (method == HsmObjectStoreRequestMethod::GET && m_event_feed != nullptr) {
-        CrudRequest crud_req{CrudMethod::READ, action_context.m_user_context};
-        CrudResponse crud_response{
-            action_context.m_req, HsmItem::hsm_object_name,
-            CrudQuery::BodyFormat::ID};
-        crud_response.ids().add_primary_key(
-            action_context.m_action.get_subject_key());
-
-        CrudEvent read_event(
-            HsmItem::hsm_object_name, CrudMethod::READ, crud_req, crud_response,
-            "HsmService");
-        m_event_feed->on_event(read_event);
+    if (m_event_feed != nullptr) {
+        const auto object_id = action_context.m_action.get_subject_key();
+        if (method == HsmObjectStoreRequestMethod::GET) {
+            CrudEvent event(
+                HsmItem::hsm_object_name, CrudMethod::READ, {object_id},
+                action_time);
+            m_event_feed->on_event(event);
+        }
+        else if (
+            method == HsmObjectStoreRequestMethod::PUT
+            || method == HsmObjectStoreRequestMethod::COPY
+            || method == HsmObjectStoreRequestMethod::MOVE
+            || method == HsmObjectStoreRequestMethod::REMOVE
+            || method == HsmObjectStoreRequestMethod::REMOVE_ALL) {
+            CrudEvent event(
+                HsmItem::hsm_object_name, CrudMethod::UPDATE, {object_id},
+                action_time);
+            m_event_feed->on_event(event);
+        }
     }
 
     // respond ok
@@ -375,7 +515,8 @@ void HsmService::on_object_store_response(
 void HsmService::on_db_update(
     HsmObjectStoreRequestMethod method,
     const std::string& store_id,
-    const HsmActionContext& action_context) const
+    const HsmActionContext& action_context,
+    std::time_t action_time) const
 {
     LOG_INFO("Starting DB Update");
 
@@ -408,8 +549,8 @@ void HsmService::on_db_update(
             source_extent.remove_extent(action_context.m_extent);
             remove_or_update_extent(action_context, source_extent);
         }
-
-        working_object.set_content_modified_time(TimeUtils::get_current_time());
+        working_object.set_content_modified_time(action_time);
+        working_object.set_content_accessed_time(action_time);
     }
     else if (method == HsmObjectStoreRequestMethod::REMOVE) {
         TierExtents source_extent;
@@ -417,11 +558,11 @@ void HsmService::on_db_update(
             action_context.m_source_tier_id, working_object, source_extent);
         source_extent.remove_extent(action_context.m_extent);
         remove_or_update_extent(action_context, source_extent);
-
-        working_object.set_content_modified_time(TimeUtils::get_current_time());
+        working_object.set_content_modified_time(action_time);
+        working_object.set_content_accessed_time(action_time);
     }
     else if (method == HsmObjectStoreRequestMethod::GET) {
-        working_object.set_content_accessed_time(TimeUtils::get_current_time());
+        working_object.set_content_accessed_time(action_time);
     }
 
     // Update the object

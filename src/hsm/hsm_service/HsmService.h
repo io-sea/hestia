@@ -104,7 +104,8 @@ class HsmService : public CrudService {
     void on_db_update(
         HsmObjectStoreRequestMethod method,
         const std::string& store_id,
-        const HsmActionContext& action_context) const;
+        const HsmActionContext& action_context,
+        std::time_t action_time) const;
 
     std::size_t get_object_size_on_tier(
         const HsmActionContext& action_context) const;
@@ -153,6 +154,15 @@ class HsmService : public CrudService {
 
     void set_action_progress(
         const HsmActionContext& action_context, std::size_t bytes) const;
+
+    void on_metadata_update(
+        const std::vector<std::string>& ids, const CrudUserContext& user) const;
+
+    void on_object_create(
+        const std::vector<std::string>& ids, const CrudUserContext& user) const;
+
+    void on_object_removed(
+        const std::vector<std::string>& ids, const CrudUserContext& user) const;
 
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;

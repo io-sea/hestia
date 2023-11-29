@@ -71,21 +71,6 @@ void EventFeed::add_sink(std::unique_ptr<EventSink> sink)
     m_sinks.push_back(std::move(sink));
 }
 
-bool EventFeed::will_handle(
-    const std::string& subject_type, CrudMethod method) const
-{
-    if (!m_config.is_active()) {
-        return false;
-    }
-
-    for (const auto& sink : m_sinks) {
-        if (sink->will_handle(subject_type, method)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void EventFeed::on_event(const CrudEvent& event)
 {
     if (!m_config.is_active()) {

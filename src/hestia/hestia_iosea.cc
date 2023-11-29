@@ -421,8 +421,10 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
 
     object->m_creation_time =
         static_cast<time_t>(get_int_map_item(attr_dict, "creation_time"));
-    auto last_modified_time =
-        static_cast<time_t>(get_int_map_item(attr_dict, "last_modified_time"));
+    object->m_last_accessed_time = static_cast<time_t>(
+        get_int_map_item(attr_dict, "content_accessed_time"));
+    auto last_modified_time = static_cast<time_t>(
+        get_int_map_item(attr_dict, "content_modified_time"));
 
     const auto user_md_id = attr_dict.get_map_item("user_metadata")
                                 ->get_map_item("id")
@@ -442,11 +444,6 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
     delete[] output;
     output = nullptr;
 
-    const auto md_modified_time = static_cast<time_t>(
-        get_int_map_item(user_md_dict, "last_modified_time"));
-    if (md_modified_time > last_modified_time) {
-        last_modified_time = md_modified_time;
-    }
     auto data = user_md_dict.get_map_item("data");
     if (data == nullptr) {
         object->m_num_attrs = 0;
@@ -475,9 +472,6 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
                 get_int_map_item(*tier_extent_dict, "creation_time"));
             tier_extent.m_last_modified_time = static_cast<time_t>(
                 get_int_map_item(*tier_extent_dict, "last_modified_time"));
-            if (tier_extent.m_last_modified_time > last_modified_time) {
-                last_modified_time = tier_extent.m_last_modified_time;
-            }
             extents.push_back(tier_extent);
         }
     }

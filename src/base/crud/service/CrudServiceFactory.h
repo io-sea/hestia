@@ -18,7 +18,6 @@ class CrudServiceFactory {
     static std::unique_ptr<CrudService> create(
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        EventFeed* event_feed,
         UserService* user_service                    = nullptr,
         std::unique_ptr<IdGenerator> id_generator_in = {})
     {
@@ -69,13 +68,12 @@ class CrudServiceFactory {
 
         if (user_service == nullptr) {
             return std::make_unique<CrudServiceWithUser>(
-                config, std::move(crud_client), user_service, event_feed,
+                config, std::move(crud_client), user_service,
                 std::move(id_generator));
         }
         else {
             return std::make_unique<CrudService>(
-                config, std::move(crud_client), event_feed,
-                std::move(id_generator));
+                config, std::move(crud_client), std::move(id_generator));
         }
     }
 };

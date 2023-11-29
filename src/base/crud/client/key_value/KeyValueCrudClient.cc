@@ -42,7 +42,6 @@ void KeyValueCrudClient::prepare_creation_overrides(
     ModelCreationContext create_overrides(m_serializer->get_runtime_type());
     create_overrides.m_creation_time.update_value(current_time);
     create_overrides.m_last_modified_time.update_value(current_time);
-    create_overrides.m_last_accessed_time.update_value(current_time);
 
     if (m_serializer->type_has_owner()) {
         create_overrides.add_user(user_context.m_id);
@@ -125,7 +124,6 @@ void KeyValueCrudClient::prepare_update_overrides(
     const auto current_time = m_time_provider->get_current_time();
     ModelUpdateContext update_context(m_serializer->get_type());
     update_context.m_last_modified_time.update_value(current_time);
-    update_context.m_last_accessed_time.update_value(current_time);
     update_context.serialize(update_overrides);
 }
 

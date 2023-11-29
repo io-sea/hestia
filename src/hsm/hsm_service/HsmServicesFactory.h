@@ -25,8 +25,7 @@ class HsmServicesFactory {
         HsmItem::Type type,
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        UserService* user_service,
-        EventFeed* event_feed);
+        UserService* user_service);
 };
 
 class HsmServiceCollection {
@@ -37,8 +36,7 @@ class HsmServiceCollection {
     void create_default_services(
         const ServiceConfig& config,
         CrudServiceBackend* backend,
-        UserService* user_service,
-        EventFeed* event_feed);
+        UserService* user_service);
 
     void add_service(HsmItem::Type type, CrudServicePtr service);
 

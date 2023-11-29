@@ -9,6 +9,19 @@ CrudEvent::CrudEvent() : Model(s_type)
     init();
 }
 
+CrudEvent::CrudEvent(
+    const std::string& subject_type,
+    CrudMethod method,
+    const std::vector<std::string>& ids,
+    std::time_t event_time) :
+    Model(s_type), m_time(event_time), m_ids(ids)
+{
+    init();
+
+    m_subject_type.init_value(subject_type);
+    m_method.init_value(method);
+}
+
 void CrudEvent::init()
 {
     register_scalar_field(&m_method);
@@ -22,8 +35,9 @@ CrudEvent::CrudEvent(
     CrudMethod method,
     const CrudRequest& request,
     const CrudResponse& response,
-    const std::string& source) :
-    Model(s_type), m_source(source)
+    const std::string& source,
+    std::time_t event_time) :
+    Model(s_type), m_source(source), m_time(event_time)
 {
     init();
 
@@ -47,9 +61,19 @@ const std::string& CrudEvent::get_source() const
     return m_source;
 }
 
+std::time_t CrudEvent::get_time() const
+{
+    return m_time;
+}
+
 const std::vector<std::string>& CrudEvent::get_ids() const
 {
-    return m_subject_ids.container();
+    if (!m_ids.empty()) {
+        return m_ids;
+    }
+    else {
+        return m_subject_ids.container();
+    }
 }
 
 const Dictionary& CrudEvent::get_modified_attrs() const

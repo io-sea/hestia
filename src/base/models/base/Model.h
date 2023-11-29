@@ -96,7 +96,6 @@ class ModelCreationContext : public SerializeableWithFields {
     {
         register_scalar_field(&m_creation_time);
         register_scalar_field(&m_last_modified_time);
-        register_scalar_field(&m_last_accessed_time);
     }
 
     void add_user(const std::string& user_id)
@@ -108,7 +107,6 @@ class ModelCreationContext : public SerializeableWithFields {
     ForeignKeyField m_created_by{"created_by", "user"};
     DateTimeField m_creation_time{"creation_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
-    DateTimeField m_last_accessed_time{"last_accessed_time"};
 };
 
 class ModelUpdateContext : public SerializeableWithFields {
@@ -116,9 +114,7 @@ class ModelUpdateContext : public SerializeableWithFields {
     ModelUpdateContext(const std::string& type) : SerializeableWithFields(type)
     {
         register_scalar_field(&m_last_modified_time);
-        register_scalar_field(&m_last_accessed_time);
     }
-    DateTimeField m_last_accessed_time{"last_accessed_time"};
     DateTimeField m_last_modified_time{"last_modified_time"};
 };
 

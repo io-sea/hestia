@@ -232,7 +232,6 @@ void PolicyEngine::on_events()
     std::time_t file_last_event = m_last_event_time;
     for (const auto& root : events) {
         auto event = root->get_map_item("root");
-        LOG_INFO(event->to_string());
         const auto event_time =
             std::stoll(event->get_map_item("time")->get_scalar());
         if (event_time > m_last_event_time) {
