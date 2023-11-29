@@ -192,6 +192,13 @@ void CurlClient::setup_handle(CurlHandle* handle)
             "Failed to set curl seekdata with error: "
             + handle->m_error_buffer);
     }
+
+    // Continue sending auth header in redirects
+    rc = curl_easy_setopt(handle->m_handle, CURLOPT_UNRESTRICTED_AUTH, 1);
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl unrestricted auth: " + handle->m_error_buffer);
+    }
 }
 
 void CurlClient::make_request(

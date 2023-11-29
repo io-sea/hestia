@@ -22,7 +22,7 @@
         .typeNavButton{
             all: unset;
             margin: 5px;
-            width: 70px;
+            width: 100px;
             border-radius: 2px;
             background-color:lightskyblue;
             vertical-align: middle;
@@ -52,9 +52,13 @@
 
         const item_list_keys = {"objects" : ["id", "name", "size", "creation_time", "content_modified_time", "content_accessed_time"],
                                 "tiers" : ["id", "priority"],
-                                "nodes" : ["id", "tag"],
-                                "datasets" : ["id"],
+                                "nodes" : ["id", "name", "host_address", "port", "version", "app_type", "backends"],
+                                "datasets" : ["id", "objects"],
+                                "object_store_backends" : ["id", "backend_type", "node", "tiers", "config"],
                                 "users" : ["id", "name"],
+                                "extents" : ["id", "tier_priority", "object", "extents"],
+                                "actions" : ["id", "subject_key", "action", "status", "transferred", "creation_time", "last_modified_time"],
+                                "metadatas" : ["id", "data"]
                                 };
         var user = null;
 
@@ -89,7 +93,22 @@
                 {
                     let row_entry = document.createElement("td");
                     let item_value = item[key];
-                    if (typeof item_value !== 'undefined')
+                    if(Array.isArray(item_value))
+                    {
+                        let item_str = "";
+                        for(const entry of item_value)
+                        {
+                            item_str += entry["id"] + "\n";
+                        }
+                        let content = document.createTextNode(item_str);
+                        row_entry.appendChild(content);
+                    }
+                    else if (typeof item_value === 'object')
+                    {
+                        let content = document.createTextNode(JSON.stringify(item_value, null, 4));
+                        row_entry.appendChild(content);
+                    }
+                    else if (typeof item_value !== 'undefined')
                     {
                         let content = document.createTextNode(item_value);
                         row_entry.appendChild(content);
@@ -182,9 +201,9 @@
 <div id="loggedInView" style="margin:auto;visibility:hidden;width:100%">
     <p>User: <span id="usernameLabel"></span></p>
     <div id="contentContainer" style="margin:auto;display:flex;flex-direction:row;">
-        <div id="contentLeftNav" style="width: 80px">
+        <div id="contentLeftNav" style="width: 100px">
         </div>
-        <div id="contentView" style="width:50%">
+        <div id="contentView" style="width:100%">
         </div>
     </div>
 </div>

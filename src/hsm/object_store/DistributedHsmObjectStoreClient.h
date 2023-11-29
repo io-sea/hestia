@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ErrorUtils.h"
 #include "HsmObjectStoreClient.h"
 #include "HsmObjectStoreClientFactory.h"
 #include "HttpRequest.h"
@@ -35,7 +36,7 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
 
     virtual ~DistributedHsmObjectStoreClient();
 
-    void do_initialize(
+    OpStatus do_initialize(
         const std::string& cache_path, DistributedHsmService* hsm_service);
 
     void make_request(

@@ -47,20 +47,25 @@ DistributedHsmObjectStoreClient::Ptr DistributedHsmObjectStoreClient::create(
         std::move(client_manager), http_client, s3_client);
 }
 
-void DistributedHsmObjectStoreClient::do_initialize(
+OpStatus DistributedHsmObjectStoreClient::do_initialize(
     const std::string& cache_path, DistributedHsmService* hsm_service)
 {
     m_hsm_service = hsm_service;
 
-    const auto current_user_id =
-        m_hsm_service->get_user_service()->get_current_user().get_primary_key();
+    const auto current_user_ctx =
+        m_hsm_service->get_user_service()->get_current_user_context();
 
     auto response =
         m_hsm_service->get_hsm_service()
             ->get_service(HsmItem::Type::TIER)
             ->make_request(CrudRequest{
                 CrudMethod::READ, CrudQuery{CrudQuery::BodyFormat::ITEM},
-                current_user_id});
+                current_user_ctx});
+    if (!response->ok()) {
+        LOG_ERROR("Error reading tiers:" << response->get_error().to_string());
+        return OpStatus(
+            OpStatus::Status::ERROR, 0, response->get_error().to_string());
+    }
 
     std::vector<StorageTier> tiers;
     for (const auto& item : response->items()) {
@@ -75,6 +80,7 @@ void DistributedHsmObjectStoreClient::do_initialize(
     m_client_manager->setup_clients(
         cache_path, m_hsm_service->get_self_config().m_self.get_primary_key(),
         m_s3_client, tiers, m_hsm_service->get_backends());
+    return {};
 }
 
 void on_error(
@@ -328,6 +334,7 @@ void DistributedHsmObjectStoreClient::do_remote_release(
         request.object().metadata().get_item("hestia-user_token");
     HttpRequest http_request(
         get_action_path(controller_endpoint), HttpRequest::Method::PUT);
+    init_request(http_request, action, user_token);
 
     do_remote_op(
         http_request, request, completion_func, progress_func,
@@ -547,9 +554,6 @@ void DistributedHsmObjectStoreClient::make_request(
     progressFunc progress_func,
     Stream* stream) const noexcept
 {
-    const auto current_user_id =
-        m_hsm_service->get_user_service()->get_current_user().get_primary_key();
-
     if (request.method() == HsmObjectStoreRequestMethod::GET
         || request.method() == HsmObjectStoreRequestMethod::EXISTS
         || request.method() == HsmObjectStoreRequestMethod::REMOVE) {

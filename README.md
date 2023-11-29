@@ -1,12 +1,10 @@
 # Hestia
 
-Hestia (Hierarchical Storage Tiers Interface for Applications) is a [Hierarchical Storage Management](https://en.wikipedia.org/wiki/Hierarchical_storage_management) (HSM) application for Object Stores.
+Hestia (Hierarchical Storage Tiers Interface for Applications) is a [Hierarchical Storage Management](https://en.wikipedia.org/wiki/Hierarchical_storage_management) (HSM) wrapper for Object Stores.
 
 It is being developed in the context of the [IO-SEA](https://iosea-project.eu) project for Exascale Storage I/O and Data Management.
 
-It adds HSM features, Object grouping and general Object adressing capabilities to third-party Object Stores.
-
-Currently the software is in an `alpha` state - interfaces are being designed for use in the IO-SEA project and basic implementations added.
+Currently the software is in a `beta` state - interfaces are being designed for use in the IO-SEA project and basic implementations added.
 
 # Hello World Example
 
@@ -15,34 +13,6 @@ The `--help` flag gives the CLI options:
 ```bash
 hestia --help
 ```
-
-```bash
-Hestia - Hierarchical Storage Tiers Interface for Applications
-Usage: hestia [OPTIONS] [SUBCOMMAND]
-
-Options:
-  -h,--help                   Print this help message and exit
-  --version                   Print application version
-
-Subcommands:
-  dataset                     dataset commands
-  object                      object commands
-  action                      action commands
-  event                       event commands
-  namespace                   namespace commands
-  tier                        tier commands
-  extent                      extent commands
-  metadata                    metadata commands
-  node                        node commands
-  object_store_backend        object_store_backend commands
-  user                        user commands
-  hsm_node                    hsm_node commands
-  server                      Run the Hestia Server
-  start                       Start the Hestia Daemon
-  stop                        Stop the Hestia Daemon
-```
-
-Each `Subcommand` supports `--help` recursively. 
 
 Create a new object:
 
@@ -87,10 +57,10 @@ Retrieve the content of the object on tier `1` and write it to `my_file_out.dat`
 hestia object get_data 550e8400-e29b-41d4-a716-446655440000 --tier 1 --file my_file_out.dat 
 ```
 
-Now, add some user metadata as a key-value pair (`my_key0 = my_value0`) to the object. Note the use of the `data.` prefix on the key, this is for denoting user/non-system attributes:
+Now, add some user metadata as a key-value pair (`my_key0=my_value0`) to the object. Note the use of the `data.` prefix on the key, this is for denoting user/non-system attributes:
 
 ```bash
-hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<< data.my_key0,my_value0
+hestia metadata update --id_fmt=parent_id --input_fmt=key_value 550e8400-e29b-41d4-a716-446655440000 <<<data.my_key0=my_value0
 ```
 
 Here we are reading the `metadata` type, but referencing the unique identifier of its parent object with `--id_fmt=parent_id`. We use the `heredoc <<<` functionality of the shell for the example, put typically you would pipe in the content of a file.

@@ -141,7 +141,7 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     const Map& action_map,
     const AuthorizationContext& auth)
 {
-    LOG_INFO("Processing HSM Action");
+    LOG_INFO("Processing HSM Action - token is: " + auth.m_user_token);
 
     Dictionary action_dict;
     action_dict.expand(action_map);

@@ -23,7 +23,8 @@ HttpResponse::Ptr TokenAuthenticationMiddleware::call(
         auto auth_response =
             m_user_service->authenticate_with_token(auth_token);
         if (auth_response->ok()) {
-            auth.m_user_id = auth_response->get_item()->get_primary_key();
+            auth.m_user_id    = auth_response->get_item()->get_primary_key();
+            auth.m_user_token = auth_token;
             LOG_INFO("Authenticated user: " + auth.m_user_id);
         }
         else {

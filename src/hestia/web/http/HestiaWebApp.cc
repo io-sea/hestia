@@ -13,6 +13,7 @@
 #include "HsmNode.h"
 #include "HsmService.h"
 #include "User.h"
+#include "UserToken.h"
 
 #include "HestiaWebPages.h"
 
@@ -69,6 +70,13 @@ HestiaWebApp::HestiaWebApp(
     user_view->set_needs_auth(false);
     m_url_router->add_pattern(
         {api_prefix + User::get_type() + "s"}, std::move(user_view));
+
+    auto user_token_view = std::make_unique<CrudWebView>(
+        hestia_service->get_user_service()->get_token_service(),
+        UserToken::get_type());
+    user_token_view->set_needs_auth(false);
+    m_url_router->add_pattern(
+        {api_prefix + UserToken::get_type() + "s"}, std::move(user_token_view));
 
     m_url_router->add_pattern(
         {api_prefix + HsmItem::hsm_action_name + "s"},

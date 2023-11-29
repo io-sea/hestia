@@ -48,6 +48,8 @@ class UserService : public CrudService {
     CrudResponse::Ptr register_user(
         const std::string& username, const std::string& password) const;
 
+    CrudService* get_token_service() const { return m_token_service.get(); }
+
   private:
     std::string get_hashed_password(
         const std::string& username, const std::string& password) const;

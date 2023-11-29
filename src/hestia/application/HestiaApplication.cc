@@ -91,12 +91,14 @@ OpStatus HestiaApplication::initialize(
 
     setup_hsm_service(service_config, crud_backend.get());
 
-    dynamic_cast<DistributedHsmObjectStoreClient*>(m_object_store_client.get())
-        ->do_initialize(
-            m_config.get_cache_path(), m_distributed_hsm_service.get());
+    const auto op_status =
+        dynamic_cast<DistributedHsmObjectStoreClient*>(
+            m_object_store_client.get())
+            ->do_initialize(
+                m_config.get_cache_path(), m_distributed_hsm_service.get());
 
     LOG_INFO("Finished Initializing Hestia");
-    return {};
+    return op_status;
 }
 
 std::string HestiaApplication::get_runtime_info() const
@@ -200,8 +202,10 @@ void sync_configs(
 void HestiaApplication::setup_hsm_service(
     const ServiceConfig& config, CrudServiceBackend* backend)
 {
-    m_event_feed = std::make_unique<EventFeed>();
-    m_event_feed->initialize(m_config.get_event_feed_config());
+    if (uses_local_storage()) {
+        m_event_feed = std::make_unique<EventFeed>();
+        m_event_feed->initialize(m_config.get_event_feed_config());
+    }
 
     auto hsm_services = std::make_unique<HsmServiceCollection>();
 
@@ -229,7 +233,7 @@ void HestiaApplication::setup_hsm_service(
     m_hsm_service = hsm_service.get();
     m_hsm_service->update_tiers(current_user_context);
 
-    if (m_event_feed->is_active() && uses_local_storage()) {
+    if (m_event_feed != nullptr && m_event_feed->is_active()) {
         const auto output_path =
             get_cache_path() + "/"
             + m_config.get_event_feed_config().get_output_path();

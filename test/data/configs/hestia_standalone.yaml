@@ -1,19 +1,25 @@
 tiers:
-  - name: "0"
-  - name: "1"
-  - name: "2"
-  - name: "3"
-  - name: "4"
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
+  - id: "00000000-0000-0000-0000-000000000003"
+    priority: 2
+  - id: "00000000-0000-0000-0000-000000000004"
+    priority: 3
+  - id: "00000000-0000-0000-0000-000000000005"
+    priority: 4
 
 object_store_backends:
   - backend_type: file_hsm
-    tier_names: ["0", "1", "2", "3"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003",
+            "00000000-0000-0000-0000-000000000004",
+            "00000000-0000-0000-0000-000000000005"]
     config: 
-      root: hsm_object_store_standalone0
-  - backend_type: file
-    tier_names: ["4"]
-    config: 
-      root: object_store_standalone0
+      root: hsm_object_store_controller0
 
 event_feed:
   active: true
