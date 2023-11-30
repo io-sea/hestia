@@ -164,6 +164,9 @@ class HsmService : public CrudService {
     void on_object_removed(
         const std::vector<std::string>& ids, const CrudUserContext& user) const;
 
+    void on_action_update(
+        const std::vector<std::string>& ids, const CrudUserContext& user) const;
+
     HsmServiceCollection::Ptr m_services;
     HsmObjectStoreClient* m_object_store;
     std::unordered_map<uint8_t, std::string> m_tier_cache;

@@ -58,6 +58,8 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     std::size_t get_num_transferred() const;
 
+    Status get_status() const;
+
     bool has_source_tier_id() const;
 
     bool has_target_tier_id() const;

@@ -6,9 +6,17 @@
 #include "hestia_iosea.h"
 
 namespace hestia {
-Datamover::Datamover()
+Datamover::Datamover(const std::string& host)
 {
-    hestia_initialize(nullptr, nullptr, nullptr);
+    if (host.empty()) {
+        hestia_initialize(nullptr, nullptr, nullptr);
+    }
+    else {
+        std::string config =
+            "{\"server\" : {\"controller_address\" : \"" + host + "\"}}";
+        std::cout << "starting with config: " << config << std::endl;
+        hestia_initialize(nullptr, nullptr, config.c_str());
+    }
 }
 
 Datamover::~Datamover()

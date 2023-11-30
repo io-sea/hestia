@@ -9,25 +9,34 @@ int main(int argc, char** argv)
 {
     if (argc < 3) {
         std::cerr
-            << "Expects at least 2 Args: <command> <work_dir> [dataset_id]"
+            << "Expects at least 2 Args: <command> <work_dir> [dataset_id] [host]"
             << std::endl;
         return -1;
     }
 
     std::string command(argv[1]);
-    if (command != "archive" && command != "restore") {
-        std::cerr << "Command is 'archive' or 'restore' - got: " << command
-                  << std::endl;
+    if (command != "archive" && command != "restore" && command != "sync") {
+        std::cerr << "Commands are 'archive', 'restore' or 'sync' - got: "
+                  << command << std::endl;
         return -1;
     }
 
     std::string dataset_id;
-    if (command == "restore") {
+    std::string host;
+    if (command == "restore" || command == "sync") {
         if (argc < 4) {
-            std::cerr << "Restore command needs datasetid arg" << std::endl;
+            std::cerr << "Command needs datasetid arg" << std::endl;
             return -1;
         }
         dataset_id = std::string(argv[3]);
+        if (argc == 5) {
+            host = std::string(argv[4]);
+        }
+    }
+    else {
+        if (argc == 4) {
+            host = std::string(argv[3]);
+        }
     }
 
     std::string sync_dir_str(argv[2]);
@@ -46,14 +55,16 @@ int main(int argc, char** argv)
     logger_config.set_should_assert_on_error(false);
     hestia::Logger::get_instance().do_initialize({}, logger_config);
 
-    hestia::SyncTool sync_tool(sync_dir);
+    hestia::SyncTool sync_tool(sync_dir, host);
 
     if (command == "archive") {
         sync_tool.archive();
     }
-    else {
+    else if (command == "restore") {
         sync_tool.restore(dataset_id);
     }
-
+    else {
+        sync_tool.sync(dataset_id);
+    }
     return 0;
 }

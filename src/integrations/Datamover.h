@@ -5,7 +5,7 @@
 namespace hestia {
 class Datamover {
   public:
-    Datamover();
+    Datamover(const std::string& host);
 
     ~Datamover();
 

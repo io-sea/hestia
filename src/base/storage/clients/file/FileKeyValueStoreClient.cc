@@ -38,6 +38,7 @@ void FileKeyValueStoreClient::string_get(
     const std::vector<std::string>& keys,
     std::vector<std::string>& values) const
 {
+    std::scoped_lock lck(m_db_mutex);
     JsonUtils::get_values(m_store / m_db_name, keys, values);
 }
 
@@ -46,18 +47,21 @@ void FileKeyValueStoreClient::string_set(
 {
     const auto path = m_store / m_db_name;
     FileUtils::create_if_not_existing(path);
+    std::scoped_lock lck(m_db_mutex);
     JsonUtils::set_values(path, kv_pairs);
 }
 
 void FileKeyValueStoreClient::string_remove(
     const std::vector<std::string>& keys) const
 {
+    std::scoped_lock lck(m_db_mutex);
     JsonUtils::remove_keys(m_store / m_db_name, keys);
 }
 
 void FileKeyValueStoreClient::string_exists(
     const std::vector<std::string>& keys, std::vector<bool>& found) const
 {
+    std::scoped_lock lck(m_db_mutex);
     return JsonUtils::has_keys(m_store / m_db_name, keys, found);
 }
 

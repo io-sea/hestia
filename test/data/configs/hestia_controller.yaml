@@ -18,3 +18,6 @@ tiers:
 
 event_feed:
   active: true
+
+logger:
+  level: debug

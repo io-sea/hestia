@@ -54,5 +54,6 @@ class FileKeyValueStoreClient : public KeyValueStoreClient {
 
     std::filesystem::path m_store{"kv_store"};
     std::string m_db_name{"strings_db.json"};
+    mutable std::mutex m_db_mutex;
 };
 }  // namespace hestia

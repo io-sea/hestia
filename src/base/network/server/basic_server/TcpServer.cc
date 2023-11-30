@@ -34,7 +34,7 @@ void TcpServer::listen(
         auto on_bound = [this](bool bound) {
             (void)bound;
             LOG_INFO("Socket bound");
-            std::unique_lock<std::mutex> lck(m_working_socket_bind_mutex);
+            std::scoped_lock<std::mutex> lck(m_working_socket_bind_mutex);
             m_working_socket_bound_cv.notify_one();
         };
 

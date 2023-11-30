@@ -17,3 +17,6 @@ object_store_backends:
             "00000000-0000-0000-0000-000000000005"]
     config: 
       root: hsm_object_store_worker0
+
+logger:
+  level: debug

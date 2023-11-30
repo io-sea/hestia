@@ -4,6 +4,7 @@
 #include "hestia_iosea.h"
 
 #include "StringUtils.h"
+#include "TimeUtils.h"
 #include "YamlUtils.h"
 
 #include <algorithm>
@@ -11,10 +12,19 @@
 #include <thread>
 
 namespace hestia {
-PolicyEngine::PolicyEngine(const std::filesystem::path& cache_dir) :
+PolicyEngine::PolicyEngine(
+    const std::filesystem::path& cache_dir, const std::string& host) :
     m_cache_dir(cache_dir)
 {
-    hestia_initialize(nullptr, nullptr, nullptr);
+    if (host.empty()) {
+        hestia_initialize(nullptr, nullptr, nullptr);
+    }
+    else {
+        std::string config =
+            "{\"server\" : {\"controller_address\" : \"" + host + "\"}}";
+        std::cout << "starting with config: " << config << std::endl;
+        hestia_initialize(nullptr, nullptr, config.c_str());
+    }
 }
 
 PolicyEngine::~PolicyEngine()
@@ -29,9 +39,7 @@ PolicyEngine::~PolicyEngine()
 static int db_callback(void*, int argc, char** argv, char** column_name)
 {
     for (int i = 0; i < argc; i++) {
-        LOG_ERROR(
-            "%s = %s\n"
-            << column_name[i] << (argv[i] ? argv[i] : "NULL"));
+        std::cout << column_name[i] << " | " << argv[i] << std::endl;
     }
     return 0;
 }
@@ -52,10 +60,10 @@ void PolicyEngine::do_db_op(const std::string& statement)
     }
 }
 
-void PolicyEngine::initialize_db()
+void PolicyEngine::initialize_db(bool clean)
 {
     auto db_path = m_cache_dir / std::filesystem::path("policy_engine_db.db");
-    if (std::filesystem::exists(db_path)) {
+    if (clean && std::filesystem::exists(db_path)) {
         std::filesystem::remove(db_path);
     }
 
@@ -64,30 +72,44 @@ void PolicyEngine::initialize_db()
         LOG_ERROR("Failed to open db");
     }
 
-    // Create objects table
-    std::string obj_statement = R"(
-        CREATE TABLE IF NOT EXISTS objects (
-            id TEXT PRIMARY KEY,
-            modified_time INT NOT NULL,
-            created_time INT NOT NULL,
-            accessed_time INT NOT NULL,
-            size INT NOT NULL
-        );
-    )";
-    do_db_op(obj_statement);
+    if (clean) {
+        // Create objects table
+        std::string statement = R"(
+            CREATE TABLE IF NOT EXISTS objects (
+                id TEXT PRIMARY KEY,
+                modified_time INT NOT NULL,
+                created_time INT NOT NULL,
+                accessed_time INT NOT NULL,
+                size INT NOT NULL
+            );
+        )";
+        do_db_op(statement);
 
-    // Create tiers table
-    std::string tier_statement = R"(
-        CREATE TABLE IF NOT EXISTS tiers (
-            priority INT PRIMARY KEY
-        );
-    )";
-    do_db_op(tier_statement);
+        // Create tiers table
+        statement = R"(
+            CREATE TABLE IF NOT EXISTS tiers (
+                priority INT PRIMARY KEY
+            );
+        )";
+        do_db_op(statement);
+    }
 }
 
 std::string get_object_columns()
 {
     return "id, modified_time, created_time, accessed_time, size";
+}
+
+void PolicyEngine::log_db()
+{
+    std::string tier_read_statement = R"(SELECT priority FROM tiers)";
+    std::cout << "Tiers" << std::endl;
+    do_db_op(tier_read_statement);
+
+    std::string object_read_statement =
+        "SELECT " + get_object_columns() + " FROM objects";
+    std::cout << "Objects" << std::endl;
+    do_db_op(object_read_statement);
 }
 
 std::string get_object_insert_values(const HestiaObject& obj)
@@ -120,15 +142,52 @@ std::string get_object_update_values_for_read(const std::string& time)
     return ret;
 }
 
-void PolicyEngine::do_initial_sync()
+int PolicyEngine::add_object_insert_values(
+    uint8_t tier_index, std::string& statement)
+{
+    HestiaId* object_ids{nullptr};
+    std::size_t num_obj_ids{0};
+    auto rc = hestia_object_list(tier_index, &object_ids, &num_obj_ids);
+    if (rc != 0) {
+        LOG_ERROR("Failed to list objects on tier");
+        return rc;
+    }
+
+    for (std::size_t jdx = 0; jdx < num_obj_ids; jdx++) {
+        HestiaObject object;
+        rc = hestia_object_get_attrs(&object_ids[jdx], &object);
+        if (rc != 0) {
+            LOG_ERROR("Failed to get object");
+            return rc;
+        }
+        statement += get_object_insert_values(object) + ",\n";
+        hestia_init_object(&object);
+    }
+    // hestia_free_ids(&object_ids, num_obj_ids);
+    return 0;
+}
+
+void PolicyEngine::add_tier_insert_values(
+    uint8_t tier_index, std::string& statement)
+{
+    statement += "(" + std::to_string(tier_index) + "),\n";
+}
+
+void PolicyEngine::replace_list_terminator(std::string& statement)
+{
+    if (statement[statement.size() - 2] == ',') {
+        statement[statement.size() - 2] = ';';
+    }
+}
+
+int PolicyEngine::do_sync(std::time_t& sync_time)
 {
     // Get tiers
     uint8_t* tiers{nullptr};
     std::size_t num_tiers{0};
-    auto rc = hestia_list_tiers(&tiers, &num_tiers);
-    if (rc != 0) {
+    if (const auto rc = hestia_list_tiers(&tiers, &num_tiers); rc != 0) {
         LOG_ERROR("Failed to list tiers");
-        return;
+        return rc;
     }
 
     // Add them to db
@@ -137,57 +196,39 @@ void PolicyEngine::do_initial_sync()
         VALUES
     )";
     for (std::size_t idx = 0; idx < num_tiers; idx++) {
-        tier_insert_stmt += "(" + std::to_string(tiers[idx]) + ")";
-        if (idx < num_tiers - 1) {
-            tier_insert_stmt += ",\n";
-        }
-        else {
-            tier_insert_stmt += ";\n";
-        }
+        add_tier_insert_values(tiers[idx], tier_insert_stmt);
     }
+    replace_list_terminator(tier_insert_stmt);
     do_db_op(tier_insert_stmt);
 
     // Get objects and add to db
     std::string obj_insert_stmt =
         "INSERT INTO objects (" + get_object_columns() + ") VALUES ";
 
-    bool objects_found = false;
+    bool objects_found{false};
     for (std::size_t idx = 0; idx < num_tiers; idx++) {
-        HestiaId* object_ids{nullptr};
-        std::size_t num_obj_ids{0};
-        rc = hestia_object_list(tiers[idx], &object_ids, &num_obj_ids);
+        std::string tier_object_values;
+        auto rc = add_object_insert_values(tiers[idx], tier_object_values);
         if (rc != 0) {
-            LOG_ERROR("Failed to list objects on tier");
-            return;
+            return rc;
         }
-
-        bool tier_objects_found = num_obj_ids > 0;
-        if (tier_objects_found) {
+        if (!tier_object_values.empty()) {
             objects_found = true;
         }
-        for (std::size_t jdx = 0; jdx < num_obj_ids; jdx++) {
-            HestiaObject object;
-            rc = hestia_object_get_attrs(&object_ids[jdx], &object);
-            if (rc != 0) {
-                LOG_ERROR("Failed to get object");
-                return;
-            }
-            obj_insert_stmt += get_object_insert_values(object);
-            obj_insert_stmt += ",\n";
-            hestia_init_object(&object);
-        }
-        // hestia_free_ids(&object_ids, num_obj_ids);
+        obj_insert_stmt += tier_object_values;
     }
+
+    sync_time = TimeUtils::get_current_time();
+
     if (objects_found) {
-        if (obj_insert_stmt[obj_insert_stmt.size() - 2] == ',') {
-            obj_insert_stmt[obj_insert_stmt.size() - 2] = ';';
-        }
+        replace_list_terminator(obj_insert_stmt);
         do_db_op(obj_insert_stmt);
     }
     hestia_free_tier_ids(&tiers);
+    return 0;
 }
 
-void PolicyEngine::start_event_listener()
+void PolicyEngine::start_event_listener(std::time_t last_sync_time)
 {
     // Since we are building mostly on mac - use a simple poll for now
     // to keep things cross platform.
@@ -215,13 +256,13 @@ void PolicyEngine::start_event_listener()
             }
         }
         if (have_events) {
-            on_events();
+            on_events(last_sync_time);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
-void PolicyEngine::on_events()
+void PolicyEngine::on_events(std::time_t last_sync_time)
 {
     const auto event_feed_path =
         m_cache_dir / std::filesystem::path("event_feed.yaml");
@@ -234,7 +275,7 @@ void PolicyEngine::on_events()
         auto event = root->get_map_item("root");
         const auto event_time =
             std::stoll(event->get_map_item("time")->get_scalar());
-        if (event_time > m_last_event_time) {
+        if (event_time > m_last_event_time && event_time > last_sync_time) {
             if (event_time > file_last_event) {
                 file_last_event = event_time;
             }

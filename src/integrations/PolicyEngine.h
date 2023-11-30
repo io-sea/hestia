@@ -10,18 +10,21 @@ struct HestiaObject;
 namespace hestia {
 class PolicyEngine {
   public:
-    PolicyEngine(const std::filesystem::path& cache_dir);
+    PolicyEngine(
+        const std::filesystem::path& cache_dir, const std::string& host = {});
 
     ~PolicyEngine();
 
-    void initialize_db();
+    void initialize_db(bool clean = false);
 
-    void do_initial_sync();
+    void log_db();
 
-    void start_event_listener();
+    int do_sync(std::time_t& sync_time);
+
+    void start_event_listener(std::time_t last_sync_time);
 
   private:
-    void on_events();
+    void on_events(std::time_t last_sync_time);
 
     void on_event(const Dictionary& event);
 
@@ -39,6 +42,12 @@ class PolicyEngine {
         const std::string& value);
 
     void check_for_hints(const HestiaObject& object);
+
+    int add_object_insert_values(uint8_t tier_index, std::string& statement);
+
+    void add_tier_insert_values(uint8_t tier_index, std::string& statement);
+
+    void replace_list_terminator(std::string& statement);
 
     void do_db_op(const std::string& statement);
 

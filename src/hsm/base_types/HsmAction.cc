@@ -167,6 +167,11 @@ HsmAction::Action HsmAction::get_action() const
     return m_action.get_value();
 }
 
+HsmAction::Status HsmAction::get_status() const
+{
+    return m_status.get_value();
+}
+
 uint8_t HsmAction::get_source_tier() const
 {
     return m_source_tier.get_value();
