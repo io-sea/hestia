@@ -84,7 +84,8 @@ void FileObjectStoreClient::migrate(
 {
     if (!exists(object_id)) {
         throw std::runtime_error(
-            "Couldn't find requested source object during migrate.");
+            "Couldn't find requested object '" + object_id
+            + "' during COPY or MOVE.");
     }
 
     const auto target_data_path     = get_data_path(object_id, root);

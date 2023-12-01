@@ -741,6 +741,15 @@ void HsmService::get_data(
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
+    if (action_context.m_extent.empty()) {
+        const auto object_id = action_context.m_action.get_subject_key();
+        std::string msg      = SOURCE_LOC() + " | Object " + object_id
+                          + " not found on tier with uuid "
+                          + action_context.m_source_tier_id;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::ITEM_NOT_FOUND, msg});
+    }
+
     make_object_store_request(
         HsmObjectStoreRequestMethod::GET, action_context, stream);
 }
@@ -765,6 +774,14 @@ void HsmService::copy_data(
     CRUD_ERROR_CHECK(action_response, action_context);
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
+    }
+    if (action_context.m_extent.empty()) {
+        const auto object_id = action_context.m_action.get_subject_key();
+        std::string msg      = SOURCE_LOC() + " | Object " + object_id
+                          + " not found on tier with uuid "
+                          + action_context.m_source_tier_id;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::ITEM_NOT_FOUND, msg});
     }
     make_object_store_request(
         HsmObjectStoreRequestMethod::COPY, action_context);
@@ -791,6 +808,14 @@ void HsmService::move_data(
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
+    if (action_context.m_extent.empty()) {
+        const auto object_id = action_context.m_action.get_subject_key();
+        std::string msg      = SOURCE_LOC() + " | Object " + object_id
+                          + " not found on tier "
+                          + action_context.m_source_tier_id;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::ITEM_NOT_FOUND, msg});
+    }
     make_object_store_request(
         HsmObjectStoreRequestMethod::MOVE, action_context);
 }
@@ -810,6 +835,14 @@ void HsmService::release_data(
     CRUD_ERROR_CHECK(action_response, action_context);
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
+    }
+    if (action_context.m_extent.empty()) {
+        const auto object_id = action_context.m_action.get_subject_key();
+        std::string msg      = SOURCE_LOC() + " | Object " + object_id
+                          + " not found on tier "
+                          + action_context.m_source_tier_id;
+        throw RequestException<HsmActionError>(
+            {HsmActionErrorCode::ITEM_NOT_FOUND, msg});
     }
     make_object_store_request(
         HsmObjectStoreRequestMethod::REMOVE, action_context);

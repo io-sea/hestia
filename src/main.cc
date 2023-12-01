@@ -35,8 +35,7 @@ int main(int argc, char** argv)
         }
     }
     catch (const std::exception& e) {
-        std::cerr << "Uncaught exception running Hestia: " << e.what()
-                  << std::endl;
+        std::cerr << "Error running Hestia: " << e.what() << std::endl;
         if (hestia_app) {
             std::cerr << "See Logs in " << hestia_app->get_cache_path()
                       << " for details." << std::endl;
@@ -49,8 +48,8 @@ int main(int argc, char** argv)
             hestia_app.reset();
         }
         catch (const std::exception& e) {
-            std::cerr << "Uncaught exception clearing Hestia Context: "
-                      << e.what() << std::endl;
+            std::cerr << "Error clearing Hestia Context: " << e.what()
+                      << std::endl;
             std::cerr << "See Logs in " << hestia_app->get_cache_path()
                       << " for details." << std::endl;
             rc = -1;

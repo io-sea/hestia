@@ -35,7 +35,11 @@
             if (iter != m_values.end()) {                                      \
                 return static_cast<TYPE>(iter - m_values.begin());             \
             }                                                                  \
-            throw std::runtime_error("Bad input string");                      \
+            std::string msg = "Bad input '" + input + "'- valid values are: "; \
+            for (const auto& value : m_values) {                               \
+                msg += value + ",";                                            \
+            }                                                                  \
+            throw std::runtime_error(msg);                                     \
         }                                                                      \
         std::vector<std::string> m_values;                                     \
     };
