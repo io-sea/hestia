@@ -55,7 +55,7 @@ class HestiaClientBase():
     def object_attrs_put(self, id: str, attrs: dict) -> json:
         attr_str = ""
         for key, value in attrs.items():
-            attr_str += f"data.{key},{value}\n"
+            attr_str += f"data.{key}={value}\n"
 
         payload = id + "\n\n" + attr_str
 
@@ -100,7 +100,7 @@ class HestiaClientBase():
             hestia_lib.HestiaIdFormatT.HESTIA_PARENT_ID,
             input=id, output_format=hestia_lib.HestiaIoFormatT.HESTIA_IO_JSON
         ))
-        return md_item["data"]
+        return md_item[0]["data"]
 
     """ Remove and object entirely from the system. This releases the object data on all tiers also.
 

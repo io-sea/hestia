@@ -180,6 +180,11 @@ int HestiaCApi::do_crud(
         }
         if (HestiaCApi::expects_attrs(method, input_format)) {
 
+            if (input_format
+                == static_cast<hestia_io_format_e>(
+                    HESTIA_IO_IDS | HESTIA_IO_KEY_VALUE)) {
+                offset++;
+            }
             CrudAttributes::FormatSpec format;
             format.m_type = HestiaCApi::to_crud_attr_format(input_format);
             req.append(body.substr(offset, body.size() - offset), format);

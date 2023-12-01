@@ -833,8 +833,12 @@ void HsmService::create_or_update_extent(
     const TierExtents& extent,
     bool do_create) const
 {
-    auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
-    LOG_INFO("Doing extent create with object id: " << extent.get_object_id());
+    auto extent_service  = m_services->get_service(HsmItem::Type::EXTENT);
+    const auto op_string = do_create ? "create" : "update";
+
+    LOG_INFO("Doing extent "
+                 << op_string << " with object id: " << extent.get_object_id()
+                 << " and tier id " << extent.get_tier_id() << std::endl;);
 
     const auto response =
         extent_service->make_request(TypedCrudRequest<TierExtents>(

@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     printf("Created object with id: %s\n", object_id);
 
     // Assign USER attributes
-    char attrs[] = "\n\ndata.key0,value0\ndata.key1,value1";
+    char attrs[] = "\n\ndata.key0=value0\ndata.key1=value1";
     int len_attrs = strlen(attrs);
     char input_buffer[2048] = {0};
     strncpy(input_buffer, object_id, len_object_id);

@@ -36,13 +36,13 @@ hestia object put_data 550e8400-e29b-41d4-a716-446655440000 --file my_file_in.da
 A unique identifier for the corresponding `HsmAction` will be returned in the shell, it can be queried to get the status and further information on the transfer:
 
 ```bash
-hestia action read --output_fmt=json 43e006fa-8ca7-d57b-6c5b-491a0881dc9f
+hestia action read 43e006fa-8ca7-d57b-6c5b-491a0881dc9f
 ```
 
 We can also query the object to see where the data has been written to:
 
 ```bash
-hestia object read --output_fmt=json 550e8400-e29b-41d4-a716-446655440000
+hestia object read 550e8400-e29b-41d4-a716-446655440000
 ```
 
 Next, copy the contents of the object to another Storage Tier, tier `1`:
@@ -106,7 +106,8 @@ Several libraries are automatically fetched if not found, using CMake `FetchCont
 Do:
 
 ```bash
-mkdir $BUILD_DIR; cd $BUILD_DIR
+mkdir $BUILD_DIR
+cd $BUILD_DIR
 cmake $PATH_TO_SOURCE
 make
 ```

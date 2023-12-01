@@ -3,11 +3,13 @@
 #include "hestia.h"
 #include "hestia_private.h"
 
+#include "JsonDocument.h"
 #include "JsonUtils.h"
 #include "MockHestiaClient.h"
 #include "TestClientConfigs.h"
 
 #include <iostream>
+#include <unordered_map>
 
 class HestiaCApiTestFixture {
   public:
@@ -138,6 +140,54 @@ class HestiaCApiTestFixture {
         content = std::string(buffer.begin(), buffer.begin() + length);
     }
 
+    void do_set_attrs(
+        const std::string& id,
+        const std::unordered_map<std::string, std::string>& attrs)
+    {
+        std::string payload = id;
+        payload += "\n\ndata.";
+        for (const auto& [key, value] : attrs) {
+            payload += key + "=" + value + "\n";
+        }
+        char* output{nullptr};
+        int len_output{0};
+        auto rc = hestia_update(
+            HESTIA_USER_METADATA,
+            static_cast<hestia_io_format_e>(
+                HESTIA_IO_IDS | HESTIA_IO_KEY_VALUE),
+            HESTIA_PARENT_ID, payload.data(), payload.size(), HESTIA_IO_NONE,
+            &output, &len_output);
+        REQUIRE(rc == 0);
+        hestia_free_output(&output);
+    }
+
+    void do_get_attrs(
+        const std::string& id,
+        std::unordered_map<std::string, std::string>& attrs)
+    {
+        int total_count = 0;
+        char* output{nullptr};
+        int len_output{0};
+        auto rc = hestia_read(
+            HESTIA_USER_METADATA, HESTIA_QUERY_IDS, HESTIA_PARENT_ID, 0, 0,
+            id.data(), id.size(), HESTIA_IO_JSON, &output, &len_output,
+            &total_count);
+        REQUIRE(rc == 0);
+        REQUIRE(len_output > 0);
+
+        std::string payload(output, len_output);
+        hestia::Dictionary dict;
+        hestia::JsonDocument json(payload);
+        json.write(dict);
+
+        REQUIRE(dict.get_sequence()[0]->has_map_item("data"));
+
+        hestia::Map items;
+        dict.get_sequence()[0]->get_map_item("data")->get_map_items(items);
+        attrs = items.data();
+        hestia_free_output(&output);
+    }
+
     hestia::mock::MockHestiaClient* m_client{nullptr};
 };
 
@@ -151,6 +201,13 @@ TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API", "[hestia]")
     do_read(read_id);
     REQUIRE(read_id == id);
 
+    std::unordered_map<std::string, std::string> attrs{{"my_key", "my_value"}};
+    do_set_attrs(id, attrs);
+
+    std::unordered_map<std::string, std::string> ret_attrs;
+    do_get_attrs(id, ret_attrs);
+    REQUIRE_FALSE(ret_attrs.empty());
+
     std::string content("The quick brown fox jumps over the lazy dog");
     do_put(id, content);
 
@@ -158,14 +215,3 @@ TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API", "[hestia]")
     do_get(id, returned_content);
     REQUIRE(content == returned_content);
 }
-
-/*
-TEST_CASE_METHOD(HestiaCApiTestFixture, "Test Hestia C API with names",
-"[hestia]")
-{
-    std::string name{"my_object"};
-    do_create_name(name);
-
-    do_read_name(name);
-}
-*/

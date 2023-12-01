@@ -380,6 +380,9 @@ int hestia_data_release(
 /// @brief Add the last set error message to the preallocated buffer
 void hestia_get_last_error(char* message_buffer, size_t len_message_buffer);
 
+/// @brief Output application info to std out
+void hestia_output_info();
+
 #ifdef __cplusplus
 }
 #endif

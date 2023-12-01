@@ -203,3 +203,12 @@ TEST_CASE("RawDictField- modify value and primary key", "[common]")
     testfield.set_is_primary_key(true);
     REQUIRE(testfield.is_primary_key());
 }
+
+TEST_CASE("Test deserialize with whitespace", "[common]")
+{
+    std::string payload = "\ndata.my_key=my_value\n";
+
+    hestia::Dictionary::FormatSpec default_spec;
+    hestia::Dictionary dict(payload, default_spec);
+    REQUIRE(dict.has_map_item("data"));
+}

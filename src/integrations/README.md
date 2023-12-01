@@ -2,7 +2,7 @@
 
 These tools are to help sanity check the IO-SEA HSM API and may also be useful as a guide on how to use the API in `hestia_iosea.h`. They need to be built from source rather than used in an installed version.
 
-The tools mock out different elements of the IO-SEA system - implementing what you see in the ![figure](./Hestia_HSM.png).
+The tools mock out different elements of the IO-SEA system - implementing what you see in the figure. ![Simplified IO-SEA architecture](./Hestia_HSM.png)
 
 Overall, we can use them to:
 
@@ -15,7 +15,7 @@ First we will run through in 'local mode' - where all tools are directly accessi
 ## Local Mode
 
 * Start the Hestia server so you can follow along with the web-view: `hestia server start`. 
-* Navigate to `127.0.0.1` and log in with `hestia_default_user` and `my_user_pass`. Click around to explore the contents of the Hestia DB.
+* Navigate to `127.0.0.1:8080` and log in with `hestia_default_user` and `my_user_pass`. Click around to explore the contents of the Hestia DB.
 
 ![Web view](./webview.png).
 

@@ -32,7 +32,7 @@ This is the `Hestia` user guide, it covers:
   - [Usage](#usage)
     - [Hestia Roles in your Playbook](#hestia-roles-in-your-playbook)
   - [Configuration](#configuration-1)
-    - [Backend Types/Configurations](#backend-typesconfigurations)
+    - [Backend Configuration](#backend-configuration)
 
 # Core Concepts
 
@@ -59,7 +59,6 @@ The figure below shows the abstractions used in Hestia and their relationships.
 * `Node`: This is a Hestia server instance - it holds server address details and configuration of the application running on the server
 * `Tier` : This is a Storage Tier in a HSM system - it represents a physical storage resource, with descriptive properties such as bandwitdh, capacity, storage media etc.
 * `User` : Several Hestia resources are scoped to a user - they can be registered in Hestia with a unique username and authenticate with a system provided token.
-* `Event` : Any events (such as resource creation, update, destruction etc) can be output to a feed for system analytics or Data Warehousing applications.
 * `Dataset` : A Dataset is a group of Objects owned by a User, allowing for Object operation batching and hints for automated HSM movements.
 * `Action` : A HSM action (data put, get, copy, move etc) requested by a User, it provides tracking and progress updates for long running operations.
 * `Object` : A Storage object - it can point to a single object with data split over several storage tiers and also hold object metadata.
@@ -119,17 +118,22 @@ Hestia can interface with several Object Store backends at the same time, thus t
 
 ```yaml
 object_store_clients:
+object_store_backends:
   - backend_type: file_hsm
-    tier_names: ["0", "1", "2", "3"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003"]
     config: 
-      root: hsm_object_store
+      root: hsm_object_store_controller0
   - backend_type: file
-    tier_names: ["4"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000004"]
     config: 
       root: object_store
 ```
 
-Here we have configured two clients, the first is a HSM enabled client which uses the local filesystem and the second is simple filesystem-based object store with one tier. We specify a `backend_type`, give the list of unique tier identifiers to be handled by the client in `tier_names` and any client-specific config as a sub-object of the `config` key.
+Here we have configured two clients, the first is a HSM enabled client which uses the local filesystem and the second is simple filesystem-based object store with one tier. We specify a `backend_type`, give the list of unique tier identifiers to be handled by the client in `tiers.ids` and any client-specific config as a sub-object of the `config` key.
 
 The following backends are currently supported:
 
@@ -146,15 +150,13 @@ In addition, a number of `Mock` versions of the above clients are available for 
 When working with HSM systems we want to match a `Storage Tier` with an Object Store backend that can handle data operations for this tier, we can create this relationship in the config as follows:
 
 ```yaml
-tiers:
-  - name: "0"
-  - name: "1"
-  - name: "2"
-  - name: "3"
-  - name: "4"
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003"]
 ```
 
-Where the tier `name` is a unique identifier corresponding to the entires in the `object_store_clients` config. Each tier entry can have further configuration options than shown above (capacity, bandwith etc), a unique name is the minimum required config.
+Where the tier `id` is a unique identifier corresponding to the entires in the `object_store_clients` config. Each tier entry can have further configuration options than shown above (priority (index), capacity, bandwith etc), a unique priority is the minimum required config.
 
 ## Server Settings
 
@@ -305,7 +307,7 @@ For convenience the server will host a web-view of the state of the Hestia syste
 #### Authentication
 Requests for creating resources need to include information about the User making the request. Hestia currently supports a simple token-based Authentication. To find the token for the default user you can go to: http://localhost:8080/api/v1/users in your web browser.
 
-Create a new object do:
+To create a new object do:
 
 ```bash
 curl -X PUT -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=" $HESTIA_ENDPOINT/api/v1/objects
@@ -317,49 +319,9 @@ where the header `authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=` c
 {"creation_time":"1694686359645111","dataset":{"id":"17ab0a87-cb5f-343b-a1c2-7d0cce08ddf4"},"id":"550e8400-e29b-41d4-a716-446655440000","last_modified_time":"1694686359645111","read_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"},"size":"0","tiers":[],"type":"object","user_metadata":{"creation_time":"1694686359641160","data":{},"id":"bb160846-4928-555f-c0dd-944cc1504d29","last_modified_time":"1694686359641160","object":{"id":"550e8400-e29b-41d4-a716-446655440000"},"type":"metadata"},"write_lock":{"active":"false","locked_at":"0","max_lock_time":"5000"}}
 ```
 
-The object id will be returned in the `id` field in the response `json`. To add data to the object with id `550e8400-e29b-41d4-a716-446655440000` we create a HSM action:
+An example showing further cURL use for manipulating objects and uploading/downloading data is included [here](/examples/sample_shell/hestia_sample.sh).
 
-```bash
-curl -X PUT --upload-file "my_file.dat" \
-  -H "hestia.hsm_action.action: put_data" \
-  -H "hestia.hsm_action.subject_key: 550e8400-e29b-41d4-a716-446655440000" \
-  -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=" \
-  $HESTIA_ENDPOINT/api/v1/actions/
-```
-
-Note the use of the HTTP Header to provide metadata, as the body is reserved for object data streaming. The header is a direct serialization of the C++ `Action` instance - the corresponding source code documentation can be used for reference.
-
-```bash
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   249    0     0  100   249      0    241  0:00:01  0:00:01 --:--:--   242
-```
-
-Copy it to another tier, tier `1`:
-
-```bash
-curl -X PUT -H "hestia.hsm_action.action: copy_data" \ 
-            -H "hestia.hsm_action.source_tier: 0" \
-            -H "hestia.hsm_action.target_tier: 1" \
-            -H "hestia.hsm_action.subject_type: object" \
-            -H "hestia.hsm_action.subject_key: 550e8400-e29b-41d4-a716-446655440000" \
-            -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=" \
-            $HESTIA_ENDPOINT/api/v1/actions
-```
-
-Not we specify the `subject_type` in this case, to make the operation distinct from copying a full `dataset`.
-
-Next we retrieve the data from the version on tier `1`:
-
-```bash
-curl -H "hestia.hsm_action.source_tier: 1" \
-     -H "hestia.hsm_action.subject_key: 550e8400-e29b-41d4-a716-446655440000" \
-     -H "hestia.hsm_action.action: get_data" \ 
-     -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=" \
-  $HESTIA_ENDPOINT/api/v1/hsm/actions
-```
-
-Stop the Hestia service
+When finished, stop the Hestia service
 
 ```bash
 hestia stop

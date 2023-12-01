@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     input_buffer += "\n\n";
     for(const auto& [key, value] : user_attrs)
     {
-        input_buffer += key + "," + value + "\n";
+        input_buffer += "data." + key + "=" + value + "\n";
     }
 
     ScopedBuffer output_buffer;
@@ -109,8 +109,19 @@ int main(int argc, char** argv)
         std::cerr << "Failed to get object system attributes." << std::endl;
         return rc;
     }
-
     std::cout << "Got object attributes: " << output_buffer.m_content << std::endl;
+    output_buffer.reset();
+
+    // Get the object USER attributes
+    total_count = 0;
+    rc = hestia_read(HESTIA_USER_METADATA, HESTIA_QUERY_IDS, HESTIA_PARENT_ID, 0, 0, object_id.m_content, object_id.m_length, 
+        HESTIA_IO_JSON, &output_buffer.m_content, &output_buffer.m_length, &total_count);
+    if (rc != 0)
+    {
+        std::cerr << "Failed to get object system attributes." << std::endl;
+        return rc;
+    }
+    std::cout << "Got object user attributes: " << output_buffer.m_content << std::endl;
 
     hestia_finish();
     return 0;

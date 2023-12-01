@@ -130,6 +130,11 @@ int hestia_stop_server()
     return 0;
 }
 
+void hestia_output_info()
+{
+    std::cout << g_client->get_runtime_info() << std::endl;
+}
+
 int hestia_initialize(
     const char* config_path, const char* token, const char* extra_config)
 {

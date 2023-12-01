@@ -13,6 +13,8 @@
 
 int main(int argc, char** argv)
 {
+    // First arg is path to a config file - it might be useful to change Log level or
+    // point to a Hestia server.
     if (argc == 2) {
         hestia_initialize(argv[1], NULL, NULL);
     }
@@ -20,12 +22,21 @@ int main(int argc, char** argv)
         hestia_initialize(NULL, NULL, NULL);
     }
 
+    // Dump some useful info - e.g. cache/log locations to std out.
+    hestia_output_info();
+
     // Create an object with some initial data - if running the example multiple times
     // you need to clear the cache or change subsequent 'puts' to use the HESTIA_UPDATE flag.
+    //
+    // Here we provide a uuid in hex form - if you leave 'object_id' uninitialized 
+    // Hestia will generate an id in the 'm_uuid' field after a PUT call (you will need to tell Hestia to free
+    // it later in that case). It is also possible to input the id in decimal form (lo,hi 64-bit pair).
     HestiaId object_id;
     hestia_init_id(&object_id);
-    object_id.m_lo = 1234;
+    object_id.m_uuid = "00000000-0000-0000-0000-000000000001";
 
+    // The input_context describes the input data - here it is an in-memory buffer, but it can also be
+    // a file descriptor or path to a file.
     char content[] = "The quick brown fox jumps over the lazy dog";
     HestiaIoContext input_context;
     input_context.m_type   = HESTIA_IO_BUFFER;
@@ -33,8 +44,10 @@ int main(int argc, char** argv)
     input_context.m_buffer = content;
     input_context.m_offset = 0;
 
-    int tier0 = 0;
-    int rc = hestia_object_put(&object_id, HESTIA_CREATE, &input_context, tier0);
+    // Here we leave the target tier unassigned - this will default to the available tier with lowest index (priority tag).
+    // If you want to assign a tier you need to 'init' the struct via Hestia and then set the tier index.
+    HestiaTier tier;
+    int rc = hestia_object_put(&object_id, HESTIA_CREATE, &input_context, &tier);
     if (rc != 0)
     {
         ON_ERROR("Error in object put - if you've run the example before maybe you need to clear the cache.");
@@ -64,7 +77,9 @@ int main(int argc, char** argv)
     output_context.m_length = strlen(content) + 1;
     output_context.m_buffer = return_buffer;
     output_context.m_offset = 0;
-    rc = hestia_object_get(&object_id, &output_context, tier0);
+
+    // Again we are defaulting to the 'fastest' available tier.
+    rc = hestia_object_get(&object_id, &output_context, &tier);
     if (rc != 0)
     {
         ON_ERROR("Error in object get.");
@@ -92,8 +107,11 @@ int main(int argc, char** argv)
     hestia_init_object(&object_attrs); // Frees and reinitializes the struct
 
     // Copy the object to a new tier
+    int tier0 = 0; // We are assuming data was added to tier0 earlier, 
+    // strictly you would need to check the object tiers first with 'hestia_object_locate()' if you allowed
+    // hestia to pick the tier during 'PUT'.
     int tier1 = 1;
-    rc = hestia_object_copy(& object_id, tier0, tier1);
+    rc = hestia_object_copy(&object_id, tier0, tier1);
     if (rc != 0)
     {
         ON_ERROR("Error in object copy.");
@@ -102,7 +120,7 @@ int main(int argc, char** argv)
 
     // Move the object to another tier
     int tier2 = 2;
-    rc = hestia_object_copy(& object_id, tier1, tier2);
+    rc = hestia_object_copy(&object_id, tier1, tier2);
     if (rc != 0)
     {
         ON_ERROR("Error in object move.");
@@ -167,9 +185,9 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    if (object_ids[0].m_lo != object_id.m_lo)
+    if (strcmp(object_ids[0].m_uuid, object_id.m_uuid) != 0)
     {
-        printf("Expected object id %llu on tier 0 but got %llu.", object_id.m_lo, object_ids[0].m_lo);
+        printf("Expected object id %s on tier 0 but got %s.", object_id.m_uuid, object_ids[0].m_uuid);
         return -1;
     }
     hestia_free_ids(&object_ids, num_object_ids);

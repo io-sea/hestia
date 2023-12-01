@@ -14,102 +14,78 @@ The Event Feed can output to multiple sinks. The `HsmEventSink` is used for the 
 
 A sample feed output is shown below (with manually added comments) using the HSM Event Sink. Each event is a separate YAML document, with tags corresponding to CRUD actions. Tags are one of [`create`, `read`, `update`, `remove`]. 
 
-All events have `id` and `time` tags. The `id` is a unique identifier string for the storage object. The `time` is the unix time the event was created at (which should be close to the resource modification time) as an unsigned integer.
+All events have `id` and `time` tags. The `id` is a unique identifier string for the storage object. The `time` is the unix time corresponding to the event (e.g. creation time for 'create' event, last accessed time for 'read' event).
 
-`create` and `update` events have an `attrs` field which is a Map type. Top-level keys are SYSTEM keys. `update` events have `user_metadata.` prefixed sub-keys of the `attr` map, these are USER provided object metadata.
+`create` and `update` events have an `attrs` field which is a Map type. User supplied attributes are in the  `user_metadata.` sub-map of the `attr` map.
 
-Relevant SYSTEM attributes are `dataset.id` referring to the object's dataset and `name`, which is an optional human-friendly name for the object.
-
-When data is added, copied or removed between storage tiers this will be reflected in object SYSTEM metadata. The `tier_x` keys will contain a snapshot of the extents of the object on each tier, with tier id 'x'.
+When data is added, copied or removed between storage tiers this will be reflected in object SYSTEM metadata. The `tiers` map will contain a snapshot of the extents of the object on each tier.
 
 ```yaml
 ---
-# An object is created - this one wasn't given a 'name'
 !create
+# The object has been created - the 'time' is the creation time of the resource. No user metadata was 
+# given at creation time and no data has beena added yet.
 attrs:
-  dataset.id: "9e91a60f-0bae-f0eb-b8d8-874ea0f89a9c"
-time: 1695205250318580
-id: "1234"
+  user_metadata:
+    {}
+  size: 0
+  tiers:
+    []
+time: 1701418948885961
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
 ...
 ---
-# An object is removed
+!update
+# The user has added some metadata, 'my_key=my_value'. The 'time' is the resource's 'content' last modified time.
+attrs:
+  user_metadata:
+    my_key: "my_value"
+  size: 0
+  tiers:
+    []
+time: 1701418995620744
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
+...
+---
+!update
+# The user has added some data on tier with index(priority) 0. The 'time' is the resource's 'content' last modified time.
+attrs:
+  user_metadata:
+    my_key: "my_value"
+  size: 45333
+  tiers:
+    - extents:
+        - length: 45333
+          offset: 0
+      index: 0
+time: 1701419050925667
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
+...
+---
+!read
+# The user has read some data - the 'time' is the resource's 'content' last accessed time.
+time: 1701419080139292
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
+...
+---
+!update
+# The user has released some data, there is none remaining in the object. The 'time' is the resource's 'content' last modified time.
+attrs:
+  user_metadata:
+    my_key: "my_value"
+  size: 0
+  tiers:
+    []
+time: 1701419100896048
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
+...
+---
+# The user has removed the object entirely - the 'time' is the removal time.
 !remove
-time: 1695205250323688
-id: "1234"
+time: 1701419111662100
+id: "d198c172-35ff-d962-a3db-027cdcf9116c"
 ...
----
-!create
-# Another object, with the now free'd id is created
-attrs:
-  dataset.id: "9e91a60f-0bae-f0eb-b8d8-874ea0f89a9c"
-time: 1695205250328623
-id: "1234"
-...
----
-!update
-# A user has added custom metadata to the object, e.g. 'my_key0 = my_value0'
-attrs:
-  user_metadata.my_key0: "my_value0"
-  user_metadata.my_key1: "my_value1"
-time: 1695205250331593
-id: "1234"
-...
----
-!read
-# The object data or USER metadata has been accessed
-time: 1695205250333054
-id: "1234"
-...
----
-!update
-# 44 bytes of data have been added to tier '0' at offset 0
-attrs:
-  tier_0: "0,44"
-time: 1695205250341016
-id: "1234"
-...
----
-!read
-# The object data or USER metadata has been accessed
-time: 1695205250350855
-id: "1234"
-...
----
-!update
-# 44 bytes of data have been added or copied to tier '1' at offset 0
-attrs:
-  tier_1: "0,44"
-  tier_0: "0,44"
-time: 1695205250359687
-id: "1234"
-...
----
-!update
-# 44 bytes of data have been added or copied to tier '2' at offset 0
-attrs:
-  tier_1: "0,44"
-  tier_0: "0,44"
-  tier_2: "0,44"
-time: 1695205250374210
-id: "1234"
-...
----
-!update
-# 44 bytes of data have been removed from tier '1' - it is now empty (reminder - this is a snapshot of the current tier state)
-attrs:
-  tier_0: "0,44"
-  tier_2: "0,44"
-time: 1695205250378590
-id: "1234"
-...
----
-!update
-# 44 bytes of data have been removed from tier '0' - it is now empty
-attrs:
-  tier_2: "0,44"
-time: 1695205250393593
-id: "1234"
-...
+
 ```
 
 
