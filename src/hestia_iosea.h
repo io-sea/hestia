@@ -35,11 +35,15 @@ typedef enum hestia_io_type_e {
 /// format is divided into [hi, lo] 64 bit decimal elements.
 ///
 /// For the PUT method you are free to pass either:
+///
 /// 1) an unitialized HestiaId. The 'm_uuid' field will be populated with a
-/// Hestia-generated uuid and should be cleaned with hestia_free_id(). OR 2) a
-/// HestiaId initialized with hestia_init_id(). Any subsequent memory
-/// allocations on the struct should be free'd by the caller. hestia_free_id()
-/// should not be used.
+/// Hestia-generated uuid and should be cleaned with hestia_free_id().
+///
+/// OR
+///
+/// 2) a HestiaId initialized with hestia_init_id().
+/// Any subsequent memory allocations on the struct should be free'd by the
+/// caller. hestia_free_id()should not be used in case (2).
 ///
 /// Option (2) is required for all other methods.
 
@@ -86,7 +90,7 @@ typedef struct HestiaKeyValuePair {
 ///
 
 typedef struct HestiaTierExtent {
-    uint8_t m_tier_index;  // The index (0-255) of the storage tier
+    uint8_t m_tier_index;  // The index or priority (0-255) of the storage tier
     size_t m_size;  // The size of the data on the tier (max offset + length)
     time_t m_creation_time;       // When the data was first added to the tier
     time_t m_last_modified_time;  // The last time the data on the tier was
@@ -101,10 +105,11 @@ typedef struct HestiaObject {
     char* m_uuid;            // Uuid in hex format
     size_t m_size;           // Largest size of the object across all tiers
     time_t m_creation_time;  // When the object was created
-    time_t m_last_modified_time;  // The time of most recent data or metadata
+    time_t m_last_modified_time;  // The time of most recent data OR metadata
                                   // update, on any tier.
-    time_t m_last_accessed_time;  // The time of most recent data or
-                                  // metadata read or update on any tier.
+    time_t m_last_accessed_time;  // The time of most recent data update on any
+                                  // tier. It does not include metadata access
+                                  // time.
     HestiaTierExtent* m_tier_extents;  // List of data extents on each tier
     size_t m_num_tier_extents;
     HestiaKeyValuePair* m_attrs;  // List of USER provided metadata
@@ -114,7 +119,7 @@ typedef struct HestiaObject {
 } HestiaObject;
 
 typedef struct HestiaTier {
-    uint8_t m_index;         // The tier index (0-255)
+    uint8_t m_index;         // The tier index or priority (0-255)
     int m_user_initialized;  // Internal - whether the tier has been initialized
 } HestiaTier;
 
@@ -122,13 +127,13 @@ typedef struct HestiaTier {
 ///
 /// Sets suitable default values on the HestiaId struct - you can populate it
 /// after. This doesn't 'reset' the id if it already has values, you should free
-/// chars you have assinged yourself if indenting to re-use the struct.
+/// chars you have assinged yourself if intending to re-use the struct.
 ///
 /// @param id Id to initialize
 /// @return 0 on success, hestia_error_e value on failure
 int hestia_init_id(HestiaId* id);
 
-/// @brief Free the HestiaId struct - only if Hestia has populated a uuid
+/// @brief Free the HestiaId struct - only use if Hestia has populated a uuid
 ///
 /// Only call this if you passed an uninitialized HestiaId to PUT
 /// Hestia will have allocated a uuid string, which it will free here.

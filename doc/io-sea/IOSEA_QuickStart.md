@@ -8,6 +8,8 @@ Install the Hestia RPM on a RHEL 8 compatible system:
 sudo dnf install hestia-$VERSION.rpm
 ```
 
+## Python API
+
 Add the Python package to your `PYTHONPATH`:
 
 ```bash
@@ -59,3 +61,12 @@ The object store, application logs and event feed will be in `$HOME/.cache/hesti
 
 The Python API and more general usage are described in more detail [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/doc/UserGuide.md).
 
+## C API
+
+The IO-SEA C-API is in the file `hestia_iosea.h`. This exclusively uses the lower-level C-API in `hestia.h`, but more closely follows IO-SEA semantics and is easier to use.
+
+There is an example of using it [here](/examples/sample_cmake_app/main_iosea.c).
+
+The [integrations](/src/integrations/README.md) directory has several tools relevant to IO-SEA built on the high-level C-API, they are a good starting point for how to use it in real cases.
+
+The Event Feed is another element of the IO-SEA API - it is documented [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/doc/internals/EventFeed.md).
