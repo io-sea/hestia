@@ -1,9 +1,13 @@
 #include "ObjectStoreTestWrapper.h"
 
+#include "InMemoryStreamSink.h"
+#include "InMemoryStreamSource.h"
 #include "Logger.h"
 #include "TestContext.h"
 
 #include <catch2/catch_all.hpp>
+
+#include <iostream>
 
 #include <future>
 
@@ -34,9 +38,7 @@ ObjectStoreTestWrapper::Ptr ObjectStoreTestWrapper::create(
 }
 
 void ObjectStoreTestWrapper::put(
-    const hestia::StorageObject& obj,
-    const std::string& content,
-    std::size_t chunk_size)
+    const hestia::StorageObject& obj, const std::string& content, bool flush)
 {
     hestia::ObjectStoreRequest request(
         obj, hestia::ObjectStoreRequestMethod::PUT);
@@ -49,40 +51,27 @@ void ObjectStoreTestWrapper::put(
             response_promise.set_value(std::move(response));
         };
 
+    hestia::Stream stream;
     if (content.empty()) {
         m_client->make_request(request, completion_cb);
     }
     else {
-        hestia::Stream stream;
+        hestia::ReadableBufferView read_buffer(content);
+        stream.set_source(hestia::InMemoryStreamSource::create(read_buffer));
         m_client->make_request(request, completion_cb, nullptr, &stream);
-        if (chunk_size == 0) {
-            REQUIRE(stream.write(content).ok());
+        if (flush) {
+            stream.flush();
         }
-        else {
-            std::vector<char> data_chars(content.begin(), content.end());
-            std::size_t cursor = 0;
-            while (cursor < content.size()) {
-                auto chunk_end = cursor + chunk_size;
-                if (chunk_end >= content.size()) {
-                    chunk_end = content.size();
-                }
-                if (chunk_end == cursor) {
-                    break;
-                }
-                hestia::ReadableBufferView read_buffer(
-                    &data_chars[0] + cursor, chunk_end - cursor);
-                REQUIRE(stream.write(read_buffer).ok());
-                cursor = chunk_end;
-            }
-        }
-        REQUIRE(stream.reset().ok());
     }
     const auto response = response_future.get();
     REQUIRE(response->ok());
 }
 
 void ObjectStoreTestWrapper::get(
-    hestia::StorageObject& obj, std::string& buffer, std::size_t size)
+    hestia::StorageObject& obj,
+    std::string& buffer,
+    std::size_t size,
+    bool flush)
 {
     hestia::ObjectStoreRequest request(
         obj, hestia::ObjectStoreRequestMethod::GET);
@@ -96,17 +85,21 @@ void ObjectStoreTestWrapper::get(
         };
 
     hestia::Stream stream;
-    m_client->make_request(request, completion_cb, nullptr, &stream);
-
     std::vector<char> returned_buffer(size);
     hestia::WriteableBufferView write_buffer(returned_buffer);
-    REQUIRE(stream.read(write_buffer).ok());
-    REQUIRE(stream.reset().ok());
-    buffer = std::string(returned_buffer.begin(), returned_buffer.end());
+    stream.set_sink(hestia::InMemoryStreamSink::create(write_buffer));
+
+    m_client->make_request(request, completion_cb, nullptr, &stream);
+
+    if (flush) {
+        stream.flush();
+    }
 
     const auto response = response_future.get();
     REQUIRE(response->ok());
-    obj = response->object();
+
+    buffer = std::string(returned_buffer.begin(), returned_buffer.end());
+    obj    = response->object();
 }
 
 void ObjectStoreTestWrapper::get(hestia::StorageObject& obj)

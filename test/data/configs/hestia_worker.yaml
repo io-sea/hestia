@@ -19,4 +19,4 @@ object_store_backends:
       root: hsm_object_store_worker0
 
 logger:
-  level: debug
+  level: info

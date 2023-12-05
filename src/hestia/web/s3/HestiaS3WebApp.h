@@ -7,7 +7,9 @@ namespace hestia {
 class DistributedHsmService;
 class UserService;
 
-struct HestiaS3WebAppConfig {};
+struct HestiaS3WebAppConfig {
+    std::string m_domain;
+};
 
 class HestiaS3WebApp : public WebApp {
   public:

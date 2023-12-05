@@ -224,6 +224,9 @@ void CurlClient::make_request(
     if (request.get_method() == HttpRequest::Method::GET) {
         handle->prepare_get();
     }
+    else if (request.get_method() == HttpRequest::Method::HEAD) {
+        handle->prepare_head();
+    }
     else if (request.get_method() == HttpRequest::Method::PUT) {
         handle->prepare_put(request, stream);
     }

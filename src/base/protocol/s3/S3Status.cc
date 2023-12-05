@@ -3,6 +3,7 @@
 #include "XmlDocument.h"
 #include "XmlParser.h"
 
+#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -130,6 +131,8 @@ S3Status::S3Status(const HttpResponse& http_response)
     else {
         for (const auto& error : errors) {
             if (error.second.second.first == m_code_str) {
+                m_code =
+                    HttpStatus::get_code_from_numeric(http_response.code());
                 m_s3_code = error.first;
                 break;
             }
@@ -170,7 +173,7 @@ XmlElementPtr S3Status::to_xml() const
         message_element->set_text(m_message);
     }
     else {
-        message_element->set_text(m_message + "/n/n" + m_message_details);
+        message_element->set_text(m_message + "\n\n" + m_message_details);
     }
     root->add_child(std::move(message_element));
 

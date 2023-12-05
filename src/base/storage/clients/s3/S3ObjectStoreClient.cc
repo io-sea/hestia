@@ -8,6 +8,7 @@
 #include "ErrorUtils.h"
 #include "Logger.h"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace hestia {
@@ -62,14 +63,24 @@ void S3ObjectStoreClient::put(
     Stream* stream,
     Stream::progressFunc progress_func) const
 {
-    S3Request s3_request;
+    const auto domain = m_config.get_default_host();
+
+    S3Request s3_request(domain);
+    s3_request.m_endpoint       = domain;
+    s3_request.m_signed_headers = {
+        "host", "x-amz-content-sha256", "x-amz-date"};
     s3_request.m_range =
         S3Range(request.extent().m_offset, request.extent().m_length);
 
     S3Object s3_object;
     m_object_adapter->to_s3(s3_object, s3_request, request.object());
 
-    S3Bucket s3_bucket(s3_object.m_bucket);
+    auto bucket_name = s3_object.m_bucket;
+    if (bucket_name.empty()) {
+        bucket_name = m_config.get_default_bucket_name();
+    }
+
+    S3Bucket s3_bucket(bucket_name);
 
     /*
     std::string user_id = obj.m_user;
@@ -86,7 +97,9 @@ void S3ObjectStoreClient::put(
 
     const auto bucket_status = m_s3_client->head_bucket(s3_bucket, s3_request);
     if (!bucket_status.is_ok()) {
-        if (bucket_status.get_s3_code() == S3StatusCode::_404_NO_SUCH_BUCKET) {
+        if (bucket_status.get_s3_code() == S3StatusCode::_404_NO_SUCH_BUCKET
+            || bucket_status.get_code_and_id().first == 404) {
+            LOG_INFO("Bucket not found - creating one");
             const auto bucket_create_status =
                 m_s3_client->create_bucket(s3_bucket, s3_request);
             if (!bucket_create_status.is_ok()) {
@@ -125,15 +138,23 @@ void S3ObjectStoreClient::get(
     Stream* stream,
     Stream::progressFunc progress_func) const
 {
-    S3Request s3_request;
+    const auto domain = m_config.get_default_host();
+
+    S3Request s3_request(domain);
+    s3_request.m_endpoint       = domain;
+    s3_request.m_signed_headers = {
+        "host", "x-amz-content-sha256", "x-amz-date"};
     s3_request.m_range =
         S3Range(request.extent().m_offset, request.extent().m_length);
 
     S3Object s3_object;
-
     m_object_adapter->to_s3(s3_object, s3_request, request.object());
 
-    S3Bucket s3_bucket(s3_object.m_bucket);
+    auto bucket_name = s3_object.m_bucket;
+    if (bucket_name.empty()) {
+        bucket_name = m_config.get_default_bucket_name();
+    }
+    S3Bucket s3_bucket(bucket_name);
 
     LOG_INFO("Doing GET with StorageObject: " + request.object().to_string());
     LOG_INFO("Doing GET with S3Object: " + s3_object.to_string());
@@ -160,7 +181,12 @@ void S3ObjectStoreClient::get(
 
 void S3ObjectStoreClient::remove(const StorageObject& object) const
 {
-    S3Request s3_request;
+    const auto domain = m_config.get_default_host();
+
+    S3Request s3_request(domain);
+    s3_request.m_endpoint       = domain;
+    s3_request.m_signed_headers = {
+        "host", "x-amz-content-sha256", "x-amz-date"};
 
     S3Object s3_object;
     m_object_adapter->to_s3(s3_object, s3_request, object);

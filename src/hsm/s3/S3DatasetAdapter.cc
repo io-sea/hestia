@@ -22,7 +22,7 @@ void S3DatasetAdapter::on_list_buckets(
 {
     for (const auto& dataset : items) {
         const auto timestamp =
-            TimeUtils::to_iso8601_basic(dataset->get_creation_time());
+            TimeUtils::to_iso8601_basic(dataset->get_creation_time() / 1000);
         list_bucket_response.m_buckets.push_back(
             {dataset->name(), S3Timestamp(timestamp)});
     }

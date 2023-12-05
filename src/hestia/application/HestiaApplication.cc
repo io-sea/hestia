@@ -35,7 +35,6 @@ namespace hestia {
 
 HestiaApplication::~HestiaApplication()
 {
-
     Logger::get_instance().get_modifiable_context().m_config.set_active(false);
 }
 

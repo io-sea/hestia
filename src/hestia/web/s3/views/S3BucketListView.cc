@@ -10,8 +10,10 @@
 #include <sstream>
 
 namespace hestia {
-S3BucketListView::S3BucketListView(DistributedHsmService* service) :
-    m_service(service), m_dataset_adatper(std::make_unique<S3DatasetAdapter>())
+S3BucketListView::S3BucketListView(
+    DistributedHsmService* service, const std::string& domain) :
+    S3WebView(service, domain),
+    m_dataset_adatper(std::make_unique<S3DatasetAdapter>())
 {
     LOG_INFO("Loaded S3BucketListView");
 }
@@ -31,7 +33,7 @@ HttpResponse::Ptr S3BucketListView::on_get(
         const std::string msg =
             container_list_response->get_error().to_string();
         LOG_ERROR(msg);
-        return S3ViewUtils::on_server_error(S3Request(request), msg);
+        return S3ViewUtils::on_server_error(S3Request(request, m_domain), msg);
     }
 
     auto response = HttpResponse::create();

@@ -4,6 +4,7 @@
 #include "Stream.h"
 
 #include <functional>
+#include <memory>
 
 namespace hestia {
 
@@ -15,6 +16,8 @@ namespace hestia {
 class HttpClient {
   public:
     virtual ~HttpClient() = default;
+
+    using Ptr = std::unique_ptr<HttpClient>;
 
     /**
      * Make a http request

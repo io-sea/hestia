@@ -13,14 +13,20 @@ namespace hestia {
 const char empty_payload_sha[] =
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-S3Request::S3Request(const S3UserContext& user_context) :
-    m_user_context(user_context)
+S3Request::S3Request(const std::string& domain) : m_domain(domain) {}
+
+S3Request::S3Request(
+    const S3UserContext& user_context, const std::string& domain) :
+    m_user_context(user_context), m_domain(domain)
 {
+    m_signed_headers = {"host", "x-amz-content-sha256", "x-amz-date"};
 }
 
-S3Request::S3Request(const HttpRequest& req, bool parse_auth)
+S3Request::S3Request(
+    const HttpRequest& req, const std::string& domain, bool parse_auth)
 {
-    m_path        = S3Path(req);
+    m_domain      = domain;
+    m_path        = S3Path(req, domain);
     m_tracking_id = req.get_tracking_id();
 
     if (parse_auth) {
@@ -275,7 +281,7 @@ std::string S3Request::create_canonical_request(
     std::stringstream sstr;
     sstr << request.get_method_as_string() << '\n';
 
-    S3Path s3_path(request);
+    S3Path s3_path(request, m_domain);
     sstr << '/' << HashUtils::uri_encode(s3_path.m_object_key, false) << '\n';
     sstr << serialize_queries();
     sstr << serialize_headers(request);
@@ -303,8 +309,9 @@ std::string S3Request::create_string_to_sign(
     }
     sstr << timestamp << '\n';
     sstr << get_scope() << '\n';
-    sstr << HashUtils::do_sha256(
-        create_canonical_request(request, payload_sha256));
+
+    const auto canonical = create_canonical_request(request, payload_sha256);
+    sstr << HashUtils::do_sha256(canonical);
     return sstr.str();
 }
 

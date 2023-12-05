@@ -17,7 +17,8 @@ S3Status S3Client::create_bucket(
     const S3Bucket& bucket, const S3Request& s3_request) const
 {
     const auto status = bucket.validate_name(
-        s3_request.m_tracking_id, s3_request.get_user_context());
+        s3_request.m_tracking_id, s3_request.get_user_context(),
+        s3_request.get_domain());
     if (!status.is_ok()) {
         return status;
     }
@@ -95,6 +96,15 @@ void S3Client::put_object(
     s3_request.populate_authorization_headers(
         S3Request::PayloadSignatureType::UNSIGNED, http_request);
 
+    if (stream != nullptr && stream->has_content()) {
+        http_request.get_header().set_item(
+            "content-length", std::to_string(stream->get_source_size()));
+    }
+    else if (object.m_size > 0) {
+        http_request.get_header().set_item(
+            "content-length", std::to_string(object.m_size));
+    }
+
     auto http_completion_func = [completion_func](HttpResponse::Ptr response) {
         completion_func(std::make_unique<S3Response>(std::move(response)));
     };
@@ -150,7 +160,9 @@ S3ListObjectsResponse::Ptr S3Client::list_objects(
     HttpRequest http_request(path, HttpRequest::Method::GET);
 
     Map query;
-    request.build_query(query);
+    for (const auto& each_query : request.m_s3_request.m_queries) {
+        query.set_item(each_query.first, each_query.second);
+    }
     http_request.set_queries(query);
 
     request.m_s3_request.populate_headers(
@@ -166,7 +178,6 @@ S3Response::Ptr S3Client::do_request(const HttpRequest& http_request) const
 {
     std::promise<HttpResponse::Ptr> response_promise;
     auto response_future = response_promise.get_future();
-
     auto http_completion_func =
         [&response_promise](HttpResponse::Ptr response) {
             response_promise.set_value(std::move(response));

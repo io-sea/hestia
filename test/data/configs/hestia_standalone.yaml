@@ -19,7 +19,7 @@ object_store_backends:
             "00000000-0000-0000-0000-000000000004",
             "00000000-0000-0000-0000-000000000005"]
     config: 
-      root: hsm_object_store_controller0
+      root: hsm_object_store_standalone
 
 event_feed:
   active: true

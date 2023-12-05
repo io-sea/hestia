@@ -10,7 +10,7 @@ using CrudResponsePtr = std::unique_ptr<CrudResponse>;
 
 class S3WebView : public WebView {
   public:
-    S3WebView(DistributedHsmService* hsm_service);
+    S3WebView(DistributedHsmService* hsm_service, const std::string& domain);
 
   protected:
     std::pair<HttpResponse::Ptr, CrudResponsePtr> on_get_bucket(
@@ -20,5 +20,6 @@ class S3WebView : public WebView {
         const std::string& bucket_name = {}) const;
 
     DistributedHsmService* m_service{nullptr};
+    std::string m_domain;
 };
 }  // namespace hestia

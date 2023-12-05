@@ -1,15 +1,11 @@
 #include <catch2/catch_all.hpp>
 
+#include "CurlClient.h"
+#include "S3Client.h"
+#include "S3ObjectStoreClient.h"
+
 #include "BasicHttpServer.h"
-#include "InMemoryStreamSink.h"
-#include "InMemoryStreamSource.h"
-
-#include "FileHsmObjectStoreClient.h"
-#include "FileKeyValueStoreClient.h"
-
 #include "HestiaS3WebApp.h"
-#include "HsmService.h"
-#include "UserService.h"
 
 #include "DistributedHsmServiceTestWrapper.h"
 #include "ObjectStoreTestWrapper.h"
@@ -18,10 +14,25 @@
 
 #include <iostream>
 
-class S3ClientTestFixture : public ObjectStoreTestWrapper {
+class S3ClientTestFixture {
   public:
-    S3ClientTestFixture() : ObjectStoreTestWrapper("s3_plugin")
+    S3ClientTestFixture()
     {
+        hestia::CurlClientConfig http_client_config;
+        m_http_client =
+            std::make_unique<hestia::CurlClient>(http_client_config);
+        m_s3_client = std::make_unique<hestia::S3Client>(m_http_client.get());
+
+        auto object_store_client =
+            hestia::S3ObjectStoreClient::create(m_s3_client.get());
+
+        hestia::S3Config s3_config;
+        s3_config.set_default_host(m_base_url);
+        object_store_client->do_initialize("1234", "", s3_config);
+
+        m_object_store =
+            ObjectStoreTestWrapper::create(std::move(object_store_client));
+
         m_fixture = std::make_unique<DistributedHsmServiceTestWrapper>();
         m_fixture->init("AKIAIOSFODNN7EXAMPLE", "my_admin_password", 5);
 
@@ -37,19 +48,19 @@ class S3ClientTestFixture : public ObjectStoreTestWrapper {
         m_server->initialize();
         m_server->start();
         m_server->wait_until_bound();
-
-        m_client->initialize("0", {}, {});
     }
 
-    std::unique_ptr<DistributedHsmServiceTestWrapper> m_fixture;
+    std::unique_ptr<hestia::HttpClient> m_http_client;
+    hestia::S3Client::Ptr m_s3_client;
+    ObjectStoreTestWrapper::Ptr m_object_store;
 
+    std::unique_ptr<DistributedHsmServiceTestWrapper> m_fixture;
     std::unique_ptr<hestia::HestiaS3WebApp> m_web_app;
     std::unique_ptr<hestia::BasicHttpServer> m_server;
-
-    std::string m_base_url = "127.0.0.1:8000/";
+    std::string m_base_url = "127.0.0.1:8000";
 };
 
-TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[.s3]")
+TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[s3]")
 {
     auto user_id = "AKIAIOSFODNN7EXAMPLE";
     auto user_key =
@@ -63,9 +74,9 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test Hestia S3 Web App", "[.s3]")
     obj.set_metadata("hestia-user_token", user_key);
 
     const std::string content = "The quick brown fox jumps over the lazy dog.";
-    put(obj, content);
+    m_object_store->put(obj, content, false);
 
     std::string recontstructed_content;
-    get(obj, recontstructed_content, content.size());
+    m_object_store->get(obj, recontstructed_content, content.size(), false);
     REQUIRE(recontstructed_content == content);
 }

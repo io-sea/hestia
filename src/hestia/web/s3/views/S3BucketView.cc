@@ -16,8 +16,9 @@
 #include <sstream>
 
 namespace hestia {
-S3BucketView::S3BucketView(DistributedHsmService* service) :
-    S3WebView(service),
+S3BucketView::S3BucketView(
+    DistributedHsmService* service, const std::string& domain) :
+    S3WebView(service, domain),
     m_dataset_adapter(std::make_unique<S3DatasetAdapter>()),
     m_object_adapter(std::make_unique<S3HsmObjectAdapter>())
 {
@@ -30,7 +31,7 @@ HttpResponse::Ptr S3BucketView::on_get(
 {
     LOG_INFO("S3BucketView:on_get");
 
-    S3ListObjectsRequest list_object_request(request);
+    S3ListObjectsRequest list_object_request(request, m_domain);
 
     auto [status, get_bucket_response] =
         on_get_bucket(list_object_request.m_s3_request, auth);
@@ -52,10 +53,11 @@ HttpResponse::Ptr S3BucketView::on_get(
 HttpResponse::Ptr S3BucketView::on_head(
     const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    LOG_INFO("S3ContainerView:on_head");
+    LOG_INFO("S3BucketView:on_head");
 
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
     auto [status, _] = on_get_bucket(s3_request, auth);
+
     return std::move(status);
 }
 
@@ -63,7 +65,7 @@ HttpResponse::Ptr S3BucketView::on_head(
 HttpResponse::Ptr S3BucketView::on_put(
     const HttpRequest& request, HttpEvent, const AuthorizationContext& auth)
 {
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
 
     auto [status, get_bucket_response] = on_get_bucket(s3_request, auth, false);
     if (status->error()) {
@@ -96,7 +98,7 @@ HttpResponse::Ptr S3BucketView::on_delete(
 {
     LOG_INFO("S3BucketView:on_delete");
 
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
 
     auto [status, get_bucket_response] = on_get_bucket(s3_request, auth, false);
     if (status->error()) {

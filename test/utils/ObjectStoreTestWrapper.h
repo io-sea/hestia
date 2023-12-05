@@ -6,8 +6,8 @@
 class ObjectStoreTestWrapper {
   public:
     using Ptr = std::unique_ptr<ObjectStoreTestWrapper>;
-    ObjectStoreTestWrapper(hestia::ObjectStoreClient::Ptr client);
-    ObjectStoreTestWrapper(const std::string& plugin_name);
+    explicit ObjectStoreTestWrapper(hestia::ObjectStoreClient::Ptr client);
+    explicit ObjectStoreTestWrapper(const std::string& plugin_name);
 
     static Ptr create(hestia::ObjectStoreClient::Ptr client);
     static Ptr create(const std::string& plugin_name);
@@ -15,9 +15,13 @@ class ObjectStoreTestWrapper {
     void put(
         const hestia::StorageObject& obj,
         const std::string& content = {},
-        std::size_t chunk_size     = 0);
+        bool flush                 = true);
 
-    void get(hestia::StorageObject& obj, std::string& buffer, std::size_t size);
+    void get(
+        hestia::StorageObject& obj,
+        std::string& buffer,
+        std::size_t size,
+        bool flush = true);
 
     void get(hestia::StorageObject& obj);
 

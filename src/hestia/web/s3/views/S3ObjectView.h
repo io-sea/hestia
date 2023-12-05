@@ -16,7 +16,7 @@ class S3ObjectView : public S3WebView {
         std::size_t m_size{0};
     };
 
-    S3ObjectView(DistributedHsmService* service);
+    S3ObjectView(DistributedHsmService* service, const std::string& domain);
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,

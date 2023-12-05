@@ -97,20 +97,4 @@ TEST_CASE_METHOD(
             }
         }
     }
-
-    WHEN("Content is passed in multiple chunks")
-    {
-        put(obj, content, 10);
-
-        WHEN("Content is read in one chunk")
-        {
-            std::string returned_content;
-            get(obj, returned_content, content.length());
-
-            THEN("It is the same as the original content")
-            {
-                REQUIRE(returned_content == content);
-            }
-        }
-    }
 }

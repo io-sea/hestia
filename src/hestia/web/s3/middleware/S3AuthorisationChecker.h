@@ -27,7 +27,9 @@ class S3AuthorisationChecker {
     };
 
     static AuthResponse authorise(
-        const UserService& user_service, const HttpRequest& request);
+        const UserService& user_service,
+        const HttpRequest& request,
+        const std::string& domain);
 
   private:
     static S3Status check(

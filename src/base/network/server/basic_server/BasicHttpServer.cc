@@ -61,7 +61,7 @@ BasicHttpServer::Status BasicHttpServer::start()
 bool BasicHttpServer::on_head(
     RequestContext& request_context, Socket* socket) const
 {
-    LOG_INFO(
+    LOG_DEBUG(
         "Got headers: "
         << request_context.get_request().get_header().to_string());
 
@@ -114,10 +114,7 @@ bool BasicHttpServer::on_body_chunk(
 
     if (body_count >= expected_body_size) {
         LOG_INFO("Finished with streamed body - sending eom");
-
-        // if (context.get_stream()->waiting_for_content())
-        //{
-        LOG_INFO("Resetting stream");
+        ;
         auto reset_state = context.get_stream()->reset();
         if (!reset_state.ok()) {
             LOG_ERROR("Error resetting stream: " << reset_state.to_string());
@@ -127,7 +124,6 @@ bool BasicHttpServer::on_body_chunk(
                     ->to_string());
             return true;
         }
-        //}
 
         m_web_app->on_event(&context, HttpEvent::EOM);
         socket->respond(context.get_response()->to_string());

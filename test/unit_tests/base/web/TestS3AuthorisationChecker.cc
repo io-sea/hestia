@@ -85,8 +85,11 @@ TEST_CASE_METHOD(
     "Test S3 authorization - object",
     "[authorisation]")
 {
+    const std::string domain      = "s3.amazonaws.com";
+    const std::string bucket_name = "examplebucket";
+
     hestia::HttpRequest request("/test.txt", hestia::HttpRequest::Method::GET);
-    request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
+    request.get_header().set_item("Host", bucket_name + "." + domain);
     request.get_header().set_item("x-amz-date", "20130524T000000Z");
 
     GIVEN("A GET request")
@@ -112,7 +115,7 @@ TEST_CASE_METHOD(
             THEN("The authorisation is valid")
             {
                 const auto response = hestia::S3AuthorisationChecker::authorise(
-                    *m_user_service, request);
+                    *m_user_service, request, domain);
                 REQUIRE(
                     response.m_status
                     != hestia::S3AuthorisationChecker::Status::FAILED);
@@ -128,7 +131,7 @@ TEST_CASE_METHOD(
             THEN("The authorisation is not valid")
             {
                 const auto response = hestia::S3AuthorisationChecker::authorise(
-                    *m_user_service, request);
+                    *m_user_service, request, domain);
                 REQUIRE(
                     response.m_status
                     == hestia::S3AuthorisationChecker::Status::FAILED);
@@ -144,7 +147,7 @@ TEST_CASE_METHOD(
             THEN("The authorisation is not valid")
             {
                 const auto response = hestia::S3AuthorisationChecker::authorise(
-                    *m_user_service, request);
+                    *m_user_service, request, domain);
                 REQUIRE(
                     response.m_status
                     == hestia::S3AuthorisationChecker::Status::FAILED);
@@ -156,8 +159,11 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     TestS3AuthorizationFixture, "S3 authorization - bucket", "[authorisation]")
 {
+    const std::string domain      = "s3.amazonaws.com";
+    const std::string bucket_name = "examplebucket";
+
     hestia::HttpRequest request("/", hestia::HttpRequest::Method::GET);
-    request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
+    request.get_header().set_item("Host", bucket_name + "." + domain);
     request.get_header().set_item("x-amz-date", "20130524T000000Z");
     request.get_header().set_item("x-amz-content-sha256", empty_body_hash);
 
@@ -180,7 +186,7 @@ TEST_CASE_METHOD(
         THEN("The authorisation is valid")
         {
             const auto response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 != hestia::S3AuthorisationChecker::Status::FAILED);
@@ -204,7 +210,7 @@ TEST_CASE_METHOD(
         THEN("The authorisation is valid")
         {
             const auto response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 != hestia::S3AuthorisationChecker::Status::FAILED);
@@ -217,9 +223,12 @@ TEST_CASE_METHOD(
     "S3 authorization - put object",
     "[authorisation]")
 {
+    const std::string domain      = "s3.amazonaws.com";
+    const std::string bucket_name = "examplebucket";
+
     hestia::HttpRequest request(
         "/test$file.text", hestia::HttpRequest::Method::PUT);
-    request.get_header().set_item("Host", "examplebucket.s3.amazonaws.com");
+    request.get_header().set_item("Host", bucket_name + "." + domain);
     request.get_header().set_item("x-amz-date", "20130524T000000Z");
     request.get_header().set_item("Date", "Fri, 24 May 2013 00:00:00 GMT");
     request.get_header().set_item("x-amz-storage-class", "REDUCED_REDUNDANCY");
@@ -244,7 +253,7 @@ TEST_CASE_METHOD(
         THEN("The authorisation will fail before payload is added")
         {
             const auto response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 == hestia::S3AuthorisationChecker::Status::FAILED);
@@ -262,7 +271,7 @@ TEST_CASE_METHOD(
             "After the first call to authorise() the status is 'waiting_for_payload'")
         {
             auto result = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 result.m_status
                 == hestia::S3AuthorisationChecker::Status::WAITING_FOR_PAYLOAD);
@@ -271,7 +280,7 @@ TEST_CASE_METHOD(
             {
                 request.body() = "Welcome to Amazon S3.";
                 result         = hestia::S3AuthorisationChecker::authorise(
-                    *m_user_service, request);
+                    *m_user_service, request, domain);
                 REQUIRE(
                     result.m_status
                     == hestia::S3AuthorisationChecker::Status::VALID);
@@ -286,8 +295,8 @@ TEST_CASE_METHOD(
                                  + ",SignedHeaders=" + headers
                                  + ",Signature=" + sig);
 
-        auto result =
-            hestia::S3AuthorisationChecker::authorise(*m_user_service, request);
+        auto result = hestia::S3AuthorisationChecker::authorise(
+            *m_user_service, request, domain);
         REQUIRE(
             result.m_status
             == hestia::S3AuthorisationChecker::Status::WAITING_FOR_PAYLOAD);
@@ -296,7 +305,7 @@ TEST_CASE_METHOD(
         THEN("The authorisation is not valid")
         {
             result = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 result.m_status
                 == hestia::S3AuthorisationChecker::Status::FAILED);
@@ -307,13 +316,15 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     TestS3AuthorizationFixture,
     "S3 authorization - unsigned-payload",
-    "[authorisation]")
+    "[.authorisation]")
 {
+    std::string domain = "192.168.2.117:11000";
+
     hestia::HttpRequest request(
-        "/lustre_hsm_4/0000000200000401_00000004_00000000.0",
+        "lustre_hsm_4/0000000200000401_00000004_00000000.0",
         hestia::HttpRequest::Method::PUT);
     request.get_header().set_item("Content-Type", "application/x-lz4");
-    request.get_header().set_item("Host", "192.168.2.117:11000");
+    request.get_header().set_item("Host", domain);
     request.get_header().set_item("x-amz-content-sha256", "UNSIGNED-PAYLOAD");
     request.get_header().set_item("x-amz-date", "20200612T095534Z");
     request.get_header().set_item("x-amz-meta-chunksize", "104857600");
@@ -351,7 +362,7 @@ TEST_CASE_METHOD(
         THEN("The authentication is valid")
         {
             auto response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 != hestia::S3AuthorisationChecker::Status::FAILED);
@@ -359,7 +370,7 @@ TEST_CASE_METHOD(
             request.body() = "Text that should not matter";
 
             response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 != hestia::S3AuthorisationChecker::Status::FAILED);
@@ -380,7 +391,7 @@ TEST_CASE_METHOD(
         THEN("The authorisation is not valid")
         {
             const auto response = hestia::S3AuthorisationChecker::authorise(
-                *m_user_service, request);
+                *m_user_service, request, domain);
             REQUIRE(
                 response.m_status
                 == hestia::S3AuthorisationChecker::Status::FAILED);

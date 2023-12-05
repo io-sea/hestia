@@ -8,7 +8,7 @@
 
 TEST_CASE("Test S3Status", "[s3]")
 {
-    hestia::S3Request request;
+    hestia::S3Request request("");
     request.m_path        = hestia::S3Path("/my_bucket");
     request.m_tracking_id = "1234";
 

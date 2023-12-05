@@ -37,13 +37,16 @@ class S3Request {
 
     enum class PayloadSignatureType { UNSIGNED, SIGNED };
 
-    S3Request() = default;
+    S3Request(const std::string& domain);
 
     // Used by clients
-    S3Request(const S3UserContext& user_context);
+    S3Request(const S3UserContext& user_context, const std::string& domain);
 
-    // Usd by server
-    S3Request(const HttpRequest& req, bool parse_auth = false);
+    // Used by server
+    S3Request(
+        const HttpRequest& req,
+        const std::string& domain,
+        bool parse_auth = false);
 
     static void add_aws_namespace(XmlElement& element);
 
@@ -60,7 +63,11 @@ class S3Request {
         m_user_context.m_user_secret_key = key;
     }
 
+    void add_query(const std::pair<std::string, std::string>& query);
+
     std::string get_resource_host(const std::string& bucket_name) const;
+
+    const std::string& get_domain() const { return m_domain; }
 
     std::string get_resource_path(
         const std::string& bucket_name,
@@ -89,15 +96,14 @@ class S3Request {
     S3Timestamp m_timestamp;
     S3UriStyle m_uri_style{S3UriStyle::PATH};
     std::string m_endpoint;
-    std::string m_region;
+    std::string m_region{"us-east-1"};
     S3Range m_range;
     std::string m_tracking_id;
     std::vector<std::string> m_signed_headers;
     std::string m_signature;
     std::string m_payload_type{"application/xml"};
 
-    using Query = std::pair<std::string, std::string>;
-    std::vector<Query> m_queries;
+    std::vector<std::pair<std::string, std::string>> m_queries;
 
   private:
     void parse_authorisation_info(const HttpRequest& request);
@@ -109,8 +115,6 @@ class S3Request {
     void sort_headers();
 
     void parse_queries(const HttpRequest& request);
-
-    void add_query(const std::pair<std::string, std::string>& query);
 
     std::string get_scope() const;
 
@@ -146,6 +150,7 @@ class S3Request {
     Status m_status = Status::UNSET;
     S3StatusCode m_error_code{S3StatusCode::_403_ACCESS_DENIED};
     std::string m_service{"s3"};
+    std::string m_domain;
     std::string m_scope_suffix{"aws4_request"};
 };
 

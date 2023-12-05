@@ -7,8 +7,9 @@
 #include "S3ViewUtils.h"
 
 namespace hestia {
-S3WebView::S3WebView(DistributedHsmService* hsm_service) :
-    m_service(hsm_service)
+S3WebView::S3WebView(
+    DistributedHsmService* hsm_service, const std::string& domain) :
+    m_service(hsm_service), m_domain(domain)
 {
 }
 

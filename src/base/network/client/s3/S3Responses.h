@@ -6,7 +6,7 @@
 
 namespace hestia {
 struct S3Response {
-    S3Response(std::unique_ptr<HttpResponse> http_response);
+    S3Response(HttpResponse::Ptr http_response);
 
     bool is_ok() const;
 
@@ -24,6 +24,11 @@ class S3ListBucketResponse {
     using Ptr = std::unique_ptr<S3ListBucketResponse>;
 
     void deserialize(const std::string& response_body);
+
+    std::size_t get_num_buckets() const;
+
+    bool ok() const;
+
     std::string to_string() const;
 
     std::vector<S3Bucket> m_buckets;
@@ -38,6 +43,11 @@ struct S3ListObjectsResponse {
     using Ptr = std::unique_ptr<S3ListObjectsResponse>;
 
     void deserialize(const std::string& response_body);
+
+    std::size_t get_num_objects() const { return m_contents.size(); }
+
+    bool ok() const { return m_error.is_ok(); }
+
     std::string to_string() const;
 
     bool m_is_version2{true};

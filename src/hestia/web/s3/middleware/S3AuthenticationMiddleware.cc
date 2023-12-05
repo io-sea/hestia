@@ -3,6 +3,13 @@
 #include "S3AuthorisationChecker.h"
 
 namespace hestia {
+
+S3AuthenticationMiddleware::S3AuthenticationMiddleware(
+    const std::string& domain) :
+    m_domain(domain)
+{
+}
+
 HttpResponse::Ptr S3AuthenticationMiddleware::call(
     const HttpRequest& request,
     AuthorizationContext& auth,
@@ -14,7 +21,7 @@ HttpResponse::Ptr S3AuthenticationMiddleware::call(
     }
 
     const auto& auth_response =
-        S3AuthorisationChecker::authorise(*m_user_service, request);
+        S3AuthorisationChecker::authorise(*m_user_service, request, m_domain);
 
     if (auth_response.m_status == S3AuthorisationChecker::Status::FAILED) {
         LOG_INFO(

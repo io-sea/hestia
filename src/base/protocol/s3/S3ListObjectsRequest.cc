@@ -2,47 +2,50 @@
 
 namespace hestia {
 
-S3ListObjectsRequest::S3ListObjectsRequest(const S3UserContext& user_context) :
-    m_s3_request(user_context)
+S3ListObjectsRequest::S3ListObjectsRequest(
+    const S3UserContext& user_context, const std::string& domain) :
+    m_s3_request(user_context, domain)
 {
 }
 
-S3ListObjectsRequest::S3ListObjectsRequest(const HttpRequest& req) :
-    m_s3_request(req)
+S3ListObjectsRequest::S3ListObjectsRequest(
+    const HttpRequest& req, const std::string& domain) :
+    m_s3_request(req, domain)
 {
 }
 
-void S3ListObjectsRequest::build_query(Map& query) const
+void S3ListObjectsRequest::build_query()
 {
     if (!m_delimiter.empty()) {
-        query.set_item("delimiter", m_delimiter);
+        m_s3_request.add_query({"delimiter", m_delimiter});
     }
     if (!m_prefix.empty()) {
-        query.set_item("prefix", m_prefix);
+        m_s3_request.add_query({"prefix", m_prefix});
     }
     if (m_max_keys > 0) {
-        query.set_item("max-keys", std::to_string(m_max_keys));
+        m_s3_request.add_query({"max-keys", std::to_string(m_max_keys)});
     }
 
     if (m_is_v2_type) {
-        query.set_item("list-type", "2");
+        m_s3_request.add_query({"list-type", "2"});
 
         if (!m_continuation_token.empty()) {
-            query.set_item("continuation-token", m_continuation_token);
+            m_s3_request.add_query(
+                {"continuation-token", m_continuation_token});
         }
         if (!m_encoding_type.empty()) {
-            query.set_item("encoding-type", m_encoding_type);
+            m_s3_request.add_query({"encoding-type", m_encoding_type});
         }
         if (!m_fetch_owner.empty()) {
-            query.set_item("fetch-owner", m_fetch_owner);
+            m_s3_request.add_query({"fetch-owner", m_fetch_owner});
         }
         if (!m_start_after.empty()) {
-            query.set_item("start-after", m_start_after);
+            m_s3_request.add_query({"start-after", m_start_after});
         }
     }
     else {
         if (!m_marker.empty()) {
-            query.set_item("marker", m_marker);
+            m_s3_request.add_query({"marker", m_marker});
         }
     }
 }

@@ -30,7 +30,7 @@ void S3HsmObjectAdapter::on_list_objects(
         s3_object.m_bucket = dataset.name();
         s3_object.m_key    = object.name();
         s3_object.m_last_modified =
-            TimeUtils::to_iso8601_basic(object.get_last_modified_time());
+            TimeUtils::to_iso8601_basic(object.get_last_modified_time() / 1000);
         s3_object.m_size = object.size();
         list_objects_response.m_contents.push_back(s3_object);
     }

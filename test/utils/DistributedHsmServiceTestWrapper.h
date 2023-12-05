@@ -24,6 +24,8 @@ class DistributedHsmServiceTestWrapper {
         const std::string& user_pass,
         std::size_t num_tiers);
 
+    std::string get_user_token() const { return m_token_generator->m_token; }
+
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;
     hestia::InMemoryHsmObjectStoreClient m_obj_store_client;
     std::unique_ptr<hestia::UserService> m_user_service;

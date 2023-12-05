@@ -38,7 +38,9 @@ XmlElementPtr S3Bucket::to_xml() const
 
 // https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
 S3Status S3Bucket::validate_name(
-    const std::string& tracking_id, const S3UserContext& user_context) const
+    const std::string& tracking_id,
+    const S3UserContext& user_context,
+    const std::string& domain) const
 {
     std::size_t max_length = 63;
 
@@ -118,7 +120,7 @@ S3Status S3Bucket::validate_name(
         return {};
     }
     else {
-        S3Request s3_request(user_context);
+        S3Request s3_request(user_context, domain);
         s3_request.m_path.m_bucket_name = m_name;
         s3_request.m_tracking_id        = tracking_id;
         return {

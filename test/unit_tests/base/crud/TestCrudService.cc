@@ -492,8 +492,6 @@ TEST_CASE_METHOD(
          hestia::CrudQuery::BodyFormat::ITEM},
         {}});
 
-    // std::cout << m_service->m_kv_store_client->dump() << std::endl;
-
     auto updated_mock_model =
         read_response->get_item_as<hestia::mock::MockModel>();
 

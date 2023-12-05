@@ -27,6 +27,11 @@ class S3Config : public SerializeableWithFields {
 
     bool is_path_uri_style() const;
 
+    void set_default_host(const std::string& host)
+    {
+        m_default_host.update_value(host);
+    }
+
     S3Config& operator=(const S3Config& other);
 
   private:
@@ -57,7 +62,7 @@ class S3Config : public SerializeableWithFields {
     /**
      * Unless overriden in a specific request use this host
      **/
-    StringField m_default_host{"default_host", "127.0.0.1:8000"};
+    StringField m_default_host{"default_host", ""};
 
     /**
      * If an object has no bucket set use this one

@@ -1,10 +1,12 @@
 object_store_backends:
   - backend_type: s3
-    tier_names: ["0"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001"]
     config:
       default_host: "127.0.0.1:9000"
       s3_access_key_id: "admin"
       m_s3_secret_access_key_var: "HESTIA_S3_SECRET_KEY"
 
 tiers:
-  - name: "0"
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0

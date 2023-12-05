@@ -5,6 +5,7 @@
 #include "XmlElement.h"
 #include "XmlParser.h"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace hestia {
@@ -32,6 +33,16 @@ S3ListBucketResponse::S3ListBucketResponse(const S3Response& response)
     }
 }
 
+bool S3ListBucketResponse::ok() const
+{
+    return m_error.is_ok();
+}
+
+std::size_t S3ListBucketResponse::get_num_buckets() const
+{
+    return m_buckets.size();
+}
+
 void S3ListBucketResponse::deserialize(const std::string& response_body)
 {
     if (response_body.empty()) {
@@ -44,13 +55,16 @@ void S3ListBucketResponse::deserialize(const std::string& response_body)
     const auto xml_doc = parser.run(response_body);
     if (!xml_doc->has_root()) {
         throw std::runtime_error(
-            SOURCE_LOC() + " | No root element in parsed xml response.");
+            SOURCE_LOC()
+            + " | No root element in parsed xml response. Body is: "
+            + response_body);
     }
 
     if (xml_doc->get_root()->get_tag_name() != "ListAllMyBucketsResult") {
         throw std::runtime_error(
             SOURCE_LOC()
-            + " | Missing required tag: ListAllMyBucketsResult pasring xml response.");
+            + " | Missing required tag: ListAllMyBucketsResult pasring xml response. Body is: "
+            + response_body);
         return;
     }
 
@@ -192,7 +206,8 @@ void S3ListObjectsResponse::deserialize(const std::string& response_body)
     if (xml_doc->get_root()->get_tag_name() != "ListBucketResult") {
         throw std::runtime_error(
             SOURCE_LOC()
-            + " | Missing required tag: ListBucketResult pasring xml response.");
+            + " | Missing required tag: ListBucketResult pasring xml response. Body is: "
+            + response_body);
         return;
     }
 
@@ -207,9 +222,7 @@ void S3ListObjectsResponse::deserialize(const std::string& response_body)
             m_next_marker = child->get_text();
         }
         else if (child->get_tag_name() == "Contents") {
-            for (const auto& contents_child : child->get_children()) {
-                m_contents.push_back(S3Object(*contents_child));
-            }
+            m_contents.push_back(S3Object(*child));
         }
         else if (child->get_tag_name() == "Name") {
             m_name = child->get_text();

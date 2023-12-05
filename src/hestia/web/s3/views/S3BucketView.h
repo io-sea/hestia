@@ -9,7 +9,7 @@ class DistributedHsmService;
 
 class S3BucketView : public S3WebView {
   public:
-    S3BucketView(DistributedHsmService* service);
+    S3BucketView(DistributedHsmService* service, const std::string& domain);
 
     HttpResponse::Ptr on_get(
         const HttpRequest& request,

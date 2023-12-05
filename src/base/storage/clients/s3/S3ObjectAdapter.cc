@@ -1,5 +1,7 @@
 #include "S3ObjectAdapter.h"
 
+#include <iostream>
+
 namespace hestia {
 std::unique_ptr<S3ObjectAdapter> S3ObjectAdapter::create(const std::string&)
 {
@@ -27,6 +29,7 @@ void S3ObjectAdapter::to_s3(
         }
         s3_object.m_key = object.get_primary_key();
     }
+    s3_object.m_size = object.size();
 }
 
 void S3ObjectAdapter::from_s3(

@@ -25,7 +25,8 @@ class S3Bucket {
 
     S3Status validate_name(
         const std::string& tracking_id,
-        const S3UserContext& user_context) const;
+        const S3UserContext& user_context,
+        const std::string& domain) const;
 
     XmlElementPtr to_xml() const;
 

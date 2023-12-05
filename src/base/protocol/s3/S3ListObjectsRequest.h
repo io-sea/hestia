@@ -6,11 +6,12 @@ namespace hestia {
 class S3ListObjectsRequest {
 
   public:
-    S3ListObjectsRequest(const S3UserContext& user_context);
+    S3ListObjectsRequest(
+        const S3UserContext& user_context, const std::string& domain);
 
-    S3ListObjectsRequest(const HttpRequest& req);
+    S3ListObjectsRequest(const HttpRequest& req, const std::string& domain);
 
-    void build_query(Map& query) const;
+    void build_query();
 
     bool m_is_v2_type{true};
     S3Request m_s3_request;

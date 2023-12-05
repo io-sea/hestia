@@ -7,9 +7,12 @@
 namespace hestia {
 
 S3AuthorisationChecker::AuthResponse S3AuthorisationChecker::authorise(
-    const UserService& user_service, const HttpRequest& http_request)
+    const UserService& user_service,
+    const HttpRequest& http_request,
+    const std::string& domain)
 {
-    S3Request s3_request(http_request, true);
+    S3Request s3_request(http_request, domain, true);
+
     if (!s3_request.is_valid()) {
         LOG_ERROR(
             "Failed parsing request auth headers: " + s3_request.to_string());

@@ -1,14 +1,18 @@
 tiers:
-  - name: "0"
-  - name: "1"
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
 
 object_store_backends:
   - backend_type: file
-    tier_names: ["0"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001"],
     config: 
       root: phobos_tests_object_store
   - backend_type: mock_phobos
-    tier_names: ["1"]
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000002"],
 
 event_feed:
   active: true

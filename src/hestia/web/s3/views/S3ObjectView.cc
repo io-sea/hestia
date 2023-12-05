@@ -17,8 +17,10 @@
 #include <sstream>
 
 namespace hestia {
-S3ObjectView::S3ObjectView(DistributedHsmService* service) :
-    S3WebView(service), m_object_adatper(std::make_unique<S3HsmObjectAdapter>())
+S3ObjectView::S3ObjectView(
+    DistributedHsmService* service, const std::string& domain) :
+    S3WebView(service, domain),
+    m_object_adatper(std::make_unique<S3HsmObjectAdapter>())
 {
     LOG_INFO("Loaded object view");
 }
@@ -51,19 +53,24 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     const AuthorizationContext& auth,
     bool is_get)
 {
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
 
-    LOG_INFO("Object get or head req: " << s3_request.to_string());
+    LOG_INFO("Object get or head");
 
     auto [status, object_get_response] = on_get_object(s3_request, auth);
     if (status->error()) {
-        LOG_INFO("Faile to find object: " << status->to_string());
+        LOG_INFO("Failed to find object: " << status->to_string());
         return std::move(status);
     }
 
+    LOG_INFO("Found object ok");
+
     auto object = object_get_response->get_item_as<HsmObject>();
     HttpResponse::Ptr response;
+    LOG_INFO("Object size is: " << object->size());
+
     if (is_get && object->size() > 0) {
+        LOG_INFO("Object has data - returning it");
         response =
             on_get_data(s3_request, request, auth, object->get_primary_key());
     }
@@ -220,9 +227,11 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
         return S3ViewUtils::on_server_error(s3_request, msg);
     }
 
+    LOG_INFO("Checking whether to put data");
     if (const auto content_length =
             request.get_header().get_content_length_as_size_t();
         content_length > 0) {
+        LOG_INFO("Putting data");
         return on_put_data(
             request, auth, create_response->get_item()->get_primary_key(),
             content_length);
@@ -287,7 +296,7 @@ HttpResponse::Ptr S3ObjectView::on_put(
         return HttpResponse::create();
     }
 
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
 
     const auto copy_source = request.get_header().get_item("x-amz-copy-source");
     if (!copy_source.empty()) {
@@ -348,7 +357,7 @@ HttpResponse::Ptr S3ObjectView::on_delete(
 {
     LOG_INFO("S3ObjectView:on_delete");
 
-    S3Request s3_request(request);
+    S3Request s3_request(request, m_domain);
 
     auto [status, object_get_response] = on_get_object(s3_request, auth);
     if (status->error()) {

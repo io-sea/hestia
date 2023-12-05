@@ -21,9 +21,9 @@ add_module(
         MockCrudWebApp.cc
         MockHestiaClient.cc
     INTERNAL_DEPENDENCIES 
-        protocol
-        web
         app
+    INTERNAL_INCLUDE_DIRS
+        http
 )
 
 add_dependencies(hestia_mocks hestia_mock_phobos_plugin hestia_mock_motr_plugin)
