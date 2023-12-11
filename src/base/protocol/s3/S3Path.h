@@ -41,6 +41,7 @@ class S3Path {
     std::string m_bucket_name;
     std::string m_object_key;
     std::string m_queries;
+    bool m_is_virtual_host{false};
 
     static constexpr char meta_prefix[] = "x-amz-meta-";
 

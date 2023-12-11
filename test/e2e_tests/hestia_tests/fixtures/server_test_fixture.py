@@ -38,6 +38,8 @@ class ServerTestFixture(BaseTestFixture):
 
         if config is None:
             config = "hestia_controller_with_backends"
+
+        logging.info("Using config: " + config)
         config_path = self.get_config_path(config)
 
         start_server_cmd = f"hestia start --config={config_path}"

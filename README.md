@@ -97,9 +97,9 @@ Linux (`RHEL 8` is the primary development platform) and MacOS are supported.
 
 * A `c++17` compatible compiler
 * `cmake >= 3.24`. NOTE: This is currently newer than the system version in many distros. A [script is provided](infra/scripts/bootstrap_cmake.sh) to fetch it if the system version is too old.
-* `build-essential` or `Development Tools` equivalent build tooling - depending on the build platform.
-
-Several libraries are automatically fetched if not found, using CMake `FetchContent`. See the [Hestia Developer Guide](./doc/DeveloperGuide.md) for details.
+* `git`
+* `make`
+* A web connection - unless further build dependencies are manually installed (see the [Hestia Developer Guide](./doc/DeveloperGuide.md) for details).
 
 ### Doing the build
 

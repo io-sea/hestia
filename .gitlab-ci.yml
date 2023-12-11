@@ -20,7 +20,6 @@ stages:
     HESTIA_CODE_COVERAGE: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
     HESTIA_WITH_MOTR: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_TEST_REDIS: "OFF"
     MOTR_SRC_DIR: ""
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
@@ -30,7 +29,6 @@ stages:
     HESTIA_BUILD_DOCUMENTATION: "ON"
     HESTIA_WITH_PHOBOS: "ON"
     HESTIA_WITH_MOTR: "ON"
-    HESTIA_WITH_PROXYGEN: "ON"
     MOTR_SRC_DIR: "/cortx-motr"
 
 # CI code snippets
@@ -69,7 +67,6 @@ stages:
       -DHESTIA_TEST_REDIS="${HESTIA_TEST_REDIS}"
       -DHESTIA_BUILD_DOCUMENTATION="${HESTIA_BUILD_DOCUMENTATION}"
       -DCODE_COVERAGE="${HESTIA_CODE_COVERAGE}"
-      -DHESTIA_WITH_PROXYGEN="${HESTIA_WITH_PROXYGEN}"
       -DHESTIA_WITH_PHOBOS="${HESTIA_WITH_PHOBOS}"
       -DHESTIA_WITH_MOTR="${HESTIA_WITH_MOTR}"
       -DHESTIA_ENABLE_SANITIZERS="${ENABLE_SANITIZERS}"
@@ -226,8 +223,6 @@ E2E_test:
 .nightly_snippets:
   - &install_motr
     ${CI_PROJECT_DIR}/infra/scripts/ci/install_motr.sh
-  - &install_proxygen
-    yum install -qy $(cat ${HESTIA_DEPS}/proxygen);
 
 .default_nightly_job: &default_nightly_job
   <<: *default_job
@@ -246,7 +241,6 @@ Nightly_build:
     <<: *nightly_variables
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -276,7 +270,6 @@ Nightly_unit_test:
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - *install_proxygen
     - *install_phobos
     - *install_motr
     - yum install -qy $(cat ${HESTIA_DEPS}/test)
@@ -294,7 +287,6 @@ Nightly_E2E:
     - *update_distro
     - *install_base_dependencies
     - *install_phobos
-    - *install_proxygen
     - *install_e2e_dependencies
   script:
     - *e2e_test
@@ -314,7 +306,6 @@ Nightly_code_coverage:
     HESTIA_BUILD_DOCUMENTATION: "OFF"
     HESTIA_WITH_PHOBOS: "OFF" #no need for backends for test coverage
     HESTIA_WITH_MOTR: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -376,7 +367,6 @@ Nightly_cleanup:
     HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
   before_script:
     - *update_distro
     - *install_base_dependencies
@@ -415,7 +405,6 @@ Master_deploy_current_build:
     <<: *nightly_variables
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_PATCH_RELEASE_VERSION}"
 
 Master_deploy_minor_build:
@@ -429,7 +418,6 @@ Master_deploy_minor_build:
     <<: *nightly_variables
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_MINOR_RELEASE_VERSION}"
 
 Master_deploy_major_build:
@@ -443,5 +431,4 @@ Master_deploy_major_build:
     <<: *nightly_variables
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_WITH_PHOBOS: "OFF"
-    HESTIA_WITH_PROXYGEN: "OFF"
     HESTIA_PROJECT_VERSION: "${CI_MAJOR_RELEASE_VERSION}"

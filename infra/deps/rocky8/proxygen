@@ -1,9 +1,0 @@
-boost-devel
-gflags-devel
-libzstd-devel
-libsodium-devel
-libevent-devel
-double-conversion-devel
-gperf
-glog-devel
-gcc-toolset-12-libatomic-devel

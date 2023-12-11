@@ -14,12 +14,15 @@ class S3ApiTestFixture(ServerTestFixture):
         super().__init__(project_dir, work_dir, system_install)
 
         self.name = "s3_api_tests"
+        self.port = 8090
 
         self.setup()
 
     def get_token(self):
         self.start_server()
+        self.port = 8080
         self.login()
+        self.port = 8090
         self.stop_server()
 
     def run(self):
@@ -34,13 +37,17 @@ class S3ApiTestFixture(ServerTestFixture):
         self.start_server("s3_server", False)
 
         endpoint = f"http://{self.host}:{self.port}"
+        logging.info("Hitting endpoint: " + endpoint + " with token " + self.token + " and file " + str(object_content))
         s3_client = S3Client(endpoint, self.user_name, self.token)
 
         buckets = s3_client.list_buckets()
-        print("Got: " + str(len(buckets)) + " buckets")
+        logging.info("Got: " + str(len(buckets)) + " buckets")
 
         s3_client.create_bucket("my_bucket")
-        #s3_client.put(object_content, "my_bucket", "my_object")
+
+        s3_client.put(object_content, "my_bucket", "my_object")
+
+        logging.info("Finished S3 tests")
 
         
 if __name__ == "__main__":

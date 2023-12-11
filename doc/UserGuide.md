@@ -176,11 +176,6 @@ The server will attempt to bind at the `host_address` and `host_port` when start
 * `http` : The `HTTP` interface to the Hestia - this exposes HSM operations as per the CLI (detailed later), but also a co-ordination API for distributed `Hestia` instances.
 * `s3` : The `S3` interface to Hestia - this exposes an S3 Object Store interface with optional HSM support via header metadata.
 
-Hestia currently supports two server backends with the `backend` option:
-
-* `basic` : Use a simple (custom written) server implementation - this is very basic - only intended for local development and testing
-* `proxygen` : User a server built on the [Proxygen](https://github.com/facebook/proxygen) library
-
 ## Event Feed
 
 Hestia will optinally log resource-altering events to a YAML file specified by `event_feed_path` in the general config as shown below. 
@@ -290,7 +285,7 @@ Many other operations are supported, see `bindings/python/hestia/test/test_bindi
 
 Hestia provides two primary web-interfaces (S3 and generic REST) through which a number of web-apps (`Worker` and `Controller`-like) can be run. 
 
-The web-apps are run on a Proxygen web-server (with a basic custom-built server provided for testing).
+The web-apps are run on a basic built-in web-server.
 
 The server can be run blocking or as a daemon depending on the supplied command line flags - with the loaded app controlled by the supplied `yaml` config.
 

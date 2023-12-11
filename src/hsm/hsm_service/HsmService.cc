@@ -438,7 +438,7 @@ void HsmService::do_hsm_action(
 void HsmService::get_object(
     const HsmActionContext& action_context, HsmObject& object) const
 {
-    const auto object_id = action_context.m_action.get_subject_key();
+    const auto object_id = action_context.get_subject_id();
 
     const auto object_service = m_services->get_service(HsmItem::Type::OBJECT);
     const auto get_response   = object_service->make_request(CrudRequest{
@@ -470,24 +470,40 @@ void HsmService::update_tiers(const CrudUserContext& user_id)
     }
 }
 
-CrudResponsePtr HsmService::get_or_create_action(
-    const HsmActionRequest& req, HsmAction& working_action) const
+void HsmService::get_or_create_action(
+    const HsmActionRequest& req, HsmActionContext& action_context) const
 {
-    if (working_action.get_primary_key().empty()) {
-        auto action_service = m_services->get_service(HsmItem::Type::ACTION);
+    auto action_service = m_services->get_service(HsmItem::Type::ACTION);
+
+    if (action_context.get_action_id().empty()) {
         auto action_response =
             action_service->make_request(TypedCrudRequest<HsmAction>{
-                CrudMethod::CREATE, working_action, CrudQuery::BodyFormat::ITEM,
-                req.get_user_context()});
+                CrudMethod::CREATE, action_context.get_action(),
+                CrudQuery::BodyFormat::ITEM, req.get_user_context()});
         if (!action_response->ok()) {
             throw RequestException<HsmActionError>(
                 {HsmActionErrorCode::CRUD_ERROR,
                  SOURCE_LOC() + "Failed to create action"});
         }
-        working_action = *action_response->get_item_as<HsmAction>();
+        action_context.set_action(*action_response->get_item_as<HsmAction>());
     }
-    return CrudResponse::create(
-        req, HsmItem::hsm_action_name, CrudQuery::BodyFormat::NONE);
+    else {
+        auto read_response = action_service->make_request(CrudRequest(
+            CrudMethod::READ,
+            {action_context.get_action_id(), CrudQuery::BodyFormat::ITEM},
+            req.get_user_context()));
+        if (!read_response->ok()) {
+            throw RequestException<HsmActionError>(
+                {HsmActionErrorCode::CRUD_ERROR,
+                 SOURCE_LOC() + "Failed to read action"});
+        }
+        if (!read_response->found()) {
+            throw RequestException<HsmActionError>(
+                {HsmActionErrorCode::CRUD_ERROR,
+                 SOURCE_LOC() + "Failed to find action"});
+        }
+        action_context.set_action(*read_response->get_item_as<HsmAction>());
+    }
 }
 
 void HsmService::make_object_store_request(
@@ -495,8 +511,8 @@ void HsmService::make_object_store_request(
     const HsmActionContext& action_context,
     Stream* stream) const
 {
-    const auto object_id = action_context.m_action.get_subject_key();
-    const auto action_id = action_context.m_action.get_primary_key();
+    const auto object_id = action_context.get_subject_id();
+    const auto action_id = action_context.get_action_id();
 
     LOG_INFO(
         "Starting HSMService "
@@ -510,7 +526,7 @@ void HsmService::make_object_store_request(
     HsmObjectStoreRequest req(storage_object, method);
     req.set_target_tier(action_context.m_target_tier_id);
     req.set_source_tier(action_context.m_source_tier_id);
-    req.set_action_id(action_context.m_action.get_primary_key());
+    req.set_action_id(action_context.get_action_id());
     req.set_extent(action_context.m_extent);
 
     auto object_store_completion_func =
@@ -528,10 +544,10 @@ void HsmService::make_object_store_request(
             [req, action_context](
                 HsmObjectStoreResponse::Ptr object_store_response) {
                 auto action_context_cp = action_context;
-                action_context_cp.m_action.set_num_transferred(
+                action_context_cp.action().set_num_transferred(
                     object_store_response->get_bytes_transferred());
-                action_context_cp.m_progress_func(
-                    HsmActionResponse::create(req, action_context_cp.m_action));
+                action_context_cp.m_progress_func(HsmActionResponse::create(
+                    req, action_context_cp.get_action()));
             };
 
         m_object_store->make_request(
@@ -548,7 +564,7 @@ void HsmService::on_object_store_response(
     LOG_INFO("Got object store response");
     if (!object_store_response->ok()) {
         auto response = HsmActionResponse::create(
-            action_context.m_req, action_context.m_action);
+            action_context.m_req, action_context.get_action());
         const std::string msg =
             SOURCE_LOC() + " | Object store error.\n"
             + object_store_response->get_error().to_string();
@@ -566,7 +582,7 @@ void HsmService::on_object_store_response(
 
         if (m_event_feed != nullptr) {
             LOG_INFO("Updating event feed locally");
-            const auto object_id = action_context.m_action.get_subject_key();
+            const auto object_id = action_context.get_subject_id();
             if (method == HsmObjectStoreRequestMethod::GET) {
                 CrudEvent event(
                     HsmItem::hsm_object_name, CrudMethod::READ, {object_id},
@@ -590,7 +606,7 @@ void HsmService::on_object_store_response(
     // respond ok
     LOG_INFO("Finished HSM Action ok");
     auto response = HsmActionResponse::create(
-        action_context.m_req, action_context.m_action);
+        action_context.m_req, action_context.get_action());
     action_context.m_completion_func(std::move(response));
 }
 
@@ -660,7 +676,7 @@ void HsmService::init_extent(
     const std::string& tier_id,
     const std::string& store_id) const
 {
-    extent.set_object_id(action_context.m_action.get_subject_key());
+    extent.set_object_id(action_context.get_subject_id());
     extent.set_tier_id(tier_id);
     extent.set_tier_priority(action_context.m_target_tier_prio);
     extent.set_backend_id(store_id);
@@ -710,9 +726,7 @@ void HsmService::put_data(
             get_tier_id(action_context.m_target_tier_prio);
     }
 
-    auto action_get_response =
-        get_or_create_action(req, action_context.m_action);
-    CRUD_ERROR_CHECK(action_get_response, action_context);
+    get_or_create_action(req, action_context);
 
     HsmObject working_object;
     get_object(action_context, working_object);
@@ -735,14 +749,13 @@ void HsmService::get_data(
             get_tier_id(action_context.m_source_tier_prio);
     }
 
-    auto action_response = get_or_create_action(req, action_context.m_action);
-    CRUD_ERROR_CHECK(action_response, action_context);
+    get_or_create_action(req, action_context);
 
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
     if (action_context.m_extent.empty()) {
-        const auto object_id = action_context.m_action.get_subject_key();
+        const auto object_id = action_context.get_subject_id();
         std::string msg      = SOURCE_LOC() + " | Object " + object_id
                           + " not found on tier with uuid "
                           + action_context.m_source_tier_id;
@@ -769,14 +782,12 @@ void HsmService::copy_data(
             get_tier_id(action_context.m_target_tier_prio);
     }
 
-    const auto action_response =
-        get_or_create_action(req, action_context.m_action);
-    CRUD_ERROR_CHECK(action_response, action_context);
+    get_or_create_action(req, action_context);
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
     if (action_context.m_extent.empty()) {
-        const auto object_id = action_context.m_action.get_subject_key();
+        const auto object_id = action_context.get_subject_id();
         std::string msg      = SOURCE_LOC() + " | Object " + object_id
                           + " not found on tier with uuid "
                           + action_context.m_source_tier_id;
@@ -802,14 +813,12 @@ void HsmService::move_data(
             get_tier_id(action_context.m_target_tier_prio);
     }
 
-    const auto action_response =
-        get_or_create_action(req, action_context.m_action);
-    CRUD_ERROR_CHECK(action_response, action_context);
+    get_or_create_action(req, action_context);
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
     if (action_context.m_extent.empty()) {
-        const auto object_id = action_context.m_action.get_subject_key();
+        const auto object_id = action_context.get_subject_id();
         std::string msg      = SOURCE_LOC() + " | Object " + object_id
                           + " not found on tier "
                           + action_context.m_source_tier_id;
@@ -831,13 +840,12 @@ void HsmService::release_data(
             get_tier_id(action_context.m_source_tier_prio);
     }
 
-    auto action_response = get_or_create_action(req, action_context.m_action);
-    CRUD_ERROR_CHECK(action_response, action_context);
+    get_or_create_action(req, action_context);
     if (action_context.m_extent.empty()) {
         action_context.m_extent = {0, get_object_size_on_tier(action_context)};
     }
     if (action_context.m_extent.empty()) {
-        const auto object_id = action_context.m_action.get_subject_key();
+        const auto object_id = action_context.get_subject_id();
         std::string msg      = SOURCE_LOC() + " | Object " + object_id
                           + " not found on tier "
                           + action_context.m_source_tier_id;
@@ -907,18 +915,19 @@ const std::string& HsmService::get_tier_id(uint8_t tier) const
 void HsmService::get_action(
     const HsmActionContext& action_context, HsmAction& action) const
 {
-    auto action_service    = get_service(HsmItem::Type::ACTION);
+    auto action_service = get_service(HsmItem::Type::ACTION);
+    LOG_DEBUG("Looking for action: " + action_context.m_action_id);
     const auto action_read = action_service->make_request(CrudRequest{
         CrudMethod::READ,
         CrudQuery{
-            CrudIdentifier(action_context.m_action.get_primary_key()),
+            CrudIdentifier(action_context.m_action_id),
             CrudQuery::BodyFormat::ITEM},
         action_context.m_user_context});
     if (!action_read->ok()) {
-        THROW("Failed to read action for error assignment");
+        THROW("Failed to read action.");
     }
     if (!action_read->found()) {
-        THROW("Failed to get action for error assignment");
+        THROW("Did not find action: id is - " << action_context.m_action_id);
     }
     action = *action_read->get_item_as<HsmAction>();
 }

@@ -282,7 +282,23 @@ std::string S3Request::create_canonical_request(
     sstr << request.get_method_as_string() << '\n';
 
     S3Path s3_path(request, m_domain);
-    sstr << '/' << HashUtils::uri_encode(s3_path.m_object_key, false) << '\n';
+
+    std::string canonical_path;
+    if (!s3_path.m_is_virtual_host && !s3_path.m_bucket_name.empty()) {
+        canonical_path +=
+            "/" + HashUtils::uri_encode(s3_path.m_bucket_name, false);
+    }
+    if (!s3_path.m_object_key.empty()) {
+        canonical_path +=
+            "/" + HashUtils::uri_encode(s3_path.m_object_key, false);
+    }
+    if (canonical_path.empty()) {
+        canonical_path = "/\n";
+    }
+    else {
+        canonical_path += "\n";
+    }
+    sstr << canonical_path;
     sstr << serialize_queries();
     sstr << serialize_headers(request);
     sstr << '\n';
@@ -295,6 +311,7 @@ std::string S3Request::create_canonical_request(
     else {
         sstr << calculated_payload;
     }
+    LOG_INFO("Canonical is: " << sstr.str());
     return sstr.str();
 }
 

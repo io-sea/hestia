@@ -16,7 +16,8 @@ S3Path::S3Path(const HttpRequest& request, const std::string& domain)
     else {
         auto [bucket_name, rest] =
             StringUtils::split_on_first(host, "." + domain);
-        m_bucket_name = bucket_name;
+        m_is_virtual_host = true;
+        m_bucket_name     = bucket_name;
         object_from_path_only(path_less_domain);
     }
     /*

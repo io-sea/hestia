@@ -16,3 +16,6 @@ object_store_backends:
       ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
       root: s3_server_object_store
+
+logger:
+  level: debug

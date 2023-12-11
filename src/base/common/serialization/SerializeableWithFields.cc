@@ -36,7 +36,6 @@ SerializeableWithFields& SerializeableWithFields::operator=(
         m_use_id = other.m_use_id;
         m_id     = other.m_id;
         m_type   = other.m_type;
-
         init();
     }
     return *this;

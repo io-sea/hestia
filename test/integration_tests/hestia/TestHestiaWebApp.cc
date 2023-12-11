@@ -11,6 +11,7 @@
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 
+#include "BasicHttpServer.h"
 #include "DistributedHsmService.h"
 #include "EventFeed.h"
 #include "HestiaWebApp.h"
@@ -21,7 +22,6 @@
 #include "UserService.h"
 #include "UuidUtils.h"
 
-#include "ProxygenTestUtils.h"
 #include "TestUtils.h"
 
 #include <filesystem>
@@ -104,7 +104,8 @@ class TestHestiaWebAppFixture {
             m_user_service.get(), m_dist_hsm_service.get());
 
         hestia::Server::Config server_config;
-        m_server = std::make_unique<TestServer>(server_config, m_web_app.get());
+        m_server = std::make_unique<hestia::BasicHttpServer>(
+            server_config, m_web_app.get());
 
         m_server->initialize();
         m_server->start();
@@ -128,7 +129,11 @@ class TestHestiaWebAppFixture {
         return response_future.get();
     }
 
-    ~TestHestiaWebAppFixture() { m_server->stop(); }
+    ~TestHestiaWebAppFixture()
+    {
+        LOG_DEBUG("Test finished - shutting down server");
+        m_server->stop();
+    }
 
     void get_objects(std::vector<hestia::Model::Ptr>& objects)
     {
@@ -289,7 +294,7 @@ class TestHestiaWebAppFixture {
     std::unique_ptr<hestia::ModelSerializer> m_tier_adapter;
 
     std::unique_ptr<hestia::HestiaWebApp> m_web_app;
-    std::unique_ptr<TestServer> m_server;
+    std::unique_ptr<hestia::BasicHttpServer> m_server;
     std::unique_ptr<hestia::CurlClient> m_http_client;
 
     std::string m_base_url   = "127.0.0.1:8000/api/v1/";

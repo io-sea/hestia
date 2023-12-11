@@ -14,7 +14,6 @@ web_apps:
 
 server_backends:
   - identifier: hestia::Basic
-  - identifier: hestia::Proxygen
 
 object_store_backends:
   - type: file_hsm

@@ -13,7 +13,6 @@ struct HsmActionContext {
         const HsmActionRequest& req,
         actionCompletionFunc completion_func,
         actionProgressFunc progress_func) :
-        m_action(req.get_action()),
         m_req(req),
         m_user_context(req.get_user_context()),
         m_completion_func(completion_func),
@@ -22,11 +21,26 @@ struct HsmActionContext {
         m_target_tier_id(req.target_tier_id()),
         m_source_tier_prio(req.source_tier()),
         m_target_tier_prio(req.target_tier()),
-        m_extent(req.extent())
+        m_extent(req.extent()),
+        m_action(req.get_action()),
+        m_action_id(m_action.get_primary_key())
     {
     }
 
-    HsmAction m_action;
+    std::string get_subject_id() const { return m_action.get_subject_key(); }
+
+    std::string get_action_id() const { return m_action_id; }
+
+    const HsmAction& get_action() const { return m_action; }
+
+    void set_action(const HsmAction& action)
+    {
+        m_action    = action;
+        m_action_id = m_action.get_primary_key();
+    }
+
+    HsmAction& action() { return m_action; }
+
     BaseRequest m_req;
     CrudUserContext m_user_context;
     actionCompletionFunc m_completion_func;
@@ -38,5 +52,11 @@ struct HsmActionContext {
     std::string m_store_id;
     Extent m_extent;
     bool m_needs_db_update{false};
+
+  private:
+    HsmAction m_action;
+
+  public:
+    std::string m_action_id;
 };
 }  // namespace hestia

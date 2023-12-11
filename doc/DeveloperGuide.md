@@ -50,6 +50,7 @@ During the build several third-party libraries are downloaded and built if syste
 * cURL
 * nlohmann JSON
 * hiredis
+* libxml2
 * yaml-cpp
 * spdlog
 * CLI11
@@ -57,9 +58,6 @@ During the build several third-party libraries are downloaded and built if syste
 
 Optional dependencies for Plugins are:
 
-* libxml2
-* libS3
-* Proxygen
 * CEA Phobos
 * Cortx Motr
 
@@ -196,7 +194,7 @@ There is a collection of `Nightly` tests that run on the `devel` branch HEAD, if
 
 The have the following stages:
 
-* `Build` - do the build, with some expensive dependencies (Phobos, Proxygen, Motr)
+* `Build` - do the build, with some expensive dependencies (Phobos, Motr)
 * `Unit Test` - run unit tests with the extra dependencies
 * `E2E Test` - run e2e tests with the extra dependencies
 * `Code Coverage` - run a code coverage job and store the results

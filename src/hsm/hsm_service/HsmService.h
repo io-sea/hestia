@@ -133,8 +133,8 @@ class HsmService : public CrudService {
     void update_action(
         const HsmActionContext& action_context, const HsmAction& action) const;
 
-    CrudResponsePtr get_or_create_action(
-        const HsmActionRequest& req, HsmAction& working_action) const;
+    void get_or_create_action(
+        const HsmActionRequest& req, HsmActionContext& action_context) const;
 
     void create_or_update_extent(
         const HsmActionContext& action_context,

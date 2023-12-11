@@ -25,7 +25,3 @@ add_module(
     DEPENDENCIES
         Threads::Threads
 )
-
-if(HESTIA_WITH_PROXYGEN)
-    add_subdirectory(proxygen)
-endif()

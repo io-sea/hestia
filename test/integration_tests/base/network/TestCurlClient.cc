@@ -10,8 +10,8 @@
 #include "InMemoryKeyValueStoreClient.h"
 #include "UserService.h"
 
+#include "BasicHttpServer.h"
 #include "File.h"
-#include "ProxygenTestUtils.h"
 #include "TestUtils.h"
 
 #include <future>
@@ -42,7 +42,8 @@ class TestCurlClientFixture {
         m_web_app      = std::make_unique<TestWebApp>(m_user_service.get());
 
         hestia::Server::Config test_config;
-        m_server = std::make_unique<TestServer>(test_config, m_web_app.get());
+        m_server = std::make_unique<hestia::BasicHttpServer>(
+            test_config, m_web_app.get());
 
         m_server->initialize();
         m_server->start();
@@ -59,8 +60,8 @@ class TestCurlClientFixture {
 
         hestia::Server::Config test_config;
         test_config.m_http_port = 8090;
-        m_redirect_server =
-            std::make_unique<TestServer>(test_config, m_redirect_web_app.get());
+        m_redirect_server       = std::make_unique<hestia::BasicHttpServer>(
+            test_config, m_redirect_web_app.get());
 
         m_redirect_server->initialize();
         m_redirect_server->start();
@@ -88,10 +89,10 @@ class TestCurlClientFixture {
 
     std::unique_ptr<hestia::CurlClient> m_client;
 
-    std::unique_ptr<TestServer> m_server;
+    std::unique_ptr<hestia::BasicHttpServer> m_server;
     std::unique_ptr<TestWebApp> m_web_app;
 
-    std::unique_ptr<TestServer> m_redirect_server;
+    std::unique_ptr<hestia::BasicHttpServer> m_redirect_server;
     std::unique_ptr<TestWebApp> m_redirect_web_app;
 
     hestia::InMemoryKeyValueStoreClient m_kv_store_client;

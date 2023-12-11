@@ -3,8 +3,6 @@
 #include "EventFeed.h"
 #include "Logger.h"
 
-#include "ProxygenTestUtils.h"
-
 #include <filesystem>
 
 int main(int argc, char* argv[])
@@ -21,9 +19,6 @@ int main(int argc, char* argv[])
         std::filesystem::create_directories(
             std::filesystem::current_path() / "test_output");
     }
-
-    ProxygenTestContext proxygen_context;
-    proxygen_context.do_initialize();
 
     int result = Catch::Session().run(argc, argv);
 

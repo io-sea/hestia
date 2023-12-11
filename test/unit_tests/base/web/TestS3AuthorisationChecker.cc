@@ -316,7 +316,7 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     TestS3AuthorizationFixture,
     "S3 authorization - unsigned-payload",
-    "[.authorisation]")
+    "[authorisation]")
 {
     std::string domain = "192.168.2.117:11000";
 
