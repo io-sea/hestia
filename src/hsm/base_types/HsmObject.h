@@ -28,9 +28,9 @@ class HsmObject : public HsmItem, public LockableModel {
 
     void set_dataset_id(const std::string& id);
 
-    void set_content_modified_time(std::time_t t);
+    void set_content_modified_time(std::chrono::microseconds t);
 
-    void set_content_accessed_time(std::time_t t);
+    void set_content_accessed_time(std::chrono::microseconds t);
 
     const std::vector<TierExtents>& tiers() const;
 

@@ -27,24 +27,24 @@ void StringField::value_from_string(const std::string& value_str)
 }
 
 DateTimeField::DateTimeField(
-    const std::string& name, std::time_t default_value) :
-    TypedScalarField<std::time_t>(name, "int", default_value)
+    const std::string& name, std::chrono::microseconds default_value) :
+    TypedScalarField<std::chrono::microseconds>(name, "int", default_value)
 {
 }
 
 std::string DateTimeField::value_as_string() const
 {
-    return std::to_string(m_value);
+    return std::to_string(m_value.count());
 }
 
 void DateTimeField::value_from_string(const std::string& value_str)
 {
-    update_value(std::stoull(value_str));
+    update_value(TimeUtils::micros_from_string(value_str));
 }
 
 void DateTimeField::set_as_now()
 {
-    update_value(TimeUtils::get_current_time());
+    update_value(TimeUtils::get_time_since_epoch_micros());
 }
 
 UuidField::UuidField(const std::string& name, const Uuid& default_value) :

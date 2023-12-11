@@ -278,7 +278,7 @@ void HsmService::on_action_update(
         }
         auto object = *get_response->get_item_as<HsmObject>();
 
-        const auto event_time = TimeUtils::get_current_time();
+        const auto event_time = TimeUtils::get_time_since_epoch_micros();
         if (action_type == HsmAction::Action::GET_DATA) {
             object.set_content_accessed_time(event_time);
             CrudEvent event(
@@ -341,7 +341,7 @@ void HsmService::on_metadata_update(
         }
         auto object = *get_response->get_item_as<HsmObject>();
 
-        const auto modified_time = TimeUtils::get_current_time();
+        const auto modified_time = TimeUtils::get_time_since_epoch_micros();
         object.set_content_modified_time(modified_time);
 
         auto object_put_response = object_service->make_request(
@@ -574,7 +574,7 @@ void HsmService::on_object_store_response(
     }
 
     if (!object_store_response->object_is_remote()) {
-        const auto action_time = TimeUtils::get_current_time();
+        const auto action_time = TimeUtils::get_time_since_epoch_micros();
 
         on_db_update(
             method, object_store_response->get_store_id(), action_context,
@@ -614,7 +614,7 @@ void HsmService::on_db_update(
     HsmObjectStoreRequestMethod method,
     const std::string& store_id,
     const HsmActionContext& action_context,
-    std::time_t action_time) const
+    std::chrono::microseconds action_time) const
 {
     LOG_INFO("Starting DB Update");
 

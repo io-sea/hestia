@@ -74,9 +74,9 @@ Dictionary* prepare_dict(
     Dictionary& dict,
     const std::string& tag,
     const std::string& id,
-    std::time_t time)
+    std::chrono::microseconds time)
 {
-    return prepare_dict(dict, tag, id, std::to_string(time));
+    return prepare_dict(dict, tag, id, TimeUtils::micros_to_string(time));
 }
 
 void HsmEventSink::on_object_create_or_update(
@@ -158,7 +158,7 @@ void HsmEventSink::on_object_update(
     Dictionary& dict,
     const std::string& object_id,
     const CrudUserContext& user_context,
-    std::time_t update_time) const
+    std::chrono::microseconds update_time) const
 {
     const auto object_service =
         m_hsm_service->get_service(HsmItem::Type::OBJECT);
@@ -248,7 +248,7 @@ void HsmEventSink::on_object_read(const CrudEvent& event) const
 void HsmEventSink::on_object_remove(
     Dictionary& dict, const std::string& id) const
 {
-    prepare_dict(dict, "remove", id, TimeUtils::get_current_time());
+    prepare_dict(dict, "remove", id, TimeUtils::get_time_since_epoch_micros());
 }
 
 void HsmEventSink::on_object_remove(const CrudEvent& event) const

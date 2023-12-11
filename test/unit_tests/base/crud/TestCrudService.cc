@@ -62,7 +62,8 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 
     auto created_model1 =
         create_response1->get_item_as<hestia::mock::MockModel>();
-    REQUIRE(created_model1->get_creation_time() == 1);
+    REQUIRE(
+        created_model1->get_creation_time() == std::chrono::microseconds(1));
     REQUIRE(created_model1->name() == "model_name");
     REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
@@ -92,7 +93,9 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
             REQUIRE(get_response1->ok());
             REQUIRE(get_response1->found());
 
-            REQUIRE(get_response1->get_item()->get_creation_time() == 1);
+            REQUIRE(
+                get_response1->get_item()->get_creation_time()
+                == std::chrono::microseconds(1));
             REQUIRE(get_response1->get_item()->name() == "model_name");
         }
 
@@ -203,7 +206,8 @@ TEST_CASE_METHOD(
 
     auto created_model1 =
         create_response1->get_item_as<hestia::mock::MockModel>();
-    REQUIRE(created_model1->get_creation_time() == 1);
+    REQUIRE(
+        created_model1->get_creation_time() == std::chrono::microseconds(1));
     REQUIRE(created_model1->name() == "model_name");
     REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
@@ -230,7 +234,9 @@ TEST_CASE_METHOD(
             auto my_updated_model =
                 update_response->get_item_as<hestia::mock::MockModel>();
 
-            REQUIRE(my_updated_model->get_last_modified_time() == 2);
+            REQUIRE(
+                my_updated_model->get_last_modified_time()
+                == std::chrono::microseconds(2));
             REQUIRE(my_updated_model->name() == "model_name");
             REQUIRE(
                 my_updated_model->m_my_field.get_value()
@@ -267,7 +273,8 @@ TEST_CASE_METHOD(
 
     auto created_model1 =
         create_response1->get_item_as<hestia::mock::MockModel>();
-    REQUIRE(created_model1->get_creation_time() == 1);
+    REQUIRE(
+        created_model1->get_creation_time() == std::chrono::microseconds(1));
     REQUIRE(created_model1->name() == "model_name");
     REQUIRE(created_model1->m_my_field.get_value() == "field_value");
 
@@ -344,7 +351,7 @@ TEST_CASE_METHOD(
             REQUIRE(response->ok());
 
             auto model = response->get_item_as<hestia::mock::MockModel>();
-            REQUIRE(model->get_creation_time() == 1);
+            REQUIRE(model->get_creation_time() == std::chrono::microseconds(1));
             REQUIRE(model->name() == "model_name");
             REQUIRE(model->m_my_field.get_value() == "field_value");
         }

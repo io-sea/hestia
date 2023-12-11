@@ -76,6 +76,11 @@ HttpResponse::Ptr S3ObjectView::on_get_or_head(
     }
     else {
         response = HttpResponse::create();
+
+        if (!is_get) {
+            response->header().set_item(
+                "content-length", std::to_string(object->size()));
+        }
     }
 
     Map metadata;

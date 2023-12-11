@@ -74,7 +74,7 @@ void Model::register_one_to_one_proxy_field(DictField* field)
 
 Model::~Model() {}
 
-std::time_t Model::get_last_modified_time() const
+std::chrono::microseconds Model::get_last_modified_time() const
 {
     return m_last_modified_time.get_value();
 }
@@ -84,7 +84,7 @@ std::string Model::get_runtime_type() const
     return m_type.get_value();
 }
 
-std::time_t Model::get_creation_time() const
+std::chrono::microseconds Model::get_creation_time() const
 {
     return m_creation_time.get_value();
 }

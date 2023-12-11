@@ -180,7 +180,7 @@ void PolicyEngine::replace_list_terminator(std::string& statement)
     }
 }
 
-int PolicyEngine::do_sync(std::time_t& sync_time)
+int PolicyEngine::do_sync(std::chrono::microseconds& sync_time)
 {
     // Get tiers
     uint8_t* tiers{nullptr};
@@ -218,7 +218,7 @@ int PolicyEngine::do_sync(std::time_t& sync_time)
         obj_insert_stmt += tier_object_values;
     }
 
-    sync_time = TimeUtils::get_current_time();
+    sync_time = TimeUtils::get_time_since_epoch_micros();
 
     if (objects_found) {
         replace_list_terminator(obj_insert_stmt);
@@ -228,7 +228,8 @@ int PolicyEngine::do_sync(std::time_t& sync_time)
     return 0;
 }
 
-void PolicyEngine::start_event_listener(std::time_t last_sync_time)
+void PolicyEngine::start_event_listener(
+    std::chrono::microseconds last_sync_time)
 {
     // Since we are building mostly on mac - use a simple poll for now
     // to keep things cross platform.
@@ -262,7 +263,7 @@ void PolicyEngine::start_event_listener(std::time_t last_sync_time)
     }
 }
 
-void PolicyEngine::on_events(std::time_t last_sync_time)
+void PolicyEngine::on_events(std::chrono::microseconds last_sync_time)
 {
     const auto event_feed_path =
         m_cache_dir / std::filesystem::path("event_feed.yaml");
@@ -270,11 +271,12 @@ void PolicyEngine::on_events(std::time_t last_sync_time)
     std::vector<Dictionary::Ptr> events;
     YamlUtils::load_all(event_feed_path.string(), events);
 
-    std::time_t file_last_event = m_last_event_time;
+    std::chrono::microseconds file_last_event = m_last_event_time;
     for (const auto& root : events) {
         auto event = root->get_map_item("root");
-        const auto event_time =
-            std::stoll(event->get_map_item("time")->get_scalar());
+
+        const auto event_time = TimeUtils::micros_from_string(
+            event->get_map_item("time")->get_scalar());
         if (event_time > m_last_event_time && event_time > last_sync_time) {
             if (event_time > file_last_event) {
                 file_last_event = event_time;

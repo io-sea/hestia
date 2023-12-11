@@ -4,6 +4,7 @@ set(INTEGRATION_TEST_SOURCES
     base/common/TestSystemUtils.cc
     base/network/TestBasicHttpServer.cc
     base/network/TestCurlClient.cc
+    base/network/TestS3ClientRealBackend.cc
     hestia/TestHestiaWebApp.cc
     hestia/TestHestiaS3WebApp.cc
     main.cc

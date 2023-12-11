@@ -13,14 +13,14 @@ class CrudEvent : public Model {
         CrudMethod method,
         const CrudRequest& request,
         const CrudResponse& response,
-        const std::string& source = {},
-        std::time_t event_time    = 0);
+        const std::string& source            = {},
+        std::chrono::microseconds event_time = std::chrono::microseconds(0));
 
     CrudEvent(
         const std::string& subject_type,
         CrudMethod method,
         const std::vector<std::string>& ids,
-        std::time_t event_time = 0);
+        std::chrono::microseconds event_time = std::chrono::microseconds(0));
 
     static std::string get_type() { return s_type; }
 
@@ -36,7 +36,7 @@ class CrudEvent : public Model {
 
     const std::string& get_source() const;
 
-    std::time_t get_time() const;
+    std::chrono::microseconds get_time() const;
 
   private:
     void init();
@@ -50,7 +50,7 @@ class CrudEvent : public Model {
     Dictionary m_modified_attrs;
     CrudUserContext m_user_context;
     std::string m_source;
-    std::time_t m_time{0};
+    std::chrono::microseconds m_time{0};
     std::vector<std::string> m_ids;
 };
 }  // namespace hestia

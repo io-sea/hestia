@@ -2,13 +2,13 @@
 
 #include "Serializeable.h"
 
-#include <ctime>
+#include <chrono>
 
 namespace hestia {
 
 class TimedLock : public Serializeable {
   public:
-    TimedLock(std::time_t timeout = 5000);
+    TimedLock(std::chrono::seconds timeout = std::chrono::seconds(5000));
 
     void serialize(
         Dictionary& dict, Format format = Format::FULL) const override;
@@ -21,8 +21,8 @@ class TimedLock : public Serializeable {
     void unlock();
 
     bool m_active{false};
-    std::time_t m_locked_at{0};
-    std::time_t m_max_lock_time{5000};
+    std::chrono::microseconds m_locked_at{0};
+    std::chrono::seconds m_max_lock_duration{5000};
 };
 
 }  // namespace hestia

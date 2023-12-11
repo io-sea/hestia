@@ -81,12 +81,12 @@ std::size_t HsmObject::size() const
     return m_size.get_value();
 }
 
-void HsmObject::set_content_accessed_time(std::time_t t)
+void HsmObject::set_content_accessed_time(std::chrono::microseconds t)
 {
     m_content_accessed_time.update_value(t);
 }
 
-void HsmObject::set_content_modified_time(std::time_t t)
+void HsmObject::set_content_modified_time(std::chrono::microseconds t)
 {
     m_content_modified_time.update_value(t);
 }

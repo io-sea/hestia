@@ -31,7 +31,7 @@ std::string DefaultIdGenerator::get_id(const std::string& key)
 
     std::vector<unsigned char> buffer;
     HashUtils::do_md5(
-        key + std::to_string(TimeUtils::get_current_time()) + address_key,
+        key + TimeUtils::get_time_since_epoch_micross_str() + address_key,
         buffer);
 
     auto uuid = UuidUtils::from_bytes(buffer);

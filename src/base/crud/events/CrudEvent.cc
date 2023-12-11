@@ -13,7 +13,7 @@ CrudEvent::CrudEvent(
     const std::string& subject_type,
     CrudMethod method,
     const std::vector<std::string>& ids,
-    std::time_t event_time) :
+    std::chrono::microseconds event_time) :
     Model(s_type), m_time(event_time), m_ids(ids)
 {
     init();
@@ -36,7 +36,7 @@ CrudEvent::CrudEvent(
     const CrudRequest& request,
     const CrudResponse& response,
     const std::string& source,
-    std::time_t event_time) :
+    std::chrono::microseconds event_time) :
     Model(s_type), m_source(source), m_time(event_time)
 {
     init();
@@ -61,7 +61,7 @@ const std::string& CrudEvent::get_source() const
     return m_source;
 }
 
-std::time_t CrudEvent::get_time() const
+std::chrono::microseconds CrudEvent::get_time() const
 {
     return m_time;
 }

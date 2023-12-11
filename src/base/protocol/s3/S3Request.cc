@@ -344,8 +344,9 @@ std::string S3Request::get_signature(
 std::string S3Request::get_signature(
     const std::string& string_to_sign, const std::string& secret_key) const
 {
-    const auto key             = "AWS4" + secret_key;
-    const auto date_key        = HashUtils::do_h_mac(key, m_timestamp.m_value);
+    const auto key = "AWS4" + secret_key;
+    const auto date_key =
+        HashUtils::do_h_mac(key, m_timestamp.m_value.substr(0, 8));
     const auto date_region_key = HashUtils::do_h_mac(date_key, m_region);
     const auto date_region_service_key =
         HashUtils::do_h_mac(date_region_key, m_service);
@@ -356,8 +357,8 @@ std::string S3Request::get_signature(
 
 std::string S3Request::get_scope() const
 {
-    return m_timestamp.m_value + "/" + m_region + "/" + m_service + "/"
-           + m_scope_suffix;
+    return m_timestamp.m_value.substr(0, 8) + "/" + m_region + "/" + m_service
+           + "/" + m_scope_suffix;
 }
 
 std::string S3Request::serialize_headers(const HttpRequest& request) const

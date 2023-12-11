@@ -105,7 +105,7 @@ class HsmService : public CrudService {
         HsmObjectStoreRequestMethod method,
         const std::string& store_id,
         const HsmActionContext& action_context,
-        std::time_t action_time) const;
+        std::chrono::microseconds action_time) const;
 
     std::size_t get_object_size_on_tier(
         const HsmActionContext& action_context) const;

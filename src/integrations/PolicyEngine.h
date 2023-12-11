@@ -19,12 +19,12 @@ class PolicyEngine {
 
     void log_db();
 
-    int do_sync(std::time_t& sync_time);
+    int do_sync(std::chrono::microseconds& sync_time);
 
-    void start_event_listener(std::time_t last_sync_time);
+    void start_event_listener(std::chrono::microseconds last_sync_time);
 
   private:
-    void on_events(std::time_t last_sync_time);
+    void on_events(std::chrono::microseconds last_sync_time);
 
     void on_event(const Dictionary& event);
 
@@ -53,6 +53,6 @@ class PolicyEngine {
 
     std::filesystem::path m_cache_dir;
     sqlite3* m_db{nullptr};
-    std::time_t m_last_event_time{0};
+    std::chrono::microseconds m_last_event_time{0};
 };
 }  // namespace hestia

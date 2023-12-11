@@ -43,9 +43,16 @@ class S3ApiTestFixture(ServerTestFixture):
         buckets = s3_client.list_buckets()
         logging.info("Got: " + str(len(buckets)) + " buckets")
 
-        s3_client.create_bucket("my_bucket")
+        bucket_name = "my_bucket"
+        s3_client.create_bucket(bucket_name)
 
-        s3_client.put(object_content, "my_bucket", "my_object")
+        object_name = "my_object"
+        s3_client.put(object_content, bucket_name, object_name)
+
+        objects = s3_client.list_objects(bucket_name)
+        logging.info("Got: " + str(len(objects)) + "objects")
+
+        s3_client.get(returned_object, bucket_name, object_name)
 
         logging.info("Finished S3 tests")
 

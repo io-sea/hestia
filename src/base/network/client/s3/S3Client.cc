@@ -1,6 +1,7 @@
 #include "S3Client.h"
 
 #include "HttpRequest.h"
+#include "Logger.h"
 #include "XmlAttribute.h"
 #include "XmlDocument.h"
 #include "XmlElement.h"
@@ -70,6 +71,7 @@ S3ListBucketResponse::Ptr S3Client::list_buckets(
     const S3Request& s3_request) const
 {
     const auto path = s3_request.m_endpoint;
+    LOG_INFO("Making request with path: " + s3_request.m_endpoint);
 
     HttpRequest http_request(path, HttpRequest::Method::GET);
     s3_request.populate_headers({}, http_request.get_header());

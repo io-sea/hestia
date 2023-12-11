@@ -72,7 +72,7 @@ void Logger::do_initialize(
             logger_path = std::filesystem::path(cache_path) / logger_path;
         }
         const std::string suffix =
-            "_" + TimeUtils::get_current_time_hr() + ".txt";
+            "_" + TimeUtils::get_current_time_readable() + ".txt";
         logger_path += suffix;
 
         std::shared_ptr<spdlog::logger> logger;

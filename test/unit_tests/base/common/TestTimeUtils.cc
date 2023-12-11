@@ -9,7 +9,8 @@
 
 TEST_CASE("Test TimeUtils - get current time", "[common]")
 {
-    std::string hestialocaltime_str = hestia::TimeUtils::get_current_time_hr();
+    std::string hestialocaltime_str =
+        hestia::TimeUtils::get_current_time_readable();
 
     std::time_t t = time(0);
     std::tm local = *std::localtime(&t);
@@ -22,7 +23,7 @@ TEST_CASE("Test TimeUtils - get current time", "[common]")
 
 TEST_CASE("Test Timed Lock - lock/unlock", "[common]")
 {
-    std::size_t timeout{5};
+    std::chrono::seconds timeout{5};
     hestia::TimedLock lock(timeout);
 
     lock.lock();
@@ -36,12 +37,10 @@ TEST_CASE("DateTimeField- set as now", "[common]")
 {
     hestia::DateTimeField testfield("Test");
 
-    auto start = std::chrono::system_clock::now().time_since_epoch().count();
-
+    auto start = hestia::TimeUtils::get_time_since_epoch_micros();
     testfield.set_as_now();
-
-    auto end    = std::chrono::system_clock::now().time_since_epoch().count();
-    auto result = std::stoll(testfield.value_as_string());
+    auto end    = hestia::TimeUtils::get_time_since_epoch_micros();
+    auto result = testfield.get_value();
     REQUIRE(start <= result);
     REQUIRE(result <= end);
 }

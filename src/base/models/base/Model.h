@@ -26,9 +26,9 @@ class Model : public SerializeableWithFields {
 
     virtual ~Model();
 
-    std::time_t get_last_modified_time() const;
+    std::chrono::microseconds get_last_modified_time() const;
 
-    std::time_t get_creation_time() const;
+    std::chrono::microseconds get_creation_time() const;
 
     std::string get_runtime_type() const override;
 

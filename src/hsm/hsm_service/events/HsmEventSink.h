@@ -31,7 +31,7 @@ class HsmEventSink : public EventSink {
         Dictionary& dict,
         const std::string& id,
         const CrudUserContext& user_context,
-        std::time_t update_time) const;
+        std::chrono::microseconds update_time) const;
 
     void on_object_create_or_update(
         Dictionary& dict,

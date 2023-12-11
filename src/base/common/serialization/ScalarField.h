@@ -3,7 +3,7 @@
 #include "BaseField.h"
 #include "Uuid.h"
 
-#include <ctime>
+#include <chrono>
 
 namespace hestia {
 
@@ -78,9 +78,11 @@ class StringField : public TypedScalarField<std::string> {
     void value_from_string(const std::string& value_str) override;
 };
 
-class DateTimeField : public TypedScalarField<std::time_t> {
+class DateTimeField : public TypedScalarField<std::chrono::microseconds> {
   public:
-    DateTimeField(const std::string& name, std::time_t default_value = 0);
+    DateTimeField(
+        const std::string& name,
+        std::chrono::microseconds default_value = std::chrono::microseconds(0));
 
     void set_as_now();
 

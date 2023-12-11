@@ -65,7 +65,7 @@ class E2eTests():
                             CliTests(self.project_dir, self.work_dir, True), 
                             SampleAppTests(self.source_dir, self.project_dir, self.work_dir, True),
                             RestApiTestFixture(self.project_dir, self.work_dir, True),
-                            #S3ApiTestFixture(self.project_dir, self.work_dir, system_install),
+                            #S3ApiTestFixture(self.project_dir, self.work_dir, True),
                             #ServiceTests(self.project_dir, self.work_dir, system_install),
                         ]
 

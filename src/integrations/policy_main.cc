@@ -2,6 +2,7 @@
 
 #include "Logger.h"
 
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
         hestia::PolicyEngine policy_engine(cache_dir, host);
         policy_engine.initialize_db(true);
 
-        std::time_t sync_time{0};
+        std::chrono::microseconds sync_time{0};
         auto rc = policy_engine.do_sync(sync_time);
         if (rc != 0) {
             std::cerr << " Failed initial sync" << std::endl;

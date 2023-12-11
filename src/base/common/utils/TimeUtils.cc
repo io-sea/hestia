@@ -11,14 +11,30 @@
 #include <string.h>
 
 namespace hestia {
-std::time_t TimeUtils::get_current_time()
+std::chrono::microseconds TimeUtils::get_time_since_epoch_micros()
 {
-    const auto epoch_count =
-        std::chrono::system_clock::now().time_since_epoch().count();
-    return epoch_count;
+    const auto epoch_duration =
+        std::chrono::system_clock::now().time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        epoch_duration);
 }
 
-std::string TimeUtils::get_current_time_hr()
+std::string TimeUtils::get_time_since_epoch_micross_str()
+{
+    return std::to_string(get_time_since_epoch_micros().count());
+}
+
+std::chrono::microseconds TimeUtils::micros_from_string(const std::string& in)
+{
+    return std::chrono::microseconds(std::stoull(in));
+}
+
+std::string TimeUtils::micros_to_string(std::chrono::microseconds ms)
+{
+    return std::to_string(ms.count());
+}
+
+std::string TimeUtils::get_current_time_readable()
 {
     const auto now  = std::chrono::system_clock::now();
     const auto time = std::chrono::system_clock::to_time_t(now);
@@ -29,24 +45,27 @@ std::string TimeUtils::get_current_time_hr()
 
 std::string TimeUtils::get_current_time_iso8601_basic()
 {
-    const auto now      = std::chrono::system_clock::now();
-    const auto time_now = std::chrono::system_clock::to_time_t(now);
-    return to_iso8601_basic(time_now);
+    return to_iso8601_basic(get_time_since_epoch_micros());
 }
 
-std::string TimeUtils::to_iso8601_basic(std::time_t time)
+std::string TimeUtils::to_iso8601_basic(
+    std::chrono::microseconds ms_since_epoch)
 {
+    std::chrono::time_point<std::chrono::system_clock> epoch;
+    const auto time_now =
+        std::chrono::system_clock::to_time_t(epoch += ms_since_epoch);
+
     std::stringstream ss;
     errno           = 0;
-    auto local_time = std::localtime(&time);
+    auto local_time = std::localtime(&time_now);
     if (local_time == nullptr) {
         std::string err_str;
         if (errno > 0) {
             err_str = strerror(errno);
         }
         LOG_ERROR(
-            "Failed to convert time to localtime: " << time << " with error "
-                                                    << err_str);
+            "Failed to convert time to localtime: "
+            << micros_to_string(ms_since_epoch) << " with error " << err_str);
         return {};
     }
     ss << std::put_time(local_time, "%Y%m%dT%H%M%SZ");
