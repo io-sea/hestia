@@ -2,15 +2,9 @@
 
 #include "HsmObjectStoreClientFactory.h"
 #include "HsmObjectStoreClientManager.h"
-#include "MockHttpClient.h"
 #include "ObjectStoreBackend.h"
-#include "S3Client.h"
 #include "StorageTier.h"
 
-#include "CacheTestFixture.h"
-
-#include <filesystem>
-#include <iostream>
 #include <string.h>
 
 class HsmObjectStoreClientManagerTestFixture {
@@ -54,10 +48,8 @@ TEST_CASE_METHOD(
     backend1.set_tier_ids(tier_ids1);
     backends.push_back(backend1);
 
-    LOG_INFO("Setting up clients...");
     m_client_manager->setup_clients("", "", nullptr, tiers, backends);
 
-    LOG_INFO("Getting hsm client...");
     hestia::HsmObjectStoreClient* hsm_client0;
     hestia::HsmObjectStoreClient* hsm_client1;
     hestia::HsmObjectStoreClient* hsm_client2;
@@ -65,7 +57,6 @@ TEST_CASE_METHOD(
     hsm_client1 = m_client_manager->get_hsm_client(tier_ids0[1]);
     hsm_client2 = m_client_manager->get_hsm_client(tier_ids1[0]);
 
-    LOG_INFO("Getting client...");
     hestia::ObjectStoreClient* client;
     client = m_client_manager->get_client(tier_ids1[0]);
 
