@@ -55,7 +55,15 @@ void PhobosClient::put(
 
         auto read_op = [this, request, fd, completion_func, id = m_id]() {
             auto response = ObjectStoreResponse::create(request, m_id);
-            m_phobos_interface->put(request.object(), fd);
+            try {
+                m_phobos_interface->put(request.object(), fd);
+            }
+            catch (const std::exception& e) {
+                response->on_error(
+                    {ObjectStoreErrorCode::STL_EXCEPTION, e.what()});
+                completion_func(std::move(response));
+                return 0;
+            }
             completion_func(std::move(response));
             return 0;
         };
@@ -87,7 +95,15 @@ void PhobosClient::get(
         auto write_op = [this, object, request, fd, completion_func,
                          id = m_id]() {
             auto response = ObjectStoreResponse::create(request, m_id);
-            m_phobos_interface->get(object, fd);
+            try {
+                m_phobos_interface->get(object, fd);
+            }
+            catch (const std::exception& e) {
+                response->on_error(
+                    {ObjectStoreErrorCode::STL_EXCEPTION, e.what()});
+                completion_func(std::move(response));
+                return 0;
+            }
             response->object() = object;
             completion_func(std::move(response));
             return 0;

@@ -131,9 +131,9 @@ struct object_info {
     struct timeval deprec_time;
 };
 
-int phobos_init_cpp();
+int phobos_init_cpp(void);
 
-void phobos_fini_cpp();
+void phobos_fini_cpp(void);
 
 /**
  * Put N files to the object store with minimal overhead.

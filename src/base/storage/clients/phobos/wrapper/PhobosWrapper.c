@@ -2,12 +2,12 @@
 #include "pho_attrs.h"
 #include "phobos_store.h"
 
-int phobos_init_cpp()
+int phobos_init_cpp(void)
 {
     return phobos_init();
 }
 
-void phobos_fini_cpp()
+void phobos_fini_cpp(void)
 {
     phobos_fini();
 }

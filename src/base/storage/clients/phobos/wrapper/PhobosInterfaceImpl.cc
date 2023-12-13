@@ -23,10 +23,6 @@ void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 {
     PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
     ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
-    if (fd > 0) {
-        ::close(fd);
-    }
-
     if (rc != 0) {
         throw std::runtime_error("phobos_get " + std::to_string(rc));
     }
@@ -57,10 +53,6 @@ void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)
     };
 
     ssize_t rc = phobos_put_cpp(&desc.get_handle(), 1, callback, nullptr);
-    if (fd > 0) {
-        ::close(fd);
-    }
-
     if (rc != 0) {
         throw std::runtime_error("phobos_put " + std::to_string(rc));
     }

@@ -12,7 +12,7 @@ class PhobosStoreTestFixture : public ObjectStoreTestWrapper {
 
 
 TEST_CASE_METHOD(
-    PhobosStoreTestFixture, "Test phobos backend integration", "[.phobos]")
+    PhobosStoreTestFixture, "Test phobos backend integration", "[phobos]")
 {
     hestia::DefaultIdGenerator uuid_generator;
     std::string obj_id = uuid_generator.get_id("phobos_test");
@@ -21,19 +21,6 @@ TEST_CASE_METHOD(
     obj.get_metadata_as_writeable().set_item("mykey", "myval");
 
     exists(obj, false);
-
-    // No way of putting just metadata
-
-    // put(obj);
-    // exists(obj, true);
-
-    // hestia::StorageObject fetched_obj(obj_uuid);
-    // get(fetched_obj);
-
-    // REQUIRE(fetched_obj.m_metadata.get_item("mykey") == "myval");
-
-    // remove(obj);
-    // exists(fetched_obj, false);
 
     std::string content = "The quick brown fox jumps over the lazy dog";
     obj.set_size(content.size());

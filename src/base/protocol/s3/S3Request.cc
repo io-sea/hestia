@@ -311,7 +311,6 @@ std::string S3Request::create_canonical_request(
     else {
         sstr << calculated_payload;
     }
-    LOG_INFO("Canonical is: " << sstr.str());
     return sstr.str();
 }
 
