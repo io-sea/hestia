@@ -15,16 +15,9 @@ class HsmObjectStoreClientManager {
     HsmObjectStoreClientManager(
         HsmObjectStoreClientFactory::Ptr client_factory);
 
-    ObjectStoreClient* get_client(ObjectStoreBackend::Type identifier) const;
-
     ObjectStoreClient* get_client(const std::string& tier_id) const;
 
-    HsmObjectStoreClient* get_hsm_client(
-        ObjectStoreBackend::Type identifier) const;
-
     HsmObjectStoreClient* get_hsm_client(const std::string& tier_id) const;
-
-    ObjectStoreBackend::Type get_backend(const std::string& tier_id) const;
 
     bool has_client(const std::string& tier_id) const;
 
@@ -41,15 +34,34 @@ class HsmObjectStoreClientManager {
         const std::vector<ObjectStoreBackend>& backends = {});
 
   private:
+    ObjectStoreClient* get_client(
+        ObjectStoreBackend::Type identifier) const;  // was public
+
+    HsmObjectStoreClient* get_hsm_client(
+        ObjectStoreBackend::Type identifier) const;  // was public
+
+    ObjectStoreBackend::Type get_backend(
+        const std::string& tier_id) const;  // was public
+
     bool has_backend(ObjectStoreBackend::Type backend) const;
 
     HsmObjectStoreClientFactory::Ptr m_client_factory;
 
+
     std::unordered_map<std::string, ObjectStoreBackend::Type> m_tier_backends;
     std::vector<ObjectStoreBackend::Type> m_backends;
 
+
+    // std::unordered_map<std::string, std::vector<ObjectStoreClient::Ptr>>
+    // m_backends;//new std::unordered_map<std::string,
+    // std::vector<HsmObjectStoreClient::Ptr>> m_hsm_backends;//new
+    // std::unordered_map<std::string,
+    // std::vector<HsmObjectStoreClientPlugin::Ptr>> m_hsm_plugin_backends;//new
+
+
     std::unordered_map<ObjectStoreBackend::Type, ObjectStoreClient::Ptr>
         m_clients;
+
     std::unordered_map<ObjectStoreBackend::Type, ObjectStoreClientPlugin::Ptr>
         m_plugin_clients;
 
