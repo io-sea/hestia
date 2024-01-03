@@ -7,86 +7,63 @@
 #define CATCH_FLOW()                                                           \
     catch (const RequestException<ObjectStoreError>& e)                        \
     {                                                                          \
-        on_exception(request, response.get(), e.get_error());                  \
-        completion_func(std::move(response));                                  \
+        on_exception(ctx.m_request, response.get(), e.get_error());            \
+        ctx.m_completion_func(std::move(response));                            \
         return;                                                                \
     }                                                                          \
     catch (const std::exception& e)                                            \
     {                                                                          \
-        on_exception(request, response.get(), e.what());                       \
-        completion_func(std::move(response));                                  \
+        on_exception(ctx.m_request, response.get(), e.what());                 \
+        ctx.m_completion_func(std::move(response));                            \
         return;                                                                \
     }                                                                          \
     catch (...)                                                                \
     {                                                                          \
-        on_exception(request, response.get());                                 \
-        completion_func(std::move(response));                                  \
+        on_exception(ctx.m_request, response.get());                           \
+        ctx.m_completion_func(std::move(response));                            \
         return;                                                                \
     }
 
 namespace hestia {
-void ObjectStoreClient::make_request(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    progressFunc progress_func,
-    Stream* stream) const noexcept
-{
-    auto response = ObjectStoreResponse::create(request, m_id);
 
-    switch (request.method()) {
+void ObjectStoreClient::initialize(
+    const std::string& id, const std::string&, const Dictionary&)
+{
+    m_id = id;
+}
+
+void ObjectStoreClient::make_request(ObjectStoreContext& ctx) const noexcept
+{
+    auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
+
+    switch (ctx.m_request.method()) {
         case ObjectStoreRequestMethod::GET:
             try {
-                if (progress_func == nullptr) {
-                    get(request, completion_func, stream, nullptr);
-                }
-                else {
-                    auto stream_progress_func =
-                        [progress_func, request,
-                         id = m_id](std::size_t transferred) {
-                            auto response =
-                                ObjectStoreResponse::create(request, id);
-                            response->set_bytes_transferred(transferred);
-                            progress_func(std::move(response));
-                        };
-                    get(request, completion_func, stream, stream_progress_func);
-                }
+                get(ctx);
             }
             CATCH_FLOW();
             return;
         case ObjectStoreRequestMethod::PUT:
             try {
-                if (progress_func == nullptr) {
-                    put(request, completion_func, stream, nullptr);
-                }
-                else {
-                    auto stream_progress_func =
-                        [progress_func, request,
-                         id = m_id](std::size_t transferred) {
-                            auto response =
-                                ObjectStoreResponse::create(request, id);
-                            response->set_bytes_transferred(transferred);
-                            progress_func(std::move(response));
-                        };
-                    put(request, completion_func, stream, stream_progress_func);
-                }
+                put(ctx);
             }
             CATCH_FLOW();
             return;
         case ObjectStoreRequestMethod::EXISTS:
             try {
-                response->set_object_found(exists(request.object()));
+                response->set_object_found(exists(ctx.m_request.object()));
             }
             CATCH_FLOW();
             break;
         case ObjectStoreRequestMethod::LIST:
             try {
-                list(request.query(), response->objects());
+                list(ctx.m_request.query(), response->objects());
             }
             CATCH_FLOW();
             break;
         case ObjectStoreRequestMethod::REMOVE:
             try {
-                remove(request.object());
+                remove(ctx.m_request.object());
             }
             CATCH_FLOW();
             break;
@@ -94,13 +71,85 @@ void ObjectStoreClient::make_request(
             break;
         default:
             const std::string msg =
-                "Method: " + request.method_as_string() + " not supported";
+                "Method: " + ctx.m_request.method_as_string()
+                + " not supported";
             const ObjectStoreError error(
                 ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg);
             LOG_ERROR("Error: " << error);
             response->on_error(error);
     }
-    completion_func(std::move(response));
+    ctx.m_completion_func(std::move(response));
+}
+
+void ObjectStoreClient::add_stream_progress_func(ObjectStoreContext& ctx) const
+{
+    auto stream_progress_func = [ctx, id = m_id](std::size_t transferred) {
+        auto response = ObjectStoreResponse::create(ctx.m_request, id);
+        response->set_bytes_transferred(transferred);
+        ctx.m_progress_func(std::move(response));
+    };
+    ctx.m_stream->set_progress_func(
+        ctx.m_request.get_progress_interval(), stream_progress_func);
+}
+
+void ObjectStoreClient::init_stream(
+    ObjectStoreContext& ctx, const StorageObject& object) const
+{
+    if (!ctx.has_stream()) {
+        return;
+    }
+    if (ctx.has_progress_func()) {
+        add_stream_progress_func(ctx);
+    }
+
+    auto stream_completion_func = [ctx, object, id = m_id](StreamState state) {
+        auto response = ObjectStoreResponse::create(ctx.m_request, id);
+        if (!state.ok()) {
+            response->on_error(
+                {ObjectStoreErrorCode::BAD_STREAM,
+                 SOURCE_LOC() + "|" + state.message()});
+        }
+        else {
+            response->object() = object;
+        }
+        ctx.m_completion_func(std::move(response));
+    };
+    ctx.m_stream->set_completion_func(stream_completion_func);
+}
+
+void ObjectStoreClient::init_stream(ObjectStoreContext& ctx) const
+{
+    if (!ctx.has_stream()) {
+        return;
+    }
+    if (ctx.has_progress_func()) {
+        add_stream_progress_func(ctx);
+    }
+
+    auto stream_completion_func = [ctx, id = m_id](StreamState state) {
+        auto response = ObjectStoreResponse::create(ctx.m_request, id);
+        if (!state.ok()) {
+            response->on_error(
+                {ObjectStoreErrorCode::BAD_STREAM,
+                 SOURCE_LOC() + "|" + state.message()});
+        }
+        ctx.m_completion_func(std::move(response));
+    };
+    ctx.m_stream->set_completion_func(stream_completion_func);
+}
+
+void ObjectStoreClient::on_object_not_found(
+    const std::string& source_loc, const std::string& object_id) const
+{
+    const std::string msg =
+        source_loc + " | Requested object: " + object_id + " not found.";
+    LOG_ERROR(msg);
+    throw ObjectStoreException({ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
+}
+
+void ObjectStoreClient::on_success(const ObjectStoreContext& ctx) const
+{
+    ctx.m_completion_func(ObjectStoreResponse::create(ctx.m_request, m_id));
 }
 
 void ObjectStoreClient::on_exception(

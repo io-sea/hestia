@@ -51,8 +51,7 @@ const DistributedHsmServiceConfig& DistributedHsmService::get_self_config()
 const std::vector<ObjectStoreBackend>& DistributedHsmService::get_backends()
     const
 {
-    return m_config.m_is_server ? m_config.m_self.backends() :
-                                  m_config.m_backends;
+    return m_config.m_self.backends();
 }
 
 CrudResponse::Ptr DistributedHsmService::make_request(
@@ -234,10 +233,6 @@ bool DistributedHsmService::is_server() const
 
 void DistributedHsmService::register_backends()
 {
-    if (m_config.m_backends.empty()) {
-        return;
-    }
-
     auto backend_service =
         m_hsm_service->get_service(HsmItem::Type::OBJECT_STORE_BACKEND);
 

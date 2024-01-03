@@ -1,23 +1,15 @@
 #include <catch2/catch_all.hpp>
 
+#include "MockHsmHttpClient.h"
+
 #include "DistributedHsmObjectStoreClient.h"
-
-#include "DistributedHsmService.h"
-
-#include "ApplicationMiddleware.h"
-#include "HestiaHsmActionView.h"
-#include "PingView.h"
-#include "RequestContext.h"
-#include "UrlRouter.h"
-#include "WebApp.h"
-
-#include "HsmObjectStoreClientManager.h"
 #include "HsmService.h"
 #include "HttpClient.h"
 #include "InMemoryHsmObjectStoreClient.h"
 #include "InMemoryKeyValueStoreClient.h"
 #include "InMemoryStreamSink.h"
 #include "InMemoryStreamSource.h"
+#include "ObjectStoreClientManager.h"
 #include "TypedCrudRequest.h"
 #include "UserService.h"
 
@@ -25,159 +17,6 @@
 
 #include <future>
 #include <iostream>
-
-class MockHsmMiddleware : public hestia::ApplicationMiddleware {
-  public:
-    hestia::HttpResponse::Ptr call(
-        const hestia::HttpRequest& request,
-        hestia::AuthorizationContext& user,
-        hestia::HttpEvent,
-        hestia::responseProviderFunc func)
-    {
-        user = m_test_user;
-        return func(request);
-    }
-
-    hestia::AuthorizationContext m_test_user;
-};
-
-class MockHsmWebApp : public hestia::WebApp {
-  public:
-    MockHsmWebApp(hestia::DistributedHsmService* hsm_service) :
-        WebApp(hsm_service->get_user_service())
-    {
-        const std::string api_prefix = "/api/v1/";
-
-        m_url_router = std::make_unique<hestia::UrlRouter>();
-
-        m_url_router->add_pattern(
-            {api_prefix + hestia::HsmItem::hsm_action_name + "s"},
-            std::make_unique<hestia::HestiaHsmActionView>(hsm_service));
-
-        m_url_router->add_pattern(
-            {api_prefix + "ping"}, std::make_unique<hestia::PingView>());
-
-        auto middleware   = std::make_unique<MockHsmMiddleware>();
-        auto current_user = hsm_service->get_user_service()->get_current_user();
-
-        middleware->m_test_user.m_user_id    = current_user.get_primary_key();
-        middleware->m_test_user.m_user_token = current_user.tokens()[0].value();
-        add_middleware(std::move(middleware));
-    }
-};
-
-class MockHsmHttpClient : public hestia::HttpClient {
-  public:
-    void add_app(
-        hestia::DistributedHsmService* hsm_service, const std::string& address)
-    {
-        m_apps[address] = std::make_unique<MockHsmWebApp>(hsm_service);
-    }
-
-    void make_request(
-        const hestia::HttpRequest& request,
-        hestia::HttpClient::completionFunc completion_func,
-        hestia::Stream* stream,
-        std::size_t,
-        progressFunc) override
-    {
-        LOG_INFO("Got request to: " << request.get_path());
-
-        const auto stripped_path =
-            hestia::StringUtils::remove_prefix(request.get_path(), "http://");
-
-        std::string working_address;
-        MockHsmWebApp* working_app{nullptr};
-        for (const auto& [address, app] : m_apps) {
-            if (hestia::StringUtils::starts_with(stripped_path, address)) {
-                working_address = address;
-                working_app     = app.get();
-            }
-        }
-
-        if (working_app == nullptr) {
-            completion_func(hestia::HttpResponse::create(404, "Not Found"));
-        }
-
-        auto intercepted_request = request;
-        intercepted_request.overwrite_path(
-            hestia::StringUtils::remove_prefix(stripped_path, working_address));
-
-        hestia::RequestContext request_context;
-        request_context.set_request(intercepted_request);
-
-        working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
-        if (request_context.get_response()->code() == 307) {
-            working_address = hestia::StringUtils::remove_prefix(
-                request_context.get_response()->header().get_item("location"),
-                "http://");
-            const auto& [start, rest] =
-                hestia::StringUtils::split_on_first(working_address, "/");
-            working_address = start;
-
-            LOG_INFO("Got redirect to: " + working_address);
-            auto app_iter = m_apps.find(working_address);
-            working_app   = nullptr;
-            if (app_iter != m_apps.end()) {
-                working_app = app_iter->second.get();
-            }
-            if (working_app == nullptr) {
-                completion_func(hestia::HttpResponse::create(404, "Not Found"));
-                return;
-            }
-            working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
-        }
-
-        working_app->on_event(&request_context, hestia::HttpEvent::EOM);
-
-        LOG_INFO("Has stream - proceeding? " << bool(stream));
-
-        if (stream != nullptr) {
-            LOG_INFO("Has stream - doing PUT");
-            if (request.get_method() == hestia::HttpRequest::Method::PUT) {
-                std::vector<char> buffer(1024);
-                hestia::WriteableBufferView buffer_view(buffer);
-                auto read_result = stream->read(buffer_view);
-                if (read_result.m_num_transferred > 0) {
-                    auto write_result = request_context.get_stream()->write(
-                        hestia::ReadableBufferView(
-                            &buffer[0], read_result.m_num_transferred));
-                    LOG_INFO(
-                        "Wrote: " << write_result.m_num_transferred
-                                  << " bytes.");
-                    REQUIRE(write_result.ok());
-                    LOG_INFO("About to reset stream");
-                    REQUIRE(request_context.get_stream()->reset().ok());
-                }
-            }
-            else if (request.get_method() == hestia::HttpRequest::Method::GET) {
-                std::vector<char> buffer(1024);
-                hestia::WriteableBufferView buffer_view(buffer);
-                auto read_result =
-                    request_context.get_stream()->read(buffer_view);
-                LOG_INFO(
-                    "Read: " << read_result.m_num_transferred << " bytes: "
-                             << std::string(buffer.begin(), buffer.end()));
-                if (read_result.m_num_transferred > 0) {
-                    auto write_result =
-                        stream->write(hestia::ReadableBufferView(
-                            buffer.data(), read_result.m_num_transferred));
-                    LOG_INFO(
-                        "Wrote: " << write_result.m_num_transferred
-                                  << " bytes.");
-                    REQUIRE(write_result.ok());
-                }
-            }
-        }
-        auto response = std::make_unique<hestia::HttpResponse>(
-            *request_context.get_response());
-        LOG_INFO("Setting location header to: " << working_address);
-        response->header().set_item("location", working_address);
-        completion_func(std::move(response));
-    }
-
-    std::unordered_map<std::string, std::unique_ptr<MockHsmWebApp>> m_apps;
-};
 
 class DistributedHsmObjectStoreClientTestFixture {
   public:
@@ -195,7 +34,7 @@ class DistributedHsmObjectStoreClientTestFixture {
     {
         LOG_INFO("Setting up client");
         auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(nullptr);
+            std::make_unique<hestia::ObjectStoreClientManager>(nullptr);
         m_local_object_store_client =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
                 std::move(client_manager), m_http_client.get());
@@ -231,7 +70,7 @@ class DistributedHsmObjectStoreClientTestFixture {
         m_http_client = std::make_unique<MockHsmHttpClient>();
 
         auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(nullptr);
+            std::make_unique<hestia::ObjectStoreClientManager>(nullptr);
 
         m_controller_object_store_client =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
@@ -298,9 +137,9 @@ class DistributedHsmObjectStoreClientTestFixture {
     {
         LOG_INFO("Setting up worker");
         auto client_factory =
-            std::make_unique<hestia::HsmObjectStoreClientFactory>(nullptr);
+            std::make_unique<hestia::ObjectStoreClientFactory>(nullptr);
         auto client_manager =
-            std::make_unique<hestia::HsmObjectStoreClientManager>(
+            std::make_unique<hestia::ObjectStoreClientManager>(
                 std::move(client_factory));
 
         m_worker_object_store_client =
@@ -438,17 +277,14 @@ class DistributedHsmObjectStoreClientTestFixture {
     std::unique_ptr<hestia::InMemoryKeyValueStoreClient> m_kv_store_client;
     std::unique_ptr<MockHsmHttpClient> m_http_client;
 
-    std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
-        m_local_object_store_client;
-    std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
-        m_worker_object_store_client;
-    std::unique_ptr<hestia::DistributedHsmObjectStoreClient>
+    hestia::DistributedHsmObjectStoreClient::Ptr m_local_object_store_client;
+    hestia::DistributedHsmObjectStoreClient::Ptr m_worker_object_store_client;
+    hestia::DistributedHsmObjectStoreClient::Ptr
         m_controller_object_store_client;
 
-    std::unique_ptr<hestia::DistributedHsmService> m_local_dist_hsm_service;
-    std::unique_ptr<hestia::DistributedHsmService> m_worker_dist_hsm_service;
-    std::unique_ptr<hestia::DistributedHsmService>
-        m_controller_dist_hsm_service;
+    hestia::DistributedHsmService::Ptr m_local_dist_hsm_service;
+    hestia::DistributedHsmService::Ptr m_worker_dist_hsm_service;
+    hestia::DistributedHsmService::Ptr m_controller_dist_hsm_service;
 
     std::unique_ptr<hestia::UserService> m_user_service;
     hestia::User m_test_user;

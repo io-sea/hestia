@@ -60,12 +60,16 @@ void HsmObjectStoreTestWrapper::put(
             hestia::ReadableBufferView(content));
         stream.set_source(std::move(source));
 
-        m_client->make_request(request, completion_cb, nullptr, &stream);
+        hestia::HsmObjectStoreContext ctx(
+            request, completion_cb, nullptr, &stream);
+        m_client->make_request(ctx);
 
         REQUIRE(stream.flush().ok());
     }
     else {
-        m_client->make_request(request, completion_cb);
+        hestia::HsmObjectStoreContext ctx(
+            request, completion_cb, nullptr, nullptr);
+        m_client->make_request(ctx);
     }
 
     const auto response = response_future.get();
@@ -85,7 +89,9 @@ void HsmObjectStoreTestWrapper::get(hestia::StorageObject& obj)
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
     obj = response->object();
@@ -115,7 +121,9 @@ void HsmObjectStoreTestWrapper::get(
     auto sink = hestia::InMemoryStreamSink::create(write_buffer);
     stream.set_sink(std::move(sink));
 
-    m_client->make_request(request, completion_cb, nullptr, &stream);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, &stream);
+
+    m_client->make_request(ctx);
 
     REQUIRE(stream.flush().ok());
 
@@ -140,7 +148,9 @@ void HsmObjectStoreTestWrapper::exists(
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
     REQUIRE(response->object_found() == should_exist);
@@ -163,7 +173,9 @@ void HsmObjectStoreTestWrapper::copy(
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
 }
@@ -186,7 +198,9 @@ void HsmObjectStoreTestWrapper::move(
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
 }
@@ -204,7 +218,9 @@ void HsmObjectStoreTestWrapper::list(
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
     result = response->objects();
@@ -222,7 +238,9 @@ void HsmObjectStoreTestWrapper::remove(const hestia::StorageObject& obj)
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::HsmObjectStoreContext ctx(request, completion_cb, nullptr, nullptr);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
 }

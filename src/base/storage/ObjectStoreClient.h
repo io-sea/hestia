@@ -1,11 +1,8 @@
 #pragma once
 
 #include "Map.h"
-#include "ObjectStoreRequest.h"
-#include "ObjectStoreResponse.h"
-#include "Stream.h"
+#include "ObjectStoreContext.h"
 
-#include <functional>
 #include <vector>
 
 namespace hestia {
@@ -36,27 +33,13 @@ class ObjectStoreClient {
     virtual ~ObjectStoreClient() = default;
 
     virtual void initialize(
-        const std::string& id, const std::string&, const Dictionary&)
-    {
-        m_id = id;
-    }
+        const std::string& id, const std::string&, const Dictionary&);
 
     /**
      * Make a request to the object store backend. Consumers should primarily
      * work with this method.
-     *
-     * @param request the request - which will have a Method type and payload
-     * @param stream if object data is to be provided (e.g. PUT) or retrieved (e.g. GET) it will be via the Stream
-     * @return a response - which can contain error info, a non-data payload and request metadata
      */
-
-    using completionFunc = std::function<void(ObjectStoreResponse::Ptr)>;
-    using progressFunc   = std::function<void(ObjectStoreResponse::Ptr)>;
-    virtual void make_request(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func = nullptr,
-        Stream* stream             = nullptr) const noexcept;
+    virtual void make_request(ObjectStoreContext& ctx) const noexcept;
 
   protected:
     virtual bool exists(const StorageObject& object) const = 0;
@@ -65,19 +48,23 @@ class ObjectStoreClient {
         const KeyValuePair& query,
         std::vector<StorageObject>& fetched) const = 0;
 
-    virtual void get(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const = 0;
+    virtual void get(ObjectStoreContext& ctx) const = 0;
 
-    virtual void put(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const = 0;
+    virtual void put(ObjectStoreContext& ctx) const = 0;
 
     virtual void remove(const StorageObject& object) const = 0;
+
+    virtual void init_stream(ObjectStoreContext& ctx) const;
+
+    virtual void init_stream(
+        ObjectStoreContext& ctx, const StorageObject& object) const;
+
+    virtual void add_stream_progress_func(ObjectStoreContext& ctx) const;
+
+    void on_object_not_found(
+        const std::string& source_loc, const std::string& object_id) const;
+
+    void on_success(const ObjectStoreContext& ctx) const;
 
     std::string m_id;
 

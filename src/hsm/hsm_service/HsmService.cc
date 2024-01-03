@@ -535,25 +535,20 @@ void HsmService::make_object_store_request(
             this->on_object_store_response(
                 method, std::move(object_store_response), action_context);
         };
-    if (action_context.m_progress_func == nullptr) {
-        m_object_store->make_request(
-            req, object_store_completion_func, nullptr, stream);
-    }
-    else {
-        auto object_store_progress_func =
-            [req, action_context](
-                HsmObjectStoreResponse::Ptr object_store_response) {
-                auto action_context_cp = action_context;
-                action_context_cp.action().set_num_transferred(
-                    object_store_response->get_bytes_transferred());
-                action_context_cp.m_progress_func(HsmActionResponse::create(
-                    req, action_context_cp.get_action()));
-            };
 
-        m_object_store->make_request(
-            req, object_store_completion_func, object_store_progress_func,
-            stream);
-    }
+    auto object_store_progress_func =
+        [req,
+         action_context](HsmObjectStoreResponse::Ptr object_store_response) {
+            auto action_context_cp = action_context;
+            action_context_cp.action().set_num_transferred(
+                object_store_response->get_bytes_transferred());
+            action_context_cp.m_progress_func(
+                HsmActionResponse::create(req, action_context_cp.get_action()));
+        };
+
+    HsmObjectStoreContext ctx(
+        req, object_store_completion_func, object_store_progress_func, stream);
+    m_object_store->make_request(ctx);
 }
 
 void HsmService::on_object_store_response(

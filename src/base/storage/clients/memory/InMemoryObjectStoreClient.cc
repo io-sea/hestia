@@ -23,12 +23,42 @@ std::string InMemoryObjectStoreClient::get_registry_identifier()
 
 bool InMemoryObjectStoreClient::exists(const StorageObject& object) const
 {
+    std::scoped_lock lck(m_metadata_mutex);
     return m_metadata.find(object.id()) != m_metadata.end();
 }
 
 std::string InMemoryObjectStoreClient::dump() const
 {
+    std::scoped_lock lck(m_data_mutex);
     return m_data.dump();
+}
+
+void InMemoryObjectStoreClient::upsert_metadata(
+    const StorageObject& object) const
+{
+    std::scoped_lock lck(m_metadata_mutex);
+    if (auto md_iter = m_metadata.find(object.id());
+        md_iter == m_metadata.end()) {
+        m_metadata[object.id()] = object.metadata();
+    }
+    else {
+        md_iter->second.merge(object.metadata());
+    }
+}
+
+void InMemoryObjectStoreClient::read_metadata(StorageObject& object) const
+{
+    std::scoped_lock lck(m_metadata_mutex);
+    auto md_iter = m_metadata.find(object.id());
+    if (md_iter == m_metadata.end()) {
+        const std::string msg =
+            "Object " + object.id() + " not found in store.";
+        LOG_ERROR(msg);
+        throw ObjectStoreException(
+            {ObjectStoreErrorCode::OBJECT_NOT_FOUND,
+             SOURCE_LOC() + " | " + msg});
+    }
+    object.merge_metadata(md_iter->second);
 }
 
 void InMemoryObjectStoreClient::migrate(
@@ -36,133 +66,108 @@ void InMemoryObjectStoreClient::migrate(
     InMemoryObjectStoreClient* target_client,
     bool delete_after)
 {
-    auto iter                            = m_metadata.find(object_id);
-    target_client->m_metadata[object_id] = iter->second;
+    {
+        std::scoped_lock lck(m_metadata_mutex);
+        auto iter = m_metadata.find(object_id);
+        if (iter == m_metadata.end()) {
+            on_object_not_found(SOURCE_LOC(), object_id);
+        }
+        target_client->m_metadata[object_id] = iter->second;
 
-    if (delete_after) {
-        m_metadata.erase(object_id);
+        if (delete_after) {
+            m_metadata.erase(object_id);
+        }
     }
 
-    target_client->m_data.set_block_list(
-        object_id, m_data.get_block_list(object_id));
-    if (delete_after) {
-        m_data.remove(object_id);
+    {
+        std::scoped_lock lck(m_data_mutex);
+        target_client->m_data.set_block_list(
+            object_id, m_data.get_block_list(object_id));
+        if (delete_after) {
+            m_data.remove(object_id);
+        }
     }
 }
 
-void InMemoryObjectStoreClient::get(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void InMemoryObjectStoreClient::get(ObjectStoreContext& ctx) const
 {
-    auto md_iter = m_metadata.find(request.object().id());
-    if (md_iter == m_metadata.end()) {
-        const std::string msg = SOURCE_LOC() + " | Object "
-                                + request.object().id()
-                                + " not found in store.";
-        LOG_ERROR(msg);
-        throw ObjectStoreException(
-            {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
+    const auto object_id = ctx.m_request.object().id();
+    if (!exists(ctx.m_request.object())) {
+        on_object_not_found(SOURCE_LOC(), object_id);
     }
 
-    auto response = ObjectStoreResponse::create(request, m_id);
-    response->object().merge_metadata(md_iter->second);
+    auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
+    read_metadata(response->object());
 
-    if (stream == nullptr) {
-        completion_func(std::move(response));
-    }
-    else {
-        auto source_func = [this, object_id = request.object().id(),
-                            extent = request.extent()](
+    if (ctx.has_stream()) {
+        auto source_func = [this, object_id, extent = ctx.m_request.extent()](
                                WriteableBufferView& buffer,
                                std::size_t) -> InMemoryStreamSource::Status {
-            const auto status = m_data.read(object_id, extent, buffer);
+            BlockStore::ReturnCode status;
+            {
+                std::scoped_lock lck(m_data_mutex);
+                status = m_data.read(object_id, extent, buffer);
+            }
             return {status.is_ok(), status.m_bytes_read};
         };
 
         auto source = InMemoryStreamSource::create(source_func);
-        source->set_size(request.extent().m_length);
-        stream->set_source(std::move(source));
-        auto stream_completion_func = [completion_func,
-                                       object = response->object(), request,
-                                       id     = m_id](StreamState state) {
-            auto response      = ObjectStoreResponse::create(request, id);
-            response->object() = object;
-            if (!state.ok()) {
-                response->on_error(
-                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
-            }
-            completion_func(std::move(response));
-        };
-        stream->set_completion_func(std::move(stream_completion_func));
-        stream->set_progress_func(
-            request.get_progress_interval(), progress_func);
+        source->set_size(ctx.m_request.extent().m_length);
+        ctx.m_stream->set_source(std::move(source));
+        init_stream(ctx, response->object());
+    }
+    else {
+        ctx.m_completion_func(std::move(response));
     }
 }
 
-void InMemoryObjectStoreClient::put(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void InMemoryObjectStoreClient::put(ObjectStoreContext& ctx) const
 {
-    LOG_INFO("Starting client PUT: " + request.object().to_string());
-    auto md_iter = m_metadata.find(request.object().id());
-    if (md_iter == m_metadata.end()) {
-        m_metadata[request.object().id()] = request.object().metadata();
-    }
-    else {
-        md_iter->second.merge(request.object().metadata());
-    }
+    const auto object_id = ctx.m_request.object().id();
 
-    if (stream == nullptr) {
-        completion_func(ObjectStoreResponse::create(request, m_id));
-    }
+    upsert_metadata(ctx.m_request.object());
 
-    else {
-        auto sink_func = [this, request](
-                             const ReadableBufferView& buffer,
-                             std::size_t offset) -> InMemoryStreamSink::Status {
+    if (ctx.has_stream()) {
+        auto sink_func =
+            [this, object_id, extent = ctx.m_request.extent()](
+                const ReadableBufferView& buffer,
+                std::size_t offset) -> InMemoryStreamSource::Status {
             const Extent chunk_extent = {
-                request.extent().m_offset + offset, buffer.length()};
-            const auto status =
-                m_data.write(request.object().id(), chunk_extent, buffer);
+                extent.m_offset + offset, buffer.length()};
+            BlockStore::ReturnCode status;
+            {
+                std::scoped_lock lck(m_data_mutex);
+                status = m_data.write(object_id, chunk_extent, buffer);
+            }
             return {status.is_ok(), buffer.length()};
         };
-
-        auto stream_completion_func = [completion_func, request,
-                                       id = m_id](StreamState state) {
-            auto response = ObjectStoreResponse::create(request, id);
-            if (!state.ok()) {
-                response->on_error(
-                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
-            }
-            completion_func(std::move(response));
-        };
-
         auto sink = InMemoryStreamSink::create(sink_func);
-        sink->set_size(request.extent().m_length);
-        stream->set_sink(std::move(sink));
-        stream->set_completion_func(stream_completion_func);
-        stream->set_progress_func(
-            request.get_progress_interval(), progress_func);
+        sink->set_size(ctx.m_request.extent().m_length);
+        ctx.m_stream->set_sink(std::move(sink));
+        init_stream(ctx);
+    }
+    else {
+        on_success(ctx);
     }
 }
 
 void InMemoryObjectStoreClient::remove(const StorageObject& object) const
 {
     const auto obj_id = object.id();
-    auto md_iter      = m_metadata.find(obj_id);
-    if (md_iter == m_metadata.end()) {
-        const std::string msg = "Object " + obj_id + " not found in store.";
-        LOG_ERROR(msg);
-        throw ObjectStoreException(
-            {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
+    {
+        std::scoped_lock lck(m_metadata_mutex);
+        auto md_iter = m_metadata.find(obj_id);
+        if (md_iter == m_metadata.end()) {
+            on_object_not_found(SOURCE_LOC(), obj_id);
+        }
+        m_metadata.erase(md_iter);
     }
-    m_metadata.erase(md_iter);
-    if (m_data.has_key(obj_id)) {
-        m_data.remove(obj_id);
+
+    {
+        std::scoped_lock lck(m_data_mutex);
+        if (m_data.has_key(obj_id)) {
+            m_data.remove(obj_id);
+        }
     }
 }
 
@@ -170,6 +175,7 @@ void InMemoryObjectStoreClient::list(
     const KeyValuePair& query,
     std::vector<StorageObject>& matching_objects) const
 {
+    std::scoped_lock lck(m_metadata_mutex);
     for (const auto& [key, md] : m_metadata) {
         if (md.has_key_and_value(query)) {
             StorageObject object(key);

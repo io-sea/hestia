@@ -3,6 +3,7 @@
 #include "KeyValueStoreClient.h"
 
 #include <map>
+#include <mutex>
 #include <set>
 
 namespace hestia {
@@ -41,5 +42,8 @@ class InMemoryKeyValueStoreClient : public KeyValueStoreClient {
 
     mutable std::unordered_map<std::string, std::string> m_string_db;
     mutable std::unordered_map<std::string, std::set<std::string>> m_set_db;
+
+    mutable std::mutex m_string_db_mutex;
+    mutable std::mutex m_set_db_mutex;
 };
 }  // namespace hestia

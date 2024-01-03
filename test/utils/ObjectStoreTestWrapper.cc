@@ -40,9 +40,6 @@ ObjectStoreTestWrapper::Ptr ObjectStoreTestWrapper::create(
 void ObjectStoreTestWrapper::put(
     const hestia::StorageObject& obj, const std::string& content, bool flush)
 {
-    hestia::ObjectStoreRequest request(
-        obj, hestia::ObjectStoreRequestMethod::PUT);
-
     std::promise<hestia::ObjectStoreResponse::Ptr> response_promise;
     auto response_future = response_promise.get_future();
 
@@ -51,14 +48,21 @@ void ObjectStoreTestWrapper::put(
             response_promise.set_value(std::move(response));
         };
 
-    hestia::Stream stream;
     if (content.empty()) {
-        m_client->make_request(request, completion_cb);
+        hestia::ObjectStoreContext ctx(
+            {obj, hestia::ObjectStoreRequestMethod::PUT}, completion_cb);
+        m_client->make_request(ctx);
     }
     else {
+        hestia::Stream stream;
+
         hestia::ReadableBufferView read_buffer(content);
         stream.set_source(hestia::InMemoryStreamSource::create(read_buffer));
-        m_client->make_request(request, completion_cb, nullptr, &stream);
+
+        hestia::ObjectStoreContext ctx(
+            {obj, hestia::ObjectStoreRequestMethod::PUT}, completion_cb,
+            nullptr, &stream);
+        m_client->make_request(ctx);
         if (flush) {
             stream.flush();
         }
@@ -73,9 +77,6 @@ void ObjectStoreTestWrapper::get(
     std::size_t size,
     bool flush)
 {
-    hestia::ObjectStoreRequest request(
-        obj, hestia::ObjectStoreRequestMethod::GET);
-
     std::promise<hestia::ObjectStoreResponse::Ptr> response_promise;
     auto response_future = response_promise.get_future();
 
@@ -89,7 +90,11 @@ void ObjectStoreTestWrapper::get(
     hestia::WriteableBufferView write_buffer(returned_buffer);
     stream.set_sink(hestia::InMemoryStreamSink::create(write_buffer));
 
-    m_client->make_request(request, completion_cb, nullptr, &stream);
+    hestia::ObjectStoreContext ctx(
+        {obj, hestia::ObjectStoreRequestMethod::GET}, completion_cb, nullptr,
+        &stream);
+
+    m_client->make_request(ctx);
 
     if (flush) {
         stream.flush();
@@ -104,9 +109,6 @@ void ObjectStoreTestWrapper::get(
 
 void ObjectStoreTestWrapper::get(hestia::StorageObject& obj)
 {
-    hestia::ObjectStoreRequest request(
-        obj, hestia::ObjectStoreRequestMethod::GET);
-
     std::promise<hestia::ObjectStoreResponse::Ptr> response_promise;
     auto response_future = response_promise.get_future();
 
@@ -115,7 +117,10 @@ void ObjectStoreTestWrapper::get(hestia::StorageObject& obj)
             response_promise.set_value(std::move(response));
         };
 
-    m_client->make_request(request, completion_cb);
+    hestia::ObjectStoreContext ctx(
+        {obj, hestia::ObjectStoreRequestMethod::GET}, completion_cb);
+
+    m_client->make_request(ctx);
     const auto response = response_future.get();
     REQUIRE(response->ok());
     obj = response->object();
@@ -132,9 +137,9 @@ void ObjectStoreTestWrapper::exists(
             response_promise.set_value(std::move(response));
         };
 
-    hestia::ObjectStoreRequest request(
-        obj, hestia::ObjectStoreRequestMethod::EXISTS);
-    m_client->make_request(request, completion_cb);
+    hestia::ObjectStoreContext ctx(
+        {obj, hestia::ObjectStoreRequestMethod::EXISTS}, completion_cb);
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
 
@@ -153,8 +158,9 @@ void ObjectStoreTestWrapper::list(
             response_promise.set_value(std::move(response));
         };
 
-    hestia::ObjectStoreRequest request(query);
-    m_client->make_request(request, completion_cb);
+    hestia::ObjectStoreContext ctx({query}, completion_cb);
+
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
     result = response->objects();
@@ -170,9 +176,9 @@ void ObjectStoreTestWrapper::remove(const hestia::StorageObject& obj)
             response_promise.set_value(std::move(response));
         };
 
-    hestia::ObjectStoreRequest request(
-        obj, hestia::ObjectStoreRequestMethod::REMOVE);
-    m_client->make_request(request, completion_cb);
+    hestia::ObjectStoreContext ctx(
+        {obj, hestia::ObjectStoreRequestMethod::REMOVE}, completion_cb);
+    m_client->make_request(ctx);
     auto response = response_future.get();
     REQUIRE(response->ok());
 }

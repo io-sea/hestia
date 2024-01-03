@@ -43,22 +43,19 @@ class S3ObjectStoreClient : public ObjectStoreClient {
   private:
     bool exists(const StorageObject& object) const override;
 
-    void put(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void put(ObjectStoreContext& ctx) const override;
 
-    void get(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void get(ObjectStoreContext& ctx) const override;
 
     void remove(const StorageObject& obj) const override;
 
     void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
+
+    void init_s3_request(const ObjectStoreContext& ctx, S3Request& req) const;
+
+    void create_bucket_if_needed(
+        const S3Bucket& bucket, const S3Request& req) const;
 
     S3Config m_config;
     S3Client* m_s3_client{nullptr};

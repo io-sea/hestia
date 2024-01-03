@@ -27,6 +27,10 @@ class HsmObjectStoreRequest :
 
     bool is_hsm_only_request() const;
 
+    bool is_single_tier_request() const;
+
+    bool is_source_tier_request() const;
+
     std::string method_as_string() const override;
 
     void set_source_tier(std::string tier) { m_source_tier = tier; }

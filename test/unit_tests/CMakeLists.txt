@@ -50,7 +50,7 @@ set(UNIT_TEST_SOURCES
     hsm/TestHsmEventSink.cc
     hsm/TestDistributedHsmService.cc
     hsm/TestDistributedHsmObjectStoreClient.cc
-    hsm/TestHsmObjectStoreClientManager.cc
+    hsm/TestObjectStoreClientManager.cc
     hestia/TestHestiaClient.cc
     hestia/TestHestiaCApi.cc
     hestia/TestHestiaHLCApi.cc

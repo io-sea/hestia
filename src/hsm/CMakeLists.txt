@@ -14,8 +14,6 @@ add_module(
         hsm_service/requests/HsmActionError.h 
         key_value_store/KeyValueStoreClientFactory.h
         object_store/DistributedHsmObjectStoreClient.h
-        object_store/HsmObjectStoreClientFactory.h
-        object_store/HsmObjectStoreClientManager.h
         s3/S3DatasetAdapter.h
         s3/S3HsmObjectAdapter.h
     SOURCES
@@ -29,8 +27,11 @@ add_module(
         hsm_service/requests/HsmActionError.cc
         key_value_store/KeyValueStoreClientFactory.cc
         object_store/DistributedHsmObjectStoreClient.cc
-        object_store/HsmObjectStoreClientFactory.cc
-        object_store/HsmObjectStoreClientManager.cc
+        object_store/HsmActionRequestAdapter.cc
+        object_store/ObjectStoreClientFactory.cc
+        object_store/ObjectStoreClientManager.cc
+        object_store/ObjectStorePluginHandler.cc
+        object_store/ObjectStoreBackendWithClient.cc
         s3/S3DatasetAdapter.cc
         s3/S3HsmObjectAdapter.cc
     INTERNAL_INCLUDE_DIRS

@@ -20,6 +20,7 @@ add_module(
         MockCrudService.cc
         MockCrudWebApp.cc
         MockHestiaClient.cc
+        MockHsmHttpClient.cc
     INTERNAL_DEPENDENCIES 
         app
     INTERNAL_INCLUDE_DIRS

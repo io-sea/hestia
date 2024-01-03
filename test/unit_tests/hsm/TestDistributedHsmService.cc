@@ -5,10 +5,10 @@
 
 #include "DistributedHsmService.h"
 
-#include "HsmObjectStoreClientManager.h"
 #include "HsmService.h"
 #include "HttpClient.h"
 #include "ObjectStoreBackend.h"
+#include "ObjectStoreClientManager.h"
 #include "TypedCrudRequest.h"
 #include "UserService.h"
 

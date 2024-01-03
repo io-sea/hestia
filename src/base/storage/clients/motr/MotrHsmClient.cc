@@ -35,45 +35,35 @@ void MotrHsmClient::set_tier_ids(const std::vector<std::string>& tier_ids)
     m_motr_interface->set_tier_ids(tier_ids);
 }
 
-void MotrHsmClient::copy(
-    const HsmObjectStoreRequest& request,
-    completionFunc completion_func,
-    progressFunc progress_func) const
+void MotrHsmClient::copy(HsmObjectStoreContext& ctx) const
 {
-    m_motr_interface->copy(request, completion_func, progress_func);
+    m_motr_interface->copy(
+        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
 }
 
-void MotrHsmClient::get(
-    const HsmObjectStoreRequest& request,
-    Stream* stream,
-    completionFunc completion_func,
-    progressFunc progress_func) const
+void MotrHsmClient::get(HsmObjectStoreContext& ctx) const
 {
-    m_motr_interface->get(request, stream, completion_func, progress_func);
+    m_motr_interface->get(
+        ctx.m_request, ctx.m_stream, ctx.m_completion_func,
+        ctx.m_progress_func);
 }
 
-void MotrHsmClient::move(
-    const HsmObjectStoreRequest& request,
-    completionFunc completion_func,
-    progressFunc progress_func) const
+void MotrHsmClient::move(HsmObjectStoreContext& ctx) const
 {
-    m_motr_interface->move(request, completion_func, progress_func);
+    m_motr_interface->move(
+        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
 }
 
-void MotrHsmClient::put(
-    const HsmObjectStoreRequest& request,
-    Stream* stream,
-    completionFunc completion_func,
-    progressFunc progress_func) const
+void MotrHsmClient::put(HsmObjectStoreContext& ctx) const
 {
-    m_motr_interface->put(request, stream, completion_func, progress_func);
+    m_motr_interface->put(
+        ctx.m_request, ctx.m_stream, ctx.m_completion_func,
+        ctx.m_progress_func);
 }
 
-void MotrHsmClient::remove(
-    const HsmObjectStoreRequest& request,
-    completionFunc completion_func,
-    progressFunc progress_func) const
+void MotrHsmClient::remove(HsmObjectStoreContext& ctx) const
 {
-    m_motr_interface->remove(request, completion_func, progress_func);
+    m_motr_interface->remove(
+        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
 }
 }  // namespace hestia

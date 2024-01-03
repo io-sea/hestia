@@ -12,6 +12,7 @@ struct S3Response {
 
     using Ptr = std::unique_ptr<S3Response>;
     HttpResponse::Ptr m_http_response;
+    S3Object m_content;
     S3Status m_status;
 };
 

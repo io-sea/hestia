@@ -250,9 +250,7 @@ void HestiaApplication::setup_hsm_service(
     m_distributed_hsm_service = DistributedHsmService::create(
         service_config, std::move(hsm_service), m_user_service.get());
 
-    if (service_config.m_is_server) {
-        m_distributed_hsm_service->register_self();
-    }
+    m_distributed_hsm_service->register_self();
 }
 
 void HestiaApplication::setup_user_service(

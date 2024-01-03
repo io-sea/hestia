@@ -46,44 +46,22 @@ class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {
     std::string dump() const;
 
   private:
-    void get(
-        const HsmObjectStoreRequest& request,
-        Stream* stream,
-        completionFunc completion_func,
-        progressFunc progress_func) const override;
+    void get(HsmObjectStoreContext& ctx) const override;
 
-    void put(
-        const HsmObjectStoreRequest& request,
-        Stream* stream,
-        completionFunc completion_func,
-        progressFunc progress_func) const override;
+    void put(HsmObjectStoreContext& ctx) const override;
 
-    void remove(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const override;
+    void remove(HsmObjectStoreContext& ctx) const override;
+
+    void copy(HsmObjectStoreContext& ctx) const override;
+
+    void move(HsmObjectStoreContext& ctx) const override;
 
     void make_object_store_request(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func,
-        ObjectStoreRequestMethod method,
-        Stream* stream = nullptr) const;
-
-    void copy(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const override;
-
-    void move(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const override;
+        HsmObjectStoreContext& ctx, ObjectStoreRequestMethod method) const;
 
     InMemoryObjectStoreClient* get_tier_client(
         const std::string& tier_id) const;
 
-    std::unordered_map<std::string, std::unique_ptr<InMemoryObjectStoreClient>>
-        m_tiers;
+    std::unordered_map<std::string, InMemoryObjectStoreClient::Ptr> m_tiers;
 };
 }  // namespace hestia

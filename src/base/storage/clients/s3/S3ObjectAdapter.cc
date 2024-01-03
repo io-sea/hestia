@@ -33,7 +33,9 @@ void S3ObjectAdapter::to_s3(
 }
 
 void S3ObjectAdapter::from_s3(
-    StorageObject& object, S3Bucket& s3_container, S3Object& s3_object)
+    StorageObject& object,
+    const S3Bucket& s3_container,
+    const S3Object& s3_object)
 {
     (void)s3_object;
     (void)s3_container;

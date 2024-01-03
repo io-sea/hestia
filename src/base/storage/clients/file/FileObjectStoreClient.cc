@@ -44,11 +44,9 @@ void FileObjectStoreClient::do_initialize(
 
     m_root = config.m_root.get_value();
     m_mode = config.m_mode.get_value();
-
     if (m_root.is_relative()) {
         m_root = std::filesystem::path(cache_path) / m_root;
     }
-
     LOG_INFO("Initializing with root: " + m_root.string());
 
     hestia::FileUtils::create_if_not_existing(m_root);
@@ -83,9 +81,7 @@ void FileObjectStoreClient::migrate(
     bool keep_existing)
 {
     if (!exists(object_id)) {
-        throw std::runtime_error(
-            "Couldn't find requested object '" + object_id
-            + "' during COPY or MOVE.");
+        on_object_not_found(SOURCE_LOC(), object_id);
     }
 
     const auto target_data_path     = get_data_path(object_id, root);
@@ -134,91 +130,55 @@ bool FileObjectStoreClient::exists(const StorageObject& object) const
     return exists(object.id());
 }
 
-void FileObjectStoreClient::put(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void FileObjectStoreClient::upsert_metadata(const StorageObject& object) const
+{
+    const auto path = get_metadata_path(object.id());
+    FileUtils::create_if_not_existing(path);
+
+    std::ofstream meta_file(path);
+    auto for_item = [&meta_file,
+                     this](const std::string& key, const std::string& value) {
+        meta_file << key << m_metadata_delimiter << value << "\n";
+    };
+    object.metadata().for_each_item(for_item);
+}
+
+void FileObjectStoreClient::put(ObjectStoreContext& ctx) const
 {
     if (needs_metadata()) {
-        auto path = get_metadata_path(request.object().id());
-        FileUtils::create_if_not_existing(path);
-
-        std::ofstream meta_file(path);
-        auto for_item =
-            [&meta_file](const std::string& key, const std::string& value) {
-                meta_file << key << " " << value << "\n";
-            };
-        request.object().metadata().for_each_item(for_item);
+        upsert_metadata(ctx.m_request.object());
     }
 
-    if (needs_data() && stream != nullptr) {
-        auto stream_sink = std::make_unique<FileStreamSink>(
-            get_data_path(request.object().id()));
-        stream->set_sink(std::move(stream_sink));
-        stream->set_progress_func(
-            request.get_progress_interval(), progress_func);
-
-
-        auto stream_completion_func = [completion_func, request,
-                                       id = m_id](StreamState state) mutable {
-            auto response = ObjectStoreResponse::create(request, id);
-            if (!state.ok()) {
-                response->on_error(
-                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
-            }
-            completion_func(std::move(response));
-        };
-        stream->set_completion_func(stream_completion_func);
+    if (needs_data() && ctx.has_stream()) {
+        const auto object_id = ctx.m_request.object().id();
+        ctx.m_stream->set_sink(
+            FileStreamSink::create(get_data_path(object_id)));
+        init_stream(ctx);
     }
     else {
-        completion_func(ObjectStoreResponse::create(request, m_id));
+        on_success(ctx);
     }
 }
 
-void FileObjectStoreClient::get(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void FileObjectStoreClient::get(ObjectStoreContext& ctx) const
 {
-    if (!exists(request.object())) {
-        const std::string msg =
-            "Requested object: " + request.object().id()
-            + " not found in: " + get_data_path(request.object().id()).string();
-        LOG_ERROR(msg);
-        throw ObjectStoreException(
-            {ObjectStoreErrorCode::OBJECT_NOT_FOUND, msg});
+    const auto object_id = ctx.m_request.object().id();
+    if (!exists(ctx.m_request.object())) {
+        on_object_not_found(SOURCE_LOC(), object_id);
     }
 
-    auto response = ObjectStoreResponse::create(request, m_id);
-
+    auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
     if (needs_metadata()) {
         read_metadata(response->object());
     }
 
-    if (needs_data() && stream != nullptr) {
-        auto stream_source = std::make_unique<FileStreamSource>(
-            get_data_path(request.object().id()));
-        stream->set_source(std::move(stream_source));
-        stream->set_progress_func(
-            request.get_progress_interval(), progress_func);
-
-        auto stream_completion_func = [completion_func,
-                                       object = response->object(), request,
-                                       id     = m_id](StreamState state) {
-            auto response      = ObjectStoreResponse::create(request, id);
-            response->object() = object;
-            if (!state.ok()) {
-                response->on_error(
-                    {ObjectStoreErrorCode::BAD_STREAM, state.message()});
-            }
-            completion_func(std::move(response));
-        };
-        stream->set_completion_func(stream_completion_func);
+    if (needs_data() && ctx.has_stream()) {
+        ctx.m_stream->set_source(
+            FileStreamSource::create(get_data_path(object_id)));
+        init_stream(ctx, response->object());
     }
     else {
-        completion_func(std::move(response));
+        ctx.m_completion_func(std::move(response));
     }
 }
 
@@ -252,7 +212,8 @@ std::string FileObjectStoreClient::get_metadata_item(
     std::string line;
     std::string value;
     while (std::getline(md_file, line)) {
-        const auto& [key, val] = StringUtils::split_on_first(line, ' ');
+        const auto& [key, val] =
+            StringUtils::split_on_first(line, m_metadata_delimiter);
         if (search_key == key) {
             value = val;
             break;
@@ -286,11 +247,8 @@ std::filesystem::path FileObjectStoreClient::get_metadata_path(
 
 bool FileObjectStoreClient::exists(const std::string& object_id) const
 {
-    if (needs_metadata()) {
-        return std::filesystem::is_regular_file(get_metadata_path(object_id));
-    }
-    else {
-        return std::filesystem::is_regular_file(get_data_path(object_id));
-    }
+    const auto check_path = needs_metadata() ? get_metadata_path(object_id) :
+                                               get_data_path(object_id);
+    return std::filesystem::is_regular_file(check_path);
 }
 }  // namespace hestia

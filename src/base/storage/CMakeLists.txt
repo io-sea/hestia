@@ -61,11 +61,13 @@ add_module(
         hsm/HsmObjectStoreClient.cc
         hsm/HsmObjectStoreClientPlugin.cc
         requests/HsmObjectStoreError.cc
+        requests/HsmObjectStoreContext.cc
         requests/HsmObjectStoreRequest.cc
         requests/HsmObjectStoreResponse.cc
         requests/ObjectStoreRequest.cc
         requests/ObjectStoreResponse.cc
         requests/ObjectStoreError.cc
+        requests/ObjectStoreContext.cc
         requests/KeyValueStoreRequest.cc
         requests/KeyValueStoreResponse.cc
     INTERNAL_INCLUDE_DIRS

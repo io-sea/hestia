@@ -24,27 +24,24 @@ class InMemoryObjectStoreClient : public ObjectStoreClient {
   private:
     bool exists(const StorageObject& object) const override;
 
-    void get(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void get(ObjectStoreContext& ctx) const override;
 
-    void put(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void put(ObjectStoreContext& ctx) const override;
 
     void remove(const StorageObject& object) const override;
-
-    bool exists(const Uuid& object_id) const;
 
     void list(
         const KeyValuePair& query,
         std::vector<StorageObject>& matching_objects) const override;
 
+    void upsert_metadata(const StorageObject& object) const;
+
+    void read_metadata(StorageObject& object) const;
+
     mutable BlockStore m_data;
     mutable std::unordered_map<std::string, Map> m_metadata;
+
+    mutable std::mutex m_data_mutex;
+    mutable std::mutex m_metadata_mutex;
 };
 }  // namespace hestia

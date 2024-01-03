@@ -56,17 +56,9 @@ class FileObjectStoreClient : public ObjectStoreClient {
     // ObjectStoreClient API
     bool exists(const StorageObject& object) const override;
 
-    void get(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void get(ObjectStoreContext& ctx) const override;
 
-    void put(
-        const ObjectStoreRequest& request,
-        completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void put(ObjectStoreContext& ctx) const override;
 
     void remove(const StorageObject& object) const override;
 
@@ -95,7 +87,10 @@ class FileObjectStoreClient : public ObjectStoreClient {
 
     void read_metadata(StorageObject& object) const;
 
+    void upsert_metadata(const StorageObject& object) const;
+
     FileObjectStoreClientConfig m_config;
+    char m_metadata_delimiter{' '};
     std::filesystem::path m_root{"object_store"};
     FileObjectStoreClientConfig::Mode m_mode{
         FileObjectStoreClientConfig::Mode::DATA_ONLY};

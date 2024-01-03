@@ -1,8 +1,6 @@
 #pragma once
 
-#include "HsmObjectStoreRequest.h"
-#include "HsmObjectStoreResponse.h"
-
+#include "HsmObjectStoreContext.h"
 #include "ObjectStoreClient.h"
 
 #include <vector>
@@ -17,67 +15,36 @@ class HsmObjectStoreClient : public ObjectStoreClient {
     using completionFunc = std::function<void(HsmObjectStoreResponse::Ptr)>;
     using progressFunc   = std::function<void(HsmObjectStoreResponse::Ptr)>;
 
-    virtual void make_request(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func = nullptr,
-        Stream* stream             = nullptr) const noexcept;
+    virtual void make_request(HsmObjectStoreContext& ctx) const noexcept;
 
     virtual void set_tier_ids(const std::vector<std::string>& tier_ids);
 
   protected:
-    void make_request(
-        const ObjectStoreRequest& request,
-        ObjectStoreClient::completionFunc completion_func,
-        ObjectStoreClient::progressFunc progress_func = nullptr,
-        Stream* stream = nullptr) const noexcept override;
+    void make_request(ObjectStoreContext& ctx) const noexcept override;
 
-    virtual void get(
-        const HsmObjectStoreRequest& request,
-        Stream* stream,
-        completionFunc completion_func,
-        progressFunc progress_func) const = 0;
+    virtual void get(HsmObjectStoreContext& ctx) const = 0;
 
-    virtual void put(
-        const HsmObjectStoreRequest& request,
-        Stream* stream,
-        completionFunc completion_func,
-        progressFunc progress_func) const = 0;
+    virtual void put(HsmObjectStoreContext& ctx) const = 0;
 
-    virtual void copy(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const = 0;
+    virtual void copy(HsmObjectStoreContext& ctx) const = 0;
 
-    virtual void move(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const = 0;
+    virtual void move(HsmObjectStoreContext& ctx) const = 0;
 
-    virtual void remove(
-        const HsmObjectStoreRequest& request,
-        completionFunc completion_func,
-        progressFunc progress_func) const = 0;
+    virtual void remove(HsmObjectStoreContext& ctx) const = 0;
 
     // hestia::ObjectStoreClient Methods
     bool exists(const StorageObject& object) const override;
 
-    void get(
-        const ObjectStoreRequest& request,
-        ObjectStoreClient::completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void get(ObjectStoreContext& ctx) const override;
 
-    void put(
-        const ObjectStoreRequest& request,
-        ObjectStoreClient::completionFunc completion_func,
-        Stream* stream                     = nullptr,
-        Stream::progressFunc progress_func = nullptr) const override;
+    void put(ObjectStoreContext& ctx) const override;
 
     void remove(const StorageObject& object) const override;
 
     void list(const KeyValuePair& query, std::vector<StorageObject>& fetched)
         const override;
+
+    void on_success(const HsmObjectStoreContext& ctx) const;
 
     std::size_t get_tier_index(const std::string& id) const;
 

@@ -17,6 +17,8 @@ class S3ObjectAdapter {
         S3Object& s3_object, S3Request& request, const StorageObject& object);
 
     void from_s3(
-        StorageObject& object, S3Bucket& s3_container, S3Object& s3_object);
+        StorageObject& object,
+        const S3Bucket& s3_container,
+        const S3Object& s3_object);
 };
 }  // namespace hestia

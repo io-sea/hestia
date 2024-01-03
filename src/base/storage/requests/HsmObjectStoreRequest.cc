@@ -101,6 +101,19 @@ bool HsmObjectStoreRequest::is_hsm_only_request() const
     return is_copy_or_move_request(m_method);
 }
 
+bool HsmObjectStoreRequest::is_source_tier_request() const
+{
+    return method() == HsmObjectStoreRequestMethod::GET
+           || method() == HsmObjectStoreRequestMethod::EXISTS
+           || method() == HsmObjectStoreRequestMethod::REMOVE;
+}
+
+bool HsmObjectStoreRequest::is_single_tier_request() const
+{
+    return is_source_tier_request()
+           || method() == HsmObjectStoreRequestMethod::PUT;
+}
+
 std::string HsmObjectStoreRequest::method_as_string() const
 {
     return to_string(m_method);

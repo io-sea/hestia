@@ -57,23 +57,51 @@ void S3ObjectStoreClient::do_initialize(
     m_object_adapter = S3ObjectAdapter::create(m_config.get_metadata_prefix());
 }
 
-void S3ObjectStoreClient::put(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void S3ObjectStoreClient::init_s3_request(
+    const ObjectStoreContext& ctx, S3Request& req) const
+{
+    const auto domain    = m_config.get_default_host();
+    req.m_endpoint       = domain;
+    req.m_signed_headers = {"host", "x-amz-content-sha256", "x-amz-date"};
+    req.m_range          = S3Range(
+        ctx.m_request.extent().m_offset, ctx.m_request.extent().m_length);
+}
+
+void S3ObjectStoreClient::create_bucket_if_needed(
+    const S3Bucket& bucket, const S3Request& req) const
+{
+    const auto bucket_status = m_s3_client->head_bucket(bucket, req);
+    if (bucket_status.is_ok()) {
+        return;
+    }
+
+    if (bucket_status.get_s3_code() == S3StatusCode::_404_NO_SUCH_BUCKET
+        || bucket_status.get_code_and_id().first == 404) {
+        LOG_INFO("Bucket not found - creating one");
+        const auto bucket_create_status =
+            m_s3_client->create_bucket(bucket, req);
+        if (!bucket_create_status.is_ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + " | Error creating s3 bucket: "
+                + bucket_create_status.to_string());
+        }
+    }
+    else {
+        throw std::runtime_error(
+            SOURCE_LOC()
+            + " | Error checking s3 bucket: " + bucket_status.to_string());
+    }
+}
+
+void S3ObjectStoreClient::put(ObjectStoreContext& ctx) const
 {
     const auto domain = m_config.get_default_host();
 
     S3Request s3_request(domain);
-    s3_request.m_endpoint       = domain;
-    s3_request.m_signed_headers = {
-        "host", "x-amz-content-sha256", "x-amz-date"};
-    s3_request.m_range =
-        S3Range(request.extent().m_offset, request.extent().m_length);
+    init_s3_request(ctx, s3_request);
 
     S3Object s3_object;
-    m_object_adapter->to_s3(s3_object, s3_request, request.object());
+    m_object_adapter->to_s3(s3_object, s3_request, ctx.m_request.object());
 
     auto bucket_name = s3_object.m_bucket;
     if (bucket_name.empty()) {
@@ -95,60 +123,41 @@ void S3ObjectStoreClient::put(
     }
     */
 
-    const auto bucket_status = m_s3_client->head_bucket(s3_bucket, s3_request);
-    if (!bucket_status.is_ok()) {
-        if (bucket_status.get_s3_code() == S3StatusCode::_404_NO_SUCH_BUCKET
-            || bucket_status.get_code_and_id().first == 404) {
-            LOG_INFO("Bucket not found - creating one");
-            const auto bucket_create_status =
-                m_s3_client->create_bucket(s3_bucket, s3_request);
-            if (!bucket_create_status.is_ok()) {
-                throw std::runtime_error(
-                    SOURCE_LOC() + " | Error creating s3 bucket: "
-                    + bucket_create_status.to_string());
-            }
-        }
-        else {
-            throw std::runtime_error(
-                SOURCE_LOC()
-                + " | Error checking s3 bucket: " + bucket_status.to_string());
-        }
-    }
+    create_bucket_if_needed(s3_bucket, s3_request);
 
-    LOG_INFO("Doing PUT with StorageObject: " + request.object().to_string());
-    LOG_INFO("Doing PUT with S3Object: " + s3_object.to_string());
+    LOG_DEBUG(
+        "Doing PUT with StorageObject: " + ctx.m_request.object().to_string());
+    LOG_DEBUG("Doing PUT with S3Object: " + s3_object.to_string());
 
-    auto s3_completion_func = [completion_func, request,
-                               id = m_id](S3Response::Ptr response) {
+    auto s3_completion_func = [this, ctx](S3Response::Ptr response) {
         if (!response->m_status.is_ok()) {
             throw std::runtime_error(
                 SOURCE_LOC() + " | Error putting s3 object: "
                 + response->m_status.to_string());
         }
-        completion_func(ObjectStoreResponse::create(request, id));
+        on_success(ctx);
     };
+
+    auto stream_progress_func = [ctx, id = m_id](std::size_t transferred) {
+        auto response = ObjectStoreResponse::create(ctx.m_request, id);
+        response->set_bytes_transferred(transferred);
+        ctx.m_progress_func(std::move(response));
+    };
+
     m_s3_client->put_object(
-        s3_object, s3_bucket, s3_request, stream, s3_completion_func,
-        request.get_progress_interval(), progress_func);
+        s3_object, s3_bucket, s3_request, ctx.m_stream, s3_completion_func,
+        ctx.m_request.get_progress_interval(), stream_progress_func);
 }
 
-void S3ObjectStoreClient::get(
-    const ObjectStoreRequest& request,
-    completionFunc completion_func,
-    Stream* stream,
-    Stream::progressFunc progress_func) const
+void S3ObjectStoreClient::get(ObjectStoreContext& ctx) const
 {
     const auto domain = m_config.get_default_host();
 
     S3Request s3_request(domain);
-    s3_request.m_endpoint       = domain;
-    s3_request.m_signed_headers = {
-        "host", "x-amz-content-sha256", "x-amz-date"};
-    s3_request.m_range =
-        S3Range(request.extent().m_offset, request.extent().m_length);
+    init_s3_request(ctx, s3_request);
 
     S3Object s3_object;
-    m_object_adapter->to_s3(s3_object, s3_request, request.object());
+    m_object_adapter->to_s3(s3_object, s3_request, ctx.m_request.object());
 
     auto bucket_name = s3_object.m_bucket;
     if (bucket_name.empty()) {
@@ -156,27 +165,32 @@ void S3ObjectStoreClient::get(
     }
     S3Bucket s3_bucket(bucket_name);
 
-    LOG_INFO("Doing GET with StorageObject: " + request.object().to_string());
-    LOG_INFO("Doing GET with S3Object: " + s3_object.to_string());
+    LOG_DEBUG(
+        "Doing GET with StorageObject: " + ctx.m_request.object().to_string());
+    LOG_DEBUG("Doing GET with S3Object: " + s3_object.to_string());
 
-    StorageObject object;
-    m_object_adapter->from_s3(object, s3_bucket, s3_object);
-
-    auto s3_completion_func = [completion_func, object, request,
-                               id = m_id](S3Response::Ptr s3_response) {
+    auto s3_completion_func = [this, ctx,
+                               s3_bucket](S3Response::Ptr s3_response) {
         if (!s3_response->m_status.is_ok()) {
             throw std::runtime_error(
                 SOURCE_LOC() + " | Error getting s3 object: "
                 + s3_response->m_status.to_string());
         }
-
-        auto response      = ObjectStoreResponse::create(request, id);
-        response->object() = object;
-        completion_func(std::move(response));
+        auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
+        m_object_adapter->from_s3(
+            response->object(), s3_bucket, s3_response->m_content);
+        ctx.m_completion_func(std::move(response));
     };
+
+    auto stream_progress_func = [ctx, id = m_id](std::size_t transferred) {
+        auto response = ObjectStoreResponse::create(ctx.m_request, id);
+        response->set_bytes_transferred(transferred);
+        ctx.m_progress_func(std::move(response));
+    };
+
     m_s3_client->get_object(
-        s3_object, s3_bucket, s3_request, stream, s3_completion_func,
-        request.get_progress_interval(), progress_func);
+        s3_object, s3_bucket, s3_request, ctx.m_stream, s3_completion_func,
+        ctx.m_request.get_progress_interval(), stream_progress_func);
 }
 
 void S3ObjectStoreClient::remove(const StorageObject& object) const
