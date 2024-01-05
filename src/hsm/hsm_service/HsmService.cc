@@ -478,8 +478,10 @@ void HsmService::get_or_create_action(
     if (action_context.get_action_id().empty()) {
         auto action_response =
             action_service->make_request(TypedCrudRequest<HsmAction>{
-                CrudMethod::CREATE, action_context.get_action(),
-                CrudQuery::BodyFormat::ITEM, req.get_user_context()});
+                CrudMethod::CREATE,
+                action_context.get_action(),
+                {CrudQuery::BodyFormat::ITEM},
+                req.get_user_context()});
         if (!action_response->ok()) {
             throw RequestException<HsmActionError>(
                 {HsmActionErrorCode::CRUD_ERROR,
@@ -703,7 +705,7 @@ void HsmService::remove_or_update_extent(
     auto extent_service = m_services->get_service(HsmItem::Type::EXTENT);
     if (extent.empty()) {
         extent_response = extent_service->make_request(CrudRequest(
-            CrudMethod::REMOVE, {extent.get_primary_key()},
+            CrudMethod::REMOVE, {extent.get_primary_key(), {}},
             action_context.m_user_context));
     }
     else {

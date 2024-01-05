@@ -16,12 +16,12 @@ class CrudResponse : public Response<CrudErrorCode> {
     CrudResponse(
         const BaseRequest& request,
         const std::string& type,
-        CrudQuery::BodyFormat output_format);
+        const CrudQuery::OutputFormat& output_format);
 
     static Ptr create(
         const BaseRequest& request,
         const std::string& type,
-        CrudQuery::BodyFormat output_format);
+        const CrudQuery::OutputFormat& output_format);
 
     virtual ~CrudResponse();
 
@@ -84,7 +84,7 @@ class CrudResponse : public Response<CrudErrorCode> {
   private:
     VecModelPtr m_items;
     CrudAttributes m_attributes;
-    CrudQuery::BodyFormat m_output_format;
+    CrudQuery::OutputFormat m_output_format;
 
     CrudIdentifierCollection m_ids;
     Dictionary m_modified_attrs;

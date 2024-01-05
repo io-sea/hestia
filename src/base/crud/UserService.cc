@@ -204,8 +204,10 @@ CrudResponse::Ptr UserService::authenticate_with_token(const std::string& token)
     CrudRequest req(
         CrudMethod::READ,
         CrudQuery{
-            KeyValuePair{"value", token}, CrudQuery::Format::GET,
-            CrudQuery::BodyFormat::ITEM},
+            KeyValuePair{"value", token},
+            {CrudQuery::BodyFormat::ITEM, CrudQuery::ChildFormat::NONE},
+            CrudQuery::Format::GET,
+        },
         {});
 
     auto token_get_response = m_token_service->make_request(req);
@@ -278,7 +280,7 @@ CrudResponse::Ptr UserService::register_user(
         CrudMethod::READ,
         CrudQuery{
             CrudIdentifier{username, CrudIdentifier::Type::NAME},
-            CrudQuery::BodyFormat::ITEM},
+            CrudQuery::BodyFormat::ID},
         {});
     auto find_response = make_request(request);
     if (!find_response->ok()) {
@@ -301,7 +303,7 @@ CrudResponse::Ptr UserService::register_user(
     user.set_password(get_hashed_password(username, password));
 
     auto create_response = make_request(TypedCrudRequest<User>{
-        CrudMethod::CREATE, user, CrudQuery::BodyFormat::ID, {}});
+        CrudMethod::CREATE, user, {CrudQuery::BodyFormat::ID}, {}});
     if (!create_response->ok()) {
         LOG_ERROR("Unexpected error creating new user");
         return create_response;
@@ -314,7 +316,7 @@ CrudResponse::Ptr UserService::register_user(
     token.set_value(m_token_generator->generate());
 
     TypedCrudRequest<UserToken> req(
-        CrudMethod::CREATE, token, CrudQuery::BodyFormat::ID, {});
+        CrudMethod::CREATE, token, {CrudQuery::BodyFormat::ID}, {});
     auto token_response = m_token_service->make_request(req);
     if (!token_response->ok()) {
         auto error_response = std::make_unique<CrudResponse>(

@@ -16,7 +16,8 @@ class HestiaCApi {
     static CrudAttributes::Format to_crud_attr_format(
         hestia_io_format_t io_format);
 
-    static CrudQuery::BodyFormat to_output_format(hestia_io_format_t io_format);
+    static CrudQuery::OutputFormat to_output_format(
+        hestia_io_format_t io_format);
 
     static bool expects_ids(
         hestia_io_format_t io_format, CrudIdentifier::InputFormat id_format);

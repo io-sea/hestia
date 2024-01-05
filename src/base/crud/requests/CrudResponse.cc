@@ -10,21 +10,21 @@ namespace hestia {
 CrudResponse::CrudResponse(
     const BaseRequest& request,
     const std::string& type,
-    CrudQuery::BodyFormat output_format) :
+    const CrudQuery::OutputFormat& output_format) :
     Response<CrudErrorCode>(request),
     m_output_format(output_format),
     m_type(type)
 {
     CrudAttributes::FormatSpec attr_format;
-    if (m_output_format == CrudQuery::BodyFormat::DICT) {
+    if (m_output_format.m_body_format == CrudQuery::BodyFormat::DICT) {
         attr_format.set_is_dict();
     }
-    else if (m_output_format == CrudQuery::BodyFormat::JSON) {
+    else if (m_output_format.m_body_format == CrudQuery::BodyFormat::JSON) {
         attr_format.set_is_json();
     }
     else if (
-        m_output_format == CrudQuery::BodyFormat::NONE
-        || m_output_format == CrudQuery::BodyFormat::ID) {
+        m_output_format.m_body_format == CrudQuery::BodyFormat::NONE
+        || m_output_format.m_body_format == CrudQuery::BodyFormat::ID) {
         attr_format.m_type = CrudAttributes::Format::NONE;
     }
     m_attributes.set_format(attr_format);
@@ -33,7 +33,7 @@ CrudResponse::CrudResponse(
 CrudResponse::Ptr CrudResponse::create(
     const BaseRequest& request,
     const std::string& type,
-    CrudQuery::BodyFormat output_format)
+    const CrudQuery::OutputFormat& output_format)
 {
     return std::make_unique<CrudResponse>(request, type, output_format);
 }
@@ -70,18 +70,18 @@ const CrudAttributes& CrudResponse::get_attributes() const
 
 bool CrudResponse::expects_attributes() const
 {
-    return m_output_format == CrudQuery::BodyFormat::JSON
-           || m_output_format == CrudQuery::BodyFormat::DICT;
+    return m_output_format.m_body_format == CrudQuery::BodyFormat::JSON
+           || m_output_format.m_body_format == CrudQuery::BodyFormat::DICT;
 }
 
 bool CrudResponse::expects_items() const
 {
-    return m_output_format == CrudQuery::BodyFormat::ITEM;
+    return m_output_format.m_body_format == CrudQuery::BodyFormat::ITEM;
 }
 
 bool CrudResponse::expects_ids() const
 {
-    return m_output_format == CrudQuery::BodyFormat::ID;
+    return m_output_format.m_body_format == CrudQuery::BodyFormat::ID;
 }
 
 Model* CrudResponse::get_item() const
@@ -158,7 +158,7 @@ const Dictionary& CrudResponse::modified_attrs() const
 void CrudResponse::write(
     std::string& buffer, const CrudQuery::FormatSpec& format)
 {
-    if (m_output_format == CrudQuery::BodyFormat::ID) {
+    if (m_output_format.m_body_format == CrudQuery::BodyFormat::ID) {
         m_ids.write(buffer, format.m_id_format);
     }
     else {

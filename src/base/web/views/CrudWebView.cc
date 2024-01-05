@@ -27,6 +27,21 @@ std::string CrudWebView::get_path(const HttpRequest& request) const
     return hestia::StringUtils::remove_prefix(path, "/");
 }
 
+CrudQuery::ChildFormat CrudWebView::get_child_format(
+    const std::string& query_value) const
+{
+    if (query_value == "none") {
+        return CrudQuery::ChildFormat::NONE;
+    }
+    else if (query_value == "full") {
+        return CrudQuery::ChildFormat::FULL;
+    }
+    else if (query_value == "id") {
+        return CrudQuery::ChildFormat::ID;
+    }
+    return m_default_child_format;
+}
+
 HttpResponse::Ptr CrudWebView::on_get(
     const HttpRequest& request,
     HttpEvent event,
@@ -51,10 +66,13 @@ HttpResponse::Ptr CrudWebView::on_get(
     response->header().set_content_type(content_type);
 
     if (path.empty()) {
+        const auto child_format =
+            get_child_format(request.get_queries().get_item("child_format"));
+
         const auto response_type = request.get_header().has_html_accept_type() ?
                                        CrudQuery::BodyFormat::DICT :
                                        CrudQuery::BodyFormat::JSON;
-        CrudQuery query(response_type);
+        CrudQuery query({response_type, child_format});
         if (!request.get_queries().empty()) {
             CrudIdentifier id(
                 request.get_queries(), CrudIdentifier::FormatSpec());
@@ -88,7 +106,9 @@ HttpResponse::Ptr CrudWebView::on_get(
     }
     else {
         const auto id = path;
-        CrudQuery query(id, CrudQuery::BodyFormat::JSON);
+        const auto child_format =
+            get_child_format(request.get_queries().get_item("child_format"));
+        CrudQuery query(id, {CrudQuery::BodyFormat::JSON, child_format});
         auto crud_response = m_service->make_request(
             CrudRequest{CrudMethod::READ, query, auth}, m_type_name);
         if (!crud_response->ok()) {
@@ -126,7 +146,7 @@ HttpResponse::Ptr CrudWebView::on_delete(
     }
 
     auto crud_response = m_service->make_request(
-        CrudRequest{CrudMethod::REMOVE, {CrudIdentifier(path)}, auth},
+        CrudRequest{CrudMethod::REMOVE, {CrudIdentifier(path), {}}, auth},
         m_type_name);
     if (!crud_response->ok()) {
         return HttpResponse::create(

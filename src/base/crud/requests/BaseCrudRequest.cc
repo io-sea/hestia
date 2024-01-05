@@ -45,7 +45,7 @@ const CrudQuery& BaseCrudRequest::get_query() const
     return m_query;
 }
 
-CrudQuery::BodyFormat BaseCrudRequest::get_output_format() const
+const CrudQuery::OutputFormat& BaseCrudRequest::get_output_format() const
 {
     return m_query.get_output_format();
 }
@@ -73,7 +73,7 @@ void BaseCrudRequest::append(
     m_query.append(body, format);
 }
 
-void BaseCrudRequest::set_output_format(CrudQuery::BodyFormat format)
+void BaseCrudRequest::set_output_format(const CrudQuery::OutputFormat& format)
 {
     m_query.set_output_format(format);
 }

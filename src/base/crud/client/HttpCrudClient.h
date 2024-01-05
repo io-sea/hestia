@@ -66,5 +66,7 @@ class HttpCrudClient : public CrudClient {
 
     HttpResponse::Ptr make_request(
         const HttpRequest& req, bool except_on_error = true) const;
+
+    std::string get_query_child_format(CrudQuery::ChildFormat format) const;
 };
 }  // namespace hestia

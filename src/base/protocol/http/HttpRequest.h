@@ -31,6 +31,8 @@ class HttpRequest {
 
     void overwrite_path(const std::string& new_path);
 
+    void set_query(const std::string& key, const std::string& value);
+
     void set_queries(const Map& queries) { m_preamble.m_queries = queries; }
 
     const HttpHeader& get_header() const;

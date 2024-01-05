@@ -169,6 +169,11 @@ void HttpRequest::set_content_length(std::size_t size)
     get_header().set_item("content-length", std::to_string(size));
 }
 
+void HttpRequest::set_query(const std::string& key, const std::string& value)
+{
+    m_preamble.m_queries.set_item(key, value);
+}
+
 std::string HttpRequest::to_string() const
 {
     std::string ret;

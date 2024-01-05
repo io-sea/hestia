@@ -37,7 +37,7 @@ class TestCrudServiceFixture {
 TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
+        hestia::CrudMethod::CREATE, {hestia::CrudQuery::BodyFormat::ITEM}, {}});
 
     REQUIRE(create_response->ok());
     REQUIRE(create_response->items().size() == 1);
@@ -56,7 +56,7 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(create_response1->ok());
 
@@ -137,8 +137,8 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         {
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "model_name"},
-                hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::BodyFormat::ITEM);
+                {hestia::CrudQuery::BodyFormat::ITEM},
+                hestia::CrudQuery::Format::GET);
             const auto get_response = m_service->make_request(
                 hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("It is found ok")
@@ -152,8 +152,8 @@ TEST_CASE_METHOD(TestCrudServiceFixture, "Test Crud Service", "[crud-service]")
         {
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "no_model_has_this_name"},
-                hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::BodyFormat::ITEM);
+                {hestia::CrudQuery::BodyFormat::ITEM},
+                hestia::CrudQuery::Format::GET);
             const auto get_response = m_service->make_request(
                 hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
             THEN("It is not found ok")
@@ -181,7 +181,7 @@ TEST_CASE_METHOD(
     TestCrudServiceFixture, "Test Crud Service - Update", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
+        hestia::CrudMethod::CREATE, {hestia::CrudQuery::BodyFormat::ITEM}, {}});
     REQUIRE(create_response->ok());
 
     REQUIRE(create_response->items().size() == 1);
@@ -200,7 +200,7 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(create_response1->ok());
 
@@ -223,7 +223,7 @@ TEST_CASE_METHOD(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
                 hestia::CrudMethod::UPDATE,
                 model_to_update,
-                hestia::CrudQuery::BodyFormat::ITEM,
+                {hestia::CrudQuery::BodyFormat::ITEM},
                 {}});
         REQUIRE(update_response->ok());
 
@@ -249,7 +249,7 @@ TEST_CASE_METHOD(
     TestCrudServiceFixture, "Test Crud Service - Read", "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
+        hestia::CrudMethod::CREATE, {hestia::CrudQuery::BodyFormat::ITEM}, {}});
     REQUIRE(create_response->ok());
     REQUIRE(create_response->items().size() == 1);
 
@@ -267,7 +267,7 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModel>{
             hestia::CrudMethod::CREATE,
             named_model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(create_response1->ok());
 
@@ -297,8 +297,8 @@ TEST_CASE_METHOD(
         {
             hestia::CrudQuery query(
                 hestia::KeyValuePair{"name", "model_name"},
-                hestia::CrudQuery::Format::GET,
-                hestia::CrudQuery::BodyFormat::ID);
+                {hestia::CrudQuery::BodyFormat::ID},
+                hestia::CrudQuery::Format::GET);
 
             const auto list_response = m_service->make_request(
                 hestia::CrudRequest{hestia::CrudMethod::READ, query, {}});
@@ -318,7 +318,7 @@ TEST_CASE_METHOD(
     {
         const auto response = m_service->make_request(hestia::CrudRequest{
             hestia::CrudMethod::CREATE,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
 
         THEN("It is created ok and returns an item")
@@ -343,7 +343,7 @@ TEST_CASE_METHOD(
             hestia::TypedCrudRequest<hestia::mock::MockModel>{
                 hestia::CrudMethod::CREATE,
                 named_model,
-                hestia::CrudQuery::BodyFormat::ITEM,
+                {hestia::CrudQuery::BodyFormat::ITEM},
                 {}});
 
         THEN("It is created ok and returns an item")
@@ -421,7 +421,7 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockParentModel>{
             hestia::CrudMethod::CREATE,
             parent_model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(response->ok());
 
@@ -430,7 +430,7 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockManyToManyTargetModel>{
             hestia::CrudMethod::CREATE,
             many_many_target_model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(many_target_response->ok());
 
@@ -442,7 +442,7 @@ TEST_CASE_METHOD(
         hestia::TypedCrudRequest<hestia::mock::MockModelWithParent>{
             hestia::CrudMethod::CREATE,
             model,
-            hestia::CrudQuery::BodyFormat::ITEM,
+            {hestia::CrudQuery::BodyFormat::ITEM},
             {}});
     REQUIRE(child_response->ok());
 
@@ -474,7 +474,7 @@ TEST_CASE_METHOD(
     "[crud-service]")
 {
     const auto create_response = m_service->make_request(hestia::CrudRequest{
-        hestia::CrudMethod::CREATE, hestia::CrudQuery::BodyFormat::ITEM, {}});
+        hestia::CrudMethod::CREATE, {hestia::CrudQuery::BodyFormat::ITEM}, {}});
 
     REQUIRE(create_response->ok());
     REQUIRE(create_response->items().size() == 1);

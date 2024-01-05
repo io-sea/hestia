@@ -24,7 +24,7 @@ class HestiaRequest : public BaseRequest {
 
     const CrudRequest& get_crud_request() const;
 
-    CrudQuery::BodyFormat get_output_format() const;
+    const CrudQuery::OutputFormat& get_output_format() const;
 
     std::string get_hsm_type_as_string() const;
 
@@ -56,7 +56,7 @@ class HestiaRequest : public BaseRequest {
 
     void set_query_filter(const Map& filter);
 
-    void set_output_format(CrudQuery::BodyFormat format);
+    void set_output_format(const CrudQuery::OutputFormat& format);
 
     bool supports_stream_source() const;
 

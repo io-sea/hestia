@@ -22,7 +22,7 @@ bool HestiaRequest::is_hsm_action() const
     return m_type == Type::HSM_ACTION;
 }
 
-CrudQuery::BodyFormat HestiaRequest::get_output_format() const
+const CrudQuery::OutputFormat& HestiaRequest::get_output_format() const
 {
     return m_crud_request.get_query().get_output_format();
 }
@@ -119,7 +119,7 @@ std::string HestiaRequest::get_hsm_type_as_string() const
     return HsmItem::to_name(m_subject.m_hsm_type);
 }
 
-void HestiaRequest::set_output_format(CrudQuery::BodyFormat format)
+void HestiaRequest::set_output_format(const CrudQuery::OutputFormat& format)
 {
     m_crud_request.set_output_format(format);
 }

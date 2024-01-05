@@ -12,6 +12,7 @@ namespace hestia {
  *
  * The Format specifier is a hint indicating:
  * - ID: just an 'identifier' field is included
+ * - NO_CHILD: Don't include any chilren - even child ids
  * - CHILD_ID: children are only represented by an identifier
  * - MODIFIED: Only modified fields are included
  * - FULL: All fields are included

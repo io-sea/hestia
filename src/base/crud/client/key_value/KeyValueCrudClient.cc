@@ -213,43 +213,46 @@ void KeyValueCrudClient::read(
         return;
     }
 
-    // Read foreign key items
-    Dictionary foreign_key_content(Dictionary::Type::SEQUENCE);
-    if (read_context.has_foreign_key_content()) {
-        // Build db queries for foreign key items
-        std::vector<std::vector<std::string>> foreign_key_ids;
-        get_db_sets(read_context.get_foreign_key_proxy_keys(), foreign_key_ids);
+    if (request.get_output_format().m_child_format
+        != CrudQuery::ChildFormat::NONE) {
+        // Read foreign key items
+        Dictionary foreign_key_content(Dictionary::Type::SEQUENCE);
+        if (read_context.has_foreign_key_content()) {
+            // Build db queries for foreign key items
+            std::vector<std::vector<std::string>> foreign_key_ids;
+            get_db_sets(
+                read_context.get_foreign_key_proxy_keys(), foreign_key_ids);
 
-        std::vector<std::string> foreign_keys;
-        std::vector<std::size_t> foreign_key_set_sizes;
-        read_context.get_foreign_key_query(
-            foreign_key_ids, foreign_keys, foreign_key_set_sizes);
+            std::vector<std::string> foreign_keys;
+            std::vector<std::size_t> foreign_key_set_sizes;
+            read_context.get_foreign_key_query(
+                foreign_key_ids, foreign_keys, foreign_key_set_sizes);
 
-        // Get the foreign key content from DB
-        read_context.process_foreign_key_content(
-            get_db_items(foreign_keys), foreign_key_set_sizes,
-            foreign_key_content);
+            // Get the foreign key content from DB
+            read_context.process_foreign_key_content(
+                get_db_items(foreign_keys), foreign_key_set_sizes,
+                foreign_key_content);
+        }
+        read_context.merge_proxy_content(foreign_key_content, *read_content);
+
+        // Read one-to-one items
+        Dictionary one_to_one_content(Dictionary::Type::SEQUENCE);
+        if (read_context.has_one_to_one_content()) {
+            // Build db queries for one to one items
+            std::vector<std::vector<std::string>> key_ids;
+            get_db_sets(read_context.get_one_to_one_keys(), key_ids);
+
+            std::vector<std::string> foreign_keys;
+            std::vector<std::size_t> foreign_key_set_sizes;
+            read_context.get_one_to_one_key_query(
+                key_ids, foreign_keys, foreign_key_set_sizes);
+
+            // Get the foreign key content from DB
+            read_context.process_one_to_one_content(
+                get_db_items(foreign_keys), one_to_one_content);
+        }
+        read_context.merge_proxy_content(one_to_one_content, *read_content);
     }
-    read_context.merge_proxy_content(foreign_key_content, *read_content);
-
-    // Read one-to-one items
-    Dictionary one_to_one_content(Dictionary::Type::SEQUENCE);
-    if (read_context.has_one_to_one_content()) {
-        // Build db queries for one to one items
-        std::vector<std::vector<std::string>> key_ids;
-        get_db_sets(read_context.get_one_to_one_keys(), key_ids);
-
-        std::vector<std::string> foreign_keys;
-        std::vector<std::size_t> foreign_key_set_sizes;
-        read_context.get_one_to_one_key_query(
-            key_ids, foreign_keys, foreign_key_set_sizes);
-
-        // Get the foreign key content from DB
-        read_context.process_one_to_one_content(
-            get_db_items(foreign_keys), one_to_one_content);
-    }
-
-    read_context.merge_proxy_content(one_to_one_content, *read_content);
     m_serializer->append_dict(std::move(read_content), crud_response);
 }
 

@@ -47,7 +47,7 @@ S3AuthorisationChecker::find_user(
 {
     CrudQuery query(
         KeyValuePair{"name", s3_request.get_user_context().m_user_id},
-        CrudQuery::Format::GET, CrudQuery::BodyFormat::ITEM);
+        {CrudQuery::BodyFormat::ITEM}, CrudQuery::Format::GET);
     auto response =
         user_service.make_request(CrudRequest{CrudMethod::READ, query, {}});
 

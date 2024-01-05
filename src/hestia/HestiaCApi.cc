@@ -103,16 +103,23 @@ bool HestiaCApi::expects_attrs(CrudMethod method, hestia_io_format_t io_format)
            || (io_format & HESTIA_IO_KEY_VALUE) != 0;
 }
 
-CrudQuery::BodyFormat HestiaCApi::to_output_format(hestia_io_format_t io_format)
+CrudQuery::OutputFormat HestiaCApi::to_output_format(
+    hestia_io_format_t io_format)
 {
-    if (io_format == HESTIA_IO_IDS) {
+    if ((io_format & HESTIA_IO_IDS) != 0) {
         return CrudQuery::BodyFormat::ID;
     }
-    else if (io_format == HESTIA_IO_KEY_VALUE) {
-        return CrudQuery::BodyFormat::DICT;
+    else if ((io_format & HESTIA_IO_KEY_VALUE) != 0) {
+        const auto child_format = ((io_format & HESTIA_IO_NO_CHILD) != 0) ?
+                                      CrudQuery::ChildFormat::NONE :
+                                      CrudQuery::ChildFormat::FULL;
+        return {CrudQuery::BodyFormat::DICT, child_format};
     }
-    else if (io_format == HESTIA_IO_JSON) {
-        return CrudQuery::BodyFormat::JSON;
+    else if ((io_format & HESTIA_IO_JSON) != 0) {
+        const auto child_format = ((io_format & HESTIA_IO_NO_CHILD) != 0) ?
+                                      CrudQuery::ChildFormat::NONE :
+                                      CrudQuery::ChildFormat::FULL;
+        return {CrudQuery::BodyFormat::JSON, child_format};
     }
     else {
         return CrudQuery::BodyFormat::NONE;
@@ -141,7 +148,8 @@ int HestiaCApi::do_crud_request(
 
     const auto response = response_future.get();
 
-    if (response->ok() && req.get_output_format() != CrudQuery::BodyFormat::NONE
+    if (response->ok()
+        && req.get_output_format().m_body_format != CrudQuery::BodyFormat::NONE
         && response->has_content()) {
         StringUtils::to_char(response->write(), response_body, len_response);
     }

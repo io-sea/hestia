@@ -26,10 +26,14 @@ class CrudWebView : public WebView {
   private:
     std::string get_path(const HttpRequest& request) const;
 
+    CrudQuery::ChildFormat get_child_format(
+        const std::string& query_value) const;
+
     CrudService* m_service{nullptr};
     std::string m_type_name;
 
     CrudQuery::FormatSpec m_readable_format;
     CrudQuery::FormatSpec m_machine_format;
+    CrudQuery::ChildFormat m_default_child_format{CrudQuery::ChildFormat::FULL};
 };
 }  // namespace hestia

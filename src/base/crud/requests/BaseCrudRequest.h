@@ -54,13 +54,13 @@ class BaseCrudRequest : public BaseRequest {
 
     const CrudQuery& get_query() const;
 
-    CrudQuery::BodyFormat get_output_format() const;
+    const CrudQuery::OutputFormat& get_output_format() const;
 
     CrudLockType lock_type() const;
 
     void set_ids(const CrudIdentifierCollection& ids);
 
-    void set_output_format(CrudQuery::BodyFormat format);
+    void set_output_format(const CrudQuery::OutputFormat& format);
 
     void set_query_filter(const Map& filter);
 

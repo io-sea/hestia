@@ -31,7 +31,7 @@ class HsmServiceTestFixture {
         auto user_create_response =
             m_user_service->make_request(hestia::TypedCrudRequest<hestia::User>(
                 hestia::CrudMethod::CREATE, m_test_user,
-                hestia::CrudQuery::BodyFormat::ITEM, {}));
+                {hestia::CrudQuery::BodyFormat::ITEM}, {}));
         REQUIRE(user_create_response->ok());
         m_test_user = *user_create_response->get_item_as<hestia::User>();
 

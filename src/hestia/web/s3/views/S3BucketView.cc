@@ -79,7 +79,9 @@ HttpResponse::Ptr S3BucketView::on_put(
 
         auto create_response = m_service->make_request(
             CrudRequest{
-                CrudMethod::CREATE, {id}, {auth.m_user_id, auth.m_user_token}},
+                CrudMethod::CREATE,
+                {id, {}},
+                {auth.m_user_id, auth.m_user_token}},
             HsmItem::dataset_name);
         if (!create_response->ok()) {
             const auto msg = create_response->get_error().to_string();
@@ -114,7 +116,7 @@ HttpResponse::Ptr S3BucketView::on_delete(
         auto remove_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::REMOVE,
-                {get_bucket_response->get_item()->get_primary_key()},
+                {get_bucket_response->get_item()->get_primary_key(), {}},
                 {auth.m_user_id, auth.m_user_token}},
             HsmItem::dataset_name);
         if (!remove_response->ok()) {

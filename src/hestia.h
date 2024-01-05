@@ -50,6 +50,8 @@ typedef enum hestia_io_format_e {
     HESTIA_IO_JSON = 1 << 1,  // I/O will be in JSON format - does not combine
                               // with other options
     HESTIA_IO_KEY_VALUE = 1 << 2,  // I/O will be in Key-Value format
+    HESTIA_IO_NO_CHILD  = 1 << 3   // READ items will not include children -
+                                   // useful for 'large' objects like tiers.
 } hestia_io_format_t;
 
 typedef enum hestia_query_format_e {

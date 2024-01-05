@@ -899,11 +899,12 @@ int hestia_list_tiers(uint8_t** tier_ids, size_t* num_ids)
     int totals{0};
     int output_size{0};
 
+    hestia_io_format_t output_format = static_cast<hestia_io_format_t>(
+        HESTIA_IO_KEY_VALUE | HESTIA_IO_NO_CHILD);
     const auto rc = hestia_read(
         hestia_item_t::HESTIA_TIER, hestia_query_format_t::HESTIA_QUERY_NONE,
-        hestia_id_format_t::HESTIA_ID_NONE, 0, 0, nullptr, 0,
-        hestia_io_format_t::HESTIA_IO_KEY_VALUE, &output, &output_size,
-        &totals);
+        hestia_id_format_t::HESTIA_ID_NONE, 0, 0, nullptr, 0, output_format,
+        &output, &output_size, &totals);
     if (rc != 0) {
         return rc;
     }

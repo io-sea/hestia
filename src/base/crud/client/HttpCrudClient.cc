@@ -53,6 +53,20 @@ HttpResponse::Ptr HttpCrudClient::make_request(
     return response;
 }
 
+std::string HttpCrudClient::get_query_child_format(
+    CrudQuery::ChildFormat format) const
+{
+    if (format == CrudQuery::ChildFormat::ID) {
+        return "id";
+    }
+    else if (format == CrudQuery::ChildFormat::FULL) {
+        return "full";
+    }
+    else {
+        return "none";
+    }
+}
+
 void HttpCrudClient::make_request(
     const CrudRequest& crud_request,
     HttpRequest::Method method,
@@ -67,6 +81,12 @@ void HttpCrudClient::make_request(
 
             HttpRequest req(get_item_path() + path_suffix, method);
             apply_common_headers(crud_request, req);
+            if (crud_request.method() == CrudMethod::READ) {
+                req.set_query(
+                    "child_format",
+                    get_query_child_format(
+                        crud_request.get_output_format().m_child_format));
+            }
 
             m_serializer->to_json(crud_request, req.body(), count);
 
@@ -121,6 +141,11 @@ void HttpCrudClient::read(
         HttpCrudPath::from_query(crud_request.get_query(), path);
 
         HttpRequest request(path, HttpRequest::Method::GET);
+        request.set_query(
+            "child_format",
+            get_query_child_format(
+                crud_request.get_output_format().m_child_format));
+
         apply_common_headers(crud_request, request);
 
         const auto response = make_request(request, false);

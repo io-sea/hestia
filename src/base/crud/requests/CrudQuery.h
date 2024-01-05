@@ -10,39 +10,56 @@ namespace hestia {
 class CrudQuery {
   public:
     enum class BodyFormat { NONE, JSON, DICT, ID, ITEM };
+    enum class ChildFormat { NONE, ID, FULL };
     STRINGABLE_ENUM(Format, ID, GET, LIST)
+
+    struct OutputFormat {
+        OutputFormat() :
+            m_body_format(BodyFormat::JSON), m_child_format(ChildFormat::FULL)
+        {
+        }
+
+        OutputFormat(
+            BodyFormat body_format,
+            ChildFormat child_format = ChildFormat::FULL) :
+            m_body_format(body_format), m_child_format(child_format)
+        {
+        }
+        BodyFormat m_body_format   = BodyFormat::JSON;
+        ChildFormat m_child_format = ChildFormat::FULL;
+    };
 
     struct FormatSpec {
         CrudIdentifierCollection::FormatSpec m_id_format;
         CrudAttributes::FormatSpec m_attrs_format;
     };
 
-    CrudQuery(BodyFormat output_format = BodyFormat::JSON);
+    CrudQuery(const OutputFormat& output_format = {});
 
     CrudQuery(
         const CrudIdentifier& identifier,
-        BodyFormat output_format = BodyFormat::JSON);
+        const OutputFormat& output_format = {});
 
     CrudQuery(
         const CrudIdentifierCollection& identifiers,
-        BodyFormat output_format = BodyFormat::JSON);
+        const OutputFormat& output_format = {});
 
     CrudQuery(
         const Map& filter,
-        const Format format      = Format::LIST,
-        BodyFormat output_format = BodyFormat::JSON);
+        const OutputFormat& output_format,
+        const Format format = Format::LIST);
 
-    CrudQuery(const CrudAttributes& attrs, BodyFormat output_format);
+    CrudQuery(const CrudAttributes& attrs, const OutputFormat& output_format);
 
     CrudQuery(
         const std::string& attrs_body,
         const CrudAttributes::FormatSpec& attrs_format,
-        BodyFormat output_format);
+        const OutputFormat& output_format);
 
     CrudQuery(
         const CrudIdentifier& identifier,
         const CrudAttributes& attrs,
-        BodyFormat output_format);
+        const OutputFormat& output_format);
 
     CrudIdentifierCollection& ids();
 
@@ -65,7 +82,7 @@ class CrudQuery {
 
     const CrudIdentifierCollection& get_ids() const { return m_ids; }
 
-    BodyFormat get_output_format() const;
+    const OutputFormat& get_output_format() const;
 
     std::size_t get_max_items() const;
 
@@ -87,7 +104,7 @@ class CrudQuery {
 
     void set_format(Format format) { m_format = format; }
 
-    void set_output_format(BodyFormat output_format);
+    void set_output_format(const OutputFormat& output_format);
 
     void set_ids(const CrudIdentifierCollection& ids);
 
@@ -108,7 +125,7 @@ class CrudQuery {
     std::size_t m_offset{0};
     std::size_t m_count{0};
 
-    BodyFormat m_output_format{BodyFormat::JSON};
+    OutputFormat m_output_format;
     Format m_format{Format::LIST};
 
     CrudIdentifierCollection m_ids;
