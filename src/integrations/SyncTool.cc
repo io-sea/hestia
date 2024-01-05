@@ -1,8 +1,10 @@
 #include "SyncTool.h"
 
+#include "File.h"
 #include "IdGenerator.h"
 #include "Logger.h"
 #include "StringUtils.h"
+#include "TimeUtils.h"
 
 #include "hestia_iosea.h"
 
@@ -46,18 +48,16 @@ std::string Dataset::to_string() const
 }
 
 SyncTool::SyncTool(
-    const std::filesystem::path& sync_dir, const std::string& host) :
+    const std::filesystem::path& sync_dir, const std::string& config_path) :
     m_sync_dir(sync_dir)
 {
-    if (host.empty()) {
+    if (config_path.empty()) {
         hestia_initialize(nullptr, nullptr, nullptr);
     }
     else {
-        std::string config =
-            "{\"server\" : {\"controller_address\" : \"" + host + "\"}}";
-        std::cout << "starting with config: " << config << std::endl;
-        hestia_initialize(nullptr, nullptr, config.c_str());
+        hestia_initialize(config_path.c_str(), nullptr, nullptr);
     }
+    hestia_output_info();
 }
 
 SyncTool::~SyncTool()
@@ -65,11 +65,12 @@ SyncTool::~SyncTool()
     hestia_finish();
 }
 
-void SyncTool::archive()
+void SyncTool::archive(
+    const std::string& sample_path, std::size_t sample_frequency)
 {
     take_snapshot(m_current_snapshot);
 
-    archive(m_current_snapshot);
+    archive(m_current_snapshot, sample_path, sample_frequency);
 }
 
 int SyncTool::put_dataset(Dataset& dataset, const std::string& dataset_id)
@@ -124,15 +125,40 @@ int SyncTool::put_dataset(Dataset& dataset, const std::string& dataset_id)
     return 0;
 }
 
-int SyncTool::archive(const FilesystemSnapshot& snapshot)
+int SyncTool::archive(
+    const FilesystemSnapshot& snapshot,
+    const std::string& sample_path,
+    std::size_t sample_frequency)
 {
     Dataset dataset;
+    std::size_t count{0};
+    std::size_t total = snapshot.m_files.size();
+
+    File sample_file;
+    bool sampling_active = !sample_path.empty();
+    if (sampling_active) {
+        sample_file.set_path(sample_path);
+    }
+
+    const auto initial_time = TimeUtils::get_time_since_epoch_micros();
     for (const auto& fs_entry : snapshot.m_files) {
         const auto id = archive(fs_entry);
         if (id.empty()) {
             return -1;
         }
         dataset.m_entries.emplace_back(id, fs_entry.m_relative_path);
+        if (count % sample_frequency == 0) {
+
+            std::cout << count << " of " << total << std::endl;
+            if (sampling_active) {
+                auto time_delta = std::to_string(
+                    (TimeUtils::get_time_since_epoch_micros() - initial_time)
+                        .count());
+                time_delta += '\n';
+                sample_file.write(time_delta.c_str(), time_delta.size());
+            }
+        }
+        count++;
     }
     return put_dataset(dataset);
 }
@@ -156,7 +182,10 @@ std::string SyncTool::archive(const FilesystemEntry& fs_entry)
     auto rc = hestia_object_put(
         &id, hestia_create_mode_t::HESTIA_CREATE, &io_ctx, &tier);
     if (rc != 0) {
-        std::cerr << "Object put failed" << std::endl;
+        char error_buf[1024];
+        hestia_get_last_error(error_buf, 1024);
+        std::cerr << "Object put failed: " << std::string(error_buf)
+                  << std::endl;
         return {};
     }
 
@@ -357,8 +386,6 @@ void SyncTool::take_snapshot(FilesystemSnapshot& snapshot)
             FilesystemEntry fs_entry;
             fs_entry.m_relative_path =
                 std::filesystem::relative(p.path(), m_sync_dir);
-
-            std::cout << "Got path: " << fs_entry.m_relative_path << std::endl;
             snapshot.m_files.push_back(fs_entry);
         }
     }

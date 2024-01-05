@@ -141,6 +141,8 @@ class HsmService : public CrudService {
         const TierExtents& extent,
         bool do_create) const;
 
+    bool event_feed_is_active() const;
+
     void remove_or_update_extent(
         const HsmActionContext& action_context,
         const TierExtents& extent) const;

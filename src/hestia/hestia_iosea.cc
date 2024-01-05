@@ -620,7 +620,7 @@ int hestia_object_put(
             tier_id = tier->m_index;
         }
         else {
-            LOG_INFO("Tier unset - listing system tiers");
+            LOG_INFO("Tier not set - listing system tiers");
             uint8_t* tiers{nullptr};
             std::size_t num_tiers{0};
             if (const auto rc = hestia_list_tiers(&tiers, &num_tiers);
@@ -910,27 +910,45 @@ int hestia_list_tiers(uint8_t** tier_ids, size_t* num_ids)
 
     Dictionary attr_dict;
     attr_dict.from_string(std::string(output, output_size));
-
-    *num_ids  = attr_dict.get_sequence().size();
-    *tier_ids = new uint8_t[*num_ids];
-
-    std::size_t count = 0;
-    for (const auto& item : attr_dict.get_sequence()) {
-        if (!item->has_map_item("priority")) {
+    if (attr_dict.is_sequence()) {
+        *num_ids          = attr_dict.get_sequence().size();
+        *tier_ids         = new uint8_t[*num_ids];
+        std::size_t count = 0;
+        for (const auto& item : attr_dict.get_sequence()) {
+            if (!item->has_map_item("priority")) {
+                set_last_error(
+                    "Tier is missing a 'priority' - possible config issue.");
+                return -1;
+            }
+            const auto name = item->get_map_item("priority")->get_scalar();
+            try {
+                (*tier_ids)[count] = std::stoi(name);
+            }
+            catch (const std::exception& e) {
+                set_last_error(
+                    "Failed to convert tier priority to int - tier config issue.");
+                return -1;
+            }
+            count++;
+        }
+    }
+    else {
+        *num_ids  = 1;
+        *tier_ids = new uint8_t[*num_ids];
+        if (!attr_dict.has_map_item("priority")) {
             set_last_error(
                 "Tier is missing a 'priority' - possible config issue.");
             return -1;
         }
-        const auto name = item->get_map_item("priority")->get_scalar();
+        const auto name = attr_dict.get_map_item("priority")->get_scalar();
         try {
-            (*tier_ids)[count] = std::stoi(name);
+            (*tier_ids)[0] = std::stoi(name);
         }
         catch (const std::exception& e) {
             set_last_error(
                 "Failed to convert tier priority to int - tier config issue.");
             return -1;
         }
-        count++;
     }
     delete[] output;
     return 0;

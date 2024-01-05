@@ -10,6 +10,11 @@ File::~File()
     close();
 }
 
+void File::set_path(const Path& path)
+{
+    m_path = path;
+}
+
 OpStatus File::write(const char* data, std::size_t length)
 {
     if (!m_out_stream.is_open()) {

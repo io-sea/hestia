@@ -44,11 +44,11 @@ struct Dataset {
 class SyncTool {
   public:
     SyncTool(
-        const std::filesystem::path& sync_dir, const std::string& host = {});
+        const std::filesystem::path& sync_dir, const std::string& config_path);
 
     ~SyncTool();
 
-    void archive();
+    void archive(const std::string& sample_path, std::size_t sample_frequency);
 
     int sync(const std::string& dataset_id);
 
@@ -61,7 +61,10 @@ class SyncTool {
 
     int put_dataset(Dataset& dataset, const std::string& dataset_id = {});
 
-    int archive(const FilesystemSnapshot& snapshot);
+    int archive(
+        const FilesystemSnapshot& snapshot,
+        const std::string& sample_path,
+        std::size_t sample_frequency);
 
     std::string archive(const FilesystemEntry& fs_entry);
 

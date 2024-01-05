@@ -1,0 +1,22 @@
+logger:
+  active: true 
+
+tiers:
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+
+object_store_backends:
+  - backend_type: file
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001"]
+    config: 
+      root: object_store
+
+event_feed:
+  active: false
+
+key_value_store_client:
+  client_type: redis
+  config:
+    backend_address: localhost
+    backend_port: 6379

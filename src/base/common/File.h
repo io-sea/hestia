@@ -55,6 +55,8 @@ class File {
 
     void seek_to(std::size_t offset);
 
+    void set_path(const Path& path);
+
     /**
      * Write to the file - the file is opened if needed
      * @param data buffer to write from

@@ -1,0 +1,43 @@
+logger:
+  active: true 
+  syslog_only: true
+  level: warn
+
+server:
+  controller: true 
+  tag: controller0
+  host_address: 127.0.0.1
+  host_port: 8080
+  
+tiers:
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
+  - id: "00000000-0000-0000-0000-000000000003"
+    priority: 2
+  - id: "00000000-0000-0000-0000-000000000004"
+    priority: 3
+  - id: "00000000-0000-0000-0000-000000000005"
+    priority: 4
+
+object_store_backends:
+  - backend_type: file_hsm
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003",
+            "00000000-0000-0000-0000-000000000004",
+            "00000000-0000-0000-0000-000000000005"]
+    config: 
+      root: /afsm/iosea/wp4/object_store
+
+event_feed:
+  active: true
+  output_path: /afsm/iosea/wp4/event_feed.yaml
+
+key_value_store_client:
+  client_type: redis
+  config:
+    backend_address: localhost
+    backend_port: 6379

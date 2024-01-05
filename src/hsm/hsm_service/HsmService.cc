@@ -105,7 +105,7 @@ CrudResponse::Ptr HsmService::make_request(
             try {
                 const auto hsm_type = HsmItem::from_name(type);
                 response            = crud_create(hsm_type, req);
-                if (m_event_feed != nullptr
+                if (event_feed_is_active()
                     && hsm_type == HsmItem::Type::OBJECT) {
                     std::vector<std::string> ids;
                     for (const auto& id : response->get_ids().data()) {
@@ -125,7 +125,7 @@ CrudResponse::Ptr HsmService::make_request(
             try {
                 const auto hsm_type = HsmItem::from_name(type);
                 response            = do_crud(hsm_type, req);
-                if (m_event_feed != nullptr) {
+                if (event_feed_is_active()) {
                     std::set<std::string> ids;
                     for (const auto& id : response->get_ids().data()) {
                         ids.insert(id.get_primary_key());
@@ -151,7 +151,7 @@ CrudResponse::Ptr HsmService::make_request(
             try {
                 const auto hsm_type = HsmItem::from_name(type);
                 response            = do_crud(hsm_type, req);
-                if (m_event_feed != nullptr
+                if (event_feed_is_active()
                     && hsm_type == HsmItem::Type::OBJECT) {
                     std::vector<std::string> ids;
                     for (const auto& id : response->get_ids().data()) {
@@ -551,6 +551,11 @@ void HsmService::make_object_store_request(
     m_object_store->make_request(ctx);
 }
 
+bool HsmService::event_feed_is_active() const
+{
+    return m_event_feed != nullptr && m_event_feed->is_active();
+}
+
 void HsmService::on_object_store_response(
     HsmObjectStoreRequestMethod method,
     HsmObjectStoreResponse::Ptr object_store_response,
@@ -575,7 +580,7 @@ void HsmService::on_object_store_response(
             method, object_store_response->get_store_id(), action_context,
             action_time);
 
-        if (m_event_feed != nullptr) {
+        if (event_feed_is_active()) {
             LOG_INFO("Updating event feed locally");
             const auto object_id = action_context.get_subject_id();
             if (method == HsmObjectStoreRequestMethod::GET) {
