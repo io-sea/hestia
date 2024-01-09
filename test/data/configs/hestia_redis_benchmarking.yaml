@@ -1,0 +1,9 @@
+key_vlue_store_client:
+  clint_type: redis
+  conig:
+    bckend_address: localhost
+    bckend_port: 6379
+
+event_feed:
+  active: false
+
