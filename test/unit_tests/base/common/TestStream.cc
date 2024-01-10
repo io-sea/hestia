@@ -63,7 +63,6 @@ TEST_CASE("Test File Stream IO", "[stream]")
     auto file_source = hestia::FileStreamSource::create(test_file);
     REQUIRE(!file_source->empty());
 
-
     stream.set_source(hestia::FileStreamSource::create(test_file));
     REQUIRE(stream.supports_source_seek());
 

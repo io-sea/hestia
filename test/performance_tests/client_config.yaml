@@ -1,0 +1,3 @@
+server:
+  controller: false
+  controller_address: 127.0.0.1:8080

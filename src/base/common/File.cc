@@ -2,6 +2,11 @@
 
 #include "FileUtils.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
 namespace hestia {
 File::File(const Path& path) : m_path(path) {}
 
@@ -17,147 +22,109 @@ void File::set_path(const Path& path)
 
 OpStatus File::write(const char* data, std::size_t length)
 {
-    if (!m_out_stream.is_open()) {
+    if (m_fd < 0) {
         if (const auto status = open_for_write(); !status.ok()) {
             return status;
         }
     }
-
-    if (m_out_stream.bad()) {
-        return {
-            OpStatus::Status::ERROR, 0,
-            "Out stream in bad state before write."};
-    }
-
-    m_out_stream.write(data, length);
-    if (m_out_stream.bad()) {
-        return {
-            OpStatus::Status::ERROR, 0, "Out stream in bad state after write."};
+    errno   = 0;
+    auto rc = ::write(m_fd, data, length);
+    if (rc < 0) {
+        const std::string msg = strerror(errno);
+        return {OpStatus::Status::ERROR, 0, "Failed to write: " + msg};
     }
     return {};
 }
 
 OpStatus File::write_lines(const std::vector<std::string>& lines)
 {
-    if (!m_out_stream.is_open()) {
-        if (const auto status = open_for_write(); !status.ok()) {
+    for (const auto& line : lines) {
+        const auto status = write((line + "\n").c_str(), line.size() + 1);
+        if (!status.ok()) {
             return status;
         }
-    }
-
-    if (m_out_stream.bad()) {
-        return {
-            OpStatus::Status::ERROR, 0,
-            "Out stream in bad state before write."};
-    }
-
-    for (const auto& line : lines) {
-        m_out_stream << line << "\n";
-    }
-
-    if (m_out_stream.bad()) {
-        return {
-            OpStatus::Status::ERROR, 0, "Out stream in bad state after write."};
     }
     return {};
 }
 
 std::pair<OpStatus, File::ReadState> File::read(char* data, std::size_t length)
 {
-    if (!m_in_stream.is_open()) {
-        if (const auto status = open_for_read(); !status.ok()) {
-            return {{OpStatus::Status::ERROR, 0, status.message()}, {}};
+    if (m_fd == -1) {
+        if (const auto open_status = open_for_read(); !open_status.ok()) {
+            return {open_status, {}};
         }
     }
 
-    if (m_in_stream.bad()) {
+    File::ReadState read_state;
+    errno         = 0;
+    const auto rc = ::read(m_fd, data, length);
+    if (rc < 0) {
+        const std::string msg = strerror(errno);
         return {
-            {OpStatus::Status::ERROR, 0, "In stream in bad state before read."},
+            {OpStatus::Status::ERROR, 0, "Error in stream during read: " + msg},
             {}};
     }
-
-    File::ReadState read_state;
-    m_in_stream.read(data, length);
-    if (m_in_stream.eof()) {
+    read_state.m_size_read = static_cast<std::size_t>(rc);
+    if (read_state.m_size_read < length) {
         read_state.m_finished = true;
     }
-    read_state.m_size_read = static_cast<std::size_t>(m_in_stream.gcount());
     return {{}, read_state};
 }
 
-void File::seek_to(std::size_t offset)
+OpStatus File::seek_to(std::size_t offset)
 {
-    if (!m_in_stream.is_open()) {
-        m_in_stream.open(m_path);
+    if (m_fd == -1) {
+        if (const auto open_status = open_for_read(); !open_status.ok()) {
+            return open_status;
+        }
     }
-    m_in_stream.clear();
-    m_in_stream.seekg(offset);
+    errno         = 0;
+    const auto rc = ::lseek(m_fd, offset, SEEK_SET);
+    if (rc < 0) {
+        const std::string msg = strerror(errno);
+        return {
+            OpStatus::Status::ERROR, 0, "Error in stream during read: " + msg};
+    }
+    return {};
 }
 
 OpStatus File::read(std::string& buffer)
 {
-    if (!m_in_stream.is_open()) {
-        if (const auto status = open_for_read(); !status.ok()) {
-            return {OpStatus::Status::ERROR, 0, status.message()};
+    const std::size_t buffer_size{4096 * 10};
+    char char_buffer[buffer_size];
+    while (true) {
+        const auto status = read(char_buffer, buffer_size);
+        if (!status.first.ok()) {
+            return status.first;
+        }
+        buffer += std::string(char_buffer, status.second.m_size_read);
+        if (status.second.m_finished) {
+            break;
         }
     }
-
-    if (m_in_stream.bad()) {
-        return {
-            OpStatus::Status::ERROR, 0, "In stream in bad state before read."};
-    }
-
-    buffer.assign(
-        (std::istreambuf_iterator<char>(m_in_stream)),
-        (std::istreambuf_iterator<char>()));
-
     return {};
 }
 
 std::pair<OpStatus, File::ReadState> File::read_lines(
     std::vector<std::string>& lines)
 {
-    if (!m_in_stream.is_open()) {
-        if (const auto status = open_for_read(); !status.ok()) {
-            return {{OpStatus::Status::ERROR, 0, status.message()}, {}};
-        }
+    std::string content;
+    const auto status = read(content);
+    if (!status.ok()) {
+        return {status, {}};
     }
-
-    if (m_in_stream.bad()) {
-        return {
-            {OpStatus::Status::ERROR, 0,
-             "In stream in bad state before write."},
-            {}};
-    }
+    StringUtils::split(content, '\n', lines);
 
     File::ReadState read_state;
-    std::string line;
-    while (std::getline(m_in_stream, line)) {
-        lines.push_back(line);
-    }
-
     read_state.m_finished  = true;
-    read_state.m_size_read = static_cast<std::size_t>(m_in_stream.gcount());
+    read_state.m_size_read = content.size();
     return {{}, read_state};
 }
 
 OpStatus File::close()
 {
-    if (m_out_stream) {
-        m_out_stream.close();
-        if (m_out_stream.bad()) {
-            return {
-                OpStatus::Status::ERROR, 0,
-                "Out stream in bad state when closing file."};
-        }
-    }
-    if (m_in_stream) {
-        m_in_stream.close();
-        if (m_in_stream.bad()) {
-            return {
-                OpStatus::Status::ERROR, 0,
-                "In stream in bad state when closing file."};
-        }
+    if (m_fd >= 0) {
+        ::close(m_fd);
     }
     return {};
 }
@@ -184,11 +151,15 @@ OpStatus File::open_for_write() noexcept
             "Unknown Exception creating path at " + m_path.string()};
     }
 
-    m_out_stream = std::ofstream(m_path);
-    if (!m_out_stream.good()) {
+    errno = 0;
+    m_fd =
+        ::open(m_path.c_str(), O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+    if (m_fd < 0) {
+        std::string msg = strerror(errno);
         return {
             OpStatus::Status::ERROR, 0,
-            "Failed to create valid output stream at " + m_path.string()};
+            "Failed to open file for writing at: " + m_path.string() + " "
+                + msg};
     }
     return {};
 }
@@ -206,11 +177,13 @@ OpStatus File::open_for_read() noexcept
             "Couldn't open file at: " + m_path.string()};
     }
 
-    m_in_stream = std::ifstream(m_path);
-    if (!m_in_stream.good()) {
+    errno = 0;
+    m_fd  = ::open(m_path.c_str(), O_RDONLY);
+    if (m_fd < 0) {
+        std::string msg = strerror(errno);
         return {
             OpStatus::Status::ERROR, 0,
-            "Failed to create valid input stream at: " + m_path.string()};
+            "Failed to open file for read at: " + m_path.string() + " " + msg};
     }
     return {};
 }

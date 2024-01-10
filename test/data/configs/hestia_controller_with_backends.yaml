@@ -31,4 +31,4 @@ event_feed:
   active: true
 
 logger:
-  level: debug
+  level: warn

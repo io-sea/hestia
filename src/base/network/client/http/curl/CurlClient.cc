@@ -32,7 +32,6 @@ void CurlClient::initialize()
 size_t CurlClient::curl_write_data(
     void* buffer, size_t, size_t nmemb, void* userp)
 {
-    LOG_INFO("Callback fired: ");
     if (userp == nullptr) {
         return 0;
     }
@@ -65,14 +64,14 @@ size_t CurlClient::on_write(void* buffer, size_t nmemb)
             {body.begin(), body.end()});
     }
 
-    LOG_INFO("Got response with size: " << nmemb);
+    LOG_DEBUG("Got response with size: " << nmemb);
     return num_written;
 }
 
 size_t CurlClient::curl_read_data(
     char* buffer, size_t, size_t nmemb, void* userp)
 {
-    LOG_INFO("Callback fired with size: " << nmemb);
+    LOG_DEBUG("Callback fired with size: " << nmemb);
     if (userp == nullptr) {
         return 0;
     }
@@ -86,20 +85,20 @@ size_t CurlClient::on_read(char* buffer, size_t nmemb)
     auto handle      = m_handles[std::this_thread::get_id()];
     auto num_to_read = nmemb;
     if (handle->m_request_context.m_stream != nullptr) {
-        LOG_INFO("Reading from input stream");
+        LOG_DEBUG("Reading from input stream");
         if (handle->m_request_context.m_stream->has_content()) {
             WriteableBufferView buffer_view(buffer, num_to_read);
             auto result = handle->m_request_context.m_stream->read(buffer_view);
             if (!result.ok()) {
                 LOG_ERROR("Error reading from stream");
             }
-            LOG_INFO(
+            LOG_DEBUG(
                 "Finished reading from input stream --- "
                 << result.m_num_transferred);
             return result.m_num_transferred;
         }
         else {
-            LOG_INFO("Finished reading from input stream 0");
+            LOG_DEBUG("Finished reading from input stream 0");
             return 0;
         }
     }
@@ -108,14 +107,14 @@ size_t CurlClient::on_read(char* buffer, size_t nmemb)
             > handle->m_request_context.m_request->body().size()) {
             num_to_read = handle->m_request_context.m_request->body().size();
         }
-        LOG_INFO("Returning " << num_to_read << " bytes ");
+        LOG_DEBUG("Returning " << num_to_read << " bytes ");
         for (std::size_t idx = 0; idx < num_to_read; idx++) {
             buffer[idx] =
                 handle->m_request_context.m_request
                     ->body()[handle->m_request_context.m_read_offset + idx];
         }
         handle->m_request_context.m_read_offset += num_to_read;
-        LOG_INFO(
+        LOG_DEBUG(
             "New offset is " << handle->m_request_context.m_read_offset
                              << " bytes ");
     }

@@ -50,7 +50,7 @@ class Stream {
      * @param block_size The size of the blocks to 'stage' data to while doing the flush
      * @return The status of the stream - it can indicate and error state or partial data transfer
      */
-    StreamState flush(std::size_t block_size = 4096) noexcept;
+    StreamState flush(std::size_t block_size = 4096 * 10) noexcept;
 
     /**
      * Return the size of the data in the sink. Not all sink types may be able

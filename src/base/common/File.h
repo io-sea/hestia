@@ -3,7 +3,6 @@
 #include "ErrorUtils.h"
 
 #include <filesystem>
-#include <fstream>
 #include <vector>
 
 namespace hestia {
@@ -53,7 +52,7 @@ class File {
 
     std::pair<OpStatus, ReadState> read_lines(std::vector<std::string>& lines);
 
-    void seek_to(std::size_t offset);
+    OpStatus seek_to(std::size_t offset);
 
     void set_path(const Path& path);
 
@@ -74,7 +73,6 @@ class File {
     OpStatus open_for_write() noexcept;
 
     Path m_path;
-    std::ofstream m_out_stream;
-    std::ifstream m_in_stream;
+    int m_fd{-1};
 };
 }  // namespace hestia

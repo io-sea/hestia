@@ -97,7 +97,10 @@ void HsmEventSink::on_object_create_or_update(
 
     const auto tier_service  = m_hsm_service->get_service(HsmItem::Type::TIER);
     const auto tier_response = tier_service->make_request(CrudRequest{
-        CrudMethod::READ, CrudQuery{tier_ids, CrudQuery::BodyFormat::ITEM},
+        CrudMethod::READ,
+        CrudQuery{
+            tier_ids,
+            {CrudQuery::BodyFormat::ITEM, CrudQuery::ChildFormat::NONE}},
         user_context, false});
     if (tier_response->found()) {
         std::unordered_map<std::string, uint8_t> tier_priorities;
