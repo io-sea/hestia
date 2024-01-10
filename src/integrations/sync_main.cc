@@ -70,6 +70,10 @@ int main(int argc, char** argv)
         std::cerr << "Expects existing directory for 'work_dir'" << std::endl;
     }
 
+    if (!std::filesystem::exists(config_path)) {
+        std::cerr << "Expects existing file for 'config_path'" << std::endl;
+    }
+
     if (activate_logger) {
         hestia::LoggerConfig logger_config;
         logger_config.set_active(true);
