@@ -55,6 +55,8 @@ class HttpRequest {
 
     const std::string& get_tracking_id() const;
 
+    std::string get_query_as_string() const;
+
   private:
     RequestContext* m_context{nullptr};
     Method m_method{Method::UNSET};
