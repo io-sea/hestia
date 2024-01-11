@@ -8,19 +8,19 @@
     catch (const RequestException<ObjectStoreError>& e)                        \
     {                                                                          \
         on_exception(ctx.m_request, response.get(), e.get_error());            \
-        ctx.m_completion_func(std::move(response));                            \
+        ctx.finish(std::move(response));                                       \
         return;                                                                \
     }                                                                          \
     catch (const std::exception& e)                                            \
     {                                                                          \
         on_exception(ctx.m_request, response.get(), e.what());                 \
-        ctx.m_completion_func(std::move(response));                            \
+        ctx.finish(std::move(response));                                       \
         return;                                                                \
     }                                                                          \
     catch (...)                                                                \
     {                                                                          \
         on_exception(ctx.m_request, response.get());                           \
-        ctx.m_completion_func(std::move(response));                            \
+        ctx.finish(std::move(response));                                       \
         return;                                                                \
     }
 
@@ -78,7 +78,7 @@ void ObjectStoreClient::make_request(ObjectStoreContext& ctx) const noexcept
             LOG_ERROR("Error: " << error);
             response->on_error(error);
     }
-    ctx.m_completion_func(std::move(response));
+    ctx.finish(std::move(response));
 }
 
 void ObjectStoreClient::add_stream_progress_func(ObjectStoreContext& ctx) const
@@ -112,7 +112,7 @@ void ObjectStoreClient::init_stream(
         else {
             response->object() = object;
         }
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     };
     ctx.m_stream->set_completion_func(stream_completion_func);
 }
@@ -133,7 +133,7 @@ void ObjectStoreClient::init_stream(ObjectStoreContext& ctx) const
                 {ObjectStoreErrorCode::BAD_STREAM,
                  SOURCE_LOC() + "|" + state.message()});
         }
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     };
     ctx.m_stream->set_completion_func(stream_completion_func);
 }
@@ -149,7 +149,7 @@ void ObjectStoreClient::on_object_not_found(
 
 void ObjectStoreClient::on_success(const ObjectStoreContext& ctx) const
 {
-    ctx.m_completion_func(ObjectStoreResponse::create(ctx.m_request, m_id));
+    ctx.finish(ObjectStoreResponse::create(ctx.m_request, m_id));
 }
 
 void ObjectStoreClient::on_exception(

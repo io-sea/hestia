@@ -57,10 +57,10 @@ void PhobosClient::put(ObjectStoreContext& ctx) const
             catch (const std::exception& e) {
                 response->on_error(
                     {ObjectStoreErrorCode::STL_EXCEPTION, e.what()});
-                ctx.m_completion_func(std::move(response));
+                ctx.finish(std::move(response));
                 return 0;
             }
-            ctx.m_completion_func(std::move(response));
+            ctx.finish(std::move(response));
             return 0;
         };
         fifo_ptr->set_producer(std::async(std::launch::async, read_op));
@@ -68,7 +68,7 @@ void PhobosClient::put(ObjectStoreContext& ctx) const
     else {
         auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
         m_phobos_interface->put(ctx.m_request.object(), -1);
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     }
 }
 
@@ -86,17 +86,19 @@ void PhobosClient::get(ObjectStoreContext& ctx) const
 
         auto write_op = [this, ctx, fd, object]() {
             auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
+            response->object() = object;
             try {
-                m_phobos_interface->get(object, fd);
+                const auto redirect_location =
+                    m_phobos_interface->get(response->object(), fd);
+                response->object().set_location(redirect_location);
             }
             catch (const std::exception& e) {
                 response->on_error(
                     {ObjectStoreErrorCode::STL_EXCEPTION, e.what()});
-                ctx.m_completion_func(std::move(response));
+                ctx.finish(std::move(response));
                 return 0;
             }
-            response->object() = object;
-            ctx.m_completion_func(std::move(response));
+            ctx.finish(std::move(response));
             return 0;
         };
         fifo_ptr->set_producer(std::async(std::launch::async, write_op));
@@ -104,7 +106,7 @@ void PhobosClient::get(ObjectStoreContext& ctx) const
     else {
         auto response      = ObjectStoreResponse::create(ctx.m_request, m_id);
         response->object() = object;
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     }
 }
 

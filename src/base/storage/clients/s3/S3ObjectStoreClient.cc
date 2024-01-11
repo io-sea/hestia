@@ -179,7 +179,7 @@ void S3ObjectStoreClient::get(ObjectStoreContext& ctx) const
         auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
         m_object_adapter->from_s3(
             response->object(), s3_bucket, s3_response->m_content);
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     };
 
     auto stream_progress_func = [ctx, id = m_id](std::size_t transferred) {

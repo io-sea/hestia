@@ -10,7 +10,7 @@ class MockPhobosInterface : public IPhobosInterfaceImpl {
 
     static std::unique_ptr<MockPhobosInterface> create();
 
-    void get(const StorageObject& obj, int fd) override;
+    std::string get(const StorageObject& obj, int fd) override;
 
     bool exists(const StorageObject& obj) override;
 
@@ -23,7 +23,10 @@ class MockPhobosInterface : public IPhobosInterfaceImpl {
 
     void remove(const StorageObject& object) override;
 
+    void set_redirect_location(const std::string& location);
+
   private:
+    std::string m_redirect_location;
     MockPhobos m_phobos;
 };
 }  // namespace hestia::mock

@@ -149,8 +149,10 @@ void DistributedHsmService::do_hsm_action(
 
     // No local backends found - redirect to remote
     std::string node_address;
+    std::string preferred_node_address =
+        request.get_action().get_preffered_node_address();
     try {
-        node_address = get_backend_address(tier_id);
+        node_address = get_backend_address(tier_id, preferred_node_address);
     }
     catch (const std::exception& e) {
         const std::string msg =
@@ -281,7 +283,7 @@ void DistributedHsmService::register_backends()
 }
 
 std::string DistributedHsmService::get_backend_address(
-    const std::string& tier_id, const std::string&) const
+    const std::string& tier_id, const std::string& preferred_address) const
 {
     auto tier_service = m_hsm_service->get_service(HsmItem::Type::TIER);
 
@@ -291,13 +293,14 @@ std::string DistributedHsmService::get_backend_address(
         CrudMethod::READ, query, m_user_service->get_current_user_context()});
     if (!get_response->ok()) {
         throw std::runtime_error(
-            "Failed to check for tier in backend search"
+            SOURCE_LOC() + " | Failed to check for tier in backend search"
             + get_response->get_error().to_string());
     }
 
     if (!get_response->found()) {
         throw std::runtime_error(
-            "Didn't find tier with id " + tier_id + " in backend search");
+            SOURCE_LOC() + " | Didn't find tier with id " + tier_id
+            + " in backend search");
     }
 
     auto tier = get_response->get_item_as<StorageTier>();
@@ -306,35 +309,66 @@ std::string DistributedHsmService::get_backend_address(
         return {};
     }
 
-    auto node_service = m_hsm_service->get_service(HsmItem::Type::NODE);
+    std::string first_address;
     for (const auto& backend : tier->get_backends()) {
         const auto node_id = backend.get_node_id();
         LOG_INFO("Checking node id: " << node_id << " for backend");
 
-        auto node_get_response = node_service->make_request(CrudRequest{
-            CrudMethod::READ, CrudQuery{node_id, CrudQuery::BodyFormat::ITEM},
-            m_user_service->get_current_user_context()});
-        if (!node_get_response->ok()) {
-            throw std::runtime_error(
-                "Failed to check for node in backend search"
-                + node_get_response->get_error().to_string());
+        const auto& [address, port] = get_node_address(node_id);
+        auto node_address           = address;
+        if (port > 0) {
+            node_address += ":" + std::to_string(port);
         }
-
-        if (!node_get_response->found()) {
-            throw std::runtime_error(
-                "Didn't find node " + node_id + " in backend search");
+        if (first_address.empty()) {
+            first_address = node_address;
         }
-
-        auto node = node_get_response->get_item_as<HsmNode>();
-        LOG_INFO("Got node id: " << node->get_primary_key());
-        LOG_INFO("Got node address: " << node->host());
-        auto node_address = node->host();
-        if (node->port() > 0) {
-            node_address += ":" + std::to_string(node->port());
+        if (preferred_address.empty() || preferred_address == address) {
+            if (preferred_address == address) {
+                LOG_INFO("Using preferred address: " + address);
+            }
+            else {
+                LOG_INFO(
+                    "No preferred address set, using first address found: "
+                    + first_address);
+            }
+            return node_address;
         }
-        return node_address;
     }
-    return {};
+    if (preferred_address.empty()) {
+        LOG_INFO(
+            "No preferred address given - using first address found: "
+            + first_address);
+    }
+    else {
+        LOG_INFO(
+            "Could not find preferred address - using first address found: "
+            + first_address);
+    }
+    return first_address;
+}
+
+std::pair<std::string, unsigned> DistributedHsmService::get_node_address(
+    const std::string& node_id) const
+{
+    auto node_service      = m_hsm_service->get_service(HsmItem::Type::NODE);
+    auto node_get_response = node_service->make_request(CrudRequest{
+        CrudMethod::READ,
+        CrudQuery{
+            node_id,
+            {CrudQuery::BodyFormat::ITEM, CrudQuery::ChildFormat::NONE}},
+        m_user_service->get_current_user_context()});
+    if (!node_get_response->ok()) {
+        throw std::runtime_error(
+            SOURCE_LOC() + " | Failed to check for node in backend search"
+            + node_get_response->get_error().to_string());
+    }
+    if (!node_get_response->found()) {
+        throw std::runtime_error(
+            SOURCE_LOC() + " | Didn't find node " + node_id
+            + " in backend search");
+    }
+    auto node = node_get_response->get_item_as<HsmNode>();
+    return {node->host(), node->port()};
 }
 
 HsmService* DistributedHsmService::get_hsm_service()

@@ -17,7 +17,7 @@ class IPhobosInterfaceImpl {
 
     virtual void finish(){};
 
-    virtual void get(const StorageObject& obj, int fd) = 0;
+    virtual std::string get(const StorageObject& obj, int fd) = 0;
 
     virtual void put(const StorageObject& obj, int fd) = 0;
 

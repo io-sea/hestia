@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "UuidUtils.h"
 
+#include <fstream>
 #include <stdexcept>
 
 namespace hestia {

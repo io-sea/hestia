@@ -25,20 +25,21 @@ HsmAction& HsmAction::operator=(const HsmAction& other)
 {
     if (this != &other) {
         OwnableModel::operator=(other);
-        m_action            = other.m_action;
-        m_subject           = other.m_subject;
-        m_status            = other.m_status;
-        m_to_transfer       = other.m_to_transfer;
-        m_offset            = other.m_offset;
-        m_transferred       = other.m_transferred;
-        m_source_tier       = other.m_source_tier;
-        m_target_tier       = other.m_target_tier;
-        m_source_tier_id    = other.m_source_tier_id;
-        m_target_tier_id    = other.m_target_tier_id;
-        m_subject_key       = other.m_subject_key;
-        m_is_request        = other.m_is_request;
-        m_status_message    = other.m_status_message;
-        m_progress_interval = other.m_progress_interval;
+        m_action                 = other.m_action;
+        m_subject                = other.m_subject;
+        m_status                 = other.m_status;
+        m_to_transfer            = other.m_to_transfer;
+        m_offset                 = other.m_offset;
+        m_transferred            = other.m_transferred;
+        m_source_tier            = other.m_source_tier;
+        m_target_tier            = other.m_target_tier;
+        m_source_tier_id         = other.m_source_tier_id;
+        m_target_tier_id         = other.m_target_tier_id;
+        m_subject_key            = other.m_subject_key;
+        m_is_request             = other.m_is_request;
+        m_preferred_node_address = other.m_preferred_node_address;
+        m_status_message         = other.m_status_message;
+        m_progress_interval      = other.m_progress_interval;
         init();
     }
     return *this;
@@ -58,6 +59,7 @@ void HsmAction::init()
     register_scalar_field(&m_target_tier_id);
     register_scalar_field(&m_subject_key);
     register_scalar_field(&m_is_request);
+    register_scalar_field(&m_preferred_node_address);
     register_scalar_field(&m_status_message);
     register_scalar_field(&m_progress_interval);
 }
@@ -235,6 +237,16 @@ void HsmAction::set_num_transferred(std::size_t size)
 std::vector<std::string> HsmAction::get_action_subjects()
 {
     return {"object", "dataset"};
+}
+
+const std::string& HsmAction::get_preffered_node_address() const
+{
+    return m_preferred_node_address.get_value();
+}
+
+void HsmAction::set_preferred_node_address(const std::string& addr)
+{
+    m_preferred_node_address.update_value(addr);
 }
 
 std::vector<HsmAction::Action> HsmAction::get_subject_actions(

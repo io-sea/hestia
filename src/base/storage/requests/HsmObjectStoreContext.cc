@@ -7,9 +7,9 @@ HsmObjectStoreContext::HsmObjectStoreContext(
     progressFunc progress_func,
     Stream* stream) :
     m_request(req),
-    m_completion_func(completion_func),
     m_progress_func(progress_func),
-    m_stream(stream)
+    m_stream(stream),
+    m_completion_func(completion_func)
 {
 }
 
@@ -21,6 +21,23 @@ bool HsmObjectStoreContext::has_progress_func() const
 bool HsmObjectStoreContext::has_stream() const
 {
     return m_stream != nullptr;
+}
+
+void HsmObjectStoreContext::finish(HsmObjectStoreResponse::Ptr result) const
+{
+    m_completion_func(std::move(result));
+}
+
+HsmObjectStoreContext::completionFunc
+HsmObjectStoreContext::get_completion_func() const
+{
+    return m_completion_func;
+}
+
+void HsmObjectStoreContext::override_completion_func(
+    completionFunc override_func)
+{
+    m_completion_func = override_func;
 }
 
 HsmObjectStoreRequest HsmObjectStoreContext::replace_method(

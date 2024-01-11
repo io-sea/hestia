@@ -58,6 +58,8 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     std::size_t get_num_transferred() const;
 
+    const std::string& get_preffered_node_address() const;
+
     Status get_status() const;
 
     bool has_source_tier_id() const;
@@ -98,6 +100,8 @@ class HsmAction : public HsmItem, public OwnableModel {
 
     void set_num_transferred(std::size_t size);
 
+    void set_preferred_node_address(const std::string& addr);
+
     HsmAction& operator=(const HsmAction& other);
 
   private:
@@ -122,6 +126,7 @@ class HsmAction : public HsmItem, public OwnableModel {
                               identifier */
     UIntegerField m_progress_interval{"progess_interval", 0};
     StringField m_subject_key{"subject_key"};
+    StringField m_preferred_node_address{"preferred_node_address"};
     StringField m_status_message{"status_message"};
     BooleanField m_is_request{"is_request", false};
 

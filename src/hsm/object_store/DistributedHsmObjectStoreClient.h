@@ -52,7 +52,8 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
 
     void do_local_hsm(HsmObjectStoreContext& ctx) const;
 
-    void do_remote_op(HsmObjectStoreContext& ctx) const;
+    void do_remote_op(
+        HsmObjectStoreContext& ctx, const std::string& endpoint = {}) const;
 
     void do_remote_op(
         const HttpRequest http_request, HsmObjectStoreContext& ctx) const;

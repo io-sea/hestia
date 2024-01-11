@@ -111,7 +111,7 @@ void InMemoryHsmObjectStoreClient::make_object_store_request(
             throw RequestException<HsmObjectStoreError>(
                 {HsmObjectStoreErrorCode::ERROR, msg});
         }
-        ctx.m_completion_func(
+        ctx.finish(
             HsmObjectStoreResponse::create(ctx.m_request, std::move(response)));
     };
 
@@ -146,7 +146,7 @@ void InMemoryHsmObjectStoreClient::copy(HsmObjectStoreContext& ctx) const
     auto source_client = get_tier_client(ctx.m_request.source_tier());
     auto target_client = get_tier_client(ctx.m_request.target_tier());
     source_client->migrate(ctx.m_request.object().id(), target_client, false);
-    ctx.m_completion_func(HsmObjectStoreResponse::create(ctx.m_request, m_id));
+    ctx.finish(HsmObjectStoreResponse::create(ctx.m_request, m_id));
 }
 
 void InMemoryHsmObjectStoreClient::move(HsmObjectStoreContext& ctx) const
@@ -154,6 +154,6 @@ void InMemoryHsmObjectStoreClient::move(HsmObjectStoreContext& ctx) const
     auto source_client = get_tier_client(ctx.m_request.source_tier());
     auto target_client = get_tier_client(ctx.m_request.target_tier());
     source_client->migrate(ctx.m_request.object().id(), target_client, true);
-    ctx.m_completion_func(HsmObjectStoreResponse::create(ctx.m_request, m_id));
+    ctx.finish(HsmObjectStoreResponse::create(ctx.m_request, m_id));
 }
 }  // namespace hestia

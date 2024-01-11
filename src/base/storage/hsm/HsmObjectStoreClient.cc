@@ -10,13 +10,13 @@
     catch (const std::exception& e)                                            \
     {                                                                          \
         on_exception(ctx.m_request, response.get(), e.what());                 \
-        ctx.m_completion_func(std::move(response));                            \
+        ctx.finish(std::move(response));                                       \
         return;                                                                \
     }                                                                          \
     catch (...)                                                                \
     {                                                                          \
         on_exception(ctx.m_request, response.get());                           \
-        ctx.m_completion_func(std::move(response));                            \
+        ctx.finish(std::move(response));                                       \
         return;                                                                \
     }
 
@@ -74,7 +74,7 @@ void HsmObjectStoreClient::make_request(
             LOG_ERROR("Error: " << error);
             response->on_error(error);
     }
-    ctx.m_completion_func(std::move(response));
+    ctx.finish(std::move(response));
 }
 
 void HsmObjectStoreClient::make_request(ObjectStoreContext& ctx) const noexcept
@@ -86,13 +86,13 @@ void HsmObjectStoreClient::make_request(ObjectStoreContext& ctx) const noexcept
             "Requested unsupported type for base object operation in HSM object store client.";
         response->on_error(
             {ObjectStoreErrorCode::UNSUPPORTED_REQUEST_METHOD, msg});
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     }
 
     HsmObjectStoreRequest hsm_request(ctx.m_request);
 
     auto hsm_store_completion_func =
-        [completion_func = ctx.m_completion_func,
+        [completion_func = ctx.get_completion_func(),
          hsm_request](HsmObjectStoreResponse::Ptr hsm_response) {
             completion_func(HsmObjectStoreResponse::to_base_response(
                 hsm_request, hsm_response.get()));
@@ -156,7 +156,7 @@ void HsmObjectStoreClient::remove(const StorageObject&) const
 
 void HsmObjectStoreClient::on_success(const HsmObjectStoreContext& ctx) const
 {
-    ctx.m_completion_func(HsmObjectStoreResponse::create(ctx.m_request, m_id));
+    ctx.finish(HsmObjectStoreResponse::create(ctx.m_request, m_id));
 }
 
 void HsmObjectStoreClient::on_exception(

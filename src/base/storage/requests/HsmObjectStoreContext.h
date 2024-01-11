@@ -31,9 +31,18 @@ class HsmObjectStoreContext {
     HsmObjectStoreContext replace_method(
         HsmObjectStoreRequestMethod method) const;
 
+    void finish(HsmObjectStoreResponse::Ptr result) const;
+
+    completionFunc get_completion_func() const;
+
+    void override_completion_func(completionFunc override_func);
+
     const HsmObjectStoreRequest m_request;
-    const completionFunc m_completion_func;
+
     const progressFunc m_progress_func;
     Stream* m_stream{nullptr};
+
+  private:
+    completionFunc m_completion_func;
 };
 }  // namespace hestia

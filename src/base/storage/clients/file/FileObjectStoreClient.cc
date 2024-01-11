@@ -178,7 +178,7 @@ void FileObjectStoreClient::get(ObjectStoreContext& ctx) const
         init_stream(ctx, response->object());
     }
     else {
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     }
 }
 

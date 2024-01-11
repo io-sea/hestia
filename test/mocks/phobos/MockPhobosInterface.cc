@@ -14,8 +14,17 @@ std::unique_ptr<MockPhobosInterface> MockPhobosInterface::create()
     return std::make_unique<MockPhobosInterface>();
 }
 
-void MockPhobosInterface::get(const StorageObject& obj, int fd)
+void MockPhobosInterface::set_redirect_location(const std::string& location)
 {
+    m_redirect_location = location;
+}
+
+std::string MockPhobosInterface::get(const StorageObject& obj, int fd)
+{
+    if (!m_redirect_location.empty()) {
+        return m_redirect_location;
+    }
+
     const auto id_str = obj.id();
 
     pho_xfer_desc desc;
@@ -31,6 +40,7 @@ void MockPhobosInterface::get(const StorageObject& obj, int fd)
     if (rc != 0) {
         throw std::runtime_error("phobos_get " + std::to_string(rc));
     }
+    return {};
 }
 
 void MockPhobosInterface::put(const StorageObject& obj, int fd)

@@ -18,6 +18,37 @@
 #include <future>
 #include <iostream>
 
+namespace hestia::mock {
+class ObjectStoreClientWithRedirect : public InMemoryHsmObjectStoreClient {
+  public:
+    void get(HsmObjectStoreContext& ctx) const override
+    {
+        if (m_redirect.empty()) {
+            InMemoryHsmObjectStoreClient::get(ctx);
+        }
+        else {
+            auto response = HsmObjectStoreResponse::create(ctx.m_request, "");
+            response->object().set_location(m_redirect);
+            ctx.finish(std::move(response));
+        }
+    }
+    std::string m_redirect;
+};
+
+class TestObjectStoreClientManager : public ObjectStoreClientManager {
+  public:
+    TestObjectStoreClientManager(ObjectStoreClientFactory::Ptr client_factory) :
+        ObjectStoreClientManager(std::move(client_factory))
+    {
+    }
+
+    void replace_first_client(HsmObjectStoreClient::Ptr client)
+    {
+        m_backends[0]->m_hsm_object_store_client = std::move(client);
+    }
+};
+}  // namespace hestia::mock
+
 class DistributedHsmObjectStoreClientTestFixture {
   public:
     DistributedHsmObjectStoreClientTestFixture()
@@ -26,8 +57,6 @@ class DistributedHsmObjectStoreClientTestFixture {
             std::make_unique<hestia::InMemoryKeyValueStoreClient>();
 
         setup_controller();
-        setup_worker();
-        setup_local_client();
     }
 
     void setup_local_client()
@@ -133,16 +162,20 @@ class DistributedHsmObjectStoreClientTestFixture {
             {}, m_controller_dist_hsm_service.get());
     }
 
-    void setup_worker()
+    void setup_worker(
+        const std::string& address      = "12345",
+        const std::string& redirect_loc = {})
     {
         LOG_INFO("Setting up worker");
         auto client_factory =
             std::make_unique<hestia::ObjectStoreClientFactory>(nullptr);
         auto client_manager =
-            std::make_unique<hestia::ObjectStoreClientManager>(
+            std::make_unique<hestia::mock::TestObjectStoreClientManager>(
                 std::move(client_factory));
 
-        m_worker_object_store_client =
+        auto raw_client_manager = client_manager.get();
+
+        m_worker_object_store_clients[address] =
             std::make_unique<hestia::DistributedHsmObjectStoreClient>(
                 std::move(client_manager), m_http_client.get());
 
@@ -159,12 +192,12 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         auto hsm_service = std::make_unique<hestia::HsmService>(
             hestia::ServiceConfig{}, std::move(hsm_child_services),
-            m_worker_object_store_client.get());
+            m_worker_object_store_clients[address].get());
         hsm_service->update_tiers(m_test_user.get_primary_key());
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(false);
-        dist_hsm_config.m_self.set_host_address("12345");
+        dist_hsm_config.m_self.set_host_address(address);
         dist_hsm_config.m_self.set_name("my_worker");
         dist_hsm_config.m_is_server = true;
 
@@ -179,15 +212,24 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         dist_hsm_config.m_backends = {object_store_backend};
 
-        m_worker_dist_hsm_service = hestia::DistributedHsmService::create(
-            dist_hsm_config, std::move(hsm_service), m_user_service.get());
+        m_worker_dist_hsm_services[address] =
+            hestia::DistributedHsmService::create(
+                dist_hsm_config, std::move(hsm_service), m_user_service.get());
 
-        m_worker_dist_hsm_service->register_self();
+        m_worker_dist_hsm_services[address]->register_self();
 
-        m_http_client->add_app(m_worker_dist_hsm_service.get(), "12345");
+        m_http_client->add_app(
+            m_worker_dist_hsm_services[address].get(), address);
 
-        m_worker_object_store_client->do_initialize(
-            {}, m_worker_dist_hsm_service.get());
+        m_worker_object_store_clients[address]->do_initialize(
+            {}, m_worker_dist_hsm_services[address].get());
+
+        auto override_client =
+            std::make_unique<hestia::mock::ObjectStoreClientWithRedirect>();
+        override_client->m_redirect = redirect_loc;
+        override_client->set_tier_ids({"0", "1", "2", "3", "4"});
+        override_client->initialize("override_client", {}, {});
+        raw_client_manager->replace_first_client(std::move(override_client));
     }
 
     void create_object(const std::string& id)
@@ -204,12 +246,14 @@ class DistributedHsmObjectStoreClientTestFixture {
     void put_data(
         const hestia::StorageObject& obj,
         const std::string& content,
-        uint8_t tier)
+        uint8_t tier,
+        const std::string& preferred_address = {})
     {
         hestia::HsmAction action(
             hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::PUT_DATA);
         action.set_subject_key(obj.get_primary_key());
         action.set_target_tier(tier);
+        action.set_preferred_node_address(preferred_address);
 
         std::promise<hestia::HsmActionResponse::Ptr> response_promise;
         auto response_future = response_promise.get_future();
@@ -278,12 +322,17 @@ class DistributedHsmObjectStoreClientTestFixture {
     std::unique_ptr<MockHsmHttpClient> m_http_client;
 
     hestia::DistributedHsmObjectStoreClient::Ptr m_local_object_store_client;
-    hestia::DistributedHsmObjectStoreClient::Ptr m_worker_object_store_client;
+
+    std::
+        unordered_map<std::string, hestia::DistributedHsmObjectStoreClient::Ptr>
+            m_worker_object_store_clients;
     hestia::DistributedHsmObjectStoreClient::Ptr
         m_controller_object_store_client;
 
     hestia::DistributedHsmService::Ptr m_local_dist_hsm_service;
-    hestia::DistributedHsmService::Ptr m_worker_dist_hsm_service;
+
+    std::unordered_map<std::string, hestia::DistributedHsmService::Ptr>
+        m_worker_dist_hsm_services;
     hestia::DistributedHsmService::Ptr m_controller_dist_hsm_service;
 
     std::unique_ptr<hestia::UserService> m_user_service;
@@ -295,6 +344,9 @@ TEST_CASE_METHOD(
     "Test Distributed Hsm Object Store Client",
     "[hsm]")
 {
+    setup_worker();
+    setup_local_client();
+
     std::string id{"0000"};
     create_object(id);
 
@@ -310,4 +362,27 @@ TEST_CASE_METHOD(
     hestia::StorageObject obj0(id);
     get_data(obj0, tier0_content, content.length(), 0);
     REQUIRE(tier0_content == content);
+}
+
+TEST_CASE_METHOD(
+    DistributedHsmObjectStoreClientTestFixture,
+    "Test Distributed Hsm Object Store Client - Object Store redirect",
+    "[hsm]")
+{
+    // Here we set up a 'dud' Worker endpoint - whose only purpose is to
+    // redirect a request to a real endpoint via its object store.
+    setup_worker("1234");
+    setup_worker("891011");
+    setup_local_client();
+
+    std::string id{"0000"};
+    create_object(id);
+
+    hestia::StorageObject obj(id);
+    obj.set_metadata("mykey", "myval");
+
+    std::string content = "The quick brown fox jumps over the lazy dog";
+    obj.set_size(content.size());
+
+    put_data(obj, content, 0, "1234");
 }

@@ -38,32 +38,32 @@ void MotrHsmClient::set_tier_ids(const std::vector<std::string>& tier_ids)
 void MotrHsmClient::copy(HsmObjectStoreContext& ctx) const
 {
     m_motr_interface->copy(
-        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
+        ctx.m_request, ctx.get_completion_func(), ctx.m_progress_func);
 }
 
 void MotrHsmClient::get(HsmObjectStoreContext& ctx) const
 {
     m_motr_interface->get(
-        ctx.m_request, ctx.m_stream, ctx.m_completion_func,
+        ctx.m_request, ctx.m_stream, ctx.get_completion_func(),
         ctx.m_progress_func);
 }
 
 void MotrHsmClient::move(HsmObjectStoreContext& ctx) const
 {
     m_motr_interface->move(
-        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
+        ctx.m_request, ctx.get_completion_func(), ctx.m_progress_func);
 }
 
 void MotrHsmClient::put(HsmObjectStoreContext& ctx) const
 {
     m_motr_interface->put(
-        ctx.m_request, ctx.m_stream, ctx.m_completion_func,
+        ctx.m_request, ctx.m_stream, ctx.get_completion_func(),
         ctx.m_progress_func);
 }
 
 void MotrHsmClient::remove(HsmObjectStoreContext& ctx) const
 {
     m_motr_interface->remove(
-        ctx.m_request, ctx.m_completion_func, ctx.m_progress_func);
+        ctx.m_request, ctx.get_completion_func(), ctx.m_progress_func);
 }
 }  // namespace hestia

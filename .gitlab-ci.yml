@@ -7,7 +7,6 @@ stages:
 # CI variables
 .variables:
   default_variables: &default_variables
-    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/cmake"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: "Release"
     CXX: "g++"
@@ -41,7 +40,6 @@ stages:
   - &install_base_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     yum install -y libxml2-devel || true;
-    ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &install_e2e_dependencies
     yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
@@ -56,7 +54,7 @@ stages:
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR}
+      cmake ${CI_PROJECT_DIR}
       -DBUILD_SHARED_LIBS=OFF
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
@@ -80,9 +78,9 @@ stages:
   - &e2e_test 
     python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
   - &create_tgz_package
-    cd ${CMAKE_BUILD_DIR}; $CMAKE_INSTALL_CACHE_DIR/bin/cpack -G TGZ
+    cd ${CMAKE_BUILD_DIR}; cpack -G TGZ
   - &create_source_package 
-    ${CMAKE_INSTALL_CACHE_DIR}/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
+    cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
   - &build_from_source_package
     rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
@@ -94,12 +92,6 @@ stages:
     tar -czvf ${CMAKE_BUILD_DIR}/hestia-docs-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/doc html
   - &zip_coverage
     tar -czvf ${CMAKE_BUILD_DIR}/hestia-coverage-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/ccov all-merged
-
-.cache:
-  cmake_install_cache: &cmake_install_cache
-    key: "cmake_3.26.3"
-    paths:
-      - .cache/cmake/
 
 .artifacts:
   build_artifacts: &build_artifacts
@@ -132,8 +124,6 @@ stages:
   script:
     - *configure
     - *build
-  cache:
-    <<: *cmake_install_cache
 
 Format:
   <<: *default_job

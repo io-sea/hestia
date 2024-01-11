@@ -10,8 +10,8 @@
 #include "File.h"
 #include "UuidUtils.h"
 
+#include <fstream>
 #include <iostream>
-
 
 #include "motr/idx.h"
 

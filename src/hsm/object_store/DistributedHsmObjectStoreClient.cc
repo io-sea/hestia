@@ -99,7 +99,7 @@ void DistributedHsmObjectStoreClient::on_error(
     LOG_ERROR(msg);
     auto response = HsmObjectStoreResponse::create(ctx.m_request, m_id);
     response->on_error({error_code, SOURCE_LOC() + " | " + msg});
-    ctx.m_completion_func(std::move(response));
+    ctx.finish(std::move(response));
 }
 
 std::string DistributedHsmObjectStoreClient::get_action_path() const
@@ -132,7 +132,7 @@ void DistributedHsmObjectStoreClient::do_remote_op(
         LOG_INFO(
             "Remote complete ok from location: "
             << response->object().get_location());
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     };
 
     auto http_progress_func = [this, ctx](std::size_t bytes_transferred) {
@@ -166,7 +166,7 @@ bool DistributedHsmObjectStoreClient::check_remote_config(
 }
 
 void DistributedHsmObjectStoreClient::do_remote_op(
-    HsmObjectStoreContext& ctx) const
+    HsmObjectStoreContext& ctx, const std::string& endpoint) const
 {
     if (!check_remote_config(ctx)) {
         return;
@@ -181,6 +181,7 @@ void DistributedHsmObjectStoreClient::do_remote_op(
     else if (action_type == HsmAction::Action::PUT_DATA) {
         action.set_size(ctx.m_stream->get_source_size());
     }
+    action.set_preferred_node_address(endpoint);
 
     HttpRequest http_request(
         get_action_path(),
@@ -202,6 +203,22 @@ void DistributedHsmObjectStoreClient::do_local_op(
                              ctx.m_request.target_tier();
     if (auto backend = m_client_manager->get_backend(tier_id);
         backend != nullptr) {
+
+        auto redirect_wrap_func = [ctx,
+                                   this](HsmObjectStoreResponse::Ptr response) {
+            if (response->object_is_remote()) {
+                const auto endpoint = response->object().get_location();
+                LOG_INFO(
+                    "Object store issued redirect - will follow it to remote - "
+                    + endpoint);
+                auto working_ctx = ctx;
+                do_remote_op(working_ctx, response->object().get_location());
+            }
+            else {
+                ctx.finish(std::move(response));
+            }
+        };
+        ctx.override_completion_func(redirect_wrap_func);
         backend->make_request(ctx);
     }
     else {
@@ -211,7 +228,7 @@ void DistributedHsmObjectStoreClient::do_local_op(
         response->on_error(
             {HsmObjectStoreErrorCode::CONFIG_ERROR,
              SOURCE_LOC() + " | " + msg});
-        ctx.m_completion_func(std::move(response));
+        ctx.finish(std::move(response));
     }
 }
 
@@ -231,7 +248,7 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         get_completion, nullptr, &stream);
     do_local_op(get_ctx);
     if (get_response && !get_response->ok()) {
-        ctx.m_completion_func(std::move(get_response));
+        ctx.finish(std::move(get_response));
         return;
     }
 
@@ -246,7 +263,7 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         put_completion, nullptr, &stream);
     do_local_op(put_ctx);
     if (put_response && !put_response->ok()) {
-        ctx.m_completion_func(std::move(put_response));
+        ctx.finish(std::move(put_response));
         return;
     }
 
@@ -255,11 +272,11 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         if (!stream_state.ok()) {
             result->on_error(
                 {HsmObjectStoreErrorCode::ERROR, stream_state.message()});
-            ctx.m_completion_func(std::move(result));
+            ctx.finish(std::move(result));
             return;
         }
         if (ctx.m_request.method() == HsmObjectStoreRequestMethod::COPY) {
-            ctx.m_completion_func(std::move(result));
+            ctx.finish(std::move(result));
         }
         else {
             auto remove_ctx =
@@ -289,7 +306,7 @@ void DistributedHsmObjectStoreClient::do_remote_hsm_with_local_source(
         get_completion, nullptr, &stream);
     do_local_op(get_ctx);
     if (get_response && !get_response->ok()) {
-        ctx.m_completion_func(std::move(get_response));
+        ctx.finish(std::move(get_response));
         return;
     }
 
@@ -328,7 +345,7 @@ void DistributedHsmObjectStoreClient::do_remote_hsm_with_local_target(
 
     do_local_op(put_ctx);
     if (put_response && !put_response->ok()) {
-        ctx.m_completion_func(std::move(put_response));
+        ctx.finish(std::move(put_response));
         return;
     }
 

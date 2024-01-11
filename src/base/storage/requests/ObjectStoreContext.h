@@ -22,9 +22,16 @@ class ObjectStoreContext {
 
     bool has_stream() const;
 
+    completionFunc get_completion_func() const;
+
+    void finish(ObjectStoreResponse::Ptr response) const;
+
     const ObjectStoreRequest m_request;
-    const completionFunc m_completion_func;
+
     const progressFunc m_progress_func;
     Stream* m_stream{nullptr};
+
+  private:
+    const completionFunc m_completion_func;
 };
 }  // namespace hestia

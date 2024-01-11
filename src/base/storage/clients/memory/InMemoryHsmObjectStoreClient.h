@@ -45,9 +45,10 @@ class InMemoryHsmObjectStoreClient : public HsmObjectStoreClient {
 
     std::string dump() const;
 
-  private:
+  protected:
     void get(HsmObjectStoreContext& ctx) const override;
 
+  private:
     void put(HsmObjectStoreContext& ctx) const override;
 
     void remove(HsmObjectStoreContext& ctx) const override;
