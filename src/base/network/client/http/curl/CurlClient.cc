@@ -241,7 +241,7 @@ void CurlClient::make_request(
     handle->m_request_context.m_response = response.get();
     handle->m_request_context.m_stream   = stream;
 
-    const auto url = request.get_path()+request.get_query_as_string();
+    const auto url = request.get_path() + request.get_query_as_string();
     curl_easy_setopt(handle->m_handle, CURLOPT_URL, url.c_str());
 
     LOG_INFO("Making request to: " << url);
