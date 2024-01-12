@@ -17,6 +17,9 @@ class PhobosClient : public ObjectStoreClient {
 
     static std::string get_registry_identifier();
 
+  protected:
+    std::unique_ptr<PhobosInterface> m_phobos_interface;
+
   private:
     void get(ObjectStoreContext& ctx) const override;
 
@@ -28,7 +31,5 @@ class PhobosClient : public ObjectStoreClient {
 
     void list(const KeyValuePair& query, std::vector<StorageObject>& found)
         const override;
-
-    std::unique_ptr<PhobosInterface> m_phobos_interface;
 };
 }  // namespace hestia

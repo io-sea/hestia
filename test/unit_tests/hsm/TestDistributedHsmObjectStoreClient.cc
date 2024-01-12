@@ -27,6 +27,7 @@ class ObjectStoreClientWithRedirect : public InMemoryHsmObjectStoreClient {
             InMemoryHsmObjectStoreClient::get(ctx);
         }
         else {
+            LOG_INFO("Doing redirect to: " +  m_redirect);
             auto response = HsmObjectStoreResponse::create(ctx.m_request, "");
             response->object().set_location(m_redirect);
             ctx.finish(std::move(response));
@@ -197,8 +198,9 @@ class DistributedHsmObjectStoreClientTestFixture {
 
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(false);
+        dist_hsm_config.m_controller_address = "45678";
         dist_hsm_config.m_self.set_host_address(address);
-        dist_hsm_config.m_self.set_name("my_worker");
+        dist_hsm_config.m_self.set_name("my_worker" + address);
         dist_hsm_config.m_is_server = true;
 
         hestia::InMemoryObjectStoreClientConfig hsm_memory_client_config;
@@ -283,12 +285,14 @@ class DistributedHsmObjectStoreClientTestFixture {
         const hestia::StorageObject& obj,
         std::string& content,
         std::size_t content_length,
-        uint8_t tier)
+        uint8_t tier,
+        const std::string& preferred_address = {})
     {
         hestia::HsmAction action(
             hestia::HsmItem::Type::OBJECT, hestia::HsmAction::Action::GET_DATA);
         action.set_subject_key(obj.get_primary_key());
         action.set_source_tier(tier);
+        action.set_preferred_node_address(preferred_address);
 
         std::promise<hestia::HsmActionResponse::Ptr> response_promise;
         auto response_future = response_promise.get_future();
@@ -369,10 +373,11 @@ TEST_CASE_METHOD(
     "Test Distributed Hsm Object Store Client - Object Store redirect",
     "[hsm]")
 {
-    // Here we set up a 'dud' Worker endpoint - whose only purpose is to
-    // redirect a request to a real endpoint via its object store.
     setup_worker("1234");
-    setup_worker("891011");
+
+    // Here we set up a 'stub' worker - whose only purpose is to
+    // redirect a request to the real worker via its object store.
+    setup_worker("891011", "1234");
     setup_local_client();
 
     std::string id{"0000"};
@@ -385,4 +390,9 @@ TEST_CASE_METHOD(
     obj.set_size(content.size());
 
     put_data(obj, content, 0, "1234");
+
+    std::string tier0_content;
+    hestia::StorageObject obj0(id);
+    get_data(obj0, tier0_content, content.length(), 0, "891011");
+    REQUIRE(tier0_content == content);
 }

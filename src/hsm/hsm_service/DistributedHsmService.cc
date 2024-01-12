@@ -341,7 +341,7 @@ std::string DistributedHsmService::get_backend_address(
     }
     else {
         LOG_INFO(
-            "Could not find preferred address - using first address found: "
+            "Could not find preferred address " + preferred_address + " - using first address found: "
             + first_address);
     }
     return first_address;

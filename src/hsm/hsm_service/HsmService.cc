@@ -530,6 +530,7 @@ void HsmService::make_object_store_request(
     req.set_source_tier(action_context.m_source_tier_id);
     req.set_action_id(action_context.get_action_id());
     req.set_extent(action_context.m_extent);
+    req.set_preferred_address(action_context.get_action().get_preffered_node_address());
 
     auto object_store_completion_func =
         [this, method,

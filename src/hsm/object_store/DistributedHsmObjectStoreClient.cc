@@ -104,6 +104,7 @@ void DistributedHsmObjectStoreClient::on_error(
 
 std::string DistributedHsmObjectStoreClient::get_action_path() const
 {
+    LOG_INFO("CTR address is: " + m_hsm_service->get_controller_address());
     return m_hsm_service->get_controller_address()
            + HsmActionRequestAdapter::get_endpoint();
 }
@@ -117,7 +118,7 @@ void DistributedHsmObjectStoreClient::do_remote_op(
 
         if (http_response->error()) {
             on_error(
-                ctx, HsmObjectStoreErrorCode::ERROR, http_response->message());
+                ctx, HsmObjectStoreErrorCode::ERROR, "Http client error: " + http_response->get_error_message());
             return;
         }
 
@@ -147,7 +148,7 @@ void DistributedHsmObjectStoreClient::do_remote_op(
 }
 
 bool DistributedHsmObjectStoreClient::check_remote_config(
-    HsmObjectStoreContext& ctx) const
+    HsmObjectStoreContext& ctx, bool can_be_worker) const
 {
     if (m_http_client == nullptr) {
         on_error(
@@ -156,10 +157,10 @@ bool DistributedHsmObjectStoreClient::check_remote_config(
         return false;
     }
 
-    if (m_hsm_service->is_server()) {
+    if (!can_be_worker && m_hsm_service->is_server()) {
         on_error(
             ctx, HsmObjectStoreErrorCode::CONFIG_ERROR,
-            "Attempting remote remote op from a Server-Worker. Backends have been misconfigured.");
+            "Attempting remote op from a Server-Worker. Backends have been misconfigured.");
         return false;
     }
     return true;
@@ -168,7 +169,7 @@ bool DistributedHsmObjectStoreClient::check_remote_config(
 void DistributedHsmObjectStoreClient::do_remote_op(
     HsmObjectStoreContext& ctx, const std::string& endpoint) const
 {
-    if (!check_remote_config(ctx)) {
+    if (!check_remote_config(ctx, !endpoint.empty())) {
         return;
     }
 
@@ -368,7 +369,7 @@ void DistributedHsmObjectStoreClient::on_remote_response(
     HttpResponse::Ptr http_response, HsmObjectStoreContext& ctx) const
 {
     if (http_response->error()) {
-        on_error(ctx, HsmObjectStoreErrorCode::ERROR, http_response->message());
+        on_error(ctx, HsmObjectStoreErrorCode::ERROR, "Http response response error: " + http_response->get_error_message());
         return;
     }
     if (ctx.m_request.method() == HsmObjectStoreRequestMethod::COPY) {
@@ -394,7 +395,7 @@ void DistributedHsmObjectStoreClient::make_single_tier_request(
     else {
         LOG_INFO(
             "Did not find client for tier " + tier_id + " - checking remote");
-        do_remote_op(ctx);
+        do_remote_op(ctx, ctx.m_request.get_preferred_address());
     }
 }
 
