@@ -82,12 +82,13 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
     if (path.empty() || path == "/") {
         Map action_map;
         request.get_header().get_data().copy_with_prefix(
-            {"hestia.hsm_action."}, action_map);        
+            {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
-            if(!request.is_content_outstanding()){
-                return std::make_unique<HttpResponse>(HttpResponse::CompletionStatus::FINISHED);
-            } 
+            if (!request.is_content_outstanding()) {
+                return std::make_unique<HttpResponse>(
+                    HttpResponse::CompletionStatus::FINISHED);
+            }
             else if (event == HttpEvent::HEADERS) {
                 return do_hsm_action(request, action_map, auth);
             }
@@ -96,8 +97,8 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
                     return std::make_unique<HttpResponse>(
                         *request.get_context()->get_response());
                 }
-                else {                                     
-                    return HttpResponse::create();                   
+                else {
+                    return HttpResponse::create();
                 }
             }
         }
