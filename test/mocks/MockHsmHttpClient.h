@@ -40,4 +40,5 @@ class MockHsmHttpClient : public hestia::HttpClient {
         progressFunc) override;
 
     std::unordered_map<std::string, std::unique_ptr<MockHsmWebApp>> m_apps;
+    hestia::Stream* m_working_stream{nullptr};
 };

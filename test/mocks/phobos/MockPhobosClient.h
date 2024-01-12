@@ -14,5 +14,7 @@ class MockPhobosClient : public hestia::PhobosClient {
     static Ptr create();
 
     static std::string get_registry_identifier();
+
+    void set_redirect_location(const std::string& location) override;
 };
 }  // namespace hestia::mock

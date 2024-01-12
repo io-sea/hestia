@@ -46,3 +46,15 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     REQUIRE(fetched_objects.size() == 1);
     REQUIRE(fetched_objects[0].id() == obj.id());
 }
+
+TEST_CASE_METHOD(
+    PhobosStoreTestFixture, "Test phobos object store - redirect", "[phobos]")
+{
+    std::string redirect_location{"1234"};
+    m_client->set_redirect_location(redirect_location);
+
+    hestia::StorageObject fetched_obj("0000");
+    std::string returned_content;
+    get(fetched_obj, returned_content, returned_content.size());
+    REQUIRE(fetched_obj.get_location() == redirect_location);
+}

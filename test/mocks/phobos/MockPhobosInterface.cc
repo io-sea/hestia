@@ -1,7 +1,9 @@
 #include "MockPhobosInterface.h"
 
+#include "Logger.h"
 #include "UuidUtils.h"
 
+#include <iostream>
 #include <sstream>
 #include <unistd.h>
 
@@ -22,6 +24,10 @@ void MockPhobosInterface::set_redirect_location(const std::string& location)
 std::string MockPhobosInterface::get(const StorageObject& obj, int fd)
 {
     if (!m_redirect_location.empty()) {
+        LOG_INFO("Force directing to: " + m_redirect_location);
+        if (fd > 0) {
+            ::close(fd);
+        }
         return m_redirect_location;
     }
 
@@ -92,6 +98,9 @@ void MockPhobosInterface::get_metadata(StorageObject& obj)
     desc.xd_op    = PHO_XFER_OP_GETMD;
 
     int rc = m_phobos.phobos_getmd(&desc, 1, nullptr, nullptr);
+    if (rc == -1) {
+        return;
+    }
     if (rc != 0) {
         throw std::runtime_error("Phobos_file::get_meta_data");
     }

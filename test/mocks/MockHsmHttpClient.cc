@@ -34,7 +34,20 @@ void MockHsmHttpClient::make_request(
     std::size_t,
     progressFunc)
 {
-    LOG_INFO("Got request to: " << request.get_path());
+    if (m_working_stream == nullptr) {
+        m_working_stream = stream;
+    }
+
+    LOG_INFO(
+        "Got " + request.get_method_as_string() + " request to: "
+        << request.get_path());
+    LOG_INFO(
+        "Stream has sink: " << bool(
+            (m_working_stream != nullptr)
+            && m_working_stream->waiting_for_content()));
+    LOG_INFO(
+        "Stream has source: " << bool(
+            (m_working_stream != nullptr) && m_working_stream->has_content()));
 
     const auto stripped_path =
         hestia::StringUtils::remove_prefix(request.get_path(), "http://");
@@ -49,7 +62,8 @@ void MockHsmHttpClient::make_request(
     }
 
     if (working_app == nullptr) {
-        completion_func(hestia::HttpResponse::create(404, "Not Found"));
+        completion_func(hestia::HttpResponse::create(
+            404, "Not Found", "No associated app found"));
     }
 
     auto intercepted_request = request;
@@ -75,7 +89,8 @@ void MockHsmHttpClient::make_request(
             working_app = app_iter->second.get();
         }
         if (working_app == nullptr) {
-            completion_func(hestia::HttpResponse::create(404, "Not Found"));
+            completion_func(hestia::HttpResponse::create(
+                404, "Not Found", "No associated app found after redirect."));
             return;
         }
         working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
@@ -83,14 +98,15 @@ void MockHsmHttpClient::make_request(
 
     working_app->on_event(&request_context, hestia::HttpEvent::EOM);
 
-    LOG_INFO("Has stream - proceeding? " << bool(stream));
+    LOG_INFO("Has stream - proceeding? " << bool(m_working_stream));
 
-    if (stream != nullptr) {
+    if (m_working_stream != nullptr) {
         if (request.get_method() == hestia::HttpRequest::Method::PUT) {
             std::vector<char> buffer(1024);
             hestia::WriteableBufferView buffer_view(buffer);
-            auto read_result = stream->read(buffer_view);
+            auto read_result = m_working_stream->read(buffer_view);
             if (read_result.m_num_transferred > 0) {
+                LOG_INFO("Writing to request context");
                 auto write_result = request_context.get_stream()->write(
                     hestia::ReadableBufferView(
                         &buffer[0], read_result.m_num_transferred));
@@ -113,8 +129,12 @@ void MockHsmHttpClient::make_request(
                 "Read: " << read_result.m_num_transferred << " bytes: "
                          << std::string(buffer.begin(), buffer.end()));
             if (read_result.m_num_transferred > 0) {
-                auto write_result = stream->write(hestia::ReadableBufferView(
-                    buffer.data(), read_result.m_num_transferred));
+                LOG_INFO("Writing to supplied stream");
+                LOG_INFO(
+                    "Stream has sink: " << bool(stream->waiting_for_content()));
+                auto write_result =
+                    m_working_stream->write(hestia::ReadableBufferView(
+                        buffer.data(), read_result.m_num_transferred));
                 LOG_INFO(
                     "Wrote: " << write_result.m_num_transferred << " bytes.");
                 if (!write_result.ok()) {
@@ -127,5 +147,7 @@ void MockHsmHttpClient::make_request(
         std::make_unique<hestia::HttpResponse>(*request_context.get_response());
     LOG_INFO("Setting location header to: " << working_address);
     response->header().set_item("location", working_address);
+
+    m_working_stream = nullptr;
     completion_func(std::move(response));
 }

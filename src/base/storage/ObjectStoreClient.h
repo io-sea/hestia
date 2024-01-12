@@ -41,6 +41,8 @@ class ObjectStoreClient {
      */
     virtual void make_request(ObjectStoreContext& ctx) const noexcept;
 
+    virtual void set_redirect_location(const std::string&) {}
+
   protected:
     virtual bool exists(const StorageObject& object) const = 0;
 
