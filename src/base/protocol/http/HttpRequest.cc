@@ -184,4 +184,18 @@ std::string HttpRequest::to_string() const
     return ret;
 }
 
+std::string HttpRequest::get_query_as_string() const
+{
+    std::string ret;
+    if (m_preamble.m_queries.empty()) {
+        return ret;
+    }
+
+    ret += "?";
+    for (const auto& [key, value] : m_preamble.m_queries.data()) {
+        ret += key + "=" + value + "&";
+    }
+    return ret.substr(0, ret.length() - 1);
+}
+
 }  // namespace hestia
