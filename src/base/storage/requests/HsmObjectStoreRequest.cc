@@ -163,19 +163,34 @@ const std::string& HsmObjectStoreRequest::target_tier() const
     return m_target_tier;
 }
 
-const std::string& HsmObjectStoreRequest::get_action_id() const { return m_action_id; }
+const std::string& HsmObjectStoreRequest::get_action_id() const
+{
+    return m_action_id;
+}
 
-const std::string& HsmObjectStoreRequest::get_preferred_address() const {return m_preferred_address; }
+const std::string& HsmObjectStoreRequest::get_preferred_address() const
+{
+    return m_preferred_address;
+}
 
-void HsmObjectStoreRequest::set_source_tier(std::string tier) { m_source_tier = tier; }
+void HsmObjectStoreRequest::set_source_tier(std::string tier)
+{
+    m_source_tier = tier;
+}
 
-void HsmObjectStoreRequest::set_target_tier(std::string tier) { m_target_tier = tier; }
+void HsmObjectStoreRequest::set_target_tier(std::string tier)
+{
+    m_target_tier = tier;
+}
 
-void HsmObjectStoreRequest::set_action_id(const std::string& id) { m_action_id = id; }
+void HsmObjectStoreRequest::set_action_id(const std::string& id)
+{
+    m_action_id = id;
+}
 
 void HsmObjectStoreRequest::set_preferred_address(const std::string& addr)
 {
     m_preferred_address = addr;
-}  
 }
+}  // namespace hestia
 // namespace hestia

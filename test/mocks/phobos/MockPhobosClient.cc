@@ -25,7 +25,8 @@ std::string MockPhobosClient::get_registry_identifier()
 
 void MockPhobosClient::set_redirect_location(const std::string& location)
 {
-    dynamic_cast<MockPhobosInterface*>(m_phobos_interface->impl())->set_redirect_location(location);
+    dynamic_cast<MockPhobosInterface*>(m_phobos_interface->impl())
+        ->set_redirect_location(location);
 }
 
 }  // namespace hestia::mock

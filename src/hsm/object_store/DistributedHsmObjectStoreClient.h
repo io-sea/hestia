@@ -72,7 +72,8 @@ class DistributedHsmObjectStoreClient : public HsmObjectStoreClient {
 
     bool is_controller_node() const;
 
-    bool check_remote_config(HsmObjectStoreContext& ctx, bool can_be_worker=false) const;
+    bool check_remote_config(
+        HsmObjectStoreContext& ctx, bool can_be_worker = false) const;
 
     void get(HsmObjectStoreContext& ctx) const override;
 

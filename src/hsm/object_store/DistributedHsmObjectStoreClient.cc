@@ -118,7 +118,8 @@ void DistributedHsmObjectStoreClient::do_remote_op(
 
         if (http_response->error()) {
             on_error(
-                ctx, HsmObjectStoreErrorCode::ERROR, "Http client error: " + http_response->get_error_message());
+                ctx, HsmObjectStoreErrorCode::ERROR,
+                "Http client error: " + http_response->get_error_message());
             return;
         }
 
@@ -369,7 +370,10 @@ void DistributedHsmObjectStoreClient::on_remote_response(
     HttpResponse::Ptr http_response, HsmObjectStoreContext& ctx) const
 {
     if (http_response->error()) {
-        on_error(ctx, HsmObjectStoreErrorCode::ERROR, "Http response response error: " + http_response->get_error_message());
+        on_error(
+            ctx, HsmObjectStoreErrorCode::ERROR,
+            "Http response response error: "
+                + http_response->get_error_message());
         return;
     }
     if (ctx.m_request.method() == HsmObjectStoreRequestMethod::COPY) {

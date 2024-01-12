@@ -40,11 +40,10 @@ class HttpResponse {
         m_completion_status = status;
     }
 
-    std::string get_error_message() const 
+    std::string get_error_message() const
     {
         auto msg = std::to_string(m_code) + " | " + m_message;
-        if (!m_body.empty())
-        {
+        if (!m_body.empty()) {
             msg += " | " + m_body;
         }
         return msg;

@@ -47,7 +47,8 @@ TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store", "[phobos]")
     REQUIRE(fetched_objects[0].id() == obj.id());
 }
 
-TEST_CASE_METHOD(PhobosStoreTestFixture, "Test phobos object store - redirect", "[phobos]")
+TEST_CASE_METHOD(
+    PhobosStoreTestFixture, "Test phobos object store - redirect", "[phobos]")
 {
     std::string redirect_location{"1234"};
     m_client->set_redirect_location(redirect_location);

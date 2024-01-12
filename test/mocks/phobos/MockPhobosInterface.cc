@@ -1,11 +1,11 @@
 #include "MockPhobosInterface.h"
 
-#include "UuidUtils.h"
 #include "Logger.h"
+#include "UuidUtils.h"
 
+#include <iostream>
 #include <sstream>
 #include <unistd.h>
-#include <iostream>
 
 namespace hestia::mock {
 
@@ -98,8 +98,7 @@ void MockPhobosInterface::get_metadata(StorageObject& obj)
     desc.xd_op    = PHO_XFER_OP_GETMD;
 
     int rc = m_phobos.phobos_getmd(&desc, 1, nullptr, nullptr);
-    if (rc == -1)
-    {
+    if (rc == -1) {
         return;
     }
     if (rc != 0) {

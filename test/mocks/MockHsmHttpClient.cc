@@ -34,14 +34,20 @@ void MockHsmHttpClient::make_request(
     std::size_t,
     progressFunc)
 {
-    if(m_working_stream == nullptr)
-    {
+    if (m_working_stream == nullptr) {
         m_working_stream = stream;
     }
 
-    LOG_INFO("Got " + request.get_method_as_string() + " request to: " << request.get_path());
-    LOG_INFO("Stream has sink: " << bool((m_working_stream != nullptr) && m_working_stream->waiting_for_content()));
-    LOG_INFO("Stream has source: " << bool((m_working_stream != nullptr) && m_working_stream->has_content()));
+    LOG_INFO(
+        "Got " + request.get_method_as_string() + " request to: "
+        << request.get_path());
+    LOG_INFO(
+        "Stream has sink: " << bool(
+            (m_working_stream != nullptr)
+            && m_working_stream->waiting_for_content()));
+    LOG_INFO(
+        "Stream has source: " << bool(
+            (m_working_stream != nullptr) && m_working_stream->has_content()));
 
     const auto stripped_path =
         hestia::StringUtils::remove_prefix(request.get_path(), "http://");
@@ -56,7 +62,8 @@ void MockHsmHttpClient::make_request(
     }
 
     if (working_app == nullptr) {
-        completion_func(hestia::HttpResponse::create(404, "Not Found", "No associated app found"));
+        completion_func(hestia::HttpResponse::create(
+            404, "Not Found", "No associated app found"));
     }
 
     auto intercepted_request = request;
@@ -82,7 +89,8 @@ void MockHsmHttpClient::make_request(
             working_app = app_iter->second.get();
         }
         if (working_app == nullptr) {
-            completion_func(hestia::HttpResponse::create(404, "Not Found", "No associated app found after redirect."));
+            completion_func(hestia::HttpResponse::create(
+                404, "Not Found", "No associated app found after redirect."));
             return;
         }
         working_app->on_event(&request_context, hestia::HttpEvent::HEADERS);
@@ -122,9 +130,11 @@ void MockHsmHttpClient::make_request(
                          << std::string(buffer.begin(), buffer.end()));
             if (read_result.m_num_transferred > 0) {
                 LOG_INFO("Writing to supplied stream");
-                LOG_INFO("Stream has sink: " << bool(stream->waiting_for_content()));
-                auto write_result = m_working_stream->write(hestia::ReadableBufferView(
-                    buffer.data(), read_result.m_num_transferred));
+                LOG_INFO(
+                    "Stream has sink: " << bool(stream->waiting_for_content()));
+                auto write_result =
+                    m_working_stream->write(hestia::ReadableBufferView(
+                        buffer.data(), read_result.m_num_transferred));
                 LOG_INFO(
                     "Wrote: " << write_result.m_num_transferred << " bytes.");
                 if (!write_result.ok()) {

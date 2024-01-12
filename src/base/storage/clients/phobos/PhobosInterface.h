@@ -35,10 +35,7 @@ class PhobosInterface {
 
     void list(const KeyValuePair& query, std::vector<StorageObject>& found);
 
-    IPhobosInterfaceImpl* impl() const 
-    {
-        return m_impl.get();
-    }
+    IPhobosInterfaceImpl* impl() const { return m_impl.get(); }
 
   private:
     std::unique_ptr<IPhobosInterfaceImpl> m_impl;

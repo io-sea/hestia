@@ -27,7 +27,7 @@ class ObjectStoreClientWithRedirect : public InMemoryHsmObjectStoreClient {
             InMemoryHsmObjectStoreClient::get(ctx);
         }
         else {
-            LOG_INFO("Doing redirect to: " +  m_redirect);
+            LOG_INFO("Doing redirect to: " + m_redirect);
             auto response = HsmObjectStoreResponse::create(ctx.m_request, "");
             response->object().set_location(m_redirect);
             ctx.finish(std::move(response));

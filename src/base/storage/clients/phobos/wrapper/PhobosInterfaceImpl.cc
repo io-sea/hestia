@@ -24,9 +24,8 @@ std::string PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
     PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
     ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
     if (rc != 0) {
-        if (desc.get_handle().pho_xfer_params.get.node_name() != nullptr) {
-            return std::string(
-                desc.get_handle().pho_xfer_params.get.node_name());
+        if (desc.get_handle().xd_params.get.node_name != nullptr) {
+            return std::string(desc.get_handle().xd_params.get.node_name);
         }
         throw std::runtime_error("phobos_get " + std::to_string(rc));
     }
