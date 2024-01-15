@@ -15,7 +15,6 @@
 
 #include "HsmAction.h"
 
-#include <iostream>
 
 namespace hestia {
 HestiaHsmActionView::HestiaHsmActionView(
@@ -148,8 +147,6 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     const AuthorizationContext& auth)
 {
     LOG_INFO("Processing HSM Action - token is: " + auth.m_user_token);
-
-    std::cout<<"Starting HsmActionView do_hsm_action"<<std::endl;
 
     Dictionary action_dict;
     action_dict.expand(action_map);
