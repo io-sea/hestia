@@ -15,6 +15,8 @@
 
 #include "HsmAction.h"
 
+#include <iostream>
+
 namespace hestia {
 HestiaHsmActionView::HestiaHsmActionView(
     DistributedHsmService* hestia_service) :
@@ -85,7 +87,7 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
             {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
-            if (!request.is_content_outstanding()) {
+            if (request.get_header().has_expect_continue()) {
                 return std::make_unique<HttpResponse>(
                     HttpResponse::CompletionStatus::FINISHED);
             }
@@ -146,6 +148,8 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     const AuthorizationContext& auth)
 {
     LOG_INFO("Processing HSM Action - token is: " + auth.m_user_token);
+
+    std::cout<<"Starting HsmActionView do_hsm_action"<<std::endl;
 
     Dictionary action_dict;
     action_dict.expand(action_map);
