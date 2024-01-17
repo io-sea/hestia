@@ -86,7 +86,8 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
             {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
-            if (action_map.get_item("action")=="put_data" && action_map.get_item("to_transfer")=="0") {
+            if (action_map.get_item("action") == "put_data"
+                && action_map.get_item("to_transfer") == "0") {
                 return std::make_unique<HttpResponse>(
                     HttpResponse::CompletionStatus::FINISHED);
             }
