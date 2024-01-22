@@ -60,6 +60,7 @@ void PhobosClient::put(ObjectStoreContext& ctx) const
                 ctx.finish(std::move(response));
                 return 0;
             }
+            LOG_INFO("Finished put");
             ctx.finish(std::move(response));
             return 0;
         };
@@ -78,7 +79,9 @@ void PhobosClient::get(ObjectStoreContext& ctx) const
     m_phobos_interface->get_metadata(object);
 
     if (ctx.has_stream()) {
-        auto fifo     = FifoStreamSource::create();
+        auto fifo = FifoStreamSource::create();
+        fifo->set_size(ctx.m_request.object().size());
+
         auto fifo_ptr = fifo.get();
 
         auto fd = fifo->get_write_descriptor();

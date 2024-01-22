@@ -524,6 +524,7 @@ void HsmService::make_object_store_request(
     StorageObject storage_object(object_id);
     storage_object.set_metadata(
         "hestia-user_token", action_context.m_user_context.m_token);
+    storage_object.set_size(action_context.m_extent.m_length);
 
     HsmObjectStoreRequest req(storage_object, method);
     req.set_target_tier(action_context.m_target_tier_id);

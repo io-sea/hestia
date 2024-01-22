@@ -217,6 +217,7 @@ void DistributedHsmObjectStoreClient::do_local_op(
                 do_remote_op(working_ctx, response->object().get_location());
             }
             else {
+                LOG_INFO("Finished local op");
                 ctx.finish(std::move(response));
             }
         };
@@ -242,6 +243,7 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
     HsmObjectStoreResponse::Ptr get_response;
     auto get_completion =
         [&get_response](HsmObjectStoreResponse::Ptr response) {
+            LOG_INFO("Local get completed ok");
             get_response = std::move(response);
         };
     HsmObjectStoreContext get_ctx(
@@ -250,6 +252,7 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         get_completion, nullptr, &stream);
     do_local_op(get_ctx);
     if (get_response && !get_response->ok()) {
+        LOG_INFO("Local hsm get did not complete ok");
         ctx.finish(std::move(get_response));
         return;
     }
@@ -257,6 +260,7 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
     HsmObjectStoreResponse::Ptr put_response;
     auto put_completion =
         [&put_response](HsmObjectStoreResponse::Ptr response) {
+            LOG_INFO("Local put completed ok");
             put_response = std::move(response);
         };
     HsmObjectStoreContext put_ctx(
@@ -265,11 +269,13 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         put_completion, nullptr, &stream);
     do_local_op(put_ctx);
     if (put_response && !put_response->ok()) {
+        LOG_INFO("Local hsm put did not complete ok");
         ctx.finish(std::move(put_response));
         return;
     }
 
     auto stream_completion_func = [this, ctx](StreamState stream_state) {
+        LOG_INFO("Stream complete");
         auto result = HsmObjectStoreResponse::create(ctx.m_request, m_id);
         if (!stream_state.ok()) {
             result->on_error(
@@ -287,7 +293,10 @@ void DistributedHsmObjectStoreClient::do_local_hsm(
         }
     };
     stream.set_completion_func(stream_completion_func);
+
+    LOG_INFO("Starting stream flush");
     stream.flush(m_config.m_buffer_size);
+    LOG_INFO("Finished stream flush");
 }
 
 void DistributedHsmObjectStoreClient::do_remote_hsm_with_local_source(

@@ -1,5 +1,7 @@
 #include "ObjectStoreBackendWithClient.h"
 
+#include "Logger.h"
+
 namespace hestia {
 
 ObjectStoreBackendWithClient::ObjectStoreBackendWithClient(
@@ -28,9 +30,11 @@ void ObjectStoreBackendWithClient::make_request(
     else {
         auto object_store_ctx = ctx.to_object_store_context();
         if (m_backend.is_built_in()) {
+            LOG_INFO("Making builtin request");
             m_object_store_client->make_request(object_store_ctx);
         }
         else {
+            LOG_INFO("Making plugin request");
             m_object_store_client_plugin->get_client()->make_request(
                 object_store_ctx);
         }

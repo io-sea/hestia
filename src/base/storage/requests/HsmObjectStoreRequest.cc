@@ -30,16 +30,16 @@ HsmObjectStoreRequest::HsmObjectStoreRequest(
 }
 
 ObjectStoreRequest HsmObjectStoreRequest::to_base_request(
-    const HsmObjectStoreRequest& reqeust)
+    const HsmObjectStoreRequest& request)
 {
-    if (reqeust.is_hsm_only_request()) {
+    if (request.is_hsm_only_request()) {
         throw std::runtime_error(
             "Attempted to convert a HSM operation to base type.");
     }
 
     ObjectStoreRequest base_request(
-        reqeust.object(), to_base_method(reqeust.method()));
-    base_request.set_extent(reqeust.extent());
+        request.object(), to_base_method(request.method()));
+    base_request.set_extent(request.extent());
     return base_request;
 }
 

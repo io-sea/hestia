@@ -23,6 +23,7 @@ stages:
     MOTR_SRC_DIR: ""
     HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
     HESTIA_API_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
+    PHOBOS_SCRIPTS_DIR: "${CI_PROJECT_DIR}/infra/scripts/phobos"
   nightly_variables: &nightly_variables
     <<: *default_variables
     HESTIA_BUILD_DOCUMENTATION: "ON"
@@ -45,10 +46,14 @@ stages:
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
   - &install_phobos
     yum install -qy $(cat ${HESTIA_DEPS}/phobos);
-    pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/phobos_requirements.txt;
+    pip3 install -r ${PHOBOS_SCRIPTS_DIR}/phobos_requirements.txt;
     export PHOBOS_SRC=/phobos; cd /;
-    ${CI_PROJECT_DIR}/infra/scripts/build_phobos.sh ${CI_PROJECT_DIR}/infra/cmake/patches;
+    ${PHOBOS_SCRIPTS_DIR}/build_phobos.sh;
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
+  - &start_phobos 
+    ${PHOBOS_SCRIPTS_DIR}/init_phobos_db.sh;
+    ${PHOBOS_SCRIPTS_DIR}/start_phobos.sh ${PHOBOS_SCRIPTS_DIR}/phobos.conf;
+    ${PHOBOS_SCRIPTS_DIR}/phobos_add_dir.sh /home/test-phobos-dir test_phobos_dir
   - &configure
     mkdir -p "${CMAKE_BUILD_DIR}"
     && pushd "${CMAKE_BUILD_DIR}"
@@ -267,7 +272,7 @@ Nightly_unit_test:
     - *configure
     - *build
     - redis-server&
-    - ${CI_PROJECT_DIR}/test/data/start_phobos_db.sh
+    - *start_phobos
     - *test
 
 Nightly_E2E:

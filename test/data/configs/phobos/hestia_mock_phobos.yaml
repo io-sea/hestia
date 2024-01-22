@@ -1,3 +1,9 @@
+server:
+  host: 127.0.0.1
+  port: 8080
+  controller: true
+  tag: controller0
+
 tiers:
   - id: "00000000-0000-0000-0000-000000000001"
     priority: 0
@@ -7,12 +13,14 @@ tiers:
 object_store_backends:
   - backend_type: file
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000001"],
+      ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
       root: phobos_tests_object_store
   - backend_type: mock_phobos
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000002"],
+      ids: ["00000000-0000-0000-0000-000000000002"]
+    config: 
+      root: phobos_tests_mock_phobos
 
 event_feed:
   active: true

@@ -1,0 +1,17 @@
+server:
+  host: 127.0.0.1
+  port: 8080
+  controller: true
+  tag: controller0
+
+tiers:
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
+
+event_feed:
+  active: true
+
+logger:
+  level: debug
