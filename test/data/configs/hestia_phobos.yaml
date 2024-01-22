@@ -10,7 +10,7 @@ object_store_backends:
       ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
       root: phobos_tests_object_store
-  - backend_type: mock_phobos
+  - backend_type: phobos
     tiers: 
       ids: ["00000000-0000-0000-0000-000000000002"]
 

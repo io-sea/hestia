@@ -32,6 +32,9 @@ class ObjectStoreClientManager {
 
     void setup_clients(const ObjectStoreClientsConfig& config);
 
+  private:
+    ObjectStoreClientFactory::Ptr m_client_factory;
+
   protected:
     std::vector<ObjectStoreBackendWithClient::Ptr> m_backends;
 
@@ -58,8 +61,6 @@ class ObjectStoreClientManager {
 
     std::optional<std::size_t> get_backend_offset(
         const std::string& tier_id) const;
-
-    ObjectStoreClientFactory::Ptr m_client_factory;
 
     // Values here are offsets into the m_backends vector. There is a
     // many-to-many relationship. A tier can have multiple backends and a

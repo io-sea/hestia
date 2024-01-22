@@ -1,10 +1,12 @@
 # Running Phobos in Parallel
 
-These are some rough notes for doing this with containers.
+Phobos can be run in a multi-node configuration using containers. On will run with the phobos db with a registered 'dir' type drive and the other as a 'worker', just with a drive but no db.
 
-Ultimately this needs the Phobos postgres db to be exposed from a container, this requires some changes in the postgres configs and also giving the address of the db a 'hostname' in any 'child' container /etc/hosts. 
+## Host Setup
 
-It is useful to use pgadmin on the host (assuming Mac) to make sure everything is set up ok also.
+### DB Viewer
+
+It is useful to use pgadmin db viewer on the host (assuming Mac) to make sure everything is set up ok with the phobos db.
 
 ```sh
 brew install --cask pgadmin4
@@ -21,12 +23,14 @@ You can also install libpqsl with brew, it will give you a path to set and you c
 ```sh
 brew install libpq
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-PGPASSWORD=password psql -h localhost -p 5432 -U username
+PGPASSWORD=phobos psql -h localhost -p 5432 -U phobos
 ```
 
 to connect.
 
-To find the host address on Mac you can do:
+### Host IP Address
+
+We need to find the host ip address, on Mac you can do:
 
 ```sh
 ifconfig 
@@ -38,38 +42,63 @@ en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 
 Something like above will have an `inet` address.
 
-The host address needs to be added to `/etc/hosts` in any container connecting to the phobosdb, something like:
+## Build containers
 
-```
-192.168.11.48:8000 phobos_db_node
-```
-
-that needs to be done when building the container.
-
-When launching the container you can point the db port to something in the non-root range, like 8080:
+We will build two containers, first for the node with the db:
 
 ```sh
-podman run -it --platform linux/arm64 -p 8080:5432 -v $HOME:$HOME phobos_build
+mkdir phobos_db_node
+cd phobos_db_node
+cp $HESTIA_SRC_DIR/src/infra/phobos/* .
+cp $HESTIA_SRC_DIR/src/infra/phobos/db_node/Dockerfile .
+podman build --platform linux/arm64 -t phobos_db_node .
 ```
 
-On the host running the phobos db we need to add `listen_addresses = '*'` to `/home/postgres/data/postgresql.conf` and modify `/home/postgres/data/pg_hba.conf` to have `all` for ipv4 addresses:
-
-```
-# IPv4 local connections:
-host    all             all             all            trust
-```
-
-Then restart the server:
+Then the node which will be the worker:
 
 ```sh
-su postgres -c "pg_ctl stop -D /home/postgres/data"
+mkdir phobos_worker_node
+cd phobos_worker_node
+cp $HESTIA_SRC_DIR/src/infra/phobos/* .
+cp $HESTIA_SRC_DIR/src/infra/phobos/worker_node/Dockerfile .
+cp $HESTIA_SRC_DIR/src/infra/phobos/worker_node/Dockerfile .
+podman build --platform linux/arm64 -t phobos_worker_node .
+```
+
+## Running the containers
+
+We can launch the container with the db with:
+
+```sh
+podman run -it --platform linux/arm64 -p 8080:5432 -v $HOME:$HOME -h phobos_db_node phobos_db_node
+```
+
+Inside the container start the db, launch phobos, create a storage device and add an object:
+
+```sh
 su postgres -c "pg_ctl start -D /home/postgres/data"
+./start_phobos.sh phobos.conf
+./phobos_add_dir.sh /home/phobos_db_device phobos_db_device
+export PYTHONPATH=/phobos/src/cli/build/lib.linux-$(arch)-3.6
+alias phobos=/phobos/src/cli/build/scripts-3.6/phobos
+phobos put --family dir phobos.conf phobos_db_file
 ```
 
-The `/etc/phobos.conf` on containers connecting to the db need to have the hostname, like phobos_db_node set above, like:
+See if you can access the db from the host now with pgadmin or libpq.
 
-```
-connect_string = dbname=phobos host=phobos_db_node user=phobos password=phobos
+We can launch the worker with:
+
+```sh
+podman run -it --platform linux/arm64 -v $HOME:$HOME -h phobos_worker_node 
+--add-host phobos_db_host:<my_host_ip> --network=host phobos_worker_node
 ```
 
-Now you can create some devices or objects on the nodes.
+Inside the worker container start phobos and create a storage device:
+
+```sh
+./start_phobos.sh phobos.conf
+./phobos_add_dir.sh /home/phobos_worker_device phobos_worker_device
+export PYTHONPATH=/phobos/src/cli/build/lib.linux-$(arch)-3.6
+alias phobos=/phobos/src/cli/build/scripts-3.6/phobos
+phobos put --family dir phobos.conf phobos_worker_file
+```
