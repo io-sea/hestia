@@ -15,6 +15,7 @@
 
 #include "HsmAction.h"
 
+
 namespace hestia {
 HestiaHsmActionView::HestiaHsmActionView(
     DistributedHsmService* hestia_service) :
@@ -85,7 +86,12 @@ HttpResponse::Ptr HestiaHsmActionView::on_put(
             {"hestia.hsm_action."}, action_map);
 
         if (!action_map.empty()) {
-            if (event == HttpEvent::HEADERS) {
+            if (action_map.get_item("action") == "put_data"
+                && action_map.get_item("to_transfer") == "0") {
+                return std::make_unique<HttpResponse>(
+                    HttpResponse::CompletionStatus::FINISHED);
+            }
+            else if (event == HttpEvent::HEADERS) {
                 return do_hsm_action(request, action_map, auth);
             }
             else {
