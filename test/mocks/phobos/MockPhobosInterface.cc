@@ -21,6 +21,11 @@ void MockPhobosInterface::set_redirect_location(const std::string& location)
     m_redirect_location = location;
 }
 
+void MockPhobosInterface::set_root(const std::string& root)
+{
+    m_phobos.set_root(root);
+}
+
 std::string MockPhobosInterface::get(const StorageObject& obj, int fd)
 {
     if (!m_redirect_location.empty()) {

@@ -3,6 +3,8 @@
 #include "FileUtils.h"
 #include "SystemUtils.h"
 
+#include <iostream>
+
 namespace hestia {
 FileStreamSink::FileStreamSink(const File::Path& path) : m_file(path) {}
 

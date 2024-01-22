@@ -9,11 +9,16 @@ class MockPhobosClient : public hestia::PhobosClient {
 
     MockPhobosClient();
 
-    virtual ~MockPhobosClient() = default;
+    virtual ~MockPhobosClient();
 
     static Ptr create();
 
     static std::string get_registry_identifier();
+
+    void initialize(
+        const std::string& id,
+        const std::string& cache_path,
+        const Dictionary& config_data) override;
 
     void set_redirect_location(const std::string& location) override;
 };

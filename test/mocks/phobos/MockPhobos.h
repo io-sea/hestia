@@ -108,7 +108,22 @@ class MockPhobos {
 
     void phobos_store_object_list_free(object_info* objs, int n_objs);
 
+    void set_root(const std::string& root);
+
   private:
+    void write_md(const std::string& id, const hestia::Map& map);
+
+    void write_data(const std::string& id, const std::vector<char>& data);
+
+    bool read_md(const std::string& id, hestia::Map& map);
+
+    bool read_data(const std::string& id, std::vector<char>& data);
+
+    bool remove_data(const std::string& id);
+
+    bool remove_md(const std::string& id);
+
+    std::string m_root;
     std::unordered_map<std::string, std::vector<char>> m_data_cache;
     std::unordered_map<std::string, hestia::Map> m_metadata_cache;
 };

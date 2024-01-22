@@ -67,8 +67,6 @@ void ObjectStoreClientManager::setup_clients(
     initialize_backends(config);
 
     for (auto& backend_with_client : m_backends) {
-        check_if_client_available(backend_with_client->m_backend);
-
         if (backend_with_client->m_backend.is_hsm()) {
             if (backend_with_client->m_backend.is_built_in()) {
                 setup_built_in_hsm_client(backend_with_client.get(), config);
@@ -95,7 +93,10 @@ void ObjectStoreClientManager::initialize_backends(
     std::unordered_map<std::string, std::size_t> backend_id_offsets;
 
     for (const auto& tier : config.m_tiers) {
-        LOG_INFO("Tier has " << tier.get_backends().size() << " backends.");
+        const auto tier_id = tier.get_primary_key();
+        LOG_INFO(
+            "Tier " << tier_id << " has " << tier.get_backends().size()
+                    << " backends.");
         for (const auto& backend : tier.get_backends()) {
             // Backend is on this node
             if (backend.get_node_id() == config.m_node_id) {
@@ -104,31 +105,19 @@ void ObjectStoreClientManager::initialize_backends(
                 if (auto iter =
                         backend_id_offsets.find(backend.get_primary_key());
                     iter != backend_id_offsets.end()) {
-                    m_tier_backend_offsets[tier.get_primary_key()].push_back(
-                        iter->second);
+                    m_tier_backend_offsets[tier_id].push_back(iter->second);
                 }
                 else {
                     // Create a new client and store its offset
                     backend_id_offsets[backend.get_primary_key()] =
                         m_backends.size();
-                    m_tier_backend_offsets[tier.get_primary_key()].push_back(
+                    m_tier_backend_offsets[tier_id].push_back(
                         m_backends.size());
                     m_backends.push_back(
                         ObjectStoreBackendWithClient::create(backend));
                 }
             }
         }
-    }
-}
-
-void ObjectStoreClientManager::check_if_client_available(
-    const ObjectStoreBackend& backend) const
-{
-    if (!m_client_factory->is_client_type_available(backend.get_backend())) {
-        const std::string msg = "Client with backend type "
-                                + backend.get_backend_as_string()
-                                + " not available.";
-        throw std::runtime_error(SOURCE_LOC() + " | " + msg);
     }
 }
 

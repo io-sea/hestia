@@ -1,9 +1,12 @@
 #include "MockPhobosClient.h"
 
+#include "Logger.h"
 #include "MockPhobosInterface.h"
 #include "ProjectConfig.h"
 
 #include "MockPhobosInterface.h"
+
+#include <filesystem>
 
 namespace hestia::mock {
 MockPhobosClient::MockPhobosClient() :
@@ -12,9 +15,29 @@ MockPhobosClient::MockPhobosClient() :
 {
 }
 
+MockPhobosClient::~MockPhobosClient()
+{
+    LOG_INFO("Destroyed");
+}
+
 MockPhobosClient::Ptr MockPhobosClient::create()
 {
     return std::make_unique<MockPhobosClient>();
+}
+
+void MockPhobosClient::initialize(
+    const std::string&,
+    const std::string& cache_path,
+    const Dictionary& config_data)
+{
+    if (config_data.has_map_item("root")) {
+        auto root = config_data.get_map_item("root")->get_scalar();
+        if (std::filesystem::path(root).is_relative()) {
+            root = cache_path + "/" + root;
+        }
+        dynamic_cast<MockPhobosInterface*>(m_phobos_interface->impl())
+            ->set_root(root);
+    }
 }
 
 std::string MockPhobosClient::get_registry_identifier()

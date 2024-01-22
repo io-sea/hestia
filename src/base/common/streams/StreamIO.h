@@ -41,7 +41,7 @@ class StreamIO {
      * Get the size of the data we are providing or consuming
      * @return the size of the data we are providing or consuming
      */
-    std::size_t get_size() const;
+    virtual std::size_t get_size() const;
 
     /**
      * Get the state of the IO (i.e. OK, ERROR, FINISHED or similar)

@@ -502,6 +502,7 @@ OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
 
     if (req.supports_stream_source()) {
         if (stream.waiting_for_content()) {
+            LOG_INFO("Stream waiting for content - starting flush");
             auto result = stream.flush();
             if (!result.ok()) {
                 const auto msg =
@@ -512,7 +513,9 @@ OpStatus HestiaCli::on_client_request(IHestiaClient& client, HestiaRequest& req)
         }
     }
     else if (req.supports_stream_sink()) {
+        LOG_INFO("Req type supports stream");
         if (stream.has_content()) {
+            LOG_INFO("Stream has content - starting flush");
             auto result = stream.flush();
             if (!result.ok()) {
                 const auto msg =

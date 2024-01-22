@@ -25,6 +25,8 @@ class MockPhobosInterface : public IPhobosInterfaceImpl {
 
     void set_redirect_location(const std::string& location);
 
+    void set_root(const std::string& root);
+
   private:
     std::string m_redirect_location;
     MockPhobos m_phobos;

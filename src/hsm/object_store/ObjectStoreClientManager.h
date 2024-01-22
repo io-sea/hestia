@@ -41,8 +41,6 @@ class ObjectStoreClientManager {
   private:
     void initialize_backends(const ObjectStoreClientsConfig& config);
 
-    void check_if_client_available(const ObjectStoreBackend& backend) const;
-
     void setup_built_in_client(
         ObjectStoreBackendWithClient* backend,
         const ObjectStoreClientsConfig& config);
