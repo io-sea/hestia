@@ -16,7 +16,6 @@ add_module(
         application/HestiaRequest.h 
         application/HestiaResponse.h
         application/ServerConfig.h
-        application/WebAppConfig.h
         web/http/HestiaWebApp.h 
         web/http/HestiaHsmActionView.h 
         web/http/HestiaUserAuthView.h
@@ -39,7 +38,6 @@ add_module(
         application/HestiaApplication.cc
         application/HestiaCommands.cc
         application/ServerConfig.cc
-        application/WebAppConfig.cc
         application/HestiaRequest.cc 
         application/HestiaResponse.cc
         web/http/HestiaWebApp.cc 

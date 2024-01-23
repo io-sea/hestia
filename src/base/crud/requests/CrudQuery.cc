@@ -15,7 +15,7 @@ CrudQuery::CrudQuery(
     const CrudAttributes& attrs, const OutputFormat& output_format) :
     m_attributes(attrs), m_output_format(output_format)
 {
-    m_ids.add_primary_keys(m_attributes.get_ids());
+    m_ids.append(m_attributes.get_ids());
 }
 
 CrudQuery::CrudQuery(
@@ -24,7 +24,7 @@ CrudQuery::CrudQuery(
     const OutputFormat& output_format) :
     m_attributes(attrs_body, attrs_format), m_output_format(output_format)
 {
-    m_ids.add_primary_keys(m_attributes.get_ids());
+    m_ids.append(m_attributes.get_ids());
 }
 
 CrudQuery::CrudQuery(

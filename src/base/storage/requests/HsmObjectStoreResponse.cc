@@ -13,7 +13,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
     BaseObjectStoreResponse<HsmObjectStoreErrorCode>(
         request, hsm_child_response->get_store_id())
 {
-    (void)hsm_child_response;
+    m_object = hsm_child_response->object();
 }
 
 HsmObjectStoreResponse::HsmObjectStoreResponse(
@@ -22,7 +22,7 @@ HsmObjectStoreResponse::HsmObjectStoreResponse(
     BaseObjectStoreResponse<HsmObjectStoreErrorCode>(
         request, child_response->get_store_id())
 {
-    (void)child_response;
+    m_object = child_response->object();
 }
 
 HsmObjectStoreResponse::Ptr HsmObjectStoreResponse::create(

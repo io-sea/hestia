@@ -158,7 +158,9 @@ bool DistributedHsmObjectStoreClient::check_remote_config(
         return false;
     }
 
-    if (!can_be_worker && m_hsm_service->is_server()) {
+    bool is_worker =
+        m_hsm_service->is_server() && !m_hsm_service->is_controller();
+    if (!can_be_worker && is_worker) {
         on_error(
             ctx, HsmObjectStoreErrorCode::CONFIG_ERROR,
             "Attempting remote op from a Server-Worker. Backends have been misconfigured.");
@@ -206,20 +208,14 @@ void DistributedHsmObjectStoreClient::do_local_op(
     if (auto backend = m_client_manager->get_backend(tier_id);
         backend != nullptr) {
 
-        auto redirect_wrap_func = [ctx,
-                                   this](HsmObjectStoreResponse::Ptr response) {
-            if (response->object_is_remote()) {
-                const auto endpoint = response->object().get_location();
+        auto redirect_wrap_func = [ctx](HsmObjectStoreResponse::Ptr response) {
+            if (!response->object().get_location().empty()) {
                 LOG_INFO(
                     "Object store issued redirect - will follow it to remote - "
-                    + endpoint);
-                auto working_ctx = ctx;
-                do_remote_op(working_ctx, response->object().get_location());
+                    + response->object().get_location());
             }
-            else {
-                LOG_INFO("Finished local op");
-                ctx.finish(std::move(response));
-            }
+            LOG_INFO("Finished local op");
+            ctx.finish(std::move(response));
         };
         ctx.override_completion_func(redirect_wrap_func);
         backend->make_request(ctx);

@@ -146,10 +146,14 @@ class DistributedHsmObjectStoreClientTestFixture {
             m_controller_object_store_client.get());
         hsm_service->update_tiers(m_test_user.get_primary_key());
 
+        hestia::HsmNodeInterface default_interface;
+        default_interface.set_port(8080);
+
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(true);
         dist_hsm_config.m_self.set_host_address("45678");
         dist_hsm_config.m_self.set_name("my_controller");
+        dist_hsm_config.m_self.add_interface(default_interface);
         dist_hsm_config.m_is_server = true;
 
         m_controller_dist_hsm_service = hestia::DistributedHsmService::create(
@@ -196,11 +200,15 @@ class DistributedHsmObjectStoreClientTestFixture {
             m_worker_object_store_clients[address].get());
         hsm_service->update_tiers(m_test_user.get_primary_key());
 
+        hestia::HsmNodeInterface default_interface;
+        default_interface.set_port(8080);
+
         hestia::DistributedHsmServiceConfig dist_hsm_config;
         dist_hsm_config.m_self.set_is_controller(false);
         dist_hsm_config.m_controller_address = "45678";
         dist_hsm_config.m_self.set_host_address(address);
         dist_hsm_config.m_self.set_name("my_worker" + address);
+        dist_hsm_config.m_self.add_interface(default_interface);
         dist_hsm_config.m_is_server = true;
 
         hestia::InMemoryObjectStoreClientConfig hsm_memory_client_config;
@@ -371,7 +379,7 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(
     DistributedHsmObjectStoreClientTestFixture,
     "Test Distributed Hsm Object Store Client - Object Store redirect",
-    "[hsm]")
+    "[.hsm]")
 {
     setup_worker("1234");
 

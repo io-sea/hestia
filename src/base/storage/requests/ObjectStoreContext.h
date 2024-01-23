@@ -12,6 +12,7 @@ class ObjectStoreContext {
   public:
     using completionFunc = std::function<void(ObjectStoreResponse::Ptr)>;
     using progressFunc   = std::function<void(ObjectStoreResponse::Ptr)>;
+
     ObjectStoreContext(
         const ObjectStoreRequest& req,
         completionFunc completion_func,

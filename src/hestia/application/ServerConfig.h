@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WebAppConfig.h"
+#include "HsmNode.h"
 
 namespace hestia {
 
@@ -17,26 +17,25 @@ class ServerConfig : public SerializeableWithFields {
 
     unsigned get_port() const;
 
-    const std::string& get_tag() const { return m_tag.get_value(); }
+    const std::string& get_tag() const;
 
-    const WebAppConfig& get_web_app_config() const;
+    const std::vector<HsmNodeInterface>& get_interfaces() const;
 
-    static std::string get_type() { return s_type; }
+    static std::string get_type();
 
     const std::string& get_controller_address() const;
 
     const std::string& get_api_prefix() const;
 
+    const Map& get_host_mapping() const;
+
     bool has_controller_address() const;
+
+    bool is_controller() const;
 
     bool should_block_on_launch() const;
 
-    void set_controller_address(const std::string& host, unsigned port)
-    {
-        m_controller_address.update_value(host + ":" + std::to_string(port));
-    }
-
-    bool is_controller() const;
+    void set_controller_address(const std::string& host, unsigned port);
 
     bool should_cache_static_resources() const;
 
@@ -50,13 +49,13 @@ class ServerConfig : public SerializeableWithFields {
     UIntegerField m_port{"port", 8080};
     StringField m_api_prefix{"api_prefix", "api/v1"};
 
-    TypedDictField<WebAppConfig> m_web_app{"web_app"};
-    StringField m_backend{"backend", "hestia::Basic"};
+    SequenceField<std::vector<HsmNodeInterface>> m_interfaces{"interfaces"};
+
     BooleanField m_cache_static_resources{"cache_static"};
     StringField m_static_resource_path{"static_resource_path"};
+    ScalarMapField m_host_mapping{"host_mapping"};
 
     StringField m_controller_address{"controller_address"};
-    BooleanField m_controller{"is_controller"};
     StringField m_tag{"tag"};
     BooleanField m_run_blocking{"run_blocking", true};
 };

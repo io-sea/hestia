@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CrudIdentifierCollection.h"
 #include "Dictionary.h"
 #include "EnumUtils.h"
 #include "JsonDocument.h"
@@ -53,7 +54,7 @@ class CrudAttributes {
 
     Dictionary::Ptr get_copy_as_dict(std::size_t index) const;
 
-    std::vector<std::string> get_ids() const;
+    CrudIdentifierCollection get_ids() const;
 
     JsonDocument* get_json() const;
 

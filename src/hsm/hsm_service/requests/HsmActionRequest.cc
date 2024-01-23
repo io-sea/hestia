@@ -4,9 +4,12 @@
 
 namespace hestia {
 HsmActionRequest::HsmActionRequest(
-    const HsmAction& action, const CrudUserContext& user_context) :
+    const HsmAction& action,
+    const CrudUserContext& user_context,
+    HsmNodeInterface::Type interface) :
     BaseRequest(),
     MethodRequest<HsmAction::Action>(action.get_action()),
+    m_interface(interface),
     m_user_context(user_context),
     m_action(action)
 {
@@ -41,6 +44,16 @@ std::string HsmActionRequest::subject_as_string() const
 const CrudUserContext& HsmActionRequest::get_user_context() const
 {
     return m_user_context;
+}
+
+HsmNodeInterface::Type HsmActionRequest::get_interface() const
+{
+    return m_interface;
+}
+
+void HsmActionRequest::set_interface(HsmNodeInterface::Type interface)
+{
+    m_interface = interface;
 }
 
 const HsmAction& HsmActionRequest::get_action() const

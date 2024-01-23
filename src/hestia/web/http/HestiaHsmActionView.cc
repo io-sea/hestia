@@ -199,6 +199,8 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
 
     if (!redirect_location.empty()) {
         response = HttpResponse::create(307, "Found");
+        redirect_location =
+            m_hestia_service->hostname_to_address(redirect_location);
         response->header().set_item(
             "Location", "http://" + redirect_location + m_path);
     }

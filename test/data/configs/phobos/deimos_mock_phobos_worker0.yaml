@@ -1,15 +1,17 @@
 server:
   host: 127.0.0.1
-  port: 8091
   controller_address: 127.0.0.1:8080
-  tag: worker1
+  tag: worker0
+  interfaces: 
+    - type: s3
+      port: 8091
 
 object_store_backends:
   - backend_type: mock_phobos
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000002"]
+      ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
-      root: phobos_object_store_worker1
+      root: phobos_object_store_worker0
 
 logger:
   level: info

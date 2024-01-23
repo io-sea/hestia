@@ -89,6 +89,7 @@ void DistributedHsmService::do_hsm_action(
     actionProgressFunc progress_func) const noexcept
 {
     if (!m_config.m_self.is_controller()) {
+        LOG_INFO("In worker mode - running hsm service directly");
         m_hsm_service->do_hsm_action(
             request, stream, completion_func, progress_func);
         return;
@@ -152,7 +153,8 @@ void DistributedHsmService::do_hsm_action(
     std::string preferred_node_address =
         request.get_action().get_preffered_node_address();
     try {
-        node_address = get_backend_address(tier_id, preferred_node_address);
+        node_address = get_backend_address(
+            tier_id, preferred_node_address, request.get_interface());
     }
     catch (const std::exception& e) {
         const std::string msg =
@@ -177,6 +179,19 @@ void DistributedHsmService::do_hsm_action(
 UserService* DistributedHsmService::get_user_service()
 {
     return m_user_service;
+}
+
+std::string DistributedHsmService::hostname_to_address(
+    const std::string& hostname) const
+{
+    const auto mapped = m_config.m_host_mapping.get_item(hostname);
+    if (mapped.empty()) {
+        return hostname;
+    }
+    else {
+        LOG_INFO("Mapped hostname " << hostname << " to " << mapped);
+        return mapped;
+    }
 }
 
 void DistributedHsmService::register_self()
@@ -233,6 +248,11 @@ bool DistributedHsmService::is_server() const
     return get_self_config().m_is_server;
 }
 
+bool DistributedHsmService::is_controller() const
+{
+    return get_controller_address().empty();
+}
+
 void DistributedHsmService::register_backends()
 {
     auto backend_service =
@@ -283,7 +303,9 @@ void DistributedHsmService::register_backends()
 }
 
 std::string DistributedHsmService::get_backend_address(
-    const std::string& tier_id, const std::string& preferred_address) const
+    const std::string& tier_id,
+    const std::string& preferred_address,
+    HsmNodeInterface::Type interface) const
 {
     auto tier_service = m_hsm_service->get_service(HsmItem::Type::TIER);
 
@@ -314,7 +336,7 @@ std::string DistributedHsmService::get_backend_address(
         const auto node_id = backend.get_node_id();
         LOG_INFO("Checking node id: " << node_id << " for backend");
 
-        const auto& [address, port] = get_node_address(node_id);
+        const auto& [address, port] = get_node_address(node_id, interface);
         auto node_address           = address;
         if (port > 0) {
             node_address += ":" + std::to_string(port);
@@ -322,8 +344,10 @@ std::string DistributedHsmService::get_backend_address(
         if (first_address.empty()) {
             first_address = node_address;
         }
-        if (preferred_address.empty() || preferred_address == address) {
-            if (preferred_address == address) {
+        if (preferred_address.empty() || preferred_address == address
+            || preferred_address == node_address) {
+            if (preferred_address == address
+                || preferred_address == node_address) {
                 LOG_INFO("Using preferred address: " + address);
             }
             else {
@@ -348,7 +372,7 @@ std::string DistributedHsmService::get_backend_address(
 }
 
 std::pair<std::string, unsigned> DistributedHsmService::get_node_address(
-    const std::string& node_id) const
+    const std::string& node_id, HsmNodeInterface::Type interface_type) const
 {
     auto node_service      = m_hsm_service->get_service(HsmItem::Type::NODE);
     auto node_get_response = node_service->make_request(CrudRequest{
@@ -367,8 +391,16 @@ std::pair<std::string, unsigned> DistributedHsmService::get_node_address(
             SOURCE_LOC() + " | Didn't find node " + node_id
             + " in backend search");
     }
+
     auto node = node_get_response->get_item_as<HsmNode>();
-    return {node->host(), node->port()};
+    for (const auto& interface : node->get_interfaces()) {
+        if (interface.get_type() == interface_type) {
+            return {node->host(), interface.get_port()};
+        }
+    }
+    throw std::runtime_error(
+        SOURCE_LOC() + " | Didn't find requested interface for " + node_id
+        + " in backend search");
 }
 
 HsmService* DistributedHsmService::get_hsm_service()

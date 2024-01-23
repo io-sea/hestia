@@ -166,23 +166,26 @@ void setup_tiers(
 void sync_configs(
     DistributedHsmServiceConfig& hsm_config, const ServerConfig& server_config)
 {
-    hsm_config.m_self.set_app_type(
-        server_config.get_web_app_config().get_interface_as_string());
-
-    hsm_config.m_self.set_is_controller(
-        server_config.is_controller()
-        || !server_config.has_controller_address());
+    if (!server_config.get_interfaces().empty()) {
+        hsm_config.m_self.set_interfaces(server_config.get_interfaces());
+    }
+    else {
+        HsmNodeInterface default_interface;
+        default_interface.set_port(8080);
+        hsm_config.m_self.add_interface(default_interface);
+    }
     hsm_config.m_controller_address = server_config.get_controller_address();
-
-    const auto host = server_config.get_host_address();
-    const auto port = server_config.get_port();
-    hsm_config.m_self.set_host_address(host);
-    hsm_config.m_self.set_port(port);
+    hsm_config.m_host_mapping       = server_config.get_host_mapping();
+    hsm_config.m_self.set_host_address(server_config.get_host_address());
+    hsm_config.m_self.set_is_controller(
+        hsm_config.m_controller_address.empty());
 
     auto tag = server_config.get_tag();
     if (tag.empty()) {
         tag = "endpoint";
     }
+
+    const auto port = hsm_config.m_self.get_interfaces()[0].get_port();
     hsm_config.m_self.set_name(
         tag + "_" + SystemUtils::get_hostname().second + "_"
         + std::to_string(port));

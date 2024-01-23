@@ -27,6 +27,8 @@ class HttpRequest {
 
     const Method& get_method() const;
 
+    Map& get_queries() { return m_preamble.m_queries; }
+
     const Map& get_queries() const { return m_preamble.m_queries; }
 
     void overwrite_path(const std::string& new_path);

@@ -90,6 +90,11 @@ class S3Request {
 
     S3StatusCode get_status_code() const { return m_error_code; }
 
+    void set_extra_headers(const Map& extra_headers)
+    {
+        m_extra_headers = extra_headers;
+    }
+
     bool is_valid() const { return m_status == Status::VALID; }
 
     S3Path m_path;
@@ -103,6 +108,7 @@ class S3Request {
     std::string m_signature;
     std::string m_payload_type{"application/xml"};
 
+    Map m_extra_headers;
     std::vector<std::pair<std::string, std::string>> m_queries;
 
   private:

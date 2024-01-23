@@ -1,9 +1,36 @@
 #pragma once
 
+#include "EnumUtils.h"
 #include "ObjectStoreBackend.h"
 #include "OwnableModel.h"
+#include "SerializeableWithFields.h"
 
 namespace hestia {
+
+class HsmNodeInterface : public SerializeableWithFields {
+  public:
+    STRINGABLE_ENUM(Type, S3, HTTP)
+
+    HsmNodeInterface();
+
+    HsmNodeInterface(const HsmNodeInterface& other);
+
+    unsigned get_port() const;
+
+    Type get_type() const;
+
+    std::string get_type_as_string() const;
+
+    void set_port(unsigned port);
+
+    HsmNodeInterface& operator=(const HsmNodeInterface& other);
+
+  private:
+    void init();
+
+    UIntegerField m_port{"port", 0};
+    EnumField<Type, Type_enum_string_converter> m_type{"type", Type::HTTP};
+};
 
 class HsmNode : public HsmItem, public OwnableModel {
   public:
@@ -15,23 +42,23 @@ class HsmNode : public HsmItem, public OwnableModel {
 
     using Ptr = std::unique_ptr<HsmNode>;
 
+    void add_interface(const HsmNodeInterface& interface);
+
     const std::vector<ObjectStoreBackend>& backends() const;
+
+    const std::vector<HsmNodeInterface>& get_interfaces() const;
 
     static std::string get_type();
 
-    bool is_controller() const;
-
     const std::string& host() const;
 
-    unsigned port() const;
-
-    void set_port(unsigned port);
+    bool is_controller() const;
 
     void set_host_address(const std::string& address);
 
-    void set_app_type(const std::string& app_type);
-
     void set_is_controller(bool controller);
+
+    void set_interfaces(const std::vector<HsmNodeInterface>& interfaces);
 
     void set_version(const std::string& version);
 
@@ -43,10 +70,9 @@ class HsmNode : public HsmItem, public OwnableModel {
     static constexpr const char s_model_type[]{"node"};
     BooleanField m_is_controller{"is_controller", false};
     StringField m_host_address{"host_address"};
-    UIntegerField m_port{"port"};
     StringField m_version{"version"};
-    StringField m_app_type{"app_type"};
 
+    SequenceField<std::vector<HsmNodeInterface>> m_interfaces{"interfaces"};
     ForeignKeyProxyField<ObjectStoreBackend> m_backends{"backends"};
 };
 }  // namespace hestia

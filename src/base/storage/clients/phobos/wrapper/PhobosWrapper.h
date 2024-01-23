@@ -264,6 +264,14 @@ int phobos_store_object_list_cpp(
  */
 void phobos_store_object_list_free_cpp(struct object_info* objs, int n_objs);
 
+int phobos_locate_cpp(
+    const char* obj_id,
+    const char* uuid,
+    int version,
+    const char* focus_host,
+    char** hostname,
+    int* nb_new_lock);
+
 #endif
 
 #endif

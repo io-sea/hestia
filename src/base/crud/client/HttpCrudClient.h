@@ -47,7 +47,7 @@ class HttpCrudClient : public CrudClient {
   protected:
     std::string get_item_path(const std::string& id = {}) const;
 
-    std::string get_item_path(const CrudIdentifier& id) const;
+    std::string get_item_path(const CrudIdentifier& id, Map& queries) const;
 
     void get_item_keys(
         const std::vector<std::string>& ids,

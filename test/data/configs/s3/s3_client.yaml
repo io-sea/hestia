@@ -1,9 +1,11 @@
+cache_path: s3_client_cache
+
 object_store_backends:
   - backend_type: s3
     tiers: 
       ids: ["00000000-0000-0000-0000-000000000001"]
     config:
-      default_host: "127.0.0.1:9000"
+      default_host: "127.0.0.1:8090"
       s3_access_key_id: "admin"
       m_s3_secret_access_key_var: "HESTIA_S3_SECRET_KEY"
 

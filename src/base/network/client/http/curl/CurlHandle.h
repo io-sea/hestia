@@ -32,6 +32,8 @@ class CurlHandle {
 
     void prepare_put(const HttpRequest& request, Stream* stream);
 
+    void prepare_post();
+
     void prepare_get();
 
     void prepare_delete();

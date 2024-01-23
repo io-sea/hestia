@@ -15,21 +15,13 @@ class IConsoleInterface;
 
 class HestiaCli {
   public:
-    enum class AppCommand {
-        UNKNOWN,
-        CLIENT,
-        DAEMON_START,
-        DAEMON_STOP,
-        SERVER
-    };
+    enum class AppCommand { UNKNOWN, CLIENT, SERVER };
 
     HestiaCli(std::unique_ptr<IConsoleInterface> console_interface = {});
 
     bool is_client() const;
 
     bool is_server() const;
-
-    bool is_daemon() const;
 
     void parse_args(int argc, char* argv[]);
 
@@ -57,8 +49,6 @@ class HestiaCli {
     OpStatus on_client_request(IHestiaClient& client, HestiaRequest& req);
 
     OpStatus run_server(IHestiaApplication* app);
-    OpStatus start_daemon(IHestiaApplication* app);
-    OpStatus stop_daemon();
 
     OpStatus print_info(IHestiaApplication* app);
     void print_version();
