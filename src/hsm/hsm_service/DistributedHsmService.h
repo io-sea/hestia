@@ -21,6 +21,7 @@ class DistributedHsmServiceConfig {
     std::string m_controller_address;
     std::string m_app_name;
     std::vector<ObjectStoreBackend> m_backends;
+    Map m_host_mapping;
     bool m_is_server{false};
 };
 
@@ -58,6 +59,8 @@ class DistributedHsmService {
     const std::vector<ObjectStoreBackend>& get_backends() const;
 
     const DistributedHsmServiceConfig& get_self_config() const;
+
+    std::string hostname_to_address(const std::string& hostname) const;
 
     bool is_server() const;
 

@@ -68,8 +68,9 @@ void PhobosDescriptor::set_up_object_operation(const Info& info)
             m_handle.xd_fd                = info.m_fd;
             break;
         case Operation::GET:
-            m_handle.xd_op = PHO_XFER_OP_GET;
-            m_handle.xd_fd = info.m_fd;
+            m_handle.xd_op    = PHO_XFER_OP_GET;
+            m_handle.xd_fd    = info.m_fd;
+            m_handle.xd_flags = PHO_XFER_OBJ_BEST_HOST;
             break;
         case Operation::GET_MD:
             m_handle.xd_op = PHO_XFER_OP_GETMD;

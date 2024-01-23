@@ -28,6 +28,8 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
         m_tag                = other.m_tag;
         m_api_prefix         = other.m_api_prefix;
         m_run_blocking       = other.m_run_blocking;
+
+        m_host_mapping = other.m_host_mapping;
         init();
     }
     return *this;
@@ -46,6 +48,8 @@ void ServerConfig::init()
     register_scalar_field(&m_api_prefix);
     register_scalar_field(&m_tag);
     register_scalar_field(&m_run_blocking);
+
+    register_map_field(&m_host_mapping);
 }
 
 const std::string& ServerConfig::get_tag() const
@@ -86,6 +90,11 @@ const std::vector<HsmNodeInterface>& ServerConfig::get_interfaces() const
 const std::string& ServerConfig::get_controller_address() const
 {
     return m_controller_address.get_value();
+}
+
+const Map& ServerConfig::get_host_mapping() const
+{
+    return m_host_mapping.get_map();
 }
 
 bool ServerConfig::has_controller_address() const

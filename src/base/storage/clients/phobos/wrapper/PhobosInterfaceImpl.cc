@@ -3,9 +3,11 @@
 #if HAS_PHOBOS
 #include "PhobosDescriptor.h"
 
+#include "SystemUtils.h"
+
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
-
 #include <unistd.h>
 
 namespace hestia {
@@ -21,10 +23,36 @@ void PhobosInterfaceImpl::finish()
 
 std::string PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
 {
-    PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
-    ssize_t rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
+    char* hostname = nullptr;
+    int num_locks{0};
+    ssize_t rc = phobos_locate_cpp(
+        obj.id().c_str(), nullptr, 0, nullptr, &hostname, &num_locks);
     if (rc != 0) {
-        if (desc.get_handle().xd_params.get.node_name != nullptr) {
+        throw std::runtime_error("phobos_locate " + std::to_string(rc));
+    }
+    if (hostname == nullptr) {
+        throw std::runtime_error("null hostname in phobos locate");
+    }
+    std::string hostname_str(hostname);
+    const auto& [status, local_hostname] = SystemUtils::get_hostname();
+    if (local_hostname != hostname) {
+        if (fd > 0) {
+            ::close(fd);
+        }
+        std::cout << "Got phobos locate host " << hostname << " redir to it "
+                  << std::endl;
+        return std::string(hostname);
+    }
+
+    PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
+    rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
+
+    if (rc != 0) {
+        if (rc == -EREMOTE
+            && desc.get_handle().xd_params.get.node_name != nullptr) {
+            if (fd > 0) {
+                ::close(fd);
+            }
             return std::string(desc.get_handle().xd_params.get.node_name);
         }
         throw std::runtime_error("phobos_get " + std::to_string(rc));

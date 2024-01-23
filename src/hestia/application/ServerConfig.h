@@ -27,6 +27,8 @@ class ServerConfig : public SerializeableWithFields {
 
     const std::string& get_api_prefix() const;
 
+    const Map& get_host_mapping() const;
+
     bool has_controller_address() const;
 
     bool is_controller() const;
@@ -51,6 +53,7 @@ class ServerConfig : public SerializeableWithFields {
 
     BooleanField m_cache_static_resources{"cache_static"};
     StringField m_static_resource_path{"static_resource_path"};
+    ScalarMapField m_host_mapping{"host_mapping"};
 
     StringField m_controller_address{"controller_address"};
     StringField m_tag{"tag"};

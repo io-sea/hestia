@@ -136,7 +136,8 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
         request.get_context()->get_stream(), completion_cb);
 
     if (!redirect_location.empty()) {
-        response = HttpResponse::create(307, "Found");
+        response          = HttpResponse::create(307, "Found");
+        redirect_location = m_service->hostname_to_address(redirect_location);
         std::string location =
             "http://" + redirect_location + request.get_path();
         LOG_INFO("Redirecting to: " + location);
@@ -303,7 +304,8 @@ HttpResponse::Ptr S3ObjectView::on_put_data(
         request.get_context()->get_stream(), completion_cb);
 
     if (!redirect_location.empty()) {
-        response = HttpResponse::create(307, "Found");
+        response          = HttpResponse::create(307, "Found");
+        redirect_location = m_service->hostname_to_address(redirect_location);
         std::string redirect_path =
             "http://" + redirect_location + request.get_path();
         LOG_INFO("Returning redirect to: " + redirect_path);

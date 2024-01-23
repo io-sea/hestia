@@ -181,6 +181,19 @@ UserService* DistributedHsmService::get_user_service()
     return m_user_service;
 }
 
+std::string DistributedHsmService::hostname_to_address(
+    const std::string& hostname) const
+{
+    const auto mapped = m_config.m_host_mapping.get_item(hostname);
+    if (mapped.empty()) {
+        return hostname;
+    }
+    else {
+        LOG_INFO("Mapped hostname " << hostname << " to " << mapped);
+        return mapped;
+    }
+}
+
 void DistributedHsmService::register_self()
 {
     LOG_INFO(

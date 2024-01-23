@@ -175,6 +175,7 @@ void sync_configs(
         hsm_config.m_self.add_interface(default_interface);
     }
     hsm_config.m_controller_address = server_config.get_controller_address();
+    hsm_config.m_host_mapping       = server_config.get_host_mapping();
     hsm_config.m_self.set_host_address(server_config.get_host_address());
     hsm_config.m_self.set_is_controller(
         hsm_config.m_controller_address.empty());
