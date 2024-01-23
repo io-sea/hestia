@@ -61,10 +61,14 @@ class DistributedHsmService {
 
     bool is_server() const;
 
+    bool is_controller() const;
+
     const std::string& get_controller_address() const;
 
     std::string get_backend_address(
-        const std::string& tier_id, const std::string& preferred_address) const;
+        const std::string& tier_id,
+        const std::string& preferred_address,
+        HsmNodeInterface::Type interface) const;
 
     void register_self();
 
@@ -72,7 +76,7 @@ class DistributedHsmService {
     void register_backends();
 
     std::pair<std::string, unsigned> get_node_address(
-        const std::string& node_id) const;
+        const std::string& node_id, HsmNodeInterface::Type interface) const;
 
     DistributedHsmServiceConfig m_config;
     HsmServicePtr m_hsm_service;

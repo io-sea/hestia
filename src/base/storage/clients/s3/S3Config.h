@@ -25,11 +25,23 @@ class S3Config : public SerializeableWithFields {
 
     const std::string& get_default_bucket_name() const;
 
+    const Map& get_extra_headers() const { return m_extra_headers.get_map(); }
+
     bool is_path_uri_style() const;
 
     void set_default_host(const std::string& host)
     {
         m_default_host.update_value(host);
+    }
+
+    void set_access_key_id(const std::string& access_key)
+    {
+        m_s3_access_key_id.update_value(access_key);
+    }
+
+    void set_extra_headers(const Map& headers)
+    {
+        m_extra_headers.get_map_as_writeable() = headers;
     }
 
     S3Config& operator=(const S3Config& other);
@@ -68,6 +80,8 @@ class S3Config : public SerializeableWithFields {
      * If an object has no bucket set use this one
      **/
     StringField m_default_bucket_name{"default_bucket_name", "default"};
+
+    ScalarMapField m_extra_headers{"extra_headers"};
 
     /**
      * Whether to use PATH or Virtual Host style uris

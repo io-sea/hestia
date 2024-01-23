@@ -60,6 +60,13 @@ CrudIdentifierCollection::CrudIdentifierCollection(
     load(buffer, format);
 }
 
+void CrudIdentifierCollection::append(const CrudIdentifierCollection& other)
+{
+    for (const auto& id : other.m_ids) {
+        m_ids.push_back(id);
+    }
+}
+
 const CrudIdentifier& CrudIdentifierCollection::first() const
 {
     if (m_ids.size() != 1) {

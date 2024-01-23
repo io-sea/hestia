@@ -535,10 +535,20 @@ void HsmService::make_object_store_request(
         action_context.get_action().get_preffered_node_address());
 
     auto object_store_completion_func =
-        [this, method,
+        [this, req, method,
          action_context](HsmObjectStoreResponse::Ptr object_store_response) {
-            this->on_object_store_response(
-                method, std::move(object_store_response), action_context);
+            if (!object_store_response->object().get_location().empty()) {
+                auto response =
+                    HsmActionResponse::create(req, action_context.get_action());
+                response->set_redirect_location(
+                    object_store_response->object().get_location());
+                action_context.m_completion_func(std::move(response));
+                return;
+            }
+            else {
+                this->on_object_store_response(
+                    method, std::move(object_store_response), action_context);
+            }
         };
 
     auto object_store_progress_func =

@@ -11,12 +11,8 @@ tiers:
   - id: "00000000-0000-0000-0000-000000000001"
     priority: 0
 
-object_store_backends:
-  - backend_type: file
-    tiers: 
-      ids: ["00000000-0000-0000-0000-000000000001"]
-    config: 
-      root: s3_server_object_store
+event_feed:
+  active: true
 
 logger:
   level: debug

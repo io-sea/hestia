@@ -104,6 +104,12 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
 
     HsmAction action(HsmItem::Type::OBJECT, HsmAction::Action::GET_DATA);
     action.set_subject_key(object_id);
+
+    const auto preferred_node =
+        request.get_header().get_item("hestia-preferred_node");
+    LOG_INFO("Setting preferred node to: " << preferred_node);
+    action.set_preferred_node_address(preferred_node);
+
     std::string redirect_location;
 
     auto response = HttpResponse::create();
@@ -124,13 +130,17 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
         }
     };
     m_service->do_hsm_action(
-        HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
+        HsmActionRequest(
+            action, {auth.m_user_id, auth.m_user_token},
+            HsmNodeInterface::Type::S3),
         request.get_context()->get_stream(), completion_cb);
 
     if (!redirect_location.empty()) {
         response = HttpResponse::create(307, "Found");
-        response->header().set_item(
-            "Location", "http://" + redirect_location + m_path);
+        std::string location =
+            "http://" + redirect_location + request.get_path();
+        LOG_INFO("Redirecting to: " + location);
+        response->header().set_item("Location", location);
     }
     else {
         response->set_completion_status(
@@ -196,40 +206,54 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
         return std::move(object_status);
     }
 
+    std::string object_uuid;
     if (object_get_response->found()) {
-        auto remove_response = on_delete_object(
-            s3_request, auth,
-            object_get_response->get_item()->get_primary_key());
-        if (remove_response->error()) {
-            return remove_response;
+        auto object = object_get_response->get_item_as<HsmObject>();
+        if (object->size() > 0) {
+            auto remove_response = on_delete_object(
+                s3_request, auth,
+                object_get_response->get_item()->get_primary_key());
+            if (remove_response->error()) {
+                return remove_response;
+            }
+        }
+        else {
+            object_uuid = object_get_response->get_item()->get_primary_key();
         }
     }
 
-    auto [status, get_bucket_response] = on_get_bucket(s3_request, auth);
-    if (status->error()) {
-        return std::move(status);
-    }
+    if (object_uuid.empty()) {
+        auto [status, get_bucket_response] = on_get_bucket(s3_request, auth);
+        if (status->error()) {
+            return std::move(status);
+        }
 
-    CrudIdentifier object_id;
-    object_id.set_name(s3_request.get_object_key());
-    object_id.set_parent_primary_key(
-        get_bucket_response->get_item()->get_primary_key());
+        CrudIdentifier object_id;
+        object_id.set_name(s3_request.get_object_key());
+        object_id.set_parent_primary_key(
+            get_bucket_response->get_item()->get_primary_key());
 
-    Map attributes =
-        request.get_header().get_items_with_prefix(S3Path::meta_prefix);
-    CrudAttributes::FormatSpec attr_format;
+        Map attributes =
+            request.get_header().get_items_with_prefix(S3Path::meta_prefix);
+        CrudAttributes::FormatSpec attr_format;
 
-    auto create_response = m_service->make_request(
-        CrudRequest{
-            CrudMethod::CREATE,
-            {object_id, CrudAttributes(attributes, attr_format),
-             CrudQuery::BodyFormat::ITEM},
-            auth},
-        HsmItem::hsm_object_name);
-    if (!create_response->ok()) {
-        const auto msg = create_response->get_error().to_string();
-        LOG_ERROR(msg);
-        return S3ViewUtils::on_server_error(s3_request, msg);
+        LOG_INFO(
+            "Creating object with: " << object_id.get_name() << " "
+                                     << object_id.get_parent_primary_key());
+
+        auto create_response = m_service->make_request(
+            CrudRequest{
+                CrudMethod::CREATE,
+                {object_id, CrudAttributes(attributes, attr_format),
+                 CrudQuery::BodyFormat::ITEM},
+                auth},
+            HsmItem::hsm_object_name);
+        if (!create_response->ok()) {
+            const auto msg = create_response->get_error().to_string();
+            LOG_ERROR(msg);
+            return S3ViewUtils::on_server_error(s3_request, msg);
+        }
+        object_uuid = create_response->get_item()->get_primary_key();
     }
 
     LOG_INFO("Checking whether to put data");
@@ -237,9 +261,7 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
             request.get_header().get_content_length_as_size_t();
         content_length > 0) {
         LOG_INFO("Putting data");
-        return on_put_data(
-            request, auth, create_response->get_item()->get_primary_key(),
-            content_length);
+        return on_put_data(request, auth, object_uuid, content_length);
     }
     else {
         return HttpResponse::create();
@@ -275,13 +297,17 @@ HttpResponse::Ptr S3ObjectView::on_put_data(
             }
         };
     m_service->do_hsm_action(
-        HsmActionRequest(action, {auth.m_user_id, auth.m_user_token}),
+        HsmActionRequest(
+            action, {auth.m_user_id, auth.m_user_token},
+            HsmNodeInterface::Type::S3),
         request.get_context()->get_stream(), completion_cb);
 
     if (!redirect_location.empty()) {
         response = HttpResponse::create(307, "Found");
-        response->header().set_item(
-            "Location", "http://" + redirect_location + m_path);
+        std::string redirect_path =
+            "http://" + redirect_location + request.get_path();
+        LOG_INFO("Returning redirect to: " + redirect_path);
+        response->header().set_item("Location", redirect_path);
     }
     else {
         response->set_completion_status(

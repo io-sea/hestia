@@ -6,7 +6,6 @@
 #include "FileStreamSource.h"
 
 #include "ConsoleInterface.h"
-#include "DaemonManager.h"
 #include "ErrorUtils.h"
 #include "Logger.h"
 #include "StringUtils.h"
@@ -223,9 +222,6 @@ void HestiaCli::parse_args(int argc, char* argv[])
 
     commands["server"] = app.add_subcommand("server", "Run the Hestia Server");
 
-    commands["start"] = app.add_subcommand("start", "Start the Hestia Daemon");
-    commands["stop"]  = app.add_subcommand("stop", "Stop the Hestia Daemon");
-
     app.add_flag(
         "--version", m_client_command.m_is_version,
         "Print application version");
@@ -303,12 +299,6 @@ void HestiaCli::parse_args(int argc, char* argv[])
         print_version();
         return;
     }
-    else if (commands["start"]->parsed()) {
-        m_app_command = AppCommand::DAEMON_START;
-    }
-    else if (commands["stop"]->parsed()) {
-        m_app_command = AppCommand::DAEMON_STOP;
-    }
     else if (commands["server"]->parsed()) {
         m_app_command = AppCommand::SERVER;
     }
@@ -328,14 +318,7 @@ bool HestiaCli::is_client() const
 
 bool HestiaCli::is_server() const
 {
-    return m_app_command == AppCommand::DAEMON_START
-           || m_app_command == AppCommand::SERVER;
-}
-
-bool HestiaCli::is_daemon() const
-{
-    return m_app_command == AppCommand::DAEMON_START
-           || m_app_command == AppCommand::DAEMON_STOP;
+    return m_app_command == AppCommand::SERVER;
 }
 
 OpStatus HestiaCli::run(IHestiaApplication* app, bool skip_init)
@@ -344,13 +327,7 @@ OpStatus HestiaCli::run(IHestiaApplication* app, bool skip_init)
         return {};
     }
 
-    if (app == nullptr || m_app_command == AppCommand::DAEMON_STOP) {
-        return stop_daemon();
-    }
-    else if (m_app_command == AppCommand::DAEMON_START) {
-        return start_daemon(app);
-    }
-    else if (m_app_command == AppCommand::SERVER) {
+    if (m_app_command == AppCommand::SERVER) {
         return run_server(app);
     }
     else if (m_app_command == AppCommand::CLIENT) {
@@ -589,34 +566,6 @@ OpStatus HestiaCli::run_server(IHestiaApplication* app)
             OpStatus::Status::ERROR, -1, "Unknown exception running server.");
     }
     return status;
-}
-
-OpStatus HestiaCli::start_daemon(IHestiaApplication* app)
-{
-    DaemonManager daemon_manager;
-    auto rc = daemon_manager.start();
-    if (rc == DaemonManager::Status::EXIT_OK) {
-        return {};
-    }
-    else if (rc == DaemonManager::Status::EXIT_FAILED) {
-        return OpStatus(
-            OpStatus::Status::ERROR, 0, "Error starting hestia Daemon");
-    }
-    return run_server(app);
-}
-
-OpStatus HestiaCli::stop_daemon()
-{
-    DaemonManager daemon_manager;
-    const auto rc = daemon_manager.stop();
-    if (rc == DaemonManager::Status::EXIT_OK) {
-        return {};
-    }
-    else if (rc == DaemonManager::Status::EXIT_FAILED) {
-        return OpStatus(
-            OpStatus::Status::ERROR, 0, "Error stopping hestia Daemon");
-    }
-    return {};
 }
 
 }  // namespace hestia

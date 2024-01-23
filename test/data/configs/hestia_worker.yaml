@@ -1,9 +1,6 @@
 server:
   host: 127.0.0.1
   port: 8090
-  web_app: hestia::HsmService
-  backend: hestia::Basic
-  controller: false
   controller_address: 127.0.0.1:8080
   tag: worker0
 

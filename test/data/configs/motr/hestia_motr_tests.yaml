@@ -1,18 +1,7 @@
 server:
   host_address: 127.0.0.1
   host_port: 8080
-  web_app: hestia::HsmService
-  backend: hestia::Basic
   controller: true
-
-web_apps:
-  - identitifier: hestia::HsmService
-    interface: http
-  - identitifier: hestia::HsmServiceS3
-    interface: s3
-
-server_backends:
-  - identifier: hestia::Basic
 
 object_store_clients:
   - identifier: hestia::FileHsmObjectStoreClient

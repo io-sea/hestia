@@ -54,9 +54,7 @@ int main(int argc, char** argv)
                       << " for details." << std::endl;
             rc = -1;
         }
-        if (!hestia_cli.is_daemon()) {
-            LOG_INFO("Hestia Finished");
-        }
+        LOG_INFO("Hestia Finished");
     }
     return rc;
 }

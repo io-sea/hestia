@@ -12,11 +12,11 @@ tiers:
     priority: 0
 
 object_store_backends:
-  - backend_type: file
+  - backend_type: mock_phobos
     tiers: 
       ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
-      root: s3_server_object_store
+      root: phobos_tests_mock_phobos
 
 logger:
   level: debug

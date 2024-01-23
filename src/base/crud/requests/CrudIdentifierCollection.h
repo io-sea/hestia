@@ -34,6 +34,8 @@ class CrudIdentifierCollection {
 
     void add(const CrudIdentifier& id);
 
+    void append(const CrudIdentifierCollection& other);
+
     void add_primary_key(const std::string& key);
 
     void add_primary_keys(const std::vector<std::string>& keys);

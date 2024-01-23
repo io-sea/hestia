@@ -77,9 +77,12 @@ void HttpCrudClient::make_request(
         std::size_t count{0};
         for (const auto& id : crud_request.get_ids().data()) {
             std::string path_suffix;
-            HttpCrudPath::from_identifier(id, path_suffix);
+            Map queries;
+            HttpCrudPath::from_identifier(id, path_suffix, queries);
 
             HttpRequest req(get_item_path() + path_suffix, method);
+            req.set_queries(queries);
+
             apply_common_headers(crud_request, req);
             if (crud_request.method() == CrudMethod::READ) {
                 req.set_query(
@@ -138,9 +141,10 @@ void HttpCrudClient::read(
     }
     else {
         std::string path = get_item_path();
-        HttpCrudPath::from_query(crud_request.get_query(), path);
-
+        Map queries;
+        HttpCrudPath::from_query(crud_request.get_query(), path, queries);
         HttpRequest request(path, HttpRequest::Method::GET);
+        request.set_queries(queries);
         request.set_query(
             "child_format",
             get_query_child_format(
@@ -185,21 +189,17 @@ bool HttpCrudClient::is_locked(
     return false;
 }
 
-std::string HttpCrudClient::get_item_path(const CrudIdentifier& id) const
+std::string HttpCrudClient::get_item_path(
+    const CrudIdentifier& id, Map& queries) const
 {
     if (id.has_primary_key()) {
         return get_item_path(id.get_primary_key());
     }
     else {
-        std::string queries;
         if (id.has_parent_primary_key()) {
-            queries += "parent_id=" + id.get_parent_primary_key();
+            queries.set_item("parent_id", id.get_parent_primary_key());
         }
-        auto path = get_item_path();
-        if (!queries.empty()) {
-            path += "/?" + queries;
-        }
-        return path;
+        return get_item_path();
     }
 }
 

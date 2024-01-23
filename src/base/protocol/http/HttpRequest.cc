@@ -29,7 +29,6 @@ const std::string& HttpRequest::get_tracking_id() const
 
 void HttpRequest::on_chunk(const std::string& msg)
 {
-    LOG_INFO(msg);
     if (m_has_read_header) {
         m_body += msg;
     }

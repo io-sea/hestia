@@ -80,7 +80,7 @@ void MockHsmHttpClient::make_request(
             "http://");
         const auto& [start, rest] =
             hestia::StringUtils::split_on_first(working_address, "/");
-        working_address = start;
+        working_address = hestia::StringUtils::split_on_first(start, ":").first;
 
         LOG_INFO("Got redirect to: " + working_address);
         auto app_iter = m_apps.find(working_address);

@@ -238,6 +238,9 @@ void S3Request::populate_headers(
     }
     header.set_item("x-amz-date", m_timestamp.m_value);
     header.set_item("host", get_resource_host(bucket_name));
+    for (const auto& [key, value] : m_extra_headers.data()) {
+        header.set_item(key, value);
+    }
 }
 
 void S3Request::populate_authorization_headers(

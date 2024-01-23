@@ -86,6 +86,20 @@ void CurlHandle::prepare_get()
     }
 }
 
+void CurlHandle::prepare_post()
+{
+    auto rc = curl_easy_setopt(m_handle, CURLOPT_POST, 1L);
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl to get mode with error: " + m_error_buffer);
+    }
+    rc = curl_easy_setopt(m_handle, CURLOPT_POSTFIELDSIZE, 0L);
+    if (rc != CURLE_OK) {
+        throw std::runtime_error(
+            "Failed to set curl to get mode with error: " + m_error_buffer);
+    }
+}
+
 void CurlHandle::prepare_head()
 {
     auto rc = curl_easy_setopt(m_handle, CURLOPT_NOBODY, 1L);

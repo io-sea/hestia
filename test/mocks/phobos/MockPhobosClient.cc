@@ -38,6 +38,10 @@ void MockPhobosClient::initialize(
         dynamic_cast<MockPhobosInterface*>(m_phobos_interface->impl())
             ->set_root(root);
     }
+    if (config_data.has_map_item("redirect_location")) {
+        set_redirect_location(
+            config_data.get_map_item("redirect_location")->get_scalar());
+    }
 }
 
 std::string MockPhobosClient::get_registry_identifier()

@@ -3,6 +3,7 @@
 #include "CrudRequest.h"
 #include "Extent.h"
 #include "HsmAction.h"
+#include "HsmNode.h"
 
 #include <memory>
 
@@ -15,7 +16,9 @@ class HsmActionRequest :
     using Ptr = std::unique_ptr<HsmActionRequest>;
 
     HsmActionRequest(
-        const HsmAction& action, const CrudUserContext& user_context);
+        const HsmAction& action,
+        const CrudUserContext& user_context,
+        HsmNodeInterface::Type interface = HsmNodeInterface::Type::HTTP);
 
     Extent extent() const;
 
@@ -24,6 +27,8 @@ class HsmActionRequest :
     HsmItem::Type get_subject() const;
 
     const CrudUserContext& get_user_context() const;
+
+    HsmNodeInterface::Type get_interface() const;
 
     bool is_release_data_action() const;
 
@@ -43,6 +48,8 @@ class HsmActionRequest :
 
     void set_extent(const Extent& extent);
 
+    void set_interface(HsmNodeInterface::Type interface);
+
     uint8_t source_tier() const;
 
     uint8_t target_tier() const;
@@ -54,6 +61,7 @@ class HsmActionRequest :
     std::string to_string() const;
 
   private:
+    HsmNodeInterface::Type m_interface{HsmNodeInterface::Type::HTTP};
     CrudUserContext m_user_context;
     HsmAction m_action;
 };

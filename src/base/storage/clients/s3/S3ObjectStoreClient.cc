@@ -65,6 +65,7 @@ void S3ObjectStoreClient::init_s3_request(
     req.m_signed_headers = {"host", "x-amz-content-sha256", "x-amz-date"};
     req.m_range          = S3Range(
         ctx.m_request.extent().m_offset, ctx.m_request.extent().m_length);
+    req.set_extra_headers(m_config.get_extra_headers());
 }
 
 void S3ObjectStoreClient::create_bucket_if_needed(

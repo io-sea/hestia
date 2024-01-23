@@ -19,6 +19,7 @@ S3Config& S3Config::operator=(const S3Config& other)
     if (this != &other) {
         SerializeableWithFields::operator=(other);
         m_metadataprefix           = other.m_metadataprefix;
+        m_extra_headers            = other.m_extra_headers;
         m_user_agent               = other.m_user_agent;
         m_default_host             = other.m_default_host;
         m_default_bucket_name      = other.m_default_bucket_name;
@@ -39,6 +40,7 @@ void S3Config::init()
     register_scalar_field(&m_uri_style);
     register_scalar_field(&m_s3_access_key_id);
     register_scalar_field(&m_s3_secret_access_key_var);
+    register_map_field(&m_extra_headers);
 }
 
 const std::string& S3Config::get_metadata_prefix() const

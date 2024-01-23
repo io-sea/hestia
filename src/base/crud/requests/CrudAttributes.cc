@@ -200,22 +200,54 @@ const std::string& CrudAttributes::get_key_prefix() const
     return m_key_prefix;
 }
 
-std::vector<std::string> CrudAttributes::get_ids() const
+CrudIdentifierCollection CrudAttributes::get_ids() const
 {
+    CrudIdentifierCollection crud_ids;
+
     std::vector<std::string> ids;
+    std::vector<std::string> names;
+    std::vector<std::string> parent_ids;
     if (is_json()) {
         m_json->get_values(SearchExpression("id"), ids);
-        if (ids.empty()) {
-            ids.resize(m_json->get_size());
+        m_json->get_values(SearchExpression("name"), names);
+        m_json->get_values(SearchExpression("parent_id"), parent_ids);
+
+        for (std::size_t idx = 0; idx < m_json->get_size(); idx++) {
+            CrudIdentifier id;
+            if (ids.size() > idx) {
+                id.set_primary_key(ids[idx]);
+            }
+            if (names.size() > idx) {
+                id.set_name(names[idx]);
+            }
+            if (parent_ids.size() > idx) {
+                id.set_parent_primary_key(parent_ids[idx]);
+            }
+            crud_ids.add(id);
         }
     }
     else {
         m_dict->get_values(SearchExpression("id"), ids);
+        m_dict->get_values(SearchExpression("name"), names);
+        m_dict->get_values(SearchExpression("parent_id"), parent_ids);
         if (ids.empty()) {
             ids.resize(m_dict->get_size());
         }
+        for (std::size_t idx = 0; idx < m_dict->get_size(); idx++) {
+            CrudIdentifier id;
+            if (ids.size() > idx) {
+                id.set_primary_key(ids[idx]);
+            }
+            if (names.size() > idx) {
+                id.set_name(names[idx]);
+            }
+            if (parent_ids.size() > idx) {
+                id.set_parent_primary_key(parent_ids[idx]);
+            }
+            crud_ids.add(id);
+        }
     }
-    return ids;
+    return crud_ids;
 }
 
 void CrudAttributes::write(
