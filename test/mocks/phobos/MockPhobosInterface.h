@@ -10,7 +10,9 @@ class MockPhobosInterface : public IPhobosInterfaceImpl {
 
     static std::unique_ptr<MockPhobosInterface> create();
 
-    std::string get(const StorageObject& obj, int fd) override;
+    void get(const StorageObject& obj, int fd) override;
+
+    std::string locate(const std::string& object_id) override;
 
     bool exists(const StorageObject& obj) override;
 

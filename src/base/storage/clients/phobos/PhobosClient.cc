@@ -79,6 +79,16 @@ void PhobosClient::get(ObjectStoreContext& ctx) const
     m_phobos_interface->get_metadata(object);
 
     if (ctx.has_stream()) {
+        const auto redirect_location = m_phobos_interface->locate(object.id());
+        if (!redirect_location.empty()) {
+            auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
+            LOG_INFO(
+                "Set redirect location on response: " << redirect_location);
+            response->object().set_location(redirect_location);
+            ctx.finish(std::move(response));
+            return;
+        }
+
         LOG_INFO("Handling stream");
         auto fifo = FifoStreamSource::create();
         fifo->set_size(ctx.m_request.object().size());
@@ -92,11 +102,7 @@ void PhobosClient::get(ObjectStoreContext& ctx) const
             auto response = ObjectStoreResponse::create(ctx.m_request, m_id);
             response->object() = object;
             try {
-                const auto redirect_location =
-                    m_phobos_interface->get(response->object(), fd);
-                LOG_INFO(
-                    "Set redirect location on response: " << redirect_location);
-                response->object().set_location(redirect_location);
+                m_phobos_interface->get(response->object(), fd);
             }
             catch (const std::exception& e) {
                 response->on_error(

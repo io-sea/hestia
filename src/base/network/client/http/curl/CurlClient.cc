@@ -248,7 +248,7 @@ void CurlClient::make_request(
     curl_easy_setopt(handle->m_handle, CURLOPT_URL, url.c_str());
 
     LOG_INFO("Making request to: " << url);
-    LOG_INFO(request.to_string());
+    LOG_DEBUG(request.to_string());
     auto rc = curl_easy_perform(handle->m_handle);
     if (rc != CURLE_OK) {
         std::string msg = SOURCE_LOC() + " | Failed request: " + url;
@@ -278,8 +278,6 @@ void CurlClient::make_request(
             response = HttpResponse::create(400, stream_state.message());
         }
     }
-
-    LOG_INFO("Request all done");
     completion_func(std::move(response));
 }
 

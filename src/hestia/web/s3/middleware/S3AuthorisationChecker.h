@@ -29,11 +29,14 @@ class S3AuthorisationChecker {
     static AuthResponse authorise(
         const UserService& user_service,
         const HttpRequest& request,
-        const std::string& domain);
+        const std::string& domain,
+        bool check_signature = true);
 
   private:
     static S3Status check(
-        const S3Request& s3_request, const HttpRequest& request);
+        const S3Request& s3_request,
+        const HttpRequest& request,
+        bool check_signature);
 
     static std::pair<S3Status, UserContext> find_user(
         const UserService& user_service, S3Request& s3_request);

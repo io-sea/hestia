@@ -9,7 +9,8 @@ namespace hestia {
 S3AuthorisationChecker::AuthResponse S3AuthorisationChecker::authorise(
     const UserService& user_service,
     const HttpRequest& http_request,
-    const std::string& domain)
+    const std::string& domain,
+    bool check_signature)
 {
     S3Request s3_request(http_request, domain, true);
 
@@ -35,7 +36,7 @@ S3AuthorisationChecker::AuthResponse S3AuthorisationChecker::authorise(
 
     s3_request.set_user_secret_key(user_context.m_token);
 
-    const auto check_status = check(s3_request, http_request);
+    const auto check_status = check(s3_request, http_request, check_signature);
     return {
         check_status.is_ok() ? Status::VALID : Status::FAILED, check_status,
         user_context};
@@ -90,12 +91,14 @@ bool S3AuthorisationChecker::awaiting_signed_payload(const HttpRequest& request)
 }
 
 S3Status S3AuthorisationChecker::check(
-    const S3Request& s3_request, const HttpRequest& http_request)
+    const S3Request& s3_request,
+    const HttpRequest& http_request,
+    bool check_signature)
 {
     const auto signature = s3_request.get_signature(
         http_request, HashUtils::do_sha256(http_request.body()),
         s3_request.get_user_context().m_user_secret_key);
-    if (s3_request.m_signature == signature) {
+    if ((!check_signature) || (s3_request.m_signature == signature)) {
         return {};
     }
     else {

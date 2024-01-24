@@ -114,7 +114,6 @@ bool BasicHttpServer::on_body_chunk(
 
     if (body_count >= expected_body_size) {
         LOG_INFO("Finished with streamed body - sending eom");
-        ;
         auto reset_state = context.get_stream()->reset();
         if (!reset_state.ok()) {
             LOG_ERROR("Error resetting stream: " << reset_state.to_string());

@@ -51,9 +51,14 @@ void PhobosInterface::finish()
     m_impl->finish();
 }
 
-std::string PhobosInterface::get(const StorageObject& object, int fd)
+void PhobosInterface::get(const StorageObject& object, int fd)
 {
-    return m_impl->get(object, fd);
+    m_impl->get(object, fd);
+}
+
+std::string PhobosInterface::locate(const std::string& object_id)
+{
+    return m_impl->locate(object_id);
 }
 
 bool PhobosInterface::exists(const StorageObject& obj)
