@@ -31,7 +31,8 @@ OpStatus HestiaServer::run()
         if (app_config.get_type() == HsmNodeInterface::Type::S3) {
             LOG_INFO("Adding S3 interface");
             HestiaS3WebAppConfig config;
-            web_app = m_apps
+            config.m_enable_auth = app_config.is_auth_enabled();
+            web_app              = m_apps
                           .emplace_back(std::make_unique<HestiaS3WebApp>(
                               config, m_distributed_hsm_service.get(),
                               m_user_service.get()))

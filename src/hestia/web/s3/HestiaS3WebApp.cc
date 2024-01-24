@@ -38,8 +38,8 @@ void HestiaS3WebApp::set_up_routing()
 
 void HestiaS3WebApp::set_up_middleware()
 {
-    auto auth_middleware =
-        std::make_unique<S3AuthenticationMiddleware>(m_config.m_domain);
+    auto auth_middleware = std::make_unique<S3AuthenticationMiddleware>(
+        m_config.m_domain, m_config.m_enable_auth);
     auth_middleware->set_user_service(m_user_service);
     add_middleware(std::move(auth_middleware));
 }

@@ -21,12 +21,12 @@ void PhobosInterfaceImpl::finish()
     phobos_fini_cpp();
 }
 
-std::string PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
+std::string PhobosInterfaceImpl::locate(const std::string& object_id)
 {
     char* hostname = nullptr;
     int num_locks{0};
     ssize_t rc = phobos_locate_cpp(
-        obj.id().c_str(), nullptr, 0, nullptr, &hostname, &num_locks);
+        object_id.c_str(), nullptr, 0, nullptr, &hostname, &num_locks);
     if (rc != 0) {
         throw std::runtime_error("phobos_locate " + std::to_string(rc));
     }
@@ -34,30 +34,20 @@ std::string PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
         throw std::runtime_error("null hostname in phobos locate");
     }
     std::string hostname_str(hostname);
+    free(hostname);
+
     const auto& [status, local_hostname] = SystemUtils::get_hostname();
-    if (local_hostname != hostname) {
-        if (fd > 0) {
-            ::close(fd);
-        }
-        std::cout << "Got phobos locate host " << hostname << " redir to it "
-                  << std::endl;
-        return std::string(hostname);
-    }
+    return local_hostname == hostname_str ? "" : hostname_str;
+}
 
+void PhobosInterfaceImpl::get(const StorageObject& obj, int fd)
+{
     PhobosDescriptor desc({obj.id(), PhobosDescriptor::Operation::GET, fd});
-    rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
-
+    const auto rc = phobos_get_cpp(&desc.get_handle(), 1, nullptr, nullptr);
     if (rc != 0) {
-        if (rc == -EREMOTE
-            && desc.get_handle().xd_params.get.node_name != nullptr) {
-            if (fd > 0) {
-                ::close(fd);
-            }
-            return std::string(desc.get_handle().xd_params.get.node_name);
-        }
         throw std::runtime_error("phobos_get " + std::to_string(rc));
     }
-    return {};
+    return;
 }
 
 void PhobosInterfaceImpl::put(const StorageObject& obj, int fd)

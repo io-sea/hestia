@@ -1,0 +1,20 @@
+server:
+  host: 127.0.0.1
+  controller_address: 192.168.0.178:8080
+  tag: worker1
+  host_mapping:
+    phobos_worker_node0 : 192.168.0.178:8091
+  interfaces: 
+    - type: s3
+      port: 8092
+
+object_store_backends:
+  - backend_type: phobos
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001"]
+
+logger:
+  level: info
+
+
+  

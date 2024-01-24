@@ -23,7 +23,9 @@ class PhobosInterface {
 
     void finish();
 
-    std::string get(const StorageObject& object, int fd);
+    void get(const StorageObject& object, int fd);
+
+    std::string locate(const std::string& object_id);
 
     void put(const StorageObject& object, int fd);
 

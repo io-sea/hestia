@@ -9,6 +9,7 @@ class UserService;
 
 struct HestiaS3WebAppConfig {
     std::string m_domain;
+    bool m_enable_auth{true};
 };
 
 class HestiaS3WebApp : public WebApp {

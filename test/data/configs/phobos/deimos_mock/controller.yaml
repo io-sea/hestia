@@ -1,0 +1,18 @@
+server:
+  host: 127.0.0.1
+  tag: s3_controller0
+  interfaces: 
+    - type: s3
+      port: 8090
+    - type: http
+      port: 8080
+
+tiers:
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+
+event_feed:
+  active: true
+
+logger:
+  level: debug

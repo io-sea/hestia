@@ -15,7 +15,6 @@ CurlHandle::~CurlHandle()
 
 void CurlHandle::setup()
 {
-    LOG_INFO("Setting up curl handle");
     m_handle = curl_easy_init();
     if (m_handle == nullptr) {
         throw std::runtime_error("Failed to initialize curl session");
@@ -37,7 +36,6 @@ void CurlHandle::setup()
 
 void CurlHandle::free()
 {
-    LOG_INFO("Freeing handle");
     if (m_handle != nullptr) {
         curl_easy_cleanup(m_handle);
         m_handle = nullptr;

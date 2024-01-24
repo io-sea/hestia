@@ -11,7 +11,9 @@ class PhobosInterfaceImpl : public IPhobosInterfaceImpl {
 
     void finish() override;
 
-    std::string get(const StorageObject& obj, int fd) override;
+    void get(const StorageObject& obj, int fd) override;
+
+    std::string locate(const std::string& object_id) override;
 
     void put(const StorageObject& obj, int fd) override;
 

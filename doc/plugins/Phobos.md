@@ -70,7 +70,7 @@ podman build --platform linux/arm64 -t phobos_worker_node .
 We can launch the container with the db with:
 
 ```sh
-podman run -it --platform linux/arm64 -p 8080:5432 -v $HOME:$HOME -h phobos_db_node phobos_db_node
+podman run -it --platform linux/arm64 -p 8888:5432 -p 8080:8080 -p 8090:8090 -v $HOME:$HOME -h phobos_db_node phobos_db_node
 ```
 
 Inside the container start the db, launch phobos, create a storage device and add an object:
@@ -89,7 +89,7 @@ See if you can access the db from the host now with pgadmin or libpq.
 We can launch the worker with:
 
 ```sh
-podman run -it --platform linux/arm64 -v $HOME:$HOME -h phobos_worker_node 
+podman run -it --platform linux/arm64 -v $HOME:$HOME -h phobos_worker_node0 
 --add-host phobos_db_host:<my_host_ip> --network=host phobos_worker_node
 ```
 
@@ -97,8 +97,14 @@ Inside the worker container start phobos and create a storage device:
 
 ```sh
 ./start_phobos.sh phobos.conf
-./phobos_add_dir.sh /home/phobos_worker_device phobos_worker_device
+./phobos_add_dir.sh /home/phobos_worker_device0 phobos_worker_device0
 export PYTHONPATH=/phobos/src/cli/build/lib.linux-$(arch)-3.6
 alias phobos=/phobos/src/cli/build/scripts-3.6/phobos
 phobos put --family dir phobos.conf phobos_worker_file
 ```
+
+# Running a 'phobos locate' demo system
+
+To run a system that can demo Phobos locate we can launch a node with a db (Controller) and two worker nodes. The configs [here](/test/data/configs/phobos/deimos/) correspond to the nodes. You need to build Hestia in the containers and replace the Host ip address in the configs (currently `192.168.0.178` in there).
+
+Then launch the controller and both workers, you should be able to use the Hestia s3 tool [here](/src/integrations/s3_main.cc) to put an object to the controller, it will end up on one of the workers. You can then try to get it from a different worker using the `preferred_node` flag - it should automatically redirect to the worker with the data and return the object data to the host.

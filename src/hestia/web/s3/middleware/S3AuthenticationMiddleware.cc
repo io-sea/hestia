@@ -5,8 +5,8 @@
 namespace hestia {
 
 S3AuthenticationMiddleware::S3AuthenticationMiddleware(
-    const std::string& domain) :
-    m_domain(domain)
+    const std::string& domain, bool enable_auth) :
+    m_enable_auth(enable_auth), m_domain(domain)
 {
 }
 
@@ -20,8 +20,8 @@ HttpResponse::Ptr S3AuthenticationMiddleware::call(
         return func(request);
     }
 
-    const auto& auth_response =
-        S3AuthorisationChecker::authorise(*m_user_service, request, m_domain);
+    const auto& auth_response = S3AuthorisationChecker::authorise(
+        *m_user_service, request, m_domain, m_enable_auth);
 
     if (auth_response.m_status == S3AuthorisationChecker::Status::FAILED) {
         LOG_INFO(

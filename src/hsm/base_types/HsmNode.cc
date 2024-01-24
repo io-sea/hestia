@@ -14,6 +14,7 @@ void HsmNodeInterface::init()
 {
     register_scalar_field(&m_port);
     register_scalar_field(&m_type);
+    register_scalar_field(&m_enable_auth);
 }
 
 HsmNodeInterface::HsmNodeInterface(const HsmNodeInterface& other) :
@@ -26,8 +27,9 @@ HsmNodeInterface& HsmNodeInterface::operator=(const HsmNodeInterface& other)
 {
     if (this != &other) {
         SerializeableWithFields::operator=(other);
-        m_port = other.m_port;
-        m_type = other.m_type;
+        m_port        = other.m_port;
+        m_type        = other.m_type;
+        m_enable_auth = other.m_enable_auth;
         init();
     }
     return *this;
@@ -41,6 +43,11 @@ unsigned HsmNodeInterface::get_port() const
 void HsmNodeInterface::set_port(unsigned port)
 {
     m_port.update_value(port);
+}
+
+bool HsmNodeInterface::is_auth_enabled() const
+{
+    return m_enable_auth.get_value();
 }
 
 HsmNodeInterface::Type HsmNodeInterface::get_type() const

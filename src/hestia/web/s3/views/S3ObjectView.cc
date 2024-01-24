@@ -14,7 +14,9 @@
 
 #include "Logger.h"
 
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 namespace hestia {
 S3ObjectView::S3ObjectView(
@@ -113,27 +115,40 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
     std::string redirect_location;
 
     auto response = HttpResponse::create();
+    response->set_completion_status(
+        HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
 
-    auto completion_cb = [&s3_request, &response, &redirect_location](
-                             HsmActionResponse::Ptr response_ret) {
-        if (response_ret->ok()) {
-            LOG_INFO("Data action completed sucessfully");
-            if (!response_ret->get_redirect_location().empty()) {
-                redirect_location = response_ret->get_redirect_location();
+    auto completion_cb =
+        [request_context = request.get_context(), &s3_request,
+         &redirect_location](HsmActionResponse::Ptr response_ret) {
+            if (response_ret->ok()) {
+                LOG_INFO("Data action completed sucessfully");
+                if (!response_ret->get_redirect_location().empty()) {
+                    redirect_location = response_ret->get_redirect_location();
+                    LOG_INFO("Got redirect location " << redirect_location);
+                }
+                else {
+                    auto response = HttpResponse::create();
+                    request_context->set_response(std::move(response));
+                }
             }
-        }
-        else {
-            const std::string msg = "Error in data action \n"
-                                    + response_ret->get_error().to_string();
-            LOG_ERROR(msg);
-            response = S3ViewUtils::on_server_error(s3_request, msg);
-        }
-    };
+            else {
+                const std::string msg = "Error in data action \n"
+                                        + response_ret->get_error().to_string();
+                LOG_ERROR(msg);
+                auto response = S3ViewUtils::on_server_error(s3_request, msg);
+                request_context->set_response(HttpResponse::create(
+                    {HttpStatus::Code::_500_INTERNAL_SERVER_ERROR, msg}));
+            }
+        };
     m_service->do_hsm_action(
         HsmActionRequest(
             action, {auth.m_user_id, auth.m_user_token},
             HsmNodeInterface::Type::S3),
         request.get_context()->get_stream(), completion_cb);
+
+    // using namespace std::chrono_literals;
+    // std::this_thread::sleep_for(1000ms);
 
     if (!redirect_location.empty()) {
         response          = HttpResponse::create(307, "Found");
@@ -143,9 +158,11 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
         LOG_INFO("Redirecting to: " + location);
         response->header().set_item("Location", location);
     }
-    else {
-        response->set_completion_status(
-            HttpResponse::CompletionStatus::AWAITING_BODY_CHUNK);
+
+    if (request.get_context()->has_response()
+        && request.get_context()->get_response()->error()) {
+        return std::make_unique<HttpResponse>(
+            *request.get_context()->get_response());
     }
     return response;
 }

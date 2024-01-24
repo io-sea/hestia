@@ -15,7 +15,6 @@
 
 #include "HsmAction.h"
 
-
 namespace hestia {
 HestiaHsmActionView::HestiaHsmActionView(
     DistributedHsmService* hestia_service) :

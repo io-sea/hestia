@@ -1,0 +1,16 @@
+server:
+  host: 127.0.0.1
+  controller_address: 192.168.0.178:8080
+  tag: worker0
+  interfaces: 
+    - type: s3
+      port: 8091
+      enable_auth: false # some defect with signature check - maybe host gets changed
+
+object_store_backends:
+  - backend_type: phobos
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001"]
+
+logger:
+  level: info

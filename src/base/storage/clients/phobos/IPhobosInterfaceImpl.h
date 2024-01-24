@@ -17,11 +17,13 @@ class IPhobosInterfaceImpl {
 
     virtual void finish(){};
 
-    virtual std::string get(const StorageObject& obj, int fd) = 0;
+    virtual void get(const StorageObject& obj, int fd) = 0;
 
     virtual void put(const StorageObject& obj, int fd) = 0;
 
     virtual bool exists(const StorageObject& obj) = 0;
+
+    virtual std::string locate(const std::string& object_id) = 0;
 
     virtual void get_metadata(StorageObject& obj) = 0;
 

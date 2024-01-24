@@ -21,6 +21,8 @@ class HsmNodeInterface : public SerializeableWithFields {
 
     std::string get_type_as_string() const;
 
+    bool is_auth_enabled() const;
+
     void set_port(unsigned port);
 
     HsmNodeInterface& operator=(const HsmNodeInterface& other);
@@ -29,6 +31,7 @@ class HsmNodeInterface : public SerializeableWithFields {
     void init();
 
     UIntegerField m_port{"port", 0};
+    BooleanField m_enable_auth{"enable_auth", true};
     EnumField<Type, Type_enum_string_converter> m_type{"type", Type::HTTP};
 };
 

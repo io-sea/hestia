@@ -26,16 +26,16 @@ void MockPhobosInterface::set_root(const std::string& root)
     m_phobos.set_root(root);
 }
 
-std::string MockPhobosInterface::get(const StorageObject& obj, int fd)
+std::string MockPhobosInterface::locate(const std::string&)
 {
     if (!m_redirect_location.empty()) {
         LOG_INFO("Force directing to: " + m_redirect_location);
-        if (fd > 0) {
-            ::close(fd);
-        }
-        return m_redirect_location;
     }
+    return m_redirect_location;
+}
 
+void MockPhobosInterface::get(const StorageObject& obj, int fd)
+{
     const auto id_str = obj.id();
 
     pho_xfer_desc desc;
@@ -51,7 +51,7 @@ std::string MockPhobosInterface::get(const StorageObject& obj, int fd)
     if (rc != 0) {
         throw std::runtime_error("phobos_get " + std::to_string(rc));
     }
-    return {};
+    return;
 }
 
 void MockPhobosInterface::put(const StorageObject& obj, int fd)
