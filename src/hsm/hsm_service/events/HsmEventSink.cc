@@ -82,7 +82,8 @@ Dictionary* prepare_dict(
 void HsmEventSink::on_object_create_or_update(
     Dictionary& dict,
     const HsmObject& object,
-    const CrudUserContext& user_context) const
+    const CrudUserContext& user_context,
+    bool is_update) const
 {
     auto xattrs = dict.set_map_item("attrs");
 
@@ -149,6 +150,16 @@ void HsmEventSink::on_object_create_or_update(
     xattrs->set_map_scalar(
         "size", std::to_string(object_size), Dictionary::ScalarType::INT);
 
+    if (is_update) {
+        const auto mtime         = object.get_content_modified_time().count();
+        const auto metadata_time = object.get_metadata_modified_time().count();
+        const auto ctime         = std::max(mtime, metadata_time);
+        dict.set_map_scalar(
+            "mtime", std::to_string(mtime), Dictionary::ScalarType::INT);
+        dict.set_map_scalar(
+            "ctime", std::to_string(ctime), Dictionary::ScalarType::INT);
+    }
+
     Dictionary::FormatSpec dict_format;
     auto metadata_dict = xattrs->set_map_item("user_metadata");
     for (const auto& [key, value] : object.metadata().data()) {
@@ -180,7 +191,7 @@ void HsmEventSink::on_object_update(
     const auto object = object_response->get_item_as<HsmObject>();
 
     auto root_dict = prepare_dict(dict, "update", object_id, update_time);
-    on_object_create_or_update(*root_dict, *object, user_context);
+    on_object_create_or_update(*root_dict, *object, user_context, true);
 }
 
 void HsmEventSink::on_object_create(
@@ -207,7 +218,7 @@ void HsmEventSink::on_object_create(
 
     auto root_dict =
         prepare_dict(dict, "create", id, object->get_creation_time());
-    on_object_create_or_update(*root_dict, *object, user_context);
+    on_object_create_or_update(*root_dict, *object, user_context, false);
 }
 
 void HsmEventSink::on_object_create(const CrudEvent& event) const

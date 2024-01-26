@@ -33,12 +33,13 @@ HsmObject& HsmObject::operator=(const HsmObject& other)
 {
     if (this != &other) {
         LockableModel::operator=(other);
-        m_size                  = other.m_size;
-        m_metadata              = other.m_metadata;
-        m_tier_extents          = other.m_tier_extents;
-        m_dataset               = other.m_dataset;
-        m_content_accessed_time = other.m_content_accessed_time;
-        m_content_modified_time = other.m_content_modified_time;
+        m_size                   = other.m_size;
+        m_metadata               = other.m_metadata;
+        m_tier_extents           = other.m_tier_extents;
+        m_dataset                = other.m_dataset;
+        m_content_accessed_time  = other.m_content_accessed_time;
+        m_content_modified_time  = other.m_content_modified_time;
+        m_metadata_modified_time = other.m_metadata_modified_time;
         init();
     }
     return *this;
@@ -51,6 +52,7 @@ void HsmObject::init()
     register_scalar_field(&m_size);
     register_scalar_field(&m_content_accessed_time);
     register_scalar_field(&m_content_modified_time);
+    register_scalar_field(&m_metadata_modified_time);
     register_one_to_one_proxy_field(&m_metadata);
     register_foreign_key_proxy_field(&m_tier_extents);
     register_foreign_key_field(&m_dataset);
@@ -89,6 +91,21 @@ void HsmObject::set_content_accessed_time(std::chrono::microseconds t)
 void HsmObject::set_content_modified_time(std::chrono::microseconds t)
 {
     m_content_modified_time.update_value(t);
+}
+
+std::chrono::microseconds HsmObject::get_content_modified_time() const
+{
+    return m_content_modified_time.get_value();
+}
+
+void HsmObject::set_metadata_modified_time(std::chrono::microseconds t)
+{
+    m_metadata_modified_time.update_value(t);
+}
+
+std::chrono::microseconds HsmObject::get_metadata_modified_time() const
+{
+    return m_metadata_modified_time.get_value();
 }
 
 void HsmObject::set_dataset_id(const std::string& id)

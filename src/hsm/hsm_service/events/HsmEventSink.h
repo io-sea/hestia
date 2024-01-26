@@ -36,7 +36,8 @@ class HsmEventSink : public EventSink {
     void on_object_create_or_update(
         Dictionary& dict,
         const HsmObject& object,
-        const CrudUserContext& user_context) const;
+        const CrudUserContext& user_context,
+        bool is_update) const;
 
     void on_object_read(const CrudEvent& event) const;
 

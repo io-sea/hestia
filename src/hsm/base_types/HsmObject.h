@@ -16,6 +16,10 @@ class HsmObject : public HsmItem, public LockableModel {
 
     static std::string get_type();
 
+    std::chrono::microseconds get_content_modified_time() const;
+
+    std::chrono::microseconds get_metadata_modified_time() const;
+
     const std::string& dataset() const;
 
     const Map& metadata() const;
@@ -27,6 +31,8 @@ class HsmObject : public HsmItem, public LockableModel {
     std::size_t size() const;
 
     void set_dataset_id(const std::string& id);
+
+    void set_metadata_modified_time(std::chrono::microseconds t);
 
     void set_content_modified_time(std::chrono::microseconds t);
 
@@ -45,6 +51,7 @@ class HsmObject : public HsmItem, public LockableModel {
     ForeignKeyProxyField<TierExtents> m_tier_extents{"tiers"};
     ForeignKeyField m_dataset{"dataset", HsmItem::dataset_name};
 
+    DateTimeField m_metadata_modified_time{"metadata_modified_time"};
     DateTimeField m_content_modified_time{"content_modified_time"};
     DateTimeField m_content_accessed_time{"content_accessed_time"};
 };

@@ -47,7 +47,7 @@ stages:
   - &install_phobos
     yum install -qy $(cat ${HESTIA_DEPS}/phobos);
     pip3 install -r ${PHOBOS_SCRIPTS_DIR}/phobos_requirements.txt;
-    export PHOBOS_SRC=/phobos; cd /;
+    export PHOBOS_SRC=/phobos; cd /;cp ${PHOBOS_SCRIPTS_DIR}/*.patch .;
     ${PHOBOS_SCRIPTS_DIR}/build_phobos.sh;
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
   - &start_phobos 

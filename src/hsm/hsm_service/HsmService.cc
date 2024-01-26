@@ -219,6 +219,7 @@ void HsmService::on_object_create(
         }
         auto object = *get_response->get_item_as<HsmObject>();
         object.set_content_modified_time(object.get_last_modified_time());
+        object.set_metadata_modified_time(object.get_last_modified_time());
         object.set_content_accessed_time(object.get_last_modified_time());
 
         auto object_put_response = object_service->make_request(
@@ -293,6 +294,7 @@ void HsmService::on_action_update(
             || action_type == HsmAction::Action::RELEASE_DATA) {
             object.set_content_accessed_time(event_time);
             object.set_content_modified_time(event_time);
+            object.set_metadata_modified_time(event_time);
             CrudEvent event(
                 HsmItem::hsm_object_name, CrudMethod::UPDATE, {object_id},
                 event_time);
@@ -342,7 +344,7 @@ void HsmService::on_metadata_update(
         auto object = *get_response->get_item_as<HsmObject>();
 
         const auto modified_time = TimeUtils::get_time_since_epoch_micros();
-        object.set_content_modified_time(modified_time);
+        object.set_metadata_modified_time(modified_time);
 
         auto object_put_response = object_service->make_request(
             TypedCrudRequest<HsmObject>{CrudMethod::UPDATE, object, user});
@@ -663,6 +665,7 @@ void HsmService::on_db_update(
             remove_or_update_extent(action_context, source_extent);
         }
         working_object.set_content_modified_time(action_time);
+        working_object.set_metadata_modified_time(action_time);
         working_object.set_content_accessed_time(action_time);
     }
     else if (method == HsmObjectStoreRequestMethod::REMOVE) {
@@ -672,6 +675,7 @@ void HsmService::on_db_update(
         source_extent.remove_extent(action_context.m_extent);
         remove_or_update_extent(action_context, source_extent);
         working_object.set_content_modified_time(action_time);
+        working_object.set_metadata_modified_time(action_time);
         working_object.set_content_accessed_time(action_time);
     }
     else if (method == HsmObjectStoreRequestMethod::GET) {

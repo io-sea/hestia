@@ -51,7 +51,12 @@ int validate_uuid(HestiaId* object_id)
 
 std::size_t get_int_map_item(const Dictionary& dict, const std::string& key)
 {
-    return std::stoull(dict.get_map_item(key)->get_scalar());
+    if (dict.has_map_item(key)) {
+        return std::stoull(dict.get_map_item(key)->get_scalar());
+    }
+    else {
+        return 0;
+    }
 }
 
 std::size_t get_extents_size(const Dictionary& tier_extent_dict)
@@ -244,11 +249,12 @@ int hestia_init_object(HestiaObject* object)
         object->m_tier_extents = nullptr;
     }
 
-    object->m_size               = 0;
-    object->m_creation_time      = 0;
-    object->m_last_modified_time = 0;
-    object->m_num_tier_extents   = 0;
-    object->m_num_attrs          = 0;
+    object->m_size             = 0;
+    object->m_creation_time    = 0;
+    object->m_mtime            = 0;
+    object->m_ctime            = 0;
+    object->m_num_tier_extents = 0;
+    object->m_num_attrs        = 0;
     delete[] object->m_name;
     object->m_name = nullptr;
     delete[] object->m_uuid;
@@ -421,10 +427,12 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
 
     object->m_creation_time =
         static_cast<time_t>(get_int_map_item(attr_dict, "creation_time"));
-    object->m_last_accessed_time = static_cast<time_t>(
+    object->m_atime = static_cast<time_t>(
         get_int_map_item(attr_dict, "content_accessed_time"));
     auto last_modified_time = static_cast<time_t>(
         get_int_map_item(attr_dict, "content_modified_time"));
+    auto metadata_modified_time = static_cast<time_t>(
+        get_int_map_item(attr_dict, "metadata_modified_time"));
 
     const auto user_md_id = attr_dict.get_map_item("user_metadata")
                                 ->get_map_item("id")
@@ -501,8 +509,9 @@ int hestia_object_get_attrs(HestiaId* object_id, HestiaObject* object)
         }
         object->m_num_tier_extents = extents.size();
     }
-    object->m_size               = max_size;
-    object->m_last_modified_time = last_modified_time;
+    object->m_size  = max_size;
+    object->m_mtime = last_modified_time;
+    object->m_ctime = std::max(metadata_modified_time, object->m_mtime);
 
     if (auto name = attr_dict.get_map_item("name"); name) {
         StringUtils::to_char(name->get_scalar(), &object->m_name);

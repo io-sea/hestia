@@ -116,9 +116,9 @@ std::string get_object_insert_values(const HestiaObject& obj)
 {
     std::string ret;
     ret += "('" + std::string(obj.m_uuid) + "',";
-    ret += std::to_string(obj.m_last_modified_time) + ",";
+    ret += std::to_string(obj.m_ctime) + ",";
     ret += std::to_string(obj.m_creation_time) + ",";
-    ret += std::to_string(obj.m_last_accessed_time) + ",";
+    ret += std::to_string(obj.m_atime) + ",";
     ret += std::to_string(obj.m_size) + ")";
     return ret;
 }
@@ -126,11 +126,9 @@ std::string get_object_insert_values(const HestiaObject& obj)
 std::string get_object_update_values(const HestiaObject& obj)
 {
     std::string ret;
-    ret +=
-        "modified_time = " + std::to_string(obj.m_last_modified_time) + ",\n";
+    ret += "modified_time = " + std::to_string(obj.m_ctime) + ",\n";
     ret += "created_time = " + std::to_string(obj.m_creation_time) + ",\n";
-    ret +=
-        "accessed_time = " + std::to_string(obj.m_last_accessed_time) + ",\n";
+    ret += "accessed_time = " + std::to_string(obj.m_atime) + ",\n";
     ret += "size = " + std::to_string(obj.m_size) + "\n";
     return ret;
 }

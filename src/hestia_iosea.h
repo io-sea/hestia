@@ -105,11 +105,11 @@ typedef struct HestiaObject {
     char* m_uuid;            // Uuid in hex format
     size_t m_size;           // Largest size of the object across all tiers
     time_t m_creation_time;  // When the object was created
-    time_t m_last_modified_time;  // The time of most recent data OR metadata
-                                  // update, on any tier.
-    time_t m_last_accessed_time;  // The time of most recent data update on any
-                                  // tier. It does not include metadata access
-                                  // time.
+    time_t m_ctime;  // The time of most recent data OR metadata update, on any
+                     // tier.
+    time_t m_mtime;  // The time of most recent data update, on any tier.
+    time_t m_atime;  // The time of most recent data update on any tier.
+                     // It does not include metadata access time.
     HestiaTierExtent* m_tier_extents;  // List of data extents on each tier
     size_t m_num_tier_extents;
     HestiaKeyValuePair* m_attrs;  // List of USER provided metadata
