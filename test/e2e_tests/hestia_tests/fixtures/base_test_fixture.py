@@ -34,15 +34,19 @@ class BaseTestFixture(object):
         self.runtime_env["HESTIA_CACHE_DIR"] = self.runtime_path / "cache"
     
     def insert_project_paths(self):
+        libdir = "lib"
+        if sys.platform != "darwin":
+            libdir = "lib64"
+
         if not self.system_install:
             project_bin_dir = self.project_dir / "bin"
-            project_lib_dir = self.project_dir / "lib"
+            project_lib_dir = self.project_dir / libdir
             self.runtime_env["PATH"] = f"{project_bin_dir}:{self.runtime_env['PATH']}"
             self.set_ld_library_path(project_lib_dir)
             self.set_pkg_conf_path(project_lib_dir / "pkgconfig")
         else:
-            self.set_ld_library_path("/usr/lib/hestia/")
-            self.set_pkg_conf_path("/usr/lib/pkgconfig/")
+            self.set_ld_library_path(f"/usr/{libdir}/hestia/")
+            self.set_pkg_conf_path(f"/usr/{libdir}/pkgconfig/")
 
     def set_ld_library_path(self, path):
         env_name = "LD_LIBRARY_PATH"
