@@ -19,16 +19,13 @@ class ServerTestFixture(BaseTestFixture):
         self.web_client = CurlCliClient(self.host + ":" + str(self.port) + "/api/v1/")
         self.user_name = "hestia_default_user"
         self.password = "my_user_pass"
+        self.server_process = None
 
     def __del__(self):
         try:
             self.stop_server()
         except:
             pass
-
-        proc = self.get_process_on_port("hestia", self.port)
-        if proc is not None:
-            proc.kill()
 
     def get_config_path(self, name):
         return self.project_dir / "test_data" / f"configs/{name}.yaml"
@@ -42,13 +39,18 @@ class ServerTestFixture(BaseTestFixture):
         logging.info("Using config: " + config)
         config_path = self.get_config_path(config)
 
-        start_server_cmd = f"hestia start --config={config_path}"
-        self.run_ops([start_server_cmd], wait=False)
+        start_server_cmd = f"hestia server --config={config_path}"
+        self.server_process = self.start_process(start_server_cmd)
 
-        time.sleep(0.1)
+        time.sleep(0.2)
+        max_tries = 5
+        count = 0
         if wait_for_ping:
             while not self.ping_server():
-                time.sleep(0.1)
+                time.sleep(0.2)
+                count = count + 1
+                if count == max_tries:
+                    raise RuntimeError("Failed to connect to server")
 
     def ping_server(self):
         ping_cmd = self.web_client.get_cmd(None, "ping")
@@ -59,8 +61,7 @@ class ServerTestFixture(BaseTestFixture):
             return False
     
     def stop_server(self):
-        stop_server_cmd = "hestia stop"
-        self.run_ops([stop_server_cmd])
+        self.server_process.kill()
 
     def login(self):
         login_cmd = self.web_client.post_cmd("login", f"user={self.user_name}&password={self.password}")
