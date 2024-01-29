@@ -17,7 +17,7 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(${PROJECT_NAME}_cmake_modules INTERFACE)
 target_include_directories(${PROJECT_NAME}_cmake_modules INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/infra/cmake>
-        $<INSTALL_INTERFACE:lib/cmake/${PROJECT_NAME}/modules>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/modules>
         )
 
 if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -27,7 +27,7 @@ install(TARGETS
         ${STANDALONE_MODULES_FOR_EXPORT}
         LIBRARY 
                 COMPONENT runtime
-                DESTINATION lib/${PROJECT_NAME}
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
         RUNTIME 
                 COMPONENT runtime
                 DESTINATION bin
@@ -45,7 +45,7 @@ if(HESTIA_BUILD_TESTS)
                 ${TEST_MODULES_FOR_EXPORT}
                 LIBRARY 
                         COMPONENT tests
-                        DESTINATION lib/${PROJECT_NAME}
+                        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
                 RUNTIME 
                         COMPONENT tests
                         DESTINATION opt/${PROJECT_NAME}/bin
@@ -81,7 +81,7 @@ install(TARGETS
         LIBRARY
                 COMPONENT runtime
                 NAMELINK_COMPONENT devel
-                DESTINATION lib/${PROJECT_NAME}
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
         INCLUDES 
                 DESTINATION include/${PROJECT_NAME}
 )
@@ -89,7 +89,7 @@ install(TARGETS
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}Targets.cmake
         NAMESPACE ${PROJECT_NAME}::
-        DESTINATION lib/cmake/${PROJECT_NAME}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
         COMPONENT devel
         )
 
@@ -102,24 +102,24 @@ write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake
 configure_file(infra/cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
                 "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        DESTINATION lib/cmake/${PROJECT_NAME}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
         COMPONENT devel
         )
 
 configure_file(infra/cmake/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 install(FILES   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
-        DESTINATION lib/pkgconfig
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
         COMPONENT devel
         )
 
 configure_file(infra/cmake/${PROJECT_NAME}d.service.in ${PROJECT_NAME}d.service @ONLY)
 install(FILES    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}d.service"
-        DESTINATION lib/systemd/system
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
         COMPONENT runtime
         )
 
 install(DIRECTORY    "${CMAKE_CURRENT_SOURCE_DIR}/bindings/python/hestia/"
-        DESTINATION lib/${PROJECT_NAME}/python/hestia
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/python/hestia
         COMPONENT runtime
         PATTERN "__pycache__/*" EXCLUDE
         )

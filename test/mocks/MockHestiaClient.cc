@@ -53,6 +53,10 @@ std::string MockHestiaClient::get_runtime_info() const
     return {};
 }
 
+bool MockHestiaClient::is_id_validation_active() const
+{
+    return true;
+}
 
 /*
 OpStatus MockHestiaClient::create(

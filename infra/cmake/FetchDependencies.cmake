@@ -11,7 +11,7 @@ macro(fetch_catch2)
     FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        6e79e682b726f524310d55dec8ddac4e9c52fb5f # v3.4.0
+    GIT_TAG        05e10dfccc28c7f973727c54f850237d07d5e10f # v3.5.2
     SYSTEM
     FIND_PACKAGE_ARGS
     )
@@ -24,7 +24,7 @@ endmacro()
 macro(fetch_nlohmann_json)
     FetchContent_Declare(
         json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
         SYSTEM
         FIND_PACKAGE_ARGS 3.11
         )
@@ -36,7 +36,7 @@ macro(fetch_spdlog)
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        7e635fca68d014934b4af8a1cf874f63989352b7 # v1.12.0
+        GIT_TAG        7c02e204c92545f869e2f04edaab1f19fe8b19fd # v1.13.0
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -54,7 +54,7 @@ macro(fetch_yaml_cpp)
     FetchContent_Declare(
             yaml-cpp
             GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
-            GIT_TAG  f7320141120f720aecc4c32be25586e7da9eb978
+            GIT_TAG  f7320141120f720aecc4c32be25586e7da9eb978 # v0.8
             SYSTEM
             OVERRIDE_FIND_PACKAGE
             )
@@ -72,7 +72,7 @@ macro(fetch_zlib)
     FetchContent_Declare(
         ZLIB
         GIT_REPOSITORY https://github.com/madler/zlib
-        GIT_TAG        09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851 # v1.3
+        GIT_TAG        51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf # v1.3.1
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -92,7 +92,7 @@ macro(fetch_libxml2)
     FetchContent_Declare(
         LibXml2
         GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
-        GIT_TAG        2b998a4ffbdfea04fc6a620721abc690a15743af # v2.11.5
+        GIT_TAG        8292f361458fcffe0bff515a385be02e9d35582c # v2.12.4
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -117,7 +117,7 @@ macro(fetch_curl)
     FetchContent_Declare(
         CURL
         GIT_REPOSITORY https://github.com/curl/curl/
-        GIT_TAG 6fa1d817e5b1a00d7d0c8168091877476b499317 # V8.3.0
+        GIT_TAG 7161cb17c01dcff1dc5bf89a18437d9d729f1ecd # V8.5.0
         SYSTEM
         FIND_PACKAGE_ARGS
     )
@@ -155,8 +155,8 @@ endmacro()
 
 macro(fetch_sqlite)
     FetchContent_Declare(sqlite
-    URL https://www.sqlite.org/2023/sqlite-amalgamation-3440100.zip
-    URL_HASH          SHA256=cc6545b71ca188e245d5d668543c01f61175f0228a0e1b4ced76fabc75ea6b2e
+    URL https://www.sqlite.org/2024/sqlite-amalgamation-3450000.zip
+    URL_HASH          SHA256=bde30d13ebdf84926ddd5e8b6df145be03a577a48fd075a087a5dd815bcdf740
     SYSTEM
     FIND_PACKAGE_ARGS
     )
@@ -205,7 +205,7 @@ endmacro()
 macro(build_phobos)
     ExternalProject_Add(phobos
     GIT_REPOSITORY https://github.com/cea-hpc/phobos
-    GIT_TAG dd12752722b99420084e907848005ffe8119d81e # v1.95
+    GIT_TAG 01822635b2a9578d36cf8733c7e58f09c15b5b0a # v1.95.1
     UPDATE_DISCONNECTED 1
     BUILD_IN_SOURCE 1
     PATCH_COMMAND   patch -p1 --forward < ${PROJECT_SOURCE_DIR}/infra/cmake/patches/phobos_ldm_common_page_size.patch 

@@ -32,6 +32,8 @@ class MockHestiaClient : public IHestiaClient {
 
     std::string get_runtime_info() const override;
 
+    bool is_id_validation_active() const override;
+
     OpStatus run() override;
 
     std::size_t m_created_id_count{0};
