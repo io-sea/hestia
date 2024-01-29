@@ -36,6 +36,10 @@ int check_object_id(HestiaId* object_id, bool should_be_init)
 
 int validate_uuid(HestiaId* object_id)
 {
+    if (!HestiaPrivate::get_client()->is_id_validation_active()) {
+        return 0;
+    }
+
     if (object_id->m_uuid != nullptr) {
         try {
             Uuid::from_string(object_id->m_uuid);

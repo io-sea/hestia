@@ -246,4 +246,9 @@ void HestiaClient::set_app_mode(const std::string& host, unsigned port)
     }
 }
 
+bool HestiaClient::is_id_validation_active() const
+{
+    return m_config.id_validation_enabled();
+}
+
 }  // namespace hestia

@@ -37,6 +37,7 @@ HestiaConfig& HestiaConfig::operator=(const HestiaConfig& other)
 
         m_enable_user_management = other.m_enable_user_management;
         m_enable_default_dataset = other.m_enable_default_dataset;
+        m_enable_id_validation   = other.m_enable_id_validation;
         init();
     }
     return *this;
@@ -47,6 +48,7 @@ void HestiaConfig::init()
     register_scalar_field(&m_cache_path);
     register_scalar_field(&m_enable_user_management);
     register_scalar_field(&m_enable_default_dataset);
+    register_scalar_field(&m_enable_id_validation);
     register_map_field(&m_server_config);
 
     register_map_field(&m_logger);
@@ -106,6 +108,11 @@ bool HestiaConfig::default_dataset_enabled() const
 bool HestiaConfig::user_management_enabled() const
 {
     return m_enable_user_management.get_value();
+}
+
+bool HestiaConfig::id_validation_enabled() const
+{
+    return m_enable_id_validation.get_value();
 }
 
 const std::string& HestiaConfig::get_config_path() const

@@ -29,6 +29,8 @@ class IHestiaClient : public IHestiaApplication {
     virtual void get_last_error(std::string& error) = 0;
 
     virtual void set_last_error(const std::string& msg) = 0;
+
+    virtual bool is_id_validation_active() const = 0;
 };
 
 class HestiaClient : public IHestiaClient, public HestiaApplication {
@@ -57,6 +59,8 @@ class HestiaClient : public IHestiaClient, public HestiaApplication {
     OpStatus run() override { return {}; }
 
     std::string get_runtime_info() const override;
+
+    bool is_id_validation_active() const override;
 
   private:
     HestiaResponse::Ptr do_crud(const HestiaRequest& request);

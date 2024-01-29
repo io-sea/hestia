@@ -45,6 +45,8 @@ class HestiaConfig : public SerializeableWithFields {
 
     bool default_dataset_enabled() const;
 
+    bool id_validation_enabled() const;
+
     bool has_object_store_backends() const;
 
     void load(
@@ -69,6 +71,7 @@ class HestiaConfig : public SerializeableWithFields {
     std::string m_path;
     std::string m_user_token;
     StringField m_cache_path{"cache_path"};
+    BooleanField m_enable_id_validation{"enable_id_validation", true};
     BooleanField m_enable_user_management{"enable_user_management", false};
     BooleanField m_enable_default_dataset{"enable_default_dataset", true};
 
