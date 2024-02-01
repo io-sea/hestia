@@ -127,6 +127,12 @@ class HsmService : public CrudService {
         const HsmObject& object,
         TierExtents& extents) const;
 
+    bool exists_on_tier(
+        const std::string& tier_id,
+        const HsmObject& object) const;
+    
+    bool exists_on_any_tier(const HsmObject& object) const;
+
     void update_object(
         const HsmActionContext& action_context, const HsmObject& object) const;
 
@@ -162,6 +168,9 @@ class HsmService : public CrudService {
 
     void on_object_create(
         const std::vector<std::string>& ids, const CrudUserContext& user) const;
+
+    void pre_object_remove(
+        const CrudIdentifierCollection& ids, const CrudUserContext& user) const;
 
     void on_object_removed(
         const std::vector<std::string>& ids, const CrudUserContext& user) const;

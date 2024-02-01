@@ -148,8 +148,16 @@ CrudResponse::Ptr HsmService::make_request(
             }
             return response;
         case CrudMethod::REMOVE:
+        //entry point to remove call
             try {
                 const auto hsm_type = HsmItem::from_name(type);
+                if (hsm_type == HsmItem::Type::OBJECT) {
+                    std::vector<std::string> ids;
+                    for (const auto& id : req.get_ids().data()) {
+                        ids.push_back(id.get_primary_key());
+                    }
+                    pre_object_remove(ids, req.get_user_context());
+                }                
                 response            = do_crud(hsm_type, req);
                 if (event_feed_is_active()
                     && hsm_type == HsmItem::Type::OBJECT) {
@@ -231,6 +239,34 @@ void HsmService::on_object_create(
             HsmItem::hsm_object_name, CrudMethod::CREATE,
             {object.get_primary_key()}, object.get_creation_time());
         m_event_feed->on_event(event);
+    }
+}
+
+void HsmService::pre_object_remove(
+    const CrudIdentifierCollection& ids, const CrudUserContext& user) const
+{   
+    for (const auto& id : ids.data()) {
+        const auto object_service =
+            m_services->get_service(HsmItem::Type::OBJECT);
+        const auto get_response = object_service->make_request(CrudRequest{
+            CrudMethod::READ, CrudQuery(id, CrudQuery::BodyFormat::ITEM),
+            user});
+        if (!get_response->ok()) {
+            throw std::runtime_error(
+                SOURCE_LOC() + "Failed to read object for event feed");
+        }
+        if (!get_response->found()) {
+            LOG_WARN("Object " + id.get_primary_key() + "not found");
+        }
+        else
+        {
+            auto object = *(get_response->get_item_as<HsmObject>());
+            if(exists_on_any_tier(object)){
+                throw RequestException<HsmActionError>(
+                    {HsmActionErrorCode::ERROR,
+                    SOURCE_LOC() + " | Object " + id.get_primary_key() + " still has object store data to be released. Release all data before removing the object"});
+            }
+        }
     }
 }
 
@@ -699,6 +735,32 @@ bool HsmService::get_tier_extent(
     }
     return false;
 }
+
+bool HsmService::exists_on_tier(
+    const std::string& tier_id,
+    const HsmObject& object) const
+{
+    for (const auto& tier_extent : object.tiers()) {
+        if (tier_extent.get_tier_id() == tier_id && !tier_extent.empty() &&tier_extent.get_size()!=0) {
+            std::cout<<"Extent size is "<<tier_extent.get_size()<<" on tier "<<tier_id<<std::endl;
+            LOG_DEBUG("Extent size is "<<tier_extent.get_size()<<" on tier "<<tier_id);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool HsmService::exists_on_any_tier(
+    const HsmObject& object) const
+{
+    for(auto &tier: m_tier_cache){
+        if(exists_on_tier(tier.second, object)){
+            return true;
+        }
+    }
+    return false;
+}
+
 
 void HsmService::remove_or_update_extent(
     const HsmActionContext& action_context, const TierExtents& extent) const
