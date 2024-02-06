@@ -8,7 +8,7 @@ class RequestContext;
 
 class HttpRequest {
   public:
-    enum class Method { GET, PUT, POST, DELETE, HEAD, UNSET };
+    enum class Method { GET, PUT, POST, DELETE, HEAD, OPTIONS, UNSET};
 
     HttpRequest() = default;
 

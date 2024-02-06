@@ -28,6 +28,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
         m_tag                = other.m_tag;
         m_api_prefix         = other.m_api_prefix;
         m_run_blocking       = other.m_run_blocking;
+        m_access_control_origin = other.m_access_control_origin;
 
         m_host_mapping = other.m_host_mapping;
         init();
@@ -48,6 +49,7 @@ void ServerConfig::init()
     register_scalar_field(&m_api_prefix);
     register_scalar_field(&m_tag);
     register_scalar_field(&m_run_blocking);
+    register_scalar_field(&m_access_control_origin);
 
     register_map_field(&m_host_mapping);
 }

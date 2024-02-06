@@ -50,6 +50,11 @@ class WebView {
         HttpEvent event,
         const AuthorizationContext& auth);
 
+    virtual HttpResponse::Ptr on_options(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth);
+
     virtual HttpResponse::Ptr on_not_supported(const HttpRequest& request);
 
     std::string m_path;

@@ -26,10 +26,23 @@ HttpResponse::Ptr WebView::on_event(
             return on_delete(request, event, auth);
         case HttpRequest::Method::HEAD:
             return on_head(request, event, auth);
+        case HttpRequest::Method::OPTIONS:
+            return on_options(request, event, auth);
         case HttpRequest::Method::UNSET:
         default:
             return on_not_supported(request);
     }
+}
+
+HttpResponse::Ptr WebView::on_options(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth)
+{
+    auto response = HttpResponse::create({HttpStatus::Code::_200_OK});
+    response->header().set_item("Access-Control-Allow-Methods", "*");
+    response->header().set_item("Access-Control-Allow-Headers", "*");
+    return response;
 }
 
 HttpResponse::Ptr WebView::on_get(

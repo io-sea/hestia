@@ -58,6 +58,13 @@ void HttpRequest::on_chunk(const std::string& msg)
                 else if (m_preamble.m_method == "HEAD") {
                     m_method = Method::HEAD;
                 }
+                else if (m_preamble.m_method == "OPTIONS") {
+                    m_method = Method::OPTIONS;
+                }
+                else 
+                {
+                    LOG_WARN("Unknown http method:" << m_preamble.m_method);
+                }
             }
             else if (buffer == "\r") {
                 if (first_line) {
@@ -146,6 +153,8 @@ std::string HttpRequest::get_method_as_string() const
             return "DELETE";
         case Method::HEAD:
             return "HEAD";
+        case Method::OPTIONS:
+            return "OPTIONS";
         case Method::UNSET:
             return "UNSET";
         default:

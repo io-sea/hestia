@@ -32,6 +32,11 @@ class WebApp {
 
     void set_url_router(std::unique_ptr<UrlRouter> router);
 
+    void set_access_control_origin(const std::string& val)
+    {
+      m_access_control_origin = val;
+    }
+
   protected:
     virtual HttpResponse::Ptr on_view_not_found(
         const HttpRequest& request) const;
@@ -50,5 +55,6 @@ class WebApp {
 
     UserService* m_user_service{nullptr};
     std::size_t m_body_chunk_size{4000};
+    std::string m_access_control_origin;
 };
 }  // namespace hestia

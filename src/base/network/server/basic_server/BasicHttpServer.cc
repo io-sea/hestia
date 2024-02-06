@@ -69,6 +69,7 @@ bool BasicHttpServer::on_head(
     if (request_context.get_response()->get_completion_status()
         == HttpResponse::CompletionStatus::FINISHED) {
         LOG_INFO("Response finished after reading headers - don't want body");
+        LOG_INFO(request_context.get_response()->to_string());
         socket->respond(request_context.get_response()->to_string());
         return true;
     }
