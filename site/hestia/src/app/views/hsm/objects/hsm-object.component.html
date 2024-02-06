@@ -1,0 +1,14 @@
+<div class="container">
+    <div class="content">
+        <ul class="objects">
+            <li *ngFor="let object of objects">
+                <button type="button" [class.selected]="object === selectedObject" (click)="onSelect(object)">
+                    <span class="badge">{{object.id}}</span>
+                    <span class="name">{{object.name}}</span>
+                </button>
+          </li>
+        </ul>
+    </div>
+    <app-hsm-detail class="detail" [object]="selectedObject"></app-hsm-detail>
+</div>
+
