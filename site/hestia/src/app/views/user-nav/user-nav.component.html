@@ -1,0 +1,16 @@
+<div class="content" *ngIf="user">
+    <header>
+        <h1>{{ user.name }}</h1>
+    </header>
+    <div class="container">
+        <nav class="nav">
+            <button>Datasets</button>
+            <button>Actions</button>
+        </nav>
+        <div class="content">
+            <app-datasets></app-datasets>
+            <app-actions></app-actions>
+        </div>
+    </div>
+</div>
+

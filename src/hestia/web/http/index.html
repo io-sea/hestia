@@ -51,8 +51,8 @@
         const base_url = 'api/v1/';
 
         const item_list_keys = {"objects" : ["id", "name", "size", "creation_time", "content_modified_time", "content_accessed_time"],
-                                "tiers" : ["id", "priority"],
-                                "nodes" : ["id", "name", "host_address", "port", "version", "app_type", "backends"],
+                                "tiers" : ["id", "priority", "backends"],
+                                "nodes" : ["id", "name", "host_address", "version", "interfaces", "backends"],
                                 "datasets" : ["id", "objects"],
                                 "object_store_backends" : ["id", "backend_type", "node", "tiers", "config"],
                                 "users" : ["id", "name"],

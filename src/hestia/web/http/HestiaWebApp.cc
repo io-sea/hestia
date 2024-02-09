@@ -101,6 +101,8 @@ HestiaWebApp::HestiaWebApp(
         m_url_router->add_pattern({"/"}, std::move(index_page));
     }
 
+    m_access_control_origin = config.m_access_control_origin;
+
     auto token_auth_middleware =
         std::make_unique<TokenAuthenticationMiddleware>();
     token_auth_middleware->set_user_service(m_user_service);

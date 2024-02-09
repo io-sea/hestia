@@ -10,6 +10,7 @@ class UserService;
 
 class HestiaWebAppConfig {
   public:
+    std::string m_access_control_origin;
     std::string m_static_resource_dir;
     bool m_cache_static_resources{true};
 };

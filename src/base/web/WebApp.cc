@@ -122,14 +122,22 @@ void WebApp::on_event(
         response->header().set_item(
             "Content-Length", std::to_string(content_length));
     }
-
+    if (!m_access_control_origin.empty()) {
+        response->header().set_item(
+            "Access-Control-Allow-Origin", m_access_control_origin);
+    }
     request_context->set_response(std::move(response));
 }
 
 HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& req) const
 {
-    return HttpResponse::create(
+    auto response = HttpResponse::create(
         {HttpStatus::Code::_404_NOT_FOUND, req.get_path() + " Not Found"});
+    if (!m_access_control_origin.empty()) {
+        response->header().set_item(
+            "Access-Control-Allow-Origin", m_access_control_origin);
+    }
+    return response;
 }
 
 HttpResponse::Ptr WebApp::on_middleware_layer(

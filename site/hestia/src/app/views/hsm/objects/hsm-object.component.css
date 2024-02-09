@@ -1,0 +1,17 @@
+.container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+.nav {
+  width: 25%;
+  background-color: blue;
+}
+.content {
+  width: 66%;
+  background-color: green;
+}
+.detail {
+  width: 33%;
+  background-color: yellow;
+}
