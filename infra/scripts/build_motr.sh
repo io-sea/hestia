@@ -32,6 +32,7 @@ export ISA_L_VERSION=2.30.0
 rpmbuild --define '_isa_l_version 2.30.0' --bb $MOTR_SRC/scripts/provisioning/roles/motr-build/tasks/isa-l.spec
 yum install -y $RPM_CACHE/isa-l-2.30.0-1.$HOST_RELEASE.$HOST_ARCH.rpm
 
+# Add comment line to test rpm generation
 # Make and install cortx-motr
 cd $MOTR_SRC
 ./autogen.sh
