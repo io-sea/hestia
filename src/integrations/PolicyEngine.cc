@@ -80,7 +80,8 @@ void PolicyEngine::initialize_db(bool clean)
                 modified_time INT NOT NULL,
                 created_time INT NOT NULL,
                 accessed_time INT NOT NULL,
-                size INT NOT NULL
+                size INT NOT NULL,
+                tiers TEXT
             );
         )";
         do_db_op(statement);
@@ -97,7 +98,7 @@ void PolicyEngine::initialize_db(bool clean)
 
 std::string get_object_columns()
 {
-    return "id, modified_time, created_time, accessed_time, size";
+    return "id, modified_time, created_time, accessed_time, size, tiers";
 }
 
 void PolicyEngine::log_db()
@@ -119,7 +120,13 @@ std::string get_object_insert_values(const HestiaObject& obj)
     ret += std::to_string(obj.m_ctime) + ",";
     ret += std::to_string(obj.m_creation_time) + ",";
     ret += std::to_string(obj.m_atime) + ",";
-    ret += std::to_string(obj.m_size) + ")";
+    ret += std::to_string(obj.m_size) + ",";
+
+    std::string tiers = "'";
+    for (std::size_t idx = 0; idx < obj.m_num_tier_extents; idx++) {
+        tiers += std::to_string(obj.m_tier_extents[idx].m_tier_index) + ",";
+    }
+    ret += tiers + "')";
     return ret;
 }
 
@@ -129,7 +136,13 @@ std::string get_object_update_values(const HestiaObject& obj)
     ret += "modified_time = " + std::to_string(obj.m_ctime) + ",\n";
     ret += "created_time = " + std::to_string(obj.m_creation_time) + ",\n";
     ret += "accessed_time = " + std::to_string(obj.m_atime) + ",\n";
-    ret += "size = " + std::to_string(obj.m_size) + "\n";
+    ret += "size = " + std::to_string(obj.m_size) + ",\n";
+    ret += "tiers = '";
+    std::string tiers;
+    for (std::size_t idx = 0; idx < obj.m_num_tier_extents; idx++) {
+        tiers += std::to_string(obj.m_tier_extents[idx].m_tier_index) + ",";
+    }
+    ret += tiers + "'\n";
     return ret;
 }
 
@@ -150,6 +163,8 @@ int PolicyEngine::add_object_insert_values(
         LOG_ERROR("Failed to list objects on tier");
         return rc;
     }
+
+    LOG_INFO("Adding " << num_obj_ids << " for tier " << tier_index);
 
     for (std::size_t jdx = 0; jdx < num_obj_ids; jdx++) {
         HestiaObject object;

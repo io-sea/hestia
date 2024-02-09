@@ -680,6 +680,7 @@ void HsmService::on_db_update(
                 target_extent, action_context, action_context.m_target_tier_id,
                 store_id);
         }
+        LOG_INFO("Adding extent of size: " << action_context.m_extent);
         target_extent.add_extent(action_context.m_extent);
         create_or_update_extent(action_context, target_extent, !extent_found);
 
