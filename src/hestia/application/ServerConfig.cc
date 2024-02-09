@@ -24,10 +24,10 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
         m_cache_static_resources = other.m_cache_static_resources;
         m_static_resource_path   = other.m_static_resource_path;
 
-        m_controller_address = other.m_controller_address;
-        m_tag                = other.m_tag;
-        m_api_prefix         = other.m_api_prefix;
-        m_run_blocking       = other.m_run_blocking;
+        m_controller_address    = other.m_controller_address;
+        m_tag                   = other.m_tag;
+        m_api_prefix            = other.m_api_prefix;
+        m_run_blocking          = other.m_run_blocking;
         m_access_control_origin = other.m_access_control_origin;
 
         m_host_mapping = other.m_host_mapping;

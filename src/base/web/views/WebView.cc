@@ -35,9 +35,9 @@ HttpResponse::Ptr WebView::on_event(
 }
 
 HttpResponse::Ptr WebView::on_options(
-        const HttpRequest& request,
-        HttpEvent event,
-        const AuthorizationContext& auth)
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
 {
     auto response = HttpResponse::create({HttpStatus::Code::_200_OK});
     response->header().set_item("Access-Control-Allow-Methods", "*");

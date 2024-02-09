@@ -18,10 +18,9 @@ HestiaUserAuthView::~HestiaUserAuthView() {}
 HttpResponse::Ptr HestiaUserAuthView::on_post(
     const HttpRequest& request, HttpEvent event, const AuthorizationContext&)
 {
-    if (event != HttpEvent::EOM)
-    {
+    if (event != HttpEvent::EOM) {
         return HttpResponse::create(
-                HttpResponse::CompletionStatus::AWAITING_EOM);
+            HttpResponse::CompletionStatus::AWAITING_EOM);
     }
 
     auto path = request.get_path();

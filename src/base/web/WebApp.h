@@ -34,7 +34,7 @@ class WebApp {
 
     void set_access_control_origin(const std::string& val)
     {
-      m_access_control_origin = val;
+        m_access_control_origin = val;
     }
 
   protected:

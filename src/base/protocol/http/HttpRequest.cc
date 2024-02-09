@@ -61,8 +61,7 @@ void HttpRequest::on_chunk(const std::string& msg)
                 else if (m_preamble.m_method == "OPTIONS") {
                     m_method = Method::OPTIONS;
                 }
-                else 
-                {
+                else {
                     LOG_WARN("Unknown http method:" << m_preamble.m_method);
                 }
             }

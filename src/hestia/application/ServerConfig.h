@@ -25,9 +25,9 @@ class ServerConfig : public SerializeableWithFields {
 
     const std::string& get_controller_address() const;
 
-    const std::string& get_access_control_origin() const 
+    const std::string& get_access_control_origin() const
     {
-      return m_access_control_origin.get_value();
+        return m_access_control_origin.get_value();
     }
 
     const std::string& get_api_prefix() const;

@@ -126,7 +126,8 @@ void HestiaServer::sync_web_app_config(HestiaWebAppConfig& config)
     config.m_cache_static_resources =
         m_config.get_server_config().should_cache_static_resources();
 
-    config.m_access_control_origin = m_config.get_server_config().get_access_control_origin();
+    config.m_access_control_origin =
+        m_config.get_server_config().get_access_control_origin();
 
     if (!static_resource_path.empty()) {
         auto full_path = std::filesystem::current_path() / static_resource_path;
