@@ -8,7 +8,7 @@ class Socket;
 namespace hestia {
 class BasicHttpServer : public Server {
   public:
-    BasicHttpServer(const Config& config, WebApp* web_app);
+    BasicHttpServer(const BaseServerConfig& config, WebApp* web_app);
 
     virtual ~BasicHttpServer();
 

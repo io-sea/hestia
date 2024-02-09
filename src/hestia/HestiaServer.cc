@@ -23,7 +23,34 @@ HestiaServer::HestiaServer() {}
 
 HestiaServer::~HestiaServer() {}
 
-OpStatus HestiaServer::run()
+OpStatus HestiaServer::initialize(
+    const std::string& config_path,
+    const std::string& user_token,
+    const Dictionary& extra_config,
+    const std::string& server_host,
+    unsigned server_port)
+{
+    const auto status = HestiaApplication::initialize(
+        config_path, user_token, extra_config, server_host, server_port);
+    if (!status.ok()) {
+        return status;
+    }
+    setup_servers();
+    return status;
+}
+
+std::string HestiaServer::get_runtime_info() const
+{
+    auto base_str = HestiaApplication::get_runtime_info();
+    for (const auto& server : m_servers) {
+        const auto addr = server->get_config().m_ip;
+        const auto port = std::to_string(server->get_config().m_http_port);
+        base_str += "Server running on: " + addr + ":" + port + "\n";
+    }
+    return base_str;
+}
+
+void HestiaServer::setup_servers()
 {
     for (const auto& app_config :
          m_config.get_server_config().get_interfaces()) {
@@ -63,7 +90,10 @@ OpStatus HestiaServer::run()
                 .get();
         add_server(web_app);
     }
+}
 
+OpStatus HestiaServer::run()
+{
     if (m_servers.size() == 1) {
         m_servers[0]->start();
         if (!m_config.get_server_config().should_block_on_launch()) {
@@ -100,7 +130,7 @@ OpStatus HestiaServer::run()
 
 void HestiaServer::add_server(WebApp* app, unsigned port)
 {
-    Server::Config server_config;
+    BaseServerConfig server_config;
     server_config.m_ip = m_config.get_server_config().get_host_address();
     if (port == 0) {
         server_config.m_http_port = m_config.get_server_config().get_port();

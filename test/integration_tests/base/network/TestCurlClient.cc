@@ -41,7 +41,7 @@ class TestCurlClientFixture {
         m_user_service = hestia::UserService::create({}, &backend);
         m_web_app      = std::make_unique<TestWebApp>(m_user_service.get());
 
-        hestia::Server::Config test_config;
+        hestia::BaseServerConfig test_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
             test_config, m_web_app.get());
 
@@ -58,7 +58,7 @@ class TestCurlClientFixture {
         m_redirect_web_app =
             std::make_unique<TestWebApp>(m_user_service.get(), false);
 
-        hestia::Server::Config test_config;
+        hestia::BaseServerConfig test_config;
         test_config.m_http_port = 8090;
         m_redirect_server       = std::make_unique<hestia::BasicHttpServer>(
             test_config, m_redirect_web_app.get());

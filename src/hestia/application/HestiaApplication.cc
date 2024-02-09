@@ -171,7 +171,7 @@ void sync_configs(
     }
     else {
         HsmNodeInterface default_interface;
-        default_interface.set_port(8080);
+        default_interface.set_port(server_config.get_port());
         hsm_config.m_self.add_interface(default_interface);
     }
     hsm_config.m_controller_address = server_config.get_controller_address();

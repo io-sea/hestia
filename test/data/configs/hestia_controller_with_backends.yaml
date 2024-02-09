@@ -15,15 +15,15 @@ tiers:
   - id: "00000000-0000-0000-0000-000000000005"
     priority: 4
 
-object_store_backends:
-  - backend_type: file_hsm
+object_store_backends: # Specify which backends this node supports
+  - backend_type: file_hsm # This is a POSIX filesystem store associated with 5 tiers
     tiers: 
       ids: ["00000000-0000-0000-0000-000000000001",
             "00000000-0000-0000-0000-000000000002",
             "00000000-0000-0000-0000-000000000003",
             "00000000-0000-0000-0000-000000000004",
             "00000000-0000-0000-0000-000000000005"]
-    config: 
+    config: # The root is the path to the store's cache, if relative it is relative to Hestia cache
       root: hsm_object_store_controller0
 
 event_feed:

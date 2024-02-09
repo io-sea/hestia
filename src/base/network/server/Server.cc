@@ -4,12 +4,13 @@
 
 namespace hestia {
 
-std::unique_ptr<Server> Server::create(const Config& config, WebApp* web_app)
+std::unique_ptr<Server> Server::create(
+    const BaseServerConfig& config, WebApp* web_app)
 {
     return std::make_unique<BasicHttpServer>(config, web_app);
 }
 
-Server::Server(const Config& config, WebApp* web_app) :
+Server::Server(const BaseServerConfig& config, WebApp* web_app) :
     m_web_app(web_app), m_config(config)
 {
 }

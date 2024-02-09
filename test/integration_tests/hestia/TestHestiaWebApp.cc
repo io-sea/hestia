@@ -103,7 +103,7 @@ class TestHestiaWebAppFixture {
         m_web_app = std::make_unique<hestia::HestiaWebApp>(
             m_user_service.get(), m_dist_hsm_service.get());
 
-        hestia::Server::Config server_config;
+        hestia::BaseServerConfig server_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
             server_config, m_web_app.get());
 

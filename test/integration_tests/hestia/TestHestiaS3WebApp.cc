@@ -41,7 +41,7 @@ class S3ClientTestFixture {
             web_app_config, m_fixture->m_dist_hsm_service.get(),
             m_fixture->m_user_service.get());
 
-        hestia::Server::Config server_config;
+        hestia::BaseServerConfig server_config;
         m_server = std::make_unique<hestia::BasicHttpServer>(
             server_config, m_web_app.get());
 

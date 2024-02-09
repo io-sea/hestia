@@ -16,7 +16,8 @@
 #include <string>
 
 namespace hestia {
-BasicHttpServer::BasicHttpServer(const Config& config, WebApp* web_app) :
+BasicHttpServer::BasicHttpServer(
+    const BaseServerConfig& config, WebApp* web_app) :
     Server(config, web_app), m_tcp_server(std::make_unique<TcpServer>())
 {
     if (m_config.m_block_on_launch) {

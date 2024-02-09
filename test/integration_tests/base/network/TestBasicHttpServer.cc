@@ -37,7 +37,7 @@ class TestBasicHttpServerFixture {
 TEST_CASE_METHOD(
     TestBasicHttpServerFixture, "Test Basic Http Server", "[server]")
 {
-    hestia::Server::Config test_config;
+    hestia::BaseServerConfig test_config;
     hestia::BasicHttpServer server(test_config, m_web_app.get());
 
     server.initialize();
