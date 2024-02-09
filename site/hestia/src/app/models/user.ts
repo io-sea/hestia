@@ -1,5 +1,9 @@
+export interface UserToken {
+  value: string
+}
+
 export interface User {
     id: number;
     name: string;
-    token?: string;
+    tokens: UserToken[];
   }

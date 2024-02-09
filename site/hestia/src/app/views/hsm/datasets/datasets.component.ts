@@ -19,10 +19,10 @@ export class DatasetsComponent {
   constructor(private datasetService: DatasetService) {}
 
   ngOnInit(): void {
-    this.getObjects();
+    this.getDatasets();
   }
 
-  getObjects(): void {
+  getDatasets(): void {
     this.datasetService.get().subscribe(datasets => this.datasets = datasets);
   }
 

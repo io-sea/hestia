@@ -15,6 +15,11 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
+  get_logged_in_user()
+  {
+    
+  }
+
   login(username:string, password:string): Observable<User>
   {
     let body = new URLSearchParams();
