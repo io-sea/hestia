@@ -154,6 +154,14 @@ HttpResponse::Ptr HestiaHsmActionView::do_hsm_action(
     HsmAction action;
     action.deserialize(action_dict);
 
+    if (action.is_data_put_action() && action.get_size() == 0) {
+        const auto content_length =
+            request.get_header().get_item("content-length");
+        if (!content_length.empty()) {
+            action.set_size(std::stoull(content_length));
+        }
+    }
+
     if (action.get_subject_key().empty()) {
         return HttpResponse::create(
             {HttpStatus::Code::_400_BAD_REQUEST,
