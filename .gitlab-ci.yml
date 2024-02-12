@@ -80,7 +80,7 @@ stages:
     <<: *cmake_install_cache
 
 # Hestia CI Jobs
-motr install test:
+motr_install_test:
   <<: *default_job
   stage: static analysis
   before_script: 
