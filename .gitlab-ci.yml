@@ -30,7 +30,6 @@ stages:
     yum install -qy $(cat ${HESTIA_DEPS}/base);
     ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR;
   - &install_motr
-    echo ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}
     curl ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/motr-rpms/1.0.0/motr-rpms-$(arch).tar.gz | tar -xvfz;
     yum install -qy ${CI_PROJECT_DIR}/motr-rpms/cortx-motr-2.0.0*.$(arch).rpm;
     yum install -qy ${CI_PROJECT_DIR}/motr-rpms/cortx-motr-devel-2.0.0*.$(arch).rpm;
@@ -87,6 +86,7 @@ motr_install_test:
   before_script: 
     - *update_distro
   script:
+    - echo ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}
     - *install_motr
 
 Format: 
