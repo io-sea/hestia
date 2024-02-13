@@ -225,3 +225,5 @@ MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password minio server /mnt/data --cons
 
 From there you can log into the admin console, create access tokens, buckets and objects.
 
+
+
