@@ -104,18 +104,13 @@ brew install llvm
 The following should be set in any shell you use for compiling (e.g. you can add them to `~/.zshrc`). Note this is slightly different to the paths suggested by brew.
 
 ```sh
-export LLVM_PATH=/opt/homebrew/opt/llvm
+export HOMEBREW_PREFIX="$(brew --prefix)"
+export LLVM_PATH=${HOMEBREW_PREFIX}/opt/llvm
 export PATH=$LLVM_PATH/bin:$PATH
 export LDFLAGS="-L$LLVM_PATH/lib/c++ -Wl,-rpath,$LLVM_PATH/lib/c++":$LDFLAGS
 export CPPFLAGS=-I$LLVM_PATH/include:$CPPFLAGS
 export CC=$LLVM_PATH/bin/clang
 export CXX=$LLVM_PATH/bin/clang++
-```
-
-Note that on older Macs, the correct LLVM path may instead be 
-
-```sh
-export LLVM_PATH=/usr/local/Cellar/llvm
 ```
 
 ### Code Coverage
