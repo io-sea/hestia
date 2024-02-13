@@ -49,8 +49,8 @@ We will build two containers, first for the node with the db:
 ```sh
 mkdir phobos_db_node
 cd phobos_db_node
-cp $HESTIA_SRC_DIR/src/infra/phobos/* .
-cp $HESTIA_SRC_DIR/src/infra/phobos/db_node/Dockerfile .
+cp $HESTIA_SRC_DIR/infra/scripts/phobos/* .
+cp $HESTIA_SRC_DIR/infra/scripts/phobos/db_node/Dockerfile .
 podman build --platform linux/arm64 -t phobos_db_node .
 ```
 
@@ -59,9 +59,8 @@ Then the node which will be the worker:
 ```sh
 mkdir phobos_worker_node
 cd phobos_worker_node
-cp $HESTIA_SRC_DIR/src/infra/phobos/* .
-cp $HESTIA_SRC_DIR/src/infra/phobos/worker_node/Dockerfile .
-cp $HESTIA_SRC_DIR/src/infra/phobos/worker_node/Dockerfile .
+cp $HESTIA_SRC_DIR/infra/scripts/phobos/* .
+cp $HESTIA_SRC_DIR/infra/phobos/scripts/worker_node/Dockerfile .
 podman build --platform linux/arm64 -t phobos_worker_node .
 ```
 
@@ -70,7 +69,7 @@ podman build --platform linux/arm64 -t phobos_worker_node .
 We can launch the container with the db with:
 
 ```sh
-podman run -it --platform linux/arm64 -p 8888:5432 -p 8080:8080 -p 8090:8090 -v $HOME:$HOME -h phobos_db_node phobos_db_node
+podman run -it --platform linux/arm64 -p 5432:5432 -p 8080:8080 -p 8090:8090 -v $HOME:$HOME -h phobos_db_node phobos_db_node
 ```
 
 Inside the container start the db, launch phobos, create a storage device and add an object:

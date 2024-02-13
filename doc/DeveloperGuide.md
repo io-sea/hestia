@@ -164,10 +164,10 @@ dnf install -y autoconf automake libtool gcc-c++ git wget doxygen rpm-build pyth
     make glib2-devel which jansson-devel libini_config-devel libattr-devel sg3_utils-devel protobuf-c-devel libpq-devel
 ```
 
-Alternatively to CMake doing the build you can run the [following script](/infra/scripts/build_phobos.sh):
+Alternatively to CMake doing the build you can run the [following script](/infra/scripts/phobos/build_phobos.sh):
 
 ```bash
-infra/scripts/build_phobos.sh infra/cmake/patches
+infra/scripts/phobos/build_phobos.sh infra/cmake/patches
 ``` 
 
 to apply our patches and build Phobos. 
