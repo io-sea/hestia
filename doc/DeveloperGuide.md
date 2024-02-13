@@ -112,6 +112,12 @@ export CC=$LLVM_PATH/bin/clang
 export CXX=$LLVM_PATH/bin/clang++
 ```
 
+Note that on older Macs, the correct LLVM path may instead be 
+
+```sh
+export LLVM_PATH=/usr/local/Cellar/llvm
+```
+
 ### Code Coverage
 
 To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be set to `ON`, described further [here](https://git.ichec.ie/io-sea-internal/hestia/-/blob/devel/test/README.md).
