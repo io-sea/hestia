@@ -294,13 +294,13 @@ As an example of a REST API, start the Hestia service
 
 ```bash
 export HESTIA_ENDPOINT=127.0.0.1:8080
-hestia start
+hestia server --host http://127.0.0.1 --port 8080
 ```
 
 For convenience the server will host a web-view of the state of the Hestia system at: http://localhost:8080, which you are encouraged to explore.
 
 #### Authentication
-Requests for creating resources need to include information about the User making the request. Hestia currently supports a simple token-based Authentication. To find the token for the default user you can go to: http://localhost:8080/api/v1/users in your web browser.
+Requests for creating resources need to include information about the User making the request. Hestia currently supports a simple token-based Authentication. To find the token for the default user you can go to: http://localhost:8080/api/v1/users  in your web browser.
 
 To create a new object do:
 
@@ -316,12 +316,6 @@ where the header `authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=` c
 
 An example showing further cURL use for manipulating objects and uploading/downloading data is included [here](/examples/sample_shell/hestia_sample.sh).
 
-When finished, stop the Hestia service
-
-```bash
-hestia stop
-```
-
 ### S3 API
 
 #### Authentication
@@ -330,11 +324,9 @@ Similarly to the REST API case we need user authentication information before ma
 You can do something like:
 
 ```bash
-hestia start
+hestia server --host http://127.0.0.1 --port 8080 
 # Read user details in browser or via curl etc
-hestia stop
 ```
-
 You will need the default user name (`name` attribute) and token (`tokens[0].value`).
 
 #### Starting the server
@@ -350,50 +342,9 @@ server:
 then we can do:
 
 ```bash
-hestia start --config=my_s3_config.yaml
+hestia server --host http://127.0.0.1 --port 8080 --config=my_s3_config.yaml
 ```
-
 to start the server.
-
-#### Making requests
-
-This example uses Amazon's `boto` Python S3 client library: `pip install boto3`.
-
-```python
-import boto3
-from botocore.client import Config
-
-# Add the user name and token obtained from the rest interface - described above
-session = boto3.session.Session(aws_access_key_id="MY_USER_NAME", aws_secret_access_key="MY_USER_TOKEN")
-
-# Here HESTIA_ENDPOINT is something like http://127.0.0.1:8080
-# Hestia best supports path based addressing style for s3
-# Payload signing is currently not supported
-client = session.client(service_name='s3', 
-  endpoint_url="HESTIA_ENDPOINT", 
-  config=Config(s3={'addressing_style': 'path','payload_signing_enabled' : False}))
-
-# Bucket and Dataset are interchaneable notions here
-my_bucket_name = "my_bucket"
-my_object_name = "my_object"
-my_metadata = {"mykey0" : "myvalue0"}
-my_file_to_upload = "test.dat"
-
-# Create the bucket
-client.create_bucket(Bucket=my_bucket_name) 
-
-# Upload the file - this also creates the object and adds any metadata
-client.upload_file(Filename=filename,
-  Bucket=my_bucket_name,
-  Key=my_object_name,
-  ExtraArgs={"Metadata": my_metadata})
-```
-
-Stop the Hestia service
-
-```bash
-hestia stop
-```
 
 # Hestia as a System Service
 
