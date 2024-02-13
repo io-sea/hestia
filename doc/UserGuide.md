@@ -344,7 +344,7 @@ then we can do:
 ```bash
 hestia server --host http://127.0.0.1 --port 8080 --config=my_s3_config.yaml
 ```
-to start the server.
+to start the server. The configuration for s3 server can be provided via the yaml file `s3_server.yaml` located in test/data/configs/s3. 
 
 # Hestia as a System Service
 

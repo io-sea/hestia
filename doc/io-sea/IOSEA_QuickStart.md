@@ -13,7 +13,7 @@ sudo dnf install hestia-$VERSION.rpm
 Add the Python package to your `PYTHONPATH`:
 
 ```bash
-export PYTHONPATH=/usr/lib/hestia/python/hestia:$PYTHONPATH
+export PYTHONPATH=/usr/$LIB/hestia/python/hestia:$PYTHONPATH
 ```
 
 Run the following example script:

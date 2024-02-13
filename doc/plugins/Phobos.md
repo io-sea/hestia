@@ -69,7 +69,7 @@ podman build --platform linux/arm64 -t phobos_worker_node .
 We can launch the container with the db with:
 
 ```sh
-podman run -it --platform linux/arm64 -p 5432:5432 -p 8080:8080 -p 8090:8090 -v $HOME:$HOME -h phobos_db_node phobos_db_node
+podman run -it --platform linux/arm64 -p 8888:5432 -p 8080:8080 -p 8090:8090 -v $HOME:$HOME -h phobos_db_node phobos_db_node
 ```
 
 Inside the container start the db, launch phobos, create a storage device and add an object:
