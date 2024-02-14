@@ -105,7 +105,7 @@ The following should be set in any shell you use for compiling (e.g. you can add
 
 ```sh
 export HOMEBREW_PREFIX="$(brew --prefix)"
-export LLVM_PATH=${HOMEBREW_PREFIX}/opt/llvm
+export LLVM_PATH=$HOMEBREW_PREFIX/opt/llvm
 export PATH=$LLVM_PATH/bin:$PATH
 export LDFLAGS="-L$LLVM_PATH/lib/c++ -Wl,-rpath,$LLVM_PATH/lib/c++":$LDFLAGS
 export CPPFLAGS=-I$LLVM_PATH/include:$CPPFLAGS
