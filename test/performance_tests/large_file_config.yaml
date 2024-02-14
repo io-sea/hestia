@@ -1,0 +1,5 @@
+logging:
+  level: error
+
+event_feed:
+  active: false
