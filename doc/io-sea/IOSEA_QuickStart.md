@@ -16,7 +16,7 @@ Add the Python package to your `PYTHONPATH`:
 export PYTHONPATH=/usr/$LIB/hestia/python/hestia:$PYTHONPATH
 ```
 
-Run the following example script:
+where $LIB is lib64 on Red Hat and lib otherwise. Run the following example script:
 
 ```python
 import hestia
