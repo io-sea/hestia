@@ -1,0 +1,7 @@
+FROM rockylinux:8
+
+RUN dnf check-update; dnf update -y; dnf install -y dnf-plugins-core epel-release; dnf install -y 'dnf-command(config-manager)'; dnf config-manager --set-enabled powertools; dnf update -y
+RUN dnf install -y wget
+RUN wget https://git.ichec.ie/io-sea-internal/hestia/-/releases/v1.2.0/downloads/binaries/hestia-1.2.0-1.x86_64.rpm; dnf install -y hestia-1.2.0-1.x86_64.rpm; mkdir configs
+COPY ./config/hestia.yaml /configs
+CMD hestia server --config /configs/hestia.yaml
