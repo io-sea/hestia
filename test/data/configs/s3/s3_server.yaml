@@ -19,4 +19,4 @@ object_store_backends:
       root: s3_server_object_store
 
 logger:
-  level: debug
+  level: info

@@ -23,8 +23,6 @@ This document covers more detailed Local Build and Test options for Hestia, as w
   - [Nightly Builds](#nightly-builds)
   - [Version Bump and Release](#version-bump-and-release)
 - [System Integration Testing](#system-integration-testing)
-  - [S3](#s3)
-    - [Minio](#minio)
 
 # Local Build
 
@@ -83,13 +81,13 @@ We use `clang-format` and `clang-tidy` for linting. To enable linting we need to
 
 To do formatting you will need the `clang` compilers in your `PATH` and can then run:
 
-```bash
+```sh
 infra/scripts/run_format.sh
 ```
 
 and linting:
 
-```bash
+```sh
 infra/scripts/run_lint.sh /path/to/build/dir
 ```
 
@@ -121,7 +119,7 @@ To enable code coverage targets, the CMake option `CODE_COVERAGE` needs to be se
 
 Hestia can be packaged with:
 
-```bash
+```sh
 make package
 ```
 
@@ -129,7 +127,7 @@ which will build an RPM and/or TGZ depending on the platform. The CMake Option `
 
 Hestia's source code can be packaged as a source RPM/TGZ by running: 
 
-```bash
+```sh
 cmake -DHESTIA_USE_SRC_RPM_SPEC=ON .
 make package_source
 ```
@@ -160,14 +158,14 @@ Phobos is automatically found by CMake when `-DHESTIA_WITH_PHOBOS=ON` on Linux.
 
 If an installation is not found CMake will attempt to build it automatically. To do so it needs the following dependencies. 
 
-```bash
+```sh
 dnf install -y autoconf automake libtool gcc-c++ git wget doxygen rpm-build python3-devel \
     make glib2-devel which jansson-devel libini_config-devel libattr-devel sg3_utils-devel protobuf-c-devel libpq-devel
 ```
 
 Alternatively to CMake doing the build you can run the [following script](/infra/scripts/phobos/build_phobos.sh):
 
-```bash
+```sh
 infra/scripts/phobos/build_phobos.sh infra/cmake/patches
 ``` 
 
@@ -211,20 +209,5 @@ They can be manually triggered through the Gitlab 'Build->Pipeline schedules' pa
 # System Integration Testing
 
 This section documents some setup to help with testing Hestia against third-party applications.
-
-## S3
-
-### Minio
-
-Minio provides several object store interfaces. For us it is useful as an S3 server for running our S3 client against.
-
-```bash
-# https://min.io/download#/macos
-brew install minio/stable/minio
-MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password minio server /mnt/data --console-address ":9001"
-```
-
-From there you can log into the admin console, create access tokens, buckets and objects.
-
 
 

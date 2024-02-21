@@ -36,4 +36,20 @@ The CLI output will give the cache location. You can modify the ports as you lik
 
 # Run the sample script
 
+Create a Python virtual environment:
 
+```sh
+python -m venv --prompt hestia_demos .venv
+```
+
+Install the dependencies:
+
+```sh
+pip install -r requirements.txt
+```
+
+Run the example:
+
+```sh
+python sample_s3_client.py
+```

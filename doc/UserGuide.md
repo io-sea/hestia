@@ -20,12 +20,11 @@ This is the `Hestia` user guide, it covers:
   - [C Interface](#c-interface)
   - [Python Interface](#python-interface)
   - [Web Interfaces](#web-interfaces)
-    - [REST API](#rest-api)
+    - [Http Interface](#http-interface)
       - [Authentication](#authentication)
     - [S3 API](#s3-api)
       - [Authentication](#authentication-1)
       - [Starting the server](#starting-the-server)
-      - [Making requests](#making-requests)
 - [Hestia as a System Service](#hestia-as-a-system-service)
   - [Systemd](#systemd)
 - [Ansible Deployment](#ansible-deployment)
@@ -165,16 +164,17 @@ Hestia can be used via a `Command Line Interface`, `c/Python APIs` or over a net
 ```yaml
 server:
   host_address: 127.0.0.1
-  host_port: 8080
-  web_app: 
-    interface: http
-  backend: hestia::Basic
+  interfaces: 
+    - type: http
+      port: 8080
 ```
 
-The server will attempt to bind at the `host_address` and `host_port` when started. The `web_app.interface` attribute specifies which `Hestia` application to launch on the server. It currently supports:
+The server will attempt to bind at the `host_address`. The `interfaces.type` attribute specifies which of the `Hestia` interface to launch on the server. It currently supports:
 
 * `http` : The `HTTP` interface to the Hestia - this exposes HSM operations as per the CLI (detailed later), but also a co-ordination API for distributed `Hestia` instances.
 * `s3` : The `S3` interface to Hestia - this exposes an S3 Object Store interface with optional HSM support via header metadata.
+
+Both interfaces can be launch at the same time, provided they are run on different ports.
 
 ## Event Feed
 
@@ -234,52 +234,10 @@ No special dependencies, compiler flags or definitions are needed by default, bu
 For similar reasons to the CLI, the interface is designed to be adaptable to meet the fluid requirements of the parent project - this is manifested by relying on strings and format specifiers as primary input and output arguments. The semantics are similar to the CLI - with a `hestia_subject_method` pattern for CRUD operations. 
 
 ## Python Interface
+
 The Python interface includes both a low-level wrapper over the C interface (`hestia.HestiaLib`) and a high-level `hestia.HestiaClient` class, which is easier to use and more closely follows IO-SEA API conventions. The low-level wrapper can serve as a fall-back for anything missing in the client.
 
-If you built Hestia from source you can add the `hestia` package to the `PYTHONPATH` with:
-
-```bash
-export PYTHONPATH=$PYTHONPATH:$HESTIA_BUILD_DIR/lib/python/hestia
-```
-
-or if you installed a binary package it will look something like:
-
-```bash
-export PYTHONPATH=$PYTHONPATH:/usr/lib/hestia/python/hestia
-```
-
-`libhestia` should be found automatically, but if there are issues finding it you can manually add its location to your `LD_LIBRARY_PATH`.
-
-As an example of using the Python interface, we can do something like:
-
-```python
-import hestia
-
-# Setup some data
-my_object_id = "1234"
-my_attributes = {"key0" : "val0", "key1" : "val1"}
-my_content = b"content for storage"
-
-# Create the client - this will initialize it too
-client = hestia.HestiaClient()
-
-# Create an object with the requested id
-client.object_create(my_object_id)
-
-# Add USER attributes to the object
-client.object_attrs_put(my_object_id, my_attributes)
-
-# Add data to the object
-client.object_data_put(my_object_id, my_content)
-
-# Get the USER attributes back
-attributes_returned = client.object_attrs_get(my_object_id, len(my_content))
-
-# Get the data back
-data_returned = client.object_data_get(my_object_id)
-```
-
-Many other operations are supported, see `bindings/python/hestia/test/test_binding.py` for detailed examples.
+See the [sample_python_app](/examples/sample_python_app/README.md) for more details on running the Python interface.
 
 ## Web Interfaces
 
@@ -289,22 +247,24 @@ The web-apps are run on a basic built-in web-server.
 
 The server can be run blocking or as a daemon depending on the supplied command line flags - with the loaded app controlled by the supplied `yaml` config.
 
-### REST API
-As an example of a REST API, start the Hestia service
+### Http Interface
+
+To launch the Http REST interface, start the Hestia server with:
 
 ```bash
-export HESTIA_ENDPOINT=127.0.0.1:8080
 hestia server --host http://127.0.0.1 --port 8080
 ```
 
 For convenience the server will host a web-view of the state of the Hestia system at: http://localhost:8080, which you are encouraged to explore.
 
 #### Authentication
+
 Requests for creating resources need to include information about the User making the request. Hestia currently supports a simple token-based Authentication. To find the token for the default user you can go to: http://localhost:8080/api/v1/users  in your web browser.
 
 To create a new object do:
 
 ```bash
+export HESTIA_ENDPOINT=127.0.0.1:8080
 curl -X PUT -H "authorization: DoaDrn1Y5h/8KTpYE/DXUGimWhpMk5e/Y3utspFArc8=" $HESTIA_ENDPOINT/api/v1/objects
 ```
 
@@ -331,20 +291,25 @@ You will need the default user name (`name` attribute) and token (`tokens[0].val
 
 #### Starting the server
 
-To start the server with an S3 interface we need to supply a config.yaml to override the default 'rest' interface, it will look like:
+To start the server with an S3 interface we need to supply a `config.yaml` to override the server defaults, it will look like:
 
 ```yaml
 server:
-  web_app: 
-    interface: s3
+  host: 127.0.0.1
+  interfaces: 
+    - type: s3
+      port: 8090
+    - type: http
+      port: 8080
 ```
 
 then we can do:
 
 ```bash
-hestia server --host http://127.0.0.1 --port 8080 --config=my_s3_config.yaml
+hestia server --config=my_conconfigfig.yaml
 ```
-to start the server. The configuration for s3 server can be provided via the yaml file `s3_server.yaml` located in test/data/configs/s3. 
+
+to start the server. For a full s3 server config see the [sample_s3_server](/examples/sample_s3_server/README.md) example.
 
 # Hestia as a System Service
 
