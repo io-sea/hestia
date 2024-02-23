@@ -6,20 +6,20 @@ import { Observable} from 'rxjs';
 import { UserService } from './user.service';
 import { HsmService } from './hsm.service';
 
-import { Dataset } from '../models/dataset';
+import { Tier } from '../models/tier';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DatasetService extends HsmService{
+export class TierService extends HsmService{
 
-  item: string = "datasets";
+  item: string = "tiers";
 
   constructor(private userServiceIn: UserService, private httpIn: HttpClient) {
     super(userServiceIn, httpIn)
    }
 
-  get(): Observable<Dataset[]> {
-    return this.http_get<Dataset>(this.item);
+  get(): Observable<Tier[]> {
+    return this.http_get<Tier>(this.item);
   }
 }

@@ -1,13 +1,16 @@
 <div class="container">
     <div class="content">
-        <ul class="datasets">
-            <li *ngFor="let dataset of datasets">
-                <button type="button" [class.selected]="dataset === selectedDataset" (click)="onSelect(dataset)">
-                    <span class="badge">{{dataset.id}}</span>
-                    <span class="name">{{dataset.name}}</span>
-                </button>
-          </li>
-        </ul>
+        <mat-action-list>
+            <div *ngFor="let dataset of datasets">
+            <button mat-list-item  
+                [class.selected]="dataset === selectedDataset" 
+                (click)="onSelect(dataset)"> 
+                    <p mat-line style="padding:0px; margin: 0px;">{{dataset.id | slice : 0 :5}}...</p>
+                    <p mat-line style="padding:0px; margin: 0px;">{{dataset.name}}</p>
+            </button>
+            <mat-divider></mat-divider>
+            </div>
+        </mat-action-list>
     </div>
     <app-dataset-detail class="detail" [dataset]="selectedDataset"></app-dataset-detail>
 </div>

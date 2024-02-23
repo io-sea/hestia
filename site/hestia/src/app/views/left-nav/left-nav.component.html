@@ -1,0 +1,12 @@
+<mat-sidenav-container class="leftnav-container">
+    <mat-sidenav mode="side" opened>
+        <mat-nav-list>
+            @for (option of getOptions(); track option) {
+              <a mat-list-item [routerLink]="option.route">{{ option.name }}</a>
+            }
+        </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content> 
+        <router-outlet/>
+    </mat-sidenav-content>
+</mat-sidenav-container>

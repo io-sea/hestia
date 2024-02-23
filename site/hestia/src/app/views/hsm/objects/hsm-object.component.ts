@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 
 import { HsmObjectService } from '../../../services/hsm-object.service';
 import { HsmObject} from '../../../models/hsm-object';
 import { HsmDetailComponent } from '../object-detail/hsm-detail.component';
+import { Dataset } from '../../../models/dataset';
 
 @Component({
   selector: 'app-hsm-object',
@@ -14,6 +15,8 @@ import { HsmDetailComponent } from '../object-detail/hsm-detail.component';
 })
 export class HsmObjectComponent {
   objects: HsmObject[] = [];
+
+  @Input() dataset?: Dataset;
   selectedObject?: HsmObject;
 
   constructor(private hsmObjectService: HsmObjectService) {}
@@ -23,7 +26,11 @@ export class HsmObjectComponent {
   }
 
   getObjects(): void {
-    this.hsmObjectService.getObjects().subscribe(objects => this.objects = objects);
+    if(this.dataset)
+    {
+      this.hsmObjectService.getObjects(this.dataset).subscribe(objects => this.objects = objects);
+    }
+    
   }
 
   onSelect(object: HsmObject): void {

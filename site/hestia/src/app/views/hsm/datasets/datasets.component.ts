@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, SlicePipe } from '@angular/common';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatListModule} from '@angular/material/list';
 
 import { Dataset } from '../../../models/dataset';
 import { DatasetService } from '../../../services/dataset.service';
@@ -8,7 +10,7 @@ import { DatasetDetailComponent } from '../dataset-detail/dataset-detail.compone
 @Component({
   selector: 'app-datasets',
   standalone: true,
-  imports: [NgFor, NgIf, DatasetDetailComponent],
+  imports: [NgFor, NgIf, SlicePipe, DatasetDetailComponent, MatSidenavModule, MatListModule],
   templateUrl: './datasets.component.html',
   styleUrl: './datasets.component.css'
 })

@@ -6,20 +6,20 @@ import { Observable} from 'rxjs';
 import { UserService } from './user.service';
 import { HsmService } from './hsm.service';
 
-import { Dataset } from '../models/dataset';
+import { HsmAction } from '../models/hsm_action';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DatasetService extends HsmService{
+export class ActionService extends HsmService{
 
-  item: string = "datasets";
+  item: string = "actions";
 
   constructor(private userServiceIn: UserService, private httpIn: HttpClient) {
     super(userServiceIn, httpIn)
    }
 
-  get(): Observable<Dataset[]> {
-    return this.http_get<Dataset>(this.item);
+  get(): Observable<HsmAction[]> {
+    return this.http_get<HsmAction>(this.item);
   }
 }

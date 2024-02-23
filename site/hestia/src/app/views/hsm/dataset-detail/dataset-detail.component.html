@@ -1,8 +1,8 @@
 <div *ngIf="dataset">
-    <h2>{{dataset.name}} Details</h2>
     <div>id: {{dataset.id}}</div>
     <div>
       <label for="dataset-name">name: </label>
       <input id="dataset-name" [(ngModel)]="dataset.name" placeholder="name">
     </div>
+    <app-hsm-object [dataset]="dataset"></app-hsm-object>
 </div>

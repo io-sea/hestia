@@ -1,4 +1,4 @@
-cache_path: /cache
+#cache_path: /cache
 
 server:
   host: 127.0.0.1

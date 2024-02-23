@@ -1,12 +1,11 @@
-<main class="main">
-  <div class="content">
+<main class="main" style="min-height: 100vh">
     <header>
-    <h1>{{ title }}</h1>
+      <app-top-bar [title]="title"></app-top-bar>
     </header>
-    <section class="content">
-      <router-outlet />
-    </section>
-  </div>
+
+    <app-landing *ngIf="user === undefined"></app-landing>
+    <app-left-nav *ngIf="user" style="height: 100vh;"></app-left-nav>
+    
 </main>
 
 

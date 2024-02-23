@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, tap, throwError, catchError } from 'rxjs';
+import { Observable, Subject, of, tap, throwError, catchError } from 'rxjs';
 
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpClientModule } from '@angular/common/http';
 
@@ -12,6 +12,9 @@ export class UserService {
 
   loggedInUser?: User;
   endpoint: string = "http://localhost:8080/api/v1/login"
+
+  logged = new Subject<boolean>();
+  isLogged = this.logged.asObservable();
 
   constructor(private http: HttpClient) { }
 
@@ -30,8 +33,15 @@ export class UserService {
 
     console.log("hitting: " + this.endpoint);
     return this.http.post<User>(this.endpoint, body.toString(), { headers: headers }).pipe(
-        tap(user => this.loggedInUser = user),
+        tap(user => this.onLoggedIn(user)),
         catchError(this.handleError));
+  }
+
+  onLoggedIn(user: User)
+  {
+    console.log("logged in");
+    this.loggedInUser = user;
+    this.logged.next(true);
   }
 
   handleError(error: HttpErrorResponse)

@@ -1,7 +1,19 @@
-<section>
-    <form>
-      <input type="text" placeholder="Username" [(ngModel)]="loginUser.name" name="first">
-      <input type="password" placeholder="Password" [(ngModel)]="loginUser.password"  name="second">
-      <button class="primary" type="button" (click)="login()">Log In</button>
+<section class="parent">
+
+  <mat-card class="box" style="padding: 10px;">
+    <div class="form_items" style="text-align:center;">
+    <form class="example-form">
+      <mat-card-content>
+        <mat-form-field class="example-full-width" style="padding: 5px;">
+          <input matInput placeholder="Username" type="text" [(ngModel)]="loginUser.name"  name="first">
+        </mat-form-field>
+        <mat-form-field class="example-full-width" style="padding: 5px;">
+          <input matInput placeholder="Password" type="password" [(ngModel)]="loginUser.password" name="second">
+        </mat-form-field>
+      </mat-card-content>
+      <button mat-stroked-button color="accent" class="btn-block" (click)="login()">Log in</button>
     </form>
+    </div>
+  </mat-card>
+
 </section>

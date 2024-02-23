@@ -1,0 +1,16 @@
+<div *ngIf="user">
+    <mat-toolbar>
+      <button mat-icon-button class="example-icon" aria-label="Site primary menu" [matMenuTriggerFor]="menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item *ngFor="let category of getCategories()" (click)="onCategory(category.name)">{{category.name}}</button>
+      </mat-menu>
+      <span>{{title}}</span>
+      <span class="topbar-spacer"></span>
+      <span>{{username}}</span>
+      <button mat-icon-button class="example-icon" aria-label="User profile">
+        <mat-icon>person</mat-icon>
+      </button>
+    </mat-toolbar>
+</div>

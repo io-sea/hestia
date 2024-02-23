@@ -3,25 +3,24 @@ import { Observable, of, catchError,  throwError} from 'rxjs';
 
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpClientModule } from '@angular/common/http';
 
-import { Dataset } from '../models/dataset';
-import { HsmObject } from '../models/hsm-object';
 import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class HsmObjectService {
+export class HsmService {
 
-  endpoint: string = "http://localhost:8080/api/v1/objects"
+  endpoint: string = "http://localhost:8080/api/v1/"
 
   constructor(private userService: UserService, private http: HttpClient) { }
 
-  getObjects(dataset: Dataset): Observable<HsmObject[]> {
+  http_get<T>(item:string, query:string=""): Observable<T[]> {
+
     let token = this.userService.loggedInUser?.tokens[0].value ?? "";
     let headers = new HttpHeaders({ 'Authorization': token });
 
-    let url = this.endpoint + "?parent_id=" + dataset.id;
-    return this.http.get<HsmObject[]>(url, { headers: headers }).pipe(
+    let url = this.endpoint + item + query;
+    return this.http.get<T[]>(url, { headers: headers }).pipe(
       catchError(this.handleError));
   }
 

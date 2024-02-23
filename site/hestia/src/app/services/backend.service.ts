@@ -6,20 +6,20 @@ import { Observable} from 'rxjs';
 import { UserService } from './user.service';
 import { HsmService } from './hsm.service';
 
-import { Dataset } from '../models/dataset';
+import { Backend } from '../models/backend';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DatasetService extends HsmService{
+export class BackendService extends HsmService{
 
-  item: string = "datasets";
+  item: string = "object_store_backends";
 
   constructor(private userServiceIn: UserService, private httpIn: HttpClient) {
     super(userServiceIn, httpIn)
    }
 
-  get(): Observable<Dataset[]> {
-    return this.http_get<Dataset>(this.item);
+  get(): Observable<Backend[]> {
+    return this.http_get<Backend>(this.item);
   }
 }

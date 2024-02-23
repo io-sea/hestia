@@ -1,12 +1,15 @@
 import { Routes } from '@angular/router';
 
-import { HsmObjectComponent } from './views/hsm/objects/hsm-object.component';
-import { LandingComponent } from './views/landing/landing.component';
-import { UserNavComponent } from './views/user-nav/user-nav.component';
-import { AdminNavComponent } from './views/admin-nav/admin-nav.component';
+import { DatasetsComponent } from './views/hsm/datasets/datasets.component';
+import { ActionsComponent } from './views/hsm/actions/actions.component';
+import { TiersComponent } from './views/system/tiers/tiers.component';
+import { NodesComponent  } from './views/system/nodes/nodes.component';
+import { BackendsComponent } from './views/system/backends/backends.component';
 
 export const routes: Routes = [
-    { path: '', redirectTo: '/landing', pathMatch: 'full' },
-    { path: 'user', component: UserNavComponent },
-    { path: 'landing', component: LandingComponent }
+    { path: 'datasets', component: DatasetsComponent },
+    { path: 'actions', component: ActionsComponent },
+    { path: 'tiers', component: TiersComponent },
+    { path: 'nodes', component: NodesComponent },
+    { path: 'backends', component: BackendsComponent },
 ];
