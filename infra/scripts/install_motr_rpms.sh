@@ -22,8 +22,8 @@ yum install -qy ${MOTR_RPM_DIR}/cortx-motr-devel-2.0.0*.$(arch).rpm;
 
 
 python3 -m pip install --upgrade pip
-python3 -m pip install --no-cache-dir --ignore-installed asciidoc ply numpy==1.19.5
-python3 -m pip install --no-cache-dir --ignore-installed cffi==1.14.5
+python3 -m pip install --no-cache-dir asciidoc ply numpy==1.19.5
+python3 -m pip install --no-cache-dir  cffi==1.14.5
 
 if [ $HOST_ARCH == "aarch64" ];then
     # On aarch64 nothing gives kafka python wheel and repo lib is too old, so need to build.
@@ -33,7 +33,8 @@ if [ $HOST_ARCH == "aarch64" ];then
 fi 
 
 wget https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.txt
-pip3 install --ignore-installed -r python_requirements.txt
+python3 -m pip install -r python_requirements.txt
+python3 -m pip install --ignore-installed PyYAML==5.4.1
 
 yum config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo # Provides consul dependency
 
