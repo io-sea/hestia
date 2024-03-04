@@ -2,6 +2,13 @@ Download motr rpms from hestia repo, under Deploy > Package registry. Set an env
 
 Note: If you have not yet installd the hestia base dependencies, do so before installing the rpms.
 
+```bash
+    cd hestia
+    yum install -qy epel-release
+    yum config-manager --set-enabled powertools
+    yum install -qy $(cat infra/deps/rocky8/base)
+```
+
 To install motr from the rpms provided in the hestia gitlab package registry, download the tarball from the repository and expand it, then run the following script (found in infra/scripts), ensuring that the argument passed in is the path to the top level 'builds' folder
 
 ```bash 

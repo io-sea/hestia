@@ -2,17 +2,16 @@
 
 #install hestia base dependencies before running this script
 
-set -o errexit
 export MOTR_BUILDS_LOCATION=$1
 if [ ! -d $1 ]; then
-        echo "Error, pass in the path to the builds folder"
+        echo "Error, pass in the path to the motr rpms folder"
         exit 1
 fi
 
-export MOTR_RPM_DIR=${MOTR_BUILDS_LOCATION}/io-sea-internal/hestia/motr-rpms
+export MOTR_RPM_DIR=${MOTR_BUILDS_LOCATION}/builds/io-sea-internal/hestia/motr-rpms
 
 if [ ! -d $MOTR_RPM_DIR ]; then
-    echo "Error, pass in the top level builds folder"
+    echo "Error, pass in the top level motr rpms folder"
     exit 1
 fi 
 export HOST_ARCH=$(arch)
@@ -23,7 +22,8 @@ yum install -qy ${MOTR_RPM_DIR}/cortx-motr-devel-2.0.0*.$(arch).rpm;
 
 
 python3 -m pip install --upgrade pip
-python3 -m pip install --no-cache-dir asciidoc ply cffi==1.14.5 numpy==1.19.5
+python3 -m pip install --no-cache-dir --ignore-installed asciidoc ply numpy==1.19.5
+python3 -m pip install --no-cache-dir --ignore-installed cffi==1.14.5
 
 if [ $HOST_ARCH == "aarch64" ];then
     # On aarch64 nothing gives kafka python wheel and repo lib is too old, so need to build.
@@ -33,7 +33,7 @@ if [ $HOST_ARCH == "aarch64" ];then
 fi 
 
 wget https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.txt
-pip3 install -r python_requirements.txt
+pip3 install --ignore-installed -r python_requirements.txt
 
 yum config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo # Provides consul dependency
 
