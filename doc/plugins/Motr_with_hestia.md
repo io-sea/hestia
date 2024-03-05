@@ -44,7 +44,7 @@ This will create the folder var/motr in your home directory.
 Download the singlenode.yaml file and replace instances of /home/seagate with the path to your home folder, or wherever your var/motr directory containing the disk images is located. Also ensure the interface matches the interface provided suring the configuration step. Once this is done you can set up the cluster.
 
 ```bash
-sudo hctl bootstrap --mkfs ~/singlenode.yaml
+sudo hctl bootstrap --mkfs ~/singlenode-multipools.yaml
 ```
 
 To verify that the cluster is running and to get the correct information for the next steps, run 
@@ -55,7 +55,27 @@ hctl status
 
 You should get an output that looks like the following: 
 
+![image](../images/hctl_status_output.png)
 
+Use the output to set the following environment variables, underlined in red in the image
+
+```bash
+export CLIENT_PROFILE="<0x7000000000000001:0x0>"    # profile id
+export CLIENT_HA_ADDR="inet:tcp:10.0.2.15@22001" # ha-agent address
+export CLIENT_LADDR="inet:tcp:10.0.2.15@22501"   # local address
+export CLIENT_PROC_FID="<0x7200000000000001:0x3>"    # process id
+
+m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"
+```
+
+Use the information about the pools (noted with green in the image) to populate the `~/.hsm/config file: 
+
+```bash
+cat ~/.hsm/config
+M0_POOL_TIER1 = <0x6f00000000000001:0x0>
+M0_POOL_TIER2 = <0x6f00000000000001:0x1>
+M0_POOL_TIER3 = <0x6f00000000000001:0x2>
+```
 
 Build hestia against motr, from the build directory: 
 
@@ -65,13 +85,18 @@ cmake /path/to/hestia/repo -DHESTIA_WITH_MOTR=ON -DMOTR_SRC_DIR=$MOTR_SRC_CODE -
 make -j 4
 ```
 
-Set environment variables 
+Add the output from hctl status to the hestia config file, under the header `object store clients`
 
-```bash
-export CLIENT_PROFILE="<0x7000000000000001:0x480>"    # profile id
-export CLIENT_HA_ADDR="172.18.1.24@o2ib:12345:34:101" # ha-agent address
-export CLIENT_LADDR="172.18.1.24@o2ib:12345:41:322"   # local address
-export CLIENT_PROC_FID="<0x7200000000000001:0xdf>"    # process id
-
-m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"
+```yaml
+  - identifier: hestia::MotrClient
+    source: plugin
+    type: hsm
+    plugin_path: libhestia_motr_plugin
+    ha_address: "inet:tcp:10.0.2.15@22001"
+    local_address: "inet:tcp:10.0.2.15@22501"
+    proc_fid: "<0x7200000000000001:0x3>"
+    profile: "<0x7000000000000001:0x0>"  
+    tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
 ```
+
+Start the hestia server with this config file. 
