@@ -85,18 +85,39 @@ cmake /path/to/hestia/repo -DHESTIA_WITH_MOTR=ON -DMOTR_SRC_DIR=$MOTR_SRC_CODE -
 make -j 4
 ```
 
-Add the output from hctl status to the hestia config file, under the header `object store clients`
+Set the library path to pick up the hestia libraries
+
+```bash
+export LD_LIBRARY_PATH=/path/to/build/lib
+```
+
+Add the output from hctl status to the hestia config file, under the header `object store clients`. An example can be found in `test/data/configs/motr/hestia_motr_tests.yaml`.
 
 ```yaml
+object_store_clients:
   - identifier: hestia::MotrClient
     source: plugin
     type: hsm
     plugin_path: libhestia_motr_plugin
-    ha_address: "inet:tcp:10.0.2.15@22001"
-    local_address: "inet:tcp:10.0.2.15@22501"
-    proc_fid: "<0x7200000000000001:0x3>"
-    profile: "<0x7000000000000001:0x0>"  
+    ha_address: "inet:tcp:10.0.2.15@22001"  #CLIENT_HA_ADDR
+    local_address: "inet:tcp:10.0.2.15@22501"  #CLIENT_LADDR
+    proc_fid: "<0x7200000000000001:0x3>"  #CLIENT_PROC_FID
+    profile: "<0x7000000000000001:0x0>"  #CLIENT_PROFILE
     tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
 ```
 
-Start the hestia server with this config file. 
+Use the heading `tier_registry` to register the tiers to the motr backend
+
+```yaml
+tier_registry:
+  - identifier: 0
+    client_identifier: hestia::MotrClient
+  - identifier: 1
+    client_identifier: hestia::MotrClient
+  - identifier: 2
+    client_identifier: hestia::MotrClient
+
+
+```
+
+Start the hestia server with this config file. To add the 
