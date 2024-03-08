@@ -20,6 +20,8 @@ Download the iosea motr vm at https://github.com/Seagate/cortx-motr/releases/tag
 
 ```bash
 sudo sh libfab-config.sh tcp enp0s3
+
+get_protcol.py | sudo sh libfab-config.sh
 ```
 
 You can verify this step using: 
@@ -68,7 +70,7 @@ export CLIENT_PROC_FID="<0x7200000000000001:0x3>"    # process id
 m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"
 ```
 
-Use the information about the pools (noted with green in the image) to populate the `~/.hsm/config file: 
+Use the information about the pools (noted with green in the image) to populate the `~/.hsm/config file`: 
 
 ```bash
 cat ~/.hsm/config
@@ -94,16 +96,22 @@ export LD_LIBRARY_PATH=/path/to/build/lib
 Add the output from hctl status to the hestia config file, under the header `object store clients`. An example can be found in `test/data/configs/motr/hestia_motr_tests.yaml`.
 
 ```yaml
-object_store_clients:
-  - identifier: hestia::MotrClient
-    source: plugin
-    type: hsm
-    plugin_path: libhestia_motr_plugin
-    ha_address: "inet:tcp:10.0.2.15@22001"  #CLIENT_HA_ADDR
-    local_address: "inet:tcp:10.0.2.15@22501"  #CLIENT_LADDR
-    proc_fid: "<0x7200000000000001:0x3>"  #CLIENT_PROC_FID
-    profile: "<0x7000000000000001:0x0>"  #CLIENT_PROFILE
-    tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
+object_store_backend:
+  - backend_type: motr
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003"]
+    config: 
+      root: motr_tests_object_store
+      source: plugin
+      type: hsm
+      plugin_path: libhestia_motr_plugin
+      ha_address: "inet:tcp:10.0.2.15@22001"
+      local_address: "inet:tcp:10.0.2.15@22502"
+      proc_fid: "<0x7200000000000001:0x4>"
+      profile: "<0x7000000000000001:0x0>"  
+      tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
 ```
 
 Use the heading `tier_registry` to register the tiers to the motr backend

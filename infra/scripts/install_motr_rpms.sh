@@ -40,3 +40,6 @@ yum config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.
 
 yum install -y ${MOTR_RPM_DIR}/cortx-py-utils-2.0.0*.noarch.rpm 
 yum install -y ${MOTR_RPM_DIR}/cortx-hare-2.0.0*.$(arch).rpm
+
+interface=$(ifconfig | grep -o e.*:[[space]] | cut -d : -f 1)
+echo "tcp("$interface")" > /etc/libfab.conf

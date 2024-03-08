@@ -19,8 +19,8 @@ object_store_backends:
             "00000000-0000-0000-0000-000000000003"]
     config: 
       ha_address: "inet:tcp:10.0.2.15@22001"
-      local_address: "inet:tcp:10.0.2.15@22502"
-      proc_fid: "<0x7200000000000001:0x4>"
+      local_address: "inet:tcp:10.0.2.15@22501"
+      proc_fid: "<0x7200000000000001:0x3>"
       profile: "<0x7000000000000001:0x0>"  
       hsm_config_path: ~/.hsm/config
       tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
