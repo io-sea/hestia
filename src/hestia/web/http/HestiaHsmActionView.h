@@ -25,6 +25,11 @@ class HestiaHsmActionView : public CrudWebView {
         HttpEvent event,
         const AuthorizationContext& auth) override;
 
+    HttpResponse::Ptr on_post(
+        const HttpRequest& request,
+        HttpEvent event,
+        const AuthorizationContext& auth) override;
+
     HttpResponse::Ptr on_delete(
         const HttpRequest& request,
         HttpEvent event,

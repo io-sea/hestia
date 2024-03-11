@@ -62,6 +62,47 @@ HttpResponse::Ptr HestiaHsmActionView::on_get(
     return CrudWebView::on_get(request, event, auth);
 }
 
+HttpResponse::Ptr HestiaHsmActionView::on_post(
+    const HttpRequest& request,
+    HttpEvent event,
+    const AuthorizationContext& auth)
+{
+    if (m_needs_auth && auth.m_user_id.empty()) {
+        LOG_ERROR("User not found");
+        return HttpResponse::create(
+            {HttpStatus::Code::_401_UNAUTHORIZED, "User not found."});
+    }
+
+    Map action_map;
+    request.get_header().get_data().copy_with_prefix(
+        {"hestia.hsm_action."}, action_map);
+
+    if (!action_map.empty()) {
+        if (action_map.get_item("action") == "put_data"
+            && action_map.get_item("to_transfer") == "0") {
+            return std::make_unique<HttpResponse>(
+                HttpResponse::CompletionStatus::FINISHED);
+        }
+        else if (event == HttpEvent::HEADERS) {
+            return do_hsm_action(request, action_map, auth);
+        }
+        else {
+            if (request.get_context()->has_response()) {
+                return std::make_unique<HttpResponse>(
+                    *request.get_context()->get_response());
+            }
+            else {
+                return HttpResponse::create();
+            }
+        }
+    }
+    else {
+        return HttpResponse::create(
+            {HttpStatus::Code::_400_BAD_REQUEST,
+             "Expect 'hestia.hsm_action.' prefixed header metadata."});
+    }
+}
+
 HttpResponse::Ptr HestiaHsmActionView::on_put(
     const HttpRequest& request,
     HttpEvent event,
