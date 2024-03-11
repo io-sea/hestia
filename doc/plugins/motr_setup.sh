@@ -12,6 +12,10 @@ export CLIENT_HA_ADDR=$(hctl status | awk '/hax/ {print $4}')
 export CLIENT_PROFILE=$(hctl status | awk '/default/ {print $1}')
 export CLIENT_PROC_FID=$(hctl status | awk '/m0_client/ {print $3}' | head -n 1)
 export CLIENT_LADDR=$(hctl status | awk '/m0_client/ {print $4}' | head -n 1)
+# add angle brakcets to the ones of these that need them
 
 m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"
+
+hctl status | sed '1,/Profile/!d' | awk '/pool/ {print}' | tail -n +2
+
 
