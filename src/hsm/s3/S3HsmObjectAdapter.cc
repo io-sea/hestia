@@ -21,6 +21,9 @@ void S3HsmObjectAdapter::get_headers(
         "Creation-Time",
         TimeUtils::micros_to_string(object.get_creation_time()));
     header.set_item("Bucket", bucket_name);
+    for (const auto& [key, value] : object.metadata().data()) {
+        header.set_item(key, value);
+    }
 }
 
 void S3HsmObjectAdapter::on_list_objects(

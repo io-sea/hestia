@@ -25,7 +25,7 @@ void S3ObjectAdapter::to_s3(
             request.m_region = value;
         }
         else {
-            s3_object.metadata.set_item(key, value);
+            s3_object.m_metadata.set_item(key, value);
         }
         s3_object.m_key = object.get_primary_key();
     }
@@ -37,8 +37,9 @@ void S3ObjectAdapter::from_s3(
     const S3Bucket& s3_container,
     const S3Object& s3_object)
 {
-    (void)s3_object;
+    for (const auto& [key, value] : s3_object.m_metadata.data()) {
+        object.set_metadata(key, value);
+    }
     (void)s3_container;
-    (void)object;
 }
 }  // namespace hestia

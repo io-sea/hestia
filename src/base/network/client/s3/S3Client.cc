@@ -107,6 +107,9 @@ void S3Client::put_object(
             "content-length", std::to_string(object.m_size));
     }
 
+    for (const auto& [key, value] : object.m_metadata.data()) {
+        http_request.get_header().set_item("x-amz-meta-" + key, value);
+    }
     auto http_completion_func = [completion_func](HttpResponse::Ptr response) {
         completion_func(std::make_unique<S3Response>(std::move(response)));
     };

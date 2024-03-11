@@ -126,7 +126,12 @@ void WebApp::on_event(
         response->header().set_item(
             "Access-Control-Allow-Origin", m_access_control_origin);
     }
-    request_context->set_response(std::move(response));
+    if (event == HttpEvent::HEADERS) {
+        request_context->set_response(std::move(response));
+    }
+    else {
+        request_context->update_response(std::move(response));
+    }
 }
 
 HttpResponse::Ptr WebApp::on_view_not_found(const HttpRequest& req) const

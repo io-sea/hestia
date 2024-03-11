@@ -23,7 +23,7 @@ class S3ClientTestFixture {
         m_client = std::make_unique<hestia::S3Client>(m_http_client.get());
     }
 
-    void put_data(
+    void put_object(
         const hestia::S3Object& object,
         const hestia::S3Bucket& bucket,
         const hestia::S3Request& req,
@@ -46,11 +46,12 @@ class S3ClientTestFixture {
         REQUIRE(response->is_ok());
     }
 
-    void get_data(
+    void get_object(
         const hestia::S3Object& object,
         const hestia::S3Bucket& bucket,
         const hestia::S3Request& req,
         std::string& data,
+        hestia::Map& metadata,
         std::size_t size)
     {
         std::vector<char> buffer(size);
@@ -69,8 +70,8 @@ class S3ClientTestFixture {
 
         const auto response = response_future.get();
         REQUIRE(response->is_ok());
-
-        data = std::string(buffer.begin(), buffer.end());
+        metadata = response->m_content.m_metadata;
+        data     = std::string(buffer.begin(), buffer.end());
     }
 
     std::unique_ptr<hestia::mock::MockHttpClientForS3> m_http_client;
@@ -107,8 +108,12 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test S3 Client", "[protocol]")
     REQUIRE(object_list_response->get_num_objects() == 0);
 
     hestia::S3Object object0("object0");
+    hestia::Map input_metadata;
+    input_metadata.set_item("my_key", "my_value");
+    object0.m_metadata = input_metadata;
+
     std::string obj_data = "The quick brown fox jumps over the lazy dog.";
-    put_data(object0, bucket0, request, obj_data);
+    put_object(object0, bucket0, request, obj_data);
 
     const auto object_list_response1 =
         m_client->list_objects(bucket0, list_object_request);
@@ -116,6 +121,10 @@ TEST_CASE_METHOD(S3ClientTestFixture, "Test S3 Client", "[protocol]")
     REQUIRE(object_list_response1->get_num_objects() == 1);
 
     std::string returned_data;
-    get_data(object0, bucket0, request, returned_data, obj_data.size());
+    hestia::Map returned_metadata;
+    get_object(
+        object0, bucket0, request, returned_data, returned_metadata,
+        obj_data.size());
     REQUIRE(returned_data == obj_data);
+    REQUIRE(returned_metadata.get_item("my_key") == "my_value");
 }

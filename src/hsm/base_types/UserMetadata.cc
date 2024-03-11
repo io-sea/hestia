@@ -35,6 +35,11 @@ std::string UserMetadata::get_type()
     return HsmItem::user_metadata_name;
 }
 
+void UserMetadata::set_item(const std::string& key, const std::string& value)
+{
+    m_data.get_map_as_writeable().set_item(key, value);
+}
+
 const Map& UserMetadata::data() const
 {
     return m_data.get_map();

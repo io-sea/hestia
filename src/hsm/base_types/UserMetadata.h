@@ -18,6 +18,8 @@ class UserMetadata : public HsmItem, public Model {
 
     const std::string& object() const;
 
+    void set_item(const std::string& key, const std::string& value);
+
     UserMetadata& operator=(const UserMetadata& other);
 
   private:

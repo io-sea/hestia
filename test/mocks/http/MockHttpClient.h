@@ -125,7 +125,6 @@ class MockHttpClientForS3 : public hestia::HttpClient {
                     m_working_context.get(), hestia::HttpEvent::EOM);
             }
         }
-
         completion_func(std::make_unique<hestia::HttpResponse>(
             *m_working_context->get_response()));
     }

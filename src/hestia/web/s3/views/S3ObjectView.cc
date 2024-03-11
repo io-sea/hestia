@@ -33,8 +33,10 @@ HttpResponse::Ptr S3ObjectView::on_get(
     const AuthorizationContext& auth)
 {
     if (event != HttpEvent::HEADERS) {
+        LOG_INFO("Returning empty 200");
         return HttpResponse::create();
     }
+    LOG_INFO("Returning get or head");
     return on_get_or_head(request, event, auth, true);
 }
 
@@ -129,7 +131,7 @@ HttpResponse::Ptr S3ObjectView::on_get_data(
                 }
                 else {
                     auto response = HttpResponse::create();
-                    request_context->set_response(std::move(response));
+                    request_context->update_response(std::move(response));
                 }
             }
             else {
@@ -251,19 +253,10 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
         object_id.set_parent_primary_key(
             get_bucket_response->get_item()->get_primary_key());
 
-        Map attributes =
-            request.get_header().get_items_with_prefix(S3Path::meta_prefix);
-        CrudAttributes::FormatSpec attr_format;
-
-        LOG_INFO(
-            "Creating object with: " << object_id.get_name() << " "
-                                     << object_id.get_parent_primary_key());
-
         auto create_response = m_service->make_request(
             CrudRequest{
                 CrudMethod::CREATE,
-                {object_id, CrudAttributes(attributes, attr_format),
-                 CrudQuery::BodyFormat::ITEM},
+                {object_id, {}, CrudQuery::BodyFormat::ITEM},
                 auth},
             HsmItem::hsm_object_name);
         if (!create_response->ok()) {
@@ -272,6 +265,42 @@ HttpResponse::Ptr S3ObjectView::on_put_object(
             return S3ViewUtils::on_server_error(s3_request, msg);
         }
         object_uuid = create_response->get_item()->get_primary_key();
+    }
+
+    Map user_attributes =
+        request.get_header().get_items_with_prefix(S3Path::meta_prefix);
+    CrudAttributes::FormatSpec attr_format;
+
+    if (!user_attributes.empty()) {
+        CrudIdentifier metadata_id;
+        metadata_id.set_parent_primary_key(object_uuid);
+
+        auto md_get_response = m_service->make_request(
+            CrudRequest{
+                CrudMethod::READ,
+                CrudQuery{metadata_id, CrudQuery::BodyFormat::ITEM},
+                {auth.m_user_id, auth.m_user_token}},
+            HsmItem::user_metadata_name);
+        if (!md_get_response->ok()) {
+            const auto msg = md_get_response->get_error().to_string();
+            LOG_ERROR(msg);
+            return S3ViewUtils::on_server_error(s3_request, msg);
+        }
+
+        auto md = *md_get_response->get_item_as<UserMetadata>();
+        for (const auto& [key, value] : user_attributes.data()) {
+            md.set_item(key, value);
+        }
+
+        auto md_put_response = m_service->make_request(
+            TypedCrudRequest{
+                CrudMethod::UPDATE, md, {auth.m_user_id, auth.m_user_token}},
+            HsmItem::user_metadata_name);
+        if (!md_put_response->ok()) {
+            const auto msg = md_put_response->get_error().to_string();
+            LOG_ERROR(msg);
+            return S3ViewUtils::on_server_error(s3_request, msg);
+        }
     }
 
     LOG_INFO("Checking whether to put data");

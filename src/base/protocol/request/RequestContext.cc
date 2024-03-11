@@ -80,6 +80,14 @@ bool RequestContext::finished() const
     return m_finished;
 }
 
+void RequestContext::update_response(HttpResponse::Ptr http_response)
+{
+    for (const auto& [key, value] : m_response->header().get_data().data()) {
+        http_response->header().set_item(key, value);
+    }
+    m_response = std::move(http_response);
+}
+
 void RequestContext::flush_stream()
 {
     if (!m_on_output_chunk) {

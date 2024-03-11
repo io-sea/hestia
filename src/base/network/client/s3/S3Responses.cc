@@ -1,6 +1,7 @@
 #include "S3Responses.h"
 
 #include "ErrorUtils.h"
+#include "StringUtils.h"
 #include "XmlDocument.h"
 #include "XmlElement.h"
 #include "XmlParser.h"
@@ -16,6 +17,16 @@ S3Response::S3Response(std::unique_ptr<HttpResponse> http_response)
         m_status = S3Status(*http_response);
     }
     m_http_response = std::move(http_response);
+
+    const std::string amz_meta_prefix = "x-amz-meta-";
+
+    for (const auto& [key, value] :
+         m_http_response->header().get_data().data()) {
+        if (StringUtils::starts_with(key, amz_meta_prefix)) {
+            m_content.m_metadata.set_item(
+                StringUtils::remove_prefix(key, amz_meta_prefix), value);
+        }
+    }
 }
 
 bool S3Response::is_ok() const

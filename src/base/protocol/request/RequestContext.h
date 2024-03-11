@@ -52,6 +52,8 @@ class RequestContext {
 
     void set_response(HttpResponse::Ptr http_response);
 
+    void update_response(HttpResponse::Ptr http_response);
+
     [[nodiscard]] IOResult write_to_stream(const ReadableBufferView& buffer);
 
   private:

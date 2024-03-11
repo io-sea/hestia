@@ -46,7 +46,7 @@ class S3Object {
         return os;
     }
 
-    Map metadata;
+    Map m_metadata;
     std::string m_bucket;
     S3Owner m_owner;
     std::string m_checksum_algorithm;
