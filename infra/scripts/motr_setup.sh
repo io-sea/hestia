@@ -30,7 +30,7 @@ echo   "ha_address: "$CLIENT_HA_ADDR
 echo   "local_address: "$CLIENT_LADDR
 echo   "proc_fid: "$CLIENT_PROC_FID
 echo   "profile: "$CLIENT_PROFILE  
-echo   "tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
+echo   "tier_info: " 
 
 export i=1
 for pool in $POOLS
