@@ -15,27 +15,20 @@ To install motr from the rpms provided in the hestia gitlab package registry, do
     sudo sh install_motr_rpms.sh path/to/builds/folder    
 ```
 
-Download the iosea motr vm at https://github.com/Seagate/cortx-motr/releases/tag/iosea-vm-v2.1, and use the README.txt file and enclosed scripts to start the motr cluster. Run the libfab-config.sh script and pass your network protocol and interface as arguments. These can be found using the ip command. For example: 
-
-
-```bash
-sudo sh libfab-config.sh tcp enp0s3
-
-get_protcol.py | sudo sh libfab-config.sh
-```
-
-You can verify this step using: 
+You can verify Your network protocol and interface were set correctly using:  
 
 ```bash 
 cat /etc/libfab.conf
 ```
-and see that the output is 
+and see that the output is similar to
 
 ```bash
 networks=tcp(enp0s3)
 ```
 
-Next download the disks.sh script and run: 
+If this has not been set, use the `ifconfig` or `ip` commands to find your network interface and protocol and populate the config file. 
+
+Download the iosea motr vm at https://github.com/Seagate/cortx-motr/releases/tag/iosea-vm-v2.1, and use the README.txt file and enclosed scripts to start the motr cluster. Download the disks.sh script and run: 
 
 ```bash 
 ./disks.sh
