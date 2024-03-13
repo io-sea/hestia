@@ -1,0 +1,85 @@
+# Cluster Description File (CDF).
+# See `cfgen --help-schema` for the format description.
+
+nodes:
+  - hostname: localhost     # [user@]hostname
+    node_group: localhost
+    data_iface: enp0s3        # name of data network interface
+    data_iface_ip_addr: null
+    transport_type: libfab
+    m0_servers:
+      - runs_confd: true
+        io_disks:
+          data: []
+          log: []
+          meta_data: null
+      - runs_confd: null
+        io_disks:
+          data:
+            - path: $HOME/var/motr/disk0.img 
+            - path: $HOME/var/motr/disk1.img 
+            - path: $HOME/var/motr/disk2.img 
+            - path: $HOME/var/motr/disk3.img 
+            - path: $HOME/var/motr/disk4.img 
+            - path: $HOME/var/motr/disk5.img 
+            - path: $HOME/var/motr/disk6.img 
+            - path: $HOME/var/motr/disk7.img 
+            - path: $HOME/var/motr/disk8.img 
+          log:
+            - path: $HOME/var/motr/disk9.img
+          meta_data: null
+    m0_clients:
+      - name: m0_client_other  # name of the motr client
+        instances: 2   # Number of instances, this host will run
+    # network_ports:
+    #   hax: 42000
+    #   hax_http: 8004
+    #   m0_server:
+    #   - name: ios
+    #     port: 41000
+    #   - name: confd
+    #     port: 41000
+    #   m0_client_other:
+    #   - name: m0_client_other
+    #     port: 41500
+    #   m0_client_s3: 42500
+create_aux: false # optional; supported values: "false" (default), "true"
+generate_formulaic_pvers: false # optional; supported values: "false" (default), "true"
+pools:
+  - name: pool0
+    type: sns  # optional; supported values: "sns" (default), "dix", "md"
+    disk_refs:
+      - { path: $HOME/var/motr/disk0.img, node: localhost }
+      - { path: $HOME/var/motr/disk1.img, node: localhost }
+      - { path: $HOME/var/motr/disk2.img, node: localhost }
+    data_units: 1
+    parity_units: 0
+    spare_units: 0
+    # allowed_failures: { site: 0, rack: 0, encl: 0, ctrl: 0, disk: 0 }
+  - name: pool1
+    type: sns  # optional; supported values: "sns" (default), "dix", "md"
+    disk_refs:
+      - { path: $HOME/var/motr/disk3.img, node: localhost }
+      - { path: $HOME/var/motr/disk4.img, node: localhost }
+      - { path: $HOME/var/motr/disk5.img, node: localhost }
+    data_units: 1
+    parity_units: 0
+    spare_units: 0
+    # allowed_failures: { site: 0, rack: 0, encl: 0, ctrl: 0, disk: 0 }
+  - name: pool2
+    type: sns  # optional; supported values: "sns" (default), "dix", "md"
+    disk_refs:
+      - { path: $HOME/var/motr/disk6.img, node: localhost }
+      - { path: $HOME/var/motr/disk7.img, node: localhost }
+      - { path: $HOME/var/motr/disk8.img, node: localhost }
+    data_units: 1
+    parity_units: 0
+    spare_units: 0
+#profiles:
+#  - name: default
+#    pools: [ the pool ]
+#fdmi_filters:
+#  - name: test
+#    node: localhost
+#    client_index: 1
+#    substrings: ["Bucket-Name", "Object-Name", "Object-URI"]

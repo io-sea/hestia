@@ -26,51 +26,19 @@ and see that the output is similar to
 networks=tcp(enp0s3)
 ```
 
-If this has not been set, use the `ifconfig` or `ip` commands to find your network interface and protocol and populate the config file. 
+If this has not been set, use the `ifconfig` or `ip` commands to find your network interface and protocol and populate the config file. Use this to edit the file `external/motr/singlenode-multipools.yaml` to show the correct network protocol on line 7: 
 
-Download the iosea motr vm at https://github.com/Seagate/cortx-motr/releases/tag/iosea-vm-v2.1, and use the README.txt file and enclosed scripts to start the motr cluster. Download the disks.sh script and run: 
+```bash
+data_iface: enp0s3  #or eth0 etc
+```
+
+Next run: 
 
 ```bash 
-./disks.sh
+/path/to/hestia/infra/scripts/motr_setup.sh
 ```
 
-This will create the folder var/motr in your home directory. 
-
-Download the singlenode.yaml file and replace instances of /home/seagate with the path to your home folder, or wherever your var/motr directory containing the disk images is located. Also ensure the interface matches the interface provided suring the configuration step. Once this is done you can set up the cluster.
-
-```bash
-sudo hctl bootstrap --mkfs ~/singlenode-multipools.yaml
-```
-
-To verify that the cluster is running and to get the correct information for the next steps, run 
-
-```bash 
-hctl status
-```
-
-You should get an output that looks like the following: 
-
-![image](../images/hctl_status_output.png)
-
-Use the output to set the following environment variables, underlined in red in the image
-
-```bash
-export CLIENT_PROFILE="<0x7000000000000001:0x0>"    # profile id
-export CLIENT_HA_ADDR="inet:tcp:10.0.2.15@22001" # ha-agent address
-export CLIENT_LADDR="inet:tcp:10.0.2.15@22501"   # local address
-export CLIENT_PROC_FID="<0x7200000000000001:0x3>"    # process id
-
-m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"
-```
-
-Use the information about the pools (noted with green in the image) to populate the `~/.hsm/config file`: 
-
-```bash
-cat ~/.hsm/config
-M0_POOL_TIER1 = <0x6f00000000000001:0x0>
-M0_POOL_TIER2 = <0x6f00000000000001:0x1>
-M0_POOL_TIER3 = <0x6f00000000000001:0x2>
-```
+This will create the folder var/motr in your home directory, start the cluster and output the config section to be added to the hestia config file. 
 
 Build hestia against motr, from the build directory: 
 
@@ -107,18 +75,6 @@ object_store_backend:
       tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
 ```
 
-Use the heading `tier_registry` to register the tiers to the motr backend
 
-```yaml
-tier_registry:
-  - identifier: 0
-    client_identifier: hestia::MotrClient
-  - identifier: 1
-    client_identifier: hestia::MotrClient
-  - identifier: 2
-    client_identifier: hestia::MotrClient
-
-
-```
 
 Start the hestia server with this config file. To add the 
