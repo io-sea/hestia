@@ -1,11 +1,16 @@
 #!/bin/bash 
+
 dest="$HOME/var/motr"
 mkdir -p "$dest" 
 for i in {0..9}; do 
 	dd if=/dev/zero of="$dest/disk$i.img" bs=1M seek=9999 count=1 
 done
 
-sudo hctl bootstrap --mkfs ~/singlenode-multipools.yaml
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+hestia_dir=$script_dir/../..
+
+
+sudo hctl bootstrap --mkfs $hestia_dir/external/motr/singlenode-multipools.yaml
 #pull this file into the hestia repo
 hctl status> tmpfile.txt
 

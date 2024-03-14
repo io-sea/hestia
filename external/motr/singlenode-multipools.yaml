@@ -1,3 +1,5 @@
+# This file has been modified from its original form in motr, see the motr licence for licensing
+
 # Cluster Description File (CDF).
 # See `cfgen --help-schema` for the format description.
 
@@ -5,8 +7,9 @@ nodes:
   - hostname: localhost     # [user@]hostname
     node_group: localhost
     data_iface: enp0s3        # name of data network interface
-    data_iface_ip_addr: null
-    transport_type: libfab
+    #data_iface: eth0           # choose the correct data_iface using the output of 
+    data_iface_ip_addr: null    # /etc/libfab.conf after running the install_motr script
+    transport_type: libfab      # or using the ifconfig or ip commands
     m0_servers:
       - runs_confd: true
         io_disks:
