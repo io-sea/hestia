@@ -10,8 +10,6 @@ tiers:
     priority: 1
   - id: "00000000-0000-0000-0000-000000000003"
     priority: 3
-  - id: "00000000-0000-0000-0000-000000000004"
-    priority: 4
 
 object_store_backends: 
   - backend_type: file 
@@ -22,8 +20,7 @@ object_store_backends:
       root: file_object_store_worker0
   - backend_type: mock_phobos
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000003",
-            "00000000-0000-0000-0000-000000000004"]
+      ids: ["00000000-0000-0000-0000-000000000003"]
     config: 
       root: phobos_object_store_worker1
 
