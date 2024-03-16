@@ -8,7 +8,7 @@ The copytool implementation is supported by two abstractions: `HSM Object Store 
 The Copytool uses a HSM Object Store Client interface, with its implementation as a
 Hybrid HSM Object Store Client as shown in the figure below, managing other Object Store Clients (e.g. Phobos and Motr) to copy data between them.
 
-![image](CopytoolDesign.png)
+![image](CopytoolDesign.png){ width=50% }
 
 # Start a server
 
@@ -17,7 +17,7 @@ Add /path/to/hestia/executable in your PATH.
 ```sh
 hestia server --config hestia.yaml
 ```
-Here we have configured two backends, the first is simple filesystem-based object store with two tiersand the second one is mock version of phobos. 
+Here we have configured two backends, the first is simple filesystem-based object store with two tiers and the second one is mock version of phobos. 
 
 # Run the script
 
@@ -27,4 +27,4 @@ You can run the script with:
 ```sh
 sh copytool_sample.sh
 ```
-which will create an object, upload a temporary file to it, copy file from Storage Tier tier 0 to tier 1 and tier 2, move from tier 1 to tier 3 and  copy back from tier 3 to tier 1.
+which will create an object, upload a temporary file to it, add file to Storage Tier tier 0, copy file from tier 0 to tier 1, move from tier 1 to tier 2, copy back from tier 2 to tier 1 and compare the contents of the files on tier 0 and tier 1. 
