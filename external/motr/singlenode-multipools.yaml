@@ -19,17 +19,17 @@ nodes:
       - runs_confd: null
         io_disks:
           data:
-            - path: $HOME/var/motr/disk0.img 
-            - path: $HOME/var/motr/disk1.img 
-            - path: $HOME/var/motr/disk2.img 
-            - path: $HOME/var/motr/disk3.img 
-            - path: $HOME/var/motr/disk4.img 
-            - path: $HOME/var/motr/disk5.img 
-            - path: $HOME/var/motr/disk6.img 
-            - path: $HOME/var/motr/disk7.img 
-            - path: $HOME/var/motr/disk8.img 
+            - path: /home/user/var/motr/disk0.img 
+            - path: /home/user/var/motr/disk1.img 
+            - path: /home/user/var/motr/disk2.img 
+            - path: /home/user/var/motr/disk3.img 
+            - path: /home/user/var/motr/disk4.img 
+            - path: /home/user/var/motr/disk5.img 
+            - path: /home/user/var/motr/disk6.img 
+            - path: /home/user/var/motr/disk7.img 
+            - path: /home/user/var/motr/disk8.img 
           log:
-            - path: $HOME/var/motr/disk9.img
+            - path: /home/user/var/motr/disk9.img
           meta_data: null
     m0_clients:
       - name: m0_client_other  # name of the motr client
@@ -52,9 +52,9 @@ pools:
   - name: pool0
     type: sns  # optional; supported values: "sns" (default), "dix", "md"
     disk_refs:
-      - { path: $HOME/var/motr/disk0.img, node: localhost }
-      - { path: $HOME/var/motr/disk1.img, node: localhost }
-      - { path: $HOME/var/motr/disk2.img, node: localhost }
+      - { path: /home/user/var/motr/disk0.img, node: localhost }
+      - { path: /home/user/var/motr/disk1.img, node: localhost }
+      - { path: /home/user/var/motr/disk2.img, node: localhost }
     data_units: 1
     parity_units: 0
     spare_units: 0
@@ -62,9 +62,9 @@ pools:
   - name: pool1
     type: sns  # optional; supported values: "sns" (default), "dix", "md"
     disk_refs:
-      - { path: $HOME/var/motr/disk3.img, node: localhost }
-      - { path: $HOME/var/motr/disk4.img, node: localhost }
-      - { path: $HOME/var/motr/disk5.img, node: localhost }
+      - { path: /home/user/var/motr/disk3.img, node: localhost }
+      - { path: /home/user/var/motr/disk4.img, node: localhost }
+      - { path: /home/user/var/motr/disk5.img, node: localhost }
     data_units: 1
     parity_units: 0
     spare_units: 0
@@ -72,9 +72,9 @@ pools:
   - name: pool2
     type: sns  # optional; supported values: "sns" (default), "dix", "md"
     disk_refs:
-      - { path: $HOME/var/motr/disk6.img, node: localhost }
-      - { path: $HOME/var/motr/disk7.img, node: localhost }
-      - { path: $HOME/var/motr/disk8.img, node: localhost }
+      - { path: /home/user/var/motr/disk6.img, node: localhost }
+      - { path: /home/user/var/motr/disk7.img, node: localhost }
+      - { path: /home/user/var/motr/disk8.img, node: localhost }
     data_units: 1
     parity_units: 0
     spare_units: 0

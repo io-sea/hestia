@@ -13,6 +13,7 @@ export MOTR_RPM_DIR=${MOTR_BUILDS_LOCATION}/builds/io-sea-internal/hestia/motr-r
 yum update -y
 yum install -y epel-release
 yum config-manager --set-enabled powertools
+yum install -y $(cat ../deps/rocky8/base)
 
 if [ ! -d $MOTR_RPM_DIR ]; then
     echo "Error, pass in the top level motr rpms folder"

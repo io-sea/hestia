@@ -8,9 +8,10 @@ done
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 hestia_dir=$script_dir/../..
+nodefile=$hestia_dir/external/motr/singlenode-multipools.yaml
+sed -i "s/user/$USER/g" $nodefile
 
-
-sudo hctl bootstrap --mkfs $hestia_dir/external/motr/singlenode-multipools.yaml
+sudo hctl bootstrap --mkfs $nodefile
 #pull this file into the hestia repo
 hctl status> tmpfile.txt
 
