@@ -3,37 +3,27 @@ server:
   host_port: 8080
   controller: true
 
-object_store_clients:
-  - identifier: hestia::FileHsmObjectStoreClient
-    source: built_in
-    type: hsm
-    root: hsm_object_store
-  - identifier: hestia::FileObjectStoreClient
-    source: built_in
-    type: basic
-    root: object_store
-  - identifier: hestia::S3Client
-    source: plugin
-    type: basic
-    plugin_path: libhestia_s3_plugin
-    host: 127.0.0.1:8000
-  - identifier: hestia::mock::MockPhobosClient
-    source: mock
-    type: basic
-    plugin_path: libhestia_mock_phobos_plugin
-  - identifier: hestia::MockMotrClient
-    source: mock
-    type: hsm
-    plugin_path: libhestia_mock_motr_plugin
-  - identifier: hestia::MotrClient
-    source: plugin
-    type: hsm
-    plugin_path: libhestia_motr_plugin
-    ha_address: "inet:tcp:10.0.2.15@22001"
-    local_address: "inet:tcp:10.0.2.15@22502"
-    proc_fid: "<0x7200000000000001:0x4>"
-    profile: "<0x7000000000000001:0x0>"  
-    tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
+tiers:
+  - id: "00000000-0000-0000-0000-000000000001"
+    priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
+  - id: "00000000-0000-0000-0000-000000000003"
+    priority: 2
+
+object_store_backends:
+  - backend_type: motr
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003"]
+    config: 
+      ha_address: "inet:tcp:10.0.2.15@22001"
+      local_address: "inet:tcp:10.0.2.15@22501"
+      proc_fid: "<0x7200000000000001:0x3>"
+      profile: "<0x7000000000000001:0x0>"  
+      hsm_config_path: ~/.hsm/config
+      tier_info: "name=M0_POOL_TIER1,identifier=<0x6f00000000000001:0x0>;name=M0_POOL_TIER2,identifier=<0x6f00000000000001:0x1>;name=M0_POOL_TIER3,identifier=<0x6f00000000000001:0x2>"
 
 key_value_store:
   client_identifier: hestia::FileKeyValueStoreClient
@@ -41,14 +31,6 @@ key_value_store:
 key_value_store_clients:
   - identifier: hestia::FileKeyValueStoreClient
     root: key_value_store
-
-tier_registry:
-  - identifier: 0
-    client_identifier: hestia::MotrClient
-  - identifier: 1
-    client_identifier: hestia::MotrClient
-  - identifier: 2
-    client_identifier: hestia::MotrClient
 
 event_feed:
   event_feed_path: event_feed.yaml
