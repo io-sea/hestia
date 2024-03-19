@@ -40,13 +40,13 @@ Next run:
 
 This will create the folder var/motr in your home directory, start the cluster and output the config section to be added to the hestia config file. 
 
-Build hestia against motr, from the build directory: 
+Build hestia against motr, using the script in hte same directory: 
 
 ```bash
-export MOTR_SRC_CODE=/path/to/cortx-motr/repo
-cmake /path/to/hestia/repo -DHESTIA_WITH_MOTR=ON -DMOTR_SRC_DIR=$MOTR_SRC_CODE -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ 
-make -j 4
+/path/to/hestia/infra/scripts/build_hestia_with_motr.sh
 ```
+
+This will create the build directory under hestia, and pull the motr source code in there. If you are not using rpms of the latest version, edit the SHA online 14
 
 Set the library path to pick up the hestia libraries
 
