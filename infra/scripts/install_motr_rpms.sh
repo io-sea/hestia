@@ -10,6 +10,10 @@ fi
 
 export MOTR_RPM_DIR=${MOTR_BUILDS_LOCATION}/builds/io-sea-internal/hestia/motr-rpms
 
+yum update -y
+yum install -y epel-release
+yum config-manager --set-enabled powertools
+
 if [ ! -d $MOTR_RPM_DIR ]; then
     echo "Error, pass in the top level motr rpms folder"
     exit 1
