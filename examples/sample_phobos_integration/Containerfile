@@ -1,0 +1,12 @@
+FROM rockylinux:8
+
+RUN dnf check-update; dnf update -y; dnf install -y dnf-plugins-core epel-release; dnf install -y 'dnf-command(config-manager)'; dnf config-manager --set-enabled powertools; dnf update -y
+RUN dnf install -qy wget git cmake gcc gcc-c++ make ca-certificates cmake doxygen glibc-devel glib2-devel graphviz hiredis-devel libcurl-devel jansson-devel
+RUN yum install -qy which libasan libubsan openssl-devel python3 rpm-build wget nano ncurses libxml2-devel
+RUN yum install -qy autoconf automake libtool python3-devel libini_config-devel libattr-devel libcmocka-devel sg3_utils-devel protobuf-c-devel openssl-devel libpq-devel postgresql postgresql-contrib postgresql-server xxhash-devel
+
+COPY * /
+#COPY ./config/hestia.yaml /configs
+#RUN ./hestia_phobos_fetch_and_build
+
+#CMD hestia server --config /configs/hestia.yaml
