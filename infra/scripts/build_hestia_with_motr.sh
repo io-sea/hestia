@@ -14,7 +14,7 @@ git clone --recursive https://github.com/Seagate/cortx-motr.git $MOTR_SRC
 #MOTR_SHA=
 #pushd $MOTR_SRC && git reset --hard $MOTR_SHA && popd
 
-cmake -DHESTIA_WITH_MOTR=ON -DMOTR_SRC_DIR=$MOTR_SRC ..
+cmake -DHESTIA_WITH_MOTR=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DMOTR_SRC_DIR=$MOTR_SRC ..
 make -j 4
 
 

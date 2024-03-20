@@ -18,6 +18,10 @@ object_store_backends:
             "00000000-0000-0000-0000-000000000002",
             "00000000-0000-0000-0000-000000000003"]
     config: 
+      root: motr_tests_object_store
+      source: plugin
+      type: hsm
+      plugin_path: libhestia_motr_plugin
       ha_address: "inet:tcp:10.0.2.15@22001"
       local_address: "inet:tcp:10.0.2.15@22501"
       proc_fid: "<0x7200000000000001:0x3>"
