@@ -11,7 +11,7 @@ macro(fetch_catch2)
     FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        05e10dfccc28c7f973727c54f850237d07d5e10f # v3.5.2
+    GIT_TAG        8ac8190e494a381072c89f5e161b92a08d98b37b # v3.5.3
     SYSTEM
     FIND_PACKAGE_ARGS
     )
@@ -92,7 +92,7 @@ macro(fetch_libxml2)
     FetchContent_Declare(
         LibXml2
         GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
-        GIT_TAG        8292f361458fcffe0bff515a385be02e9d35582c # v2.12.4
+        GIT_TAG        505e2e872e767405be565aa9d47ae9d6d5677f79 # v2.12.6
         SYSTEM
         FIND_PACKAGE_ARGS
         )
@@ -117,7 +117,7 @@ macro(fetch_curl)
     FetchContent_Declare(
         CURL
         GIT_REPOSITORY https://github.com/curl/curl/
-        GIT_TAG 7161cb17c01dcff1dc5bf89a18437d9d729f1ecd # V8.5.0
+        GIT_TAG 5ce164e0e9290c96eb7d502173426c0a135ec008 # V8.6.0
         SYSTEM
         FIND_PACKAGE_ARGS
     )
@@ -155,8 +155,8 @@ endmacro()
 
 macro(fetch_sqlite)
     FetchContent_Declare(sqlite
-    URL https://www.sqlite.org/2024/sqlite-amalgamation-3450000.zip
-    URL_HASH          SHA256=bde30d13ebdf84926ddd5e8b6df145be03a577a48fd075a087a5dd815bcdf740
+    URL https://www.sqlite.org/2024/sqlite-amalgamation-3450200.zip
+    URL_HASH          SHA256=65230414820d43a6d1445d1d98cfe57e8eb9f7ac0d6a96ad6932e0647cce51db
     SYSTEM
     FIND_PACKAGE_ARGS
     )
@@ -167,8 +167,8 @@ endmacro()
 
 macro(build_openssl)
     ExternalProject_Add(openssl
-    URL https://www.openssl.org/source/openssl-1.1.1w.tar.gz
-    URL_HASH          SHA256=cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8
+    GIT_REPOSITORY https://github.com/openssl/openssl/
+    GIT_TAG        a7e992847de83aa36be0c399c89db3fb827b0be2 # v3.2.1
     CONFIGURE_COMMAND <SOURCE_DIR>/config --prefix=<INSTALL_DIR> --libdir=lib
     INSTALL_COMMAND make install_sw
     )
@@ -190,11 +190,11 @@ macro(build_openssl)
 endmacro()
 
 macro(fetch_openssl)
-    find_package(OpenSSL 1.1.1 QUIET)
+    find_package(OpenSSL QUIET)
     if (NOT ${OpenSSL_FOUND})
         if(APPLE)
-            set(OPENSSL_ROOT_DIR /opt/homebrew/opt/openssl@1.1)
-            find_package(OpenSSL 1.1.1 QUIET)
+            set(OPENSSL_ROOT_DIR /opt/homebrew/opt/openssl)
+            find_package(OpenSSL QUIET)
         endif()
     endif()
     if (NOT ${OpenSSL_FOUND})

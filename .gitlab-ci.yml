@@ -34,18 +34,20 @@ stages:
 # CI code snippets
 .snippets:
   - &update_distro
-    yum check-update -q || true;
-    yum update -qy;
-    yum install -qy epel-release;
-    yum config-manager -q --set-enabled powertools;
+    dnf check-update -q || true; 
+    dnf update -qy; 
+    dnf install -qy dnf-plugins-core epel-release; 
+    dnf install -qy 'dnf-command(config-manager)'; 
+    dnf config-manager --set-enabled powertools; 
+    dnf update -qy
   - &install_base_dependencies
-    yum install -qy $(cat ${HESTIA_DEPS}/base);
-    yum install -y libxml2-devel || true;
+    dnf install -qy $(cat ${HESTIA_DEPS}/base);
+    dnf install -y libxml2-devel || true;
   - &install_e2e_dependencies
-    yum install -qy $(cat ${HESTIA_DEPS}/e2e_test);
+    dnf install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
   - &install_phobos
-    yum install -qy $(cat ${HESTIA_DEPS}/phobos);
+    dnf install -qy $(cat ${HESTIA_DEPS}/phobos);
     pip3 install -r ${PHOBOS_SCRIPTS_DIR}/phobos_requirements.txt;
     export PHOBOS_SRC=/phobos; cd /;cp ${PHOBOS_SCRIPTS_DIR}/*.patch .;
     ${PHOBOS_SCRIPTS_DIR}/build_phobos.sh;
@@ -135,7 +137,7 @@ Format:
   stage: static analysis
   before_script:
     - *update_distro
-    - yum install -qy $(cat ${HESTIA_DEPS}/format)
+    - dnf install -qy $(cat ${HESTIA_DEPS}/format)
   script:
     - ./infra/scripts/run_format.sh
       && git status
@@ -155,7 +157,7 @@ Lint:
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/lint)
+    - dnf install -qy $(cat ${HESTIA_DEPS}/lint)
     - *configure
     - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies -j$(nproc)
   script:
@@ -196,7 +198,7 @@ Unit_test:
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/test)
+    - dnf install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
@@ -267,7 +269,7 @@ Nightly_unit_test:
     - *install_base_dependencies
     - *install_phobos
     - *install_motr
-    - yum install -qy $(cat ${HESTIA_DEPS}/test)
+    - dnf install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
@@ -304,7 +306,7 @@ Nightly_code_coverage:
   before_script:
     - *update_distro
     - *install_base_dependencies
-    - yum install -qy $(cat ${HESTIA_DEPS}/test)
+    - dnf install -qy $(cat ${HESTIA_DEPS}/test)
   script:
     - *configure
     - *build
