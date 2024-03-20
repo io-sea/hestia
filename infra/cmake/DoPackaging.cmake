@@ -183,7 +183,6 @@ if(NOT APPLE)
         set(CPACK_COMPONENTS_ALL ${HESTIA_COMPONENTS})
         set(CPACK_RPM_COMPONENT_INSTALL ON)
         set(CPACK_RPM_MAIN_COMPONENT runtime) 
-        set(CPACK_RPM_CHANGELOG_FILE )
 
         set(CPACK_RPM_RUNTIME_PACKAGE_SUMMARY "Hestia HSM object store interface client and server applications and libraries")
         set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Hestia HSM object store interface development headers")
