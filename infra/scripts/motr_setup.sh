@@ -18,9 +18,9 @@ hctl status> tmpfile.txt
 export CLIENT_HA_ADDR=$(cat tmpfile.txt | awk '/hax/ {print $4}')
 export CLIENT_PROFILE=$(cat tmpfile.txt | awk '/default/ {print $1}')
 export CLIENT_PROFILE="<$CLIENT_PROFILE>"
-export CLIENT_PROC_FID=$(cat tmpfile.txt | awk '/m0_client/ {print $3}' | head -n 1)
+export CLIENT_PROC_FID=$(cat tmpfile.txt | awk '/m0_client/ {print $3}' | head -n 2 | tail -n 1)
 export CLIENT_PROC_FID="<$CLIENT_PROC_FID>"
-export CLIENT_LADDR=$(cat tmpfile.txt | awk '/m0_client/ {print $4}' | head -n 1)
+export CLIENT_LADDR=$(cat tmpfile.txt | awk '/m0_client/ {print $4}' | head -n 2 | tail -n 1)
 # add angle brakcets to the ones of these that need them
 
 m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"

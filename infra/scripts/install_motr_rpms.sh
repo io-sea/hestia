@@ -48,13 +48,11 @@ yum install -y ${MOTR_RPM_DIR}/cortx-hare-2.0.0*.$(arch).rpm
 
 interface=$(ifconfig | grep -o e.*:[[space]] | cut -d : -f 1)
 
-if [ $(ifconfig | grep "enp0s3" | wc -l) -gt 0 ]; 
-    then
-        interface=enp0s3
-    elif [ $(ifconfig | grep "eth0" | wc -l) -gt 0 ];
-    then
-        interface=eth0
-    else
-        echo "network interface not set manually- please set the netwoek interface in the libfab.conf file"
+if [ $(ifconfig | grep "enp0s3" | wc -l) -gt 0 ]; then
+    interface=enp0s3
+elif [ $(ifconfig | grep "eth0" | wc -l) -gt 0 ];then
+    interface=eth0
+else
+    echo "network interface not set automatically- please set the network interface in the libfab.conf file (this can be found using the ip or ifconfig commands)"
 fi
 echo "tcp("$interface")" > /etc/libfab.conf
