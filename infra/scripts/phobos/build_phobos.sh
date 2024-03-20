@@ -8,4 +8,3 @@ patch -p1 --forward < ../phobos_fix_db_conn.patch
 CFLAGS=-Wno-error ./configure --disable-dependency-tracking
 make
 make install
-cd ..
