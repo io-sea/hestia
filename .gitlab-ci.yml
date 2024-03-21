@@ -43,6 +43,8 @@ stages:
   - &install_base_dependencies
     dnf install -qy $(cat ${HESTIA_DEPS}/base);
     dnf install -y libxml2-devel || true;
+  - &install_release_dependencies
+    dnf install -qy $(cat ${HESTIA_DEPS}/release);
   - &install_e2e_dependencies
     dnf install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
@@ -169,6 +171,10 @@ Release:
   variables:
     <<: *default_variables
     HESTIA_BUILD_DOCUMENTATION: "ON"
+  before_script:
+    - *update_distro
+    - *install_base_dependencies
+    - *install_release_dependencies
   script:
     - *configure
     - *create_source_package
@@ -241,6 +247,7 @@ Nightly_build:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_release_dependencies
   script:
     - *configure
     - *build
@@ -367,6 +374,7 @@ Nightly_cleanup:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_release_dependencies
   script:
     - *configure
     - *build
