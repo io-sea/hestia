@@ -117,7 +117,7 @@ macro(fetch_curl)
     FetchContent_Declare(
         CURL
         GIT_REPOSITORY https://github.com/curl/curl/
-        GIT_TAG 5ce164e0e9290c96eb7d502173426c0a135ec008 # V8.6.0
+        GIT_TAG 7161cb17c01dcff1dc5bf89a18437d9d729f1ecd # V8.5.0
         SYSTEM
         FIND_PACKAGE_ARGS
     )
