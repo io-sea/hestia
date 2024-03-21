@@ -172,14 +172,36 @@ if(NOT APPLE)
                 DEPENDS runtime)
         list(APPEND HESTIA_COMPONENTS tests)
         endif()
+
+        if (HESTIA_WITH_PHOBOS)
+        cpack_add_component(phobos
+                DESCRIPTION "Hestia Phobos Plugin Integration"
+                DEPENDS runtime)
+        list(APPEND HESTIA_COMPONENTS phobos)
+        endif()
         
         set(CPACK_COMPONENTS_ALL ${HESTIA_COMPONENTS})
         set(CPACK_RPM_COMPONENT_INSTALL ON)
         set(CPACK_RPM_MAIN_COMPONENT runtime) 
-        set(CPACK_RPM_BUILDREQUIRES "wget, git, make, cmake, gcc-c++, binutils, elfutils, doxygen")
 
-        set(PHOBOS_BUILD_REQUIRES "autoconf, automake, libtool, which, openssl-devel, python3-devel, jansson-devel, libini_config-devel, libattr-devel, sg3_utils-devel, protobuf-c-devel, glib2-devel, libpq-devel, postgresql, postgresql-contrib, postgresql-server")
-        #set(CPACK_RPM_BUILDREQUIRES "${CPACK_RPM_BUILDREQUIRES}, ${PHOBOS_BUILD_REQUIRES}")
+        set(CPACK_RPM_RUNTIME_PACKAGE_SUMMARY "Hestia HSM object store interface client and server applications and libraries")
+        set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Hestia HSM object store interface development headers")
+        set(CPACK_RPM_PHOBOS_PACKAGE_SUMMARY "Phobos plugin package for the Hestia HSM object store library")
+
+        set(CPACK_RPM_RUNTIME_PACKAGE_DESCRIPTION "Hestia HSM object store interface client and server applications and libraries")
+        set(CPACK_RPM_DEVEL_PACKAGE_DESCRIPTION "Hestia HSM object store interface development headers")
+        set(CPACK_RPM_PHOBOS_PACKAGE_DESCRIPTION "Phobos plugin package for the Hestia HSM object store library")
+
+        set(CPACK_RPM_BUILDREQUIRES "wget, git, make, cmake, gcc-c++, binutils, elfutils, doxygen, openssl-devel, catch-devel, hiredis-devel, sqlite-devel, curl-devel, libxml2-devel, zlib-devel, json-devel")
+
+        # Broken depends: yaml-cpp-devel, spdlog-devel
+        set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "openssl, hiredis, yaml-cpp, sqlite, libxml2, libcurl, zlib, spdlog, json")
+        set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "hestia")
+        set(CPACK_RPM_PHOBOS_PACKAGE_REQUIRES "hestia phobos")
+        
+        if (HESTIA_WITH_PHOBOS)
+                set(CPACK_RPM_BUILDREQUIRES "${CPACK_RPM_BUILDREQUIRES} phobos-devel")
+        endif()
 
         set(CPACK_RPM_INSTALL_WITH_EXEC ON)
 
@@ -192,7 +214,7 @@ if(NOT APPLE)
         message(STATUS "Will do debuginfo: " ${CPACK_RPM_DEBUGINFO_PACKAGE})
         
         set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
-
+        set(CPACK_RPM_CHANGELOG_FILE ${CMAKE_SOURCE_DIR}/infra/cmake/RpmChangelog)
         set(CPACK_RPM_SOURCE_PKG_BUILD_PARAMS "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DHESTIA_BUILD_DOCUMENTATION=ON -DCMAKE_PROJECT_VERSION=${CMAKE_PROJECT_VERSION}")
 
         set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})

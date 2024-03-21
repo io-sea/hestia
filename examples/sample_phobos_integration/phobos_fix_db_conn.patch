@@ -1,0 +1,59 @@
+diff --git a/src/cli/phobos/db/__main__.py b/src/cli/phobos/db/__main__.py
+index 3a24acd..485aca7 100644
+--- a/src/cli/phobos/db/__main__.py
++++ b/src/cli/phobos/db/__main__.py
+@@ -103,7 +103,7 @@ def setup_db_main(args, _migrator): # pylint: disable=unused-argument
+ 
+     if args.schema:
+         # Create a new migrator with a connection to the newly configured db
+-        with psycopg2.connect(dbname=database, user=user, password=password) \
++        with psycopg2.connect(dbname=database, user=user, password=password, host="localhost") \
+                 as conn:
+             migrator = Migrator(conn)
+             migrator.create_schema()
+diff --git a/src/cli/phobos/db/db_config.py b/src/cli/phobos/db/db_config.py
+index 8cad2b0..8a60d5e 100644
+--- a/src/cli/phobos/db/db_config.py
++++ b/src/cli/phobos/db/db_config.py
+@@ -43,7 +43,8 @@ def setup_db(database, user, password):
+         raise ValueError("database and user cannot be None")
+ 
+     # Connect to "postgres" (admin) database
+-    with psycopg2.connect(dbname="postgres") as conn:
++    try:
++        conn = psycopg2.connect(dbname="postgres", host="localhost")
+         conn.autocommit = True
+         with conn.cursor() as cursor:
+             # Admin input: no privilege escalation here, hence we don't care
+@@ -67,9 +68,12 @@ def setup_db(database, user, password):
+                     "CREATE DATABASE %s WITH OWNER %s"
+                     % (database, user)
+                 )
++    finally:
++        if conn:
++            conn.close()
+ 
+     # Connect to the newly created database to create extensions
+-    with psycopg2.connect(dbname=database) as conn:
++    with psycopg2.connect(dbname=database, host="localhost") as conn:
+         conn.autocommit = True
+         with conn.cursor() as cursor:
+             # Create btree_gin extension
+@@ -83,7 +87,8 @@ def setup_db(database, user, password):
+ 
+ def drop_db(database, user):
+     """Drop the phobos database and user"""
+-    with psycopg2.connect(dbname="postgres") as conn:
++    try:
++        conn =psycopg2.connect(dbname="postgres", host="localhost")
+         conn.autocommit = True
+         with conn.cursor() as cursor:
+             with _allow_pg_prog_error("does not exist"):
+@@ -91,3 +96,6 @@ def drop_db(database, user):
+             with _allow_pg_prog_error("does not exist"):
+                 cursor.execute("DROP USER %s" % (user,))
+             # Don't drop the btree_gin extension in case another database use it
++    finally:
++        if conn:
++            conn.close()
+\ No newline at end of file

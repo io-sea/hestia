@@ -1,0 +1,5 @@
+* Wed Mar 20 2024 James Grogan <james.grogan@ichec.ie> - 1.2.6-1
+  Move manual RPM spec fixes into CMake declarations
+* Mon Mar 18 2024 Aurélien Cedeyn <aurelien.cedeyn@cea.fr> - 1.2.0-2
+  Fix cpack -G RPM things
+  Fix packaging issues
