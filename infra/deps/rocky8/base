@@ -9,6 +9,11 @@ graphviz
 libasan
 libubsan
 make
+catch-devel
+curl-devel
+hiredis-devel
+json-devel 
+sqlite-devel
 openssl-devel
 python3
 rpm-build
