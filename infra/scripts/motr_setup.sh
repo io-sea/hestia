@@ -1,20 +1,27 @@
 #!/bin/bash 
+
 dest="$HOME/var/motr"
 mkdir -p "$dest" 
 for i in {0..9}; do 
 	dd if=/dev/zero of="$dest/disk$i.img" bs=1M seek=9999 count=1 
 done
 
-sudo hctl bootstrap --mkfs ~/singlenode-multipools.yaml
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+hestia_dir=$script_dir/../..
+#nodefile=$hestia_dir/external/motr/singlenode-multipools.yaml  #for multipool version
+nodefile=$hestia_dir/external/motr/singlenode.yaml  #for single tier version
+sed -i "s/user/$USER/g" $nodefile
+
+sudo hctl bootstrap --mkfs $nodefile
 #pull this file into the hestia repo
 hctl status> tmpfile.txt
 
 export CLIENT_HA_ADDR=$(cat tmpfile.txt | awk '/hax/ {print $4}')
 export CLIENT_PROFILE=$(cat tmpfile.txt | awk '/default/ {print $1}')
 export CLIENT_PROFILE="<$CLIENT_PROFILE>"
-export CLIENT_PROC_FID=$(cat tmpfile.txt | awk '/m0_client/ {print $3}' | head -n 1)
+export CLIENT_PROC_FID=$(cat tmpfile.txt | awk '/m0_client/ {print $3}' | head -n 2 | tail -n 1)
 export CLIENT_PROC_FID="<$CLIENT_PROC_FID>"
-export CLIENT_LADDR=$(cat tmpfile.txt | awk '/m0_client/ {print $4}' | head -n 1)
+export CLIENT_LADDR=$(cat tmpfile.txt | awk '/m0_client/ {print $4}' | head -n 2 | tail -n 1)
 # add angle brakcets to the ones of these that need them
 
 m0composite "$CLIENT_LADDR" "$CLIENT_HA_ADDR" "$CLIENT_PROFILE" "$CLIENT_PROC_FID"

@@ -1,22 +1,11 @@
-server:
-  host_address: 127.0.0.1
-  host_port: 8080
-  controller: true
-
 tiers:
   - id: "00000000-0000-0000-0000-000000000001"
     priority: 0
-  - id: "00000000-0000-0000-0000-000000000002"
-    priority: 1
-  - id: "00000000-0000-0000-0000-000000000003"
-    priority: 2
 
 object_store_backends:
   - backend_type: motr
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000001",
-            "00000000-0000-0000-0000-000000000002",
-            "00000000-0000-0000-0000-000000000003"]
+      ids: ["00000000-0000-0000-0000-000000000001"]
     config: 
       root: motr_tests_object_store
       source: plugin
@@ -30,10 +19,6 @@ object_store_backends:
       tier_info: 
         - name: M0_POOL_TIER1
           identifier: "<0x6f00000000000001:0x0>"
-        - name: M0_POOL_TIER2
-          identifier: "<0x6f00000000000001:0x1>"
-        - name: M0_POOL_TIER3
-          identifier: "<0x6f00000000000001:0x2>"
 
 key_value_store:
   client_identifier: hestia::FileKeyValueStoreClient

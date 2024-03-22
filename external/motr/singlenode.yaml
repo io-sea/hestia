@@ -7,9 +7,8 @@ nodes:
   - hostname: localhost     # [user@]hostname
     node_group: localhost
     data_iface: enp0s3        # name of data network interface
-    #data_iface: eth0           # choose the correct data_iface using the output of 
-    data_iface_ip_addr: null    # /etc/libfab.conf after running the install_motr script
-    transport_type: libfab      # or using the ifconfig or ip commands
+    data_iface_ip_addr: null
+    transport_type: libfab
     m0_servers:
       - runs_confd: true
         io_disks:
@@ -49,35 +48,22 @@ nodes:
 create_aux: false # optional; supported values: "false" (default), "true"
 generate_formulaic_pvers: false # optional; supported values: "false" (default), "true"
 pools:
-  - name: pool0
+  - name: the pool
     type: sns  # optional; supported values: "sns" (default), "dix", "md"
     disk_refs:
       - { path: /home/user/var/motr/disk0.img, node: localhost }
       - { path: /home/user/var/motr/disk1.img, node: localhost }
       - { path: /home/user/var/motr/disk2.img, node: localhost }
-    data_units: 1
-    parity_units: 0
-    spare_units: 0
-    # allowed_failures: { site: 0, rack: 0, encl: 0, ctrl: 0, disk: 0 }
-  - name: pool1
-    type: sns  # optional; supported values: "sns" (default), "dix", "md"
-    disk_refs:
       - { path: /home/user/var/motr/disk3.img, node: localhost }
       - { path: /home/user/var/motr/disk4.img, node: localhost }
       - { path: /home/user/var/motr/disk5.img, node: localhost }
-    data_units: 1
-    parity_units: 0
-    spare_units: 0
-    # allowed_failures: { site: 0, rack: 0, encl: 0, ctrl: 0, disk: 0 }
-  - name: pool2
-    type: sns  # optional; supported values: "sns" (default), "dix", "md"
-    disk_refs:
       - { path: /home/user/var/motr/disk6.img, node: localhost }
       - { path: /home/user/var/motr/disk7.img, node: localhost }
       - { path: /home/user/var/motr/disk8.img, node: localhost }
     data_units: 1
     parity_units: 0
     spare_units: 0
+    # allowed_failures: { site: 0, rack: 0, encl: 0, ctrl: 0, disk: 0 }
 #profiles:
 #  - name: default
 #    pools: [ the pool ]
