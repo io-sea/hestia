@@ -28,7 +28,7 @@ class ServerTestFixture(BaseTestFixture):
             pass
 
     def get_config_path(self, name):
-        return self.project_dir / "test_data" / f"configs/{name}.yaml"
+        return self.work_dir / "test_data" / f"configs/{name}.yaml"
 
     def start_server(self, config = None, wait_for_ping = True):
         logging.info("Starting server")

@@ -51,8 +51,8 @@ class E2eTests():
             self.archive_tests = [
                             CliTests(installation_dir, self.work_dir, False), 
                             SampleAppTests(self.source_dir, installation_dir, self.work_dir, False),
-                            RestApiTestFixture(installation_dir, self.work_dir, False),
-                            # S3ApiTestFixture(installation_dir, self.work_dir, False),
+                            S3ApiTestFixture(installation_dir, self.work_dir, False),
+                            RestApiTestFixture(installation_dir, self.work_dir, False),                        
                             # ServiceTests(installation_dir, self.work_dir, False),
                         ]
 
@@ -64,8 +64,8 @@ class E2eTests():
             self.system_tests = [
                             CliTests(self.project_dir, self.work_dir, True), 
                             SampleAppTests(self.source_dir, self.project_dir, self.work_dir, True),
-                            RestApiTestFixture(self.project_dir, self.work_dir, True),
-                            # S3ApiTestFixture(self.project_dir, self.work_dir, True),
+                            S3ApiTestFixture(self.project_dir, self.work_dir, True),
+                            RestApiTestFixture(self.project_dir, self.work_dir, True),                            
                             #ServiceTests(self.project_dir, self.work_dir, system_install),
                         ]
 
