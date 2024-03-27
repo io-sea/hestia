@@ -86,7 +86,7 @@ stages:
   - &test
     make -C "${CMAKE_BUILD_DIR}" CTEST_OUTPUT_ON_FAILURE=1 test -j$(nproc)
   - &e2e_test 
-    python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
+    python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR} --log_to_console=true
   - &create_tgz_package
     cd ${CMAKE_BUILD_DIR}; cpack -G TGZ
   - &create_source_package 
