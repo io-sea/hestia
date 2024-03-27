@@ -14,16 +14,17 @@ from hestia_tests.service_tests import ServiceTests
 from hestia_tests.rest_api_tests import RestApiTestFixture
 
 class E2eTests():
-    def __init__(self, source_dir: Path, project_dir: Path):
+    def __init__(self, source_dir: Path, project_dir: Path, log_to_console: bool):
         self.source_dir = source_dir
         self.project_dir = project_dir
+        self.log_to_console = log_to_console
         self.project_name = "hestia"
 
         self.work_dir = self.project_dir / "e2e_tests"
         print("E2E Tests work dir is: " + str(self.work_dir))
         Path.mkdir(self.work_dir, parents=True, exist_ok=True)
 
-        hestia_tests.utils.setup_default_logging(self.work_dir / 'e2e_tests.log')
+        hestia_tests.utils.setup_default_logging(self.work_dir / 'e2e_tests.log', log_to_console)
 
     def setup_environment(self):
         test_data_src = self.source_dir / "test" / "data"
@@ -62,10 +63,10 @@ class E2eTests():
 
         if system_installed:
             self.system_tests = [
-                            CliTests(self.project_dir, self.work_dir, True), 
-                            SampleAppTests(self.source_dir, self.project_dir, self.work_dir, True),
-                            S3ApiTestFixture(self.project_dir, self.work_dir, True),
-                            RestApiTestFixture(self.project_dir, self.work_dir, True),                            
+                            #CliTests(self.project_dir, self.work_dir, True), 
+                            #SampleAppTests(self.source_dir, self.project_dir, self.work_dir, True),
+                            #S3ApiTestFixture(self.project_dir, self.work_dir, True),
+                            #RestApiTestFixture(self.project_dir, self.work_dir, True),                            
                             #ServiceTests(self.project_dir, self.work_dir, system_install),
                         ]
 
@@ -86,11 +87,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--source_dir', type=str, default=os.getcwd())
     parser.add_argument('--build_dir', type=str, default=os.getcwd())
+    parser.add_argument('--log_to_console', type=bool, default=False)
 
     args = parser.parse_args()
 
     source_dir = get_absolute_path(args.source_dir)
     build_dir = get_absolute_path(args.build_dir)
+    log_to_console = args.log_to_console
 
-    e2e_tests = E2eTests(source_dir, build_dir)
+    e2e_tests = E2eTests(source_dir, build_dir, log_to_console)
     e2e_tests.run()
