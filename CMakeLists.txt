@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
 set(CMAKE_PROJECT_VERSION "0.0.0" CACHE STRING "Project Version")
-if(CMAKE_PROJECT_VERSION STREQUAL "")
+if(CMAKE_PROJECT_VERSION MATCHES "")
   project(hestia VERSION "0.0.0" LANGUAGES C CXX)
-else
+else()
   project(hestia VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C CXX)
 
 message(STATUS "Hestia Version: " ${CMAKE_PROJECT_VERSION})
