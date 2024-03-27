@@ -166,7 +166,7 @@ stages:
   script:
     - make -C "${CMAKE_BUILD_DIR}" hestia_check_tidy -j$(nproc)
 
-Release:
+.Release:
   <<: *default_job
   stage: build
   variables:
