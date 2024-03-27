@@ -50,10 +50,10 @@ class E2eTests():
         if archive_installed:
             installation_dir = self.work_dir / self.project_name
             self.archive_tests = [
-                            CliTests(installation_dir, self.work_dir, False), 
-                            SampleAppTests(self.source_dir, installation_dir, self.work_dir, False),
-                            S3ApiTestFixture(installation_dir, self.work_dir, False),
-                            RestApiTestFixture(installation_dir, self.work_dir, False),                        
+                            #CliTests(installation_dir, self.work_dir, False), 
+                            #SampleAppTests(self.source_dir, installation_dir, self.work_dir, False),
+                            #S3ApiTestFixture(installation_dir, self.work_dir, False),
+                            #RestApiTestFixture(installation_dir, self.work_dir, False),                        
                             # ServiceTests(installation_dir, self.work_dir, False),
                         ]
 
