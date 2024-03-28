@@ -38,7 +38,7 @@ stages:
     dnf update -qy; 
     dnf install -qy dnf-plugins-core epel-release; 
     dnf install -qy 'dnf-command(config-manager)'; 
-    dnf config-manager --set-enabled powertools; 
+    dnf config-manager --enable crb; 
     dnf update -qy
   - &install_base_dependencies
     dnf install -qy $(cat ${HESTIA_DEPS}/base);
