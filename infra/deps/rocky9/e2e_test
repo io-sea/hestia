@@ -1,0 +1,11 @@
+autoconf
+automake
+cmake
+gcc
+gcc-c++
+git
+libtool
+make
+python3
+python3-devel
+wget

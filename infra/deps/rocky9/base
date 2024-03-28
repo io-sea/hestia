@@ -1,0 +1,14 @@
+ca-certificates 
+cmake
+doxygen
+gcc
+gcc-c++
+git
+graphviz
+libasan
+libubsan
+make
+openssl-devel
+python3
+rpm-build
+wget 

@@ -21,7 +21,7 @@ stages:
     HESTIA_WITH_MOTR: "OFF"
     HESTIA_TEST_REDIS: "OFF"
     MOTR_SRC_DIR: ""
-    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky8"
+    HESTIA_DEPS: "${CI_PROJECT_DIR}/infra/deps/rocky9"
     HESTIA_API_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
     PHOBOS_SCRIPTS_DIR: "${CI_PROJECT_DIR}/infra/scripts/phobos"
   nightly_variables: &nightly_variables
