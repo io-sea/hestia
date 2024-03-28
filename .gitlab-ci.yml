@@ -7,6 +7,7 @@ stages:
 # CI variables
 .variables:
   default_variables: &default_variables
+    CMAKE_INSTALL_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/cmake"
     CMAKE_BUILD_DIR: "${CI_PROJECT_DIR}/build"
     CMAKE_BUILD_TYPE: "Release"
     CXX: "g++"
@@ -43,6 +44,7 @@ stages:
   - &install_base_dependencies
     dnf install -qy $(cat ${HESTIA_DEPS}/base);
     dnf install -y libxml2-devel || true;
+    ${CI_PROJECT_DIR}/infra/scripts/bootstrap_cmake.sh $CMAKE_INSTALL_CACHE_DIR
   - &install_release_dependencies
     dnf install -qy $(cat ${HESTIA_DEPS}/release);
   - &install_e2e_dependencies
@@ -63,7 +65,7 @@ stages:
     && pushd "${CMAKE_BUILD_DIR}"
     && (
       set -x;
-      cmake ${CI_PROJECT_DIR}
+      $CMAKE_INSTALL_CACHE_DIR/bin/cmake ${CI_PROJECT_DIR}
       -DBUILD_SHARED_LIBS=OFF
       -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
       -DCMAKE_EXPORT_COMPILE_COMMANDS="${CMAKE_EXPORT_COMPILE_COMMANDS}"
@@ -89,7 +91,7 @@ stages:
   - &create_tgz_package
     cd ${CMAKE_BUILD_DIR}; cpack -G TGZ
   - &create_source_package 
-    cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
+    $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
   - &build_from_source_package
     rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
