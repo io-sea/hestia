@@ -89,7 +89,7 @@ stages:
   - &e2e_test 
     python3 ${CI_PROJECT_DIR}/test/e2e_tests/run_e2e_tests.py --source_dir=${CI_PROJECT_DIR} --build_dir=${CMAKE_BUILD_DIR}
   - &create_tgz_package
-    cd ${CMAKE_BUILD_DIR}; cpack -G TGZ
+    cd ${CMAKE_BUILD_DIR}; $CMAKE_INSTALL_CACHE_DIR/bin/cpack -G TGZ
   - &create_source_package 
     $CMAKE_INSTALL_CACHE_DIR/bin/cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
