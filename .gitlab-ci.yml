@@ -110,7 +110,7 @@ stages:
     expire_in: 30 min
 
 .default_job: &default_job
-  image: rockylinux:8
+  image: rockylinux:9
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
         && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "devel"
