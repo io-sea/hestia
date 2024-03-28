@@ -74,8 +74,8 @@ class ServerTestFixture(BaseTestFixture):
     def stop_server(self):
         #self.server_process.poll()
         print("Shutting down server " + self.host + ":" + str(self.port))
-        self.kill(self.server_process.pid)
-        #self.server_process.kill()
+        #self.kill(self.server_process.pid)
+        self.server_process.terminate()
         #os.killpg(os.getpgid(self.server_process.pid), signal.SIGKILL)
         #os.kill(self.server_process.pid, signal.SIGKILL)
         #self.server_process.poll()
