@@ -48,12 +48,15 @@ class S3ApiTestFixture(ServerTestFixture):
         s3_client.create_bucket(bucket_name)
 
         object_name = "my_object"
-        s3_client.put(object_content, bucket_name, object_name)
+        print("Object content is: ")
+        print(object_content)
+        print(type(object_content))
+        s3_client.put(str(object_content), bucket_name, object_name)
 
         objects = s3_client.list_objects(bucket_name)
         logging.info("Got: " + str(len(objects)) + "objects")
 
-        s3_client.get(returned_object, bucket_name, object_name)
+        s3_client.get(str(returned_object), bucket_name, object_name)
 
         logging.info("Finished S3 tests")
 

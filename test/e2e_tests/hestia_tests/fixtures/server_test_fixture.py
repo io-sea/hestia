@@ -1,4 +1,6 @@
 import os
+import signal
+import psutil
 from pathlib import Path
 import logging
 import json
@@ -31,7 +33,7 @@ class ServerTestFixture(BaseTestFixture):
         return self.work_dir / "test_data" / f"configs/{name}.yaml"
 
     def start_server(self, config = None, wait_for_ping = True):
-        logging.info("Starting server")
+        logging.info("Starting server on port " + str(self.port))
 
         if config is None:
             config = "hestia_controller_with_backends"
@@ -41,7 +43,7 @@ class ServerTestFixture(BaseTestFixture):
 
         start_server_cmd = f"hestia server --config={config_path}"
         self.server_process = self.start_process(start_server_cmd)
-
+       
         time.sleep(0.2)
         max_tries = 5
         count = 0
@@ -60,8 +62,36 @@ class ServerTestFixture(BaseTestFixture):
         except:
             return False
     
+    def kill(self, pid):
+        process = psutil.Process(pid)
+        count =0
+        for proc in process.children(recursive=True):
+            count = count +1 
+            print("Found child process " + str(count))
+            proc.kill()
+        process.kill()
+    
     def stop_server(self):
-        self.server_process.kill()
+        #self.server_process.poll()
+        print("Shutting down server " + self.host + ":" + str(self.port))
+        self.kill(self.server_process.pid)
+        #self.server_process.kill()
+        #os.killpg(os.getpgid(self.server_process.pid), signal.SIGKILL)
+        #os.kill(self.server_process.pid, signal.SIGKILL)
+        #self.server_process.poll()
+        #self.check_server_down()
+
+    def check_server_down(self):
+        max_tries = 10
+        count = 0
+        while self.ping_server():
+            time.sleep(1)
+            count = count + 1
+            if count == max_tries:
+                raise RuntimeError("Failed to bring server down quickly enough")
+
+
+    
 
     def login(self):
         login_cmd = self.web_client.post_cmd("login", f"user={self.user_name}&password={self.password}")
