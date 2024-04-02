@@ -44,6 +44,15 @@ Vendor:         @CPACK_RPM_PACKAGE_VENDOR@
 mkdir cpack_rpm_build_dir
 cd cpack_rpm_build_dir
 
+# We rely on a newer cmake than is on RHEL 9. This scripts grabs
+# a newer version if needed.
+../@CPACK_PACKAGE_FILE_NAME@/infra/scripts/bootstrap_cmake.sh
+if [ -f cmake/bin/cmake ]; then
+   alias cmake=cmake/bin/cmake
+   alias cpack=cmake/bin/cpack
+fi
+
+cmake --version
 cmake @CPACK_RPM_SOURCE_PKG_BUILD_PARAMS@ -DCPACK_PACKAGING_INSTALL_PREFIX=/usr ../@CPACK_PACKAGE_FILE_NAME@
 make %{?_smp_mflags} 
 #p build
