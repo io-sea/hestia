@@ -195,7 +195,7 @@ if(NOT APPLE)
         set(CPACK_RPM_BUILDREQUIRES "wget, git, make, cmake, gcc-c++, binutils, elfutils, doxygen, openssl-devel, catch-devel, hiredis-devel, sqlite-devel, curl-devel, libxml2-devel, zlib-devel, json-devel")
 
         # Broken depends: yaml-cpp-devel, spdlog-devel
-        set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "openssl, hiredis, yaml-cpp, sqlite, libxml2, libcurl, zlib, spdlog, json")
+        set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "openssl, hiredis, yaml-cpp, sqlite, libxml2, libcurl, zlib, spdlog, json-devel")
         set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "hestia")
         set(CPACK_RPM_PHOBOS_PACKAGE_REQUIRES "hestia phobos")
         
