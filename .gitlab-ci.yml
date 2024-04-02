@@ -13,7 +13,7 @@ stages:
     CC: "gcc"
     ENABLE_SANITIZERS: "ON"
     CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
-    #HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
+    HESTIA_PROJECT_VERSION: "${CI_NIGHTLY_VERSION}"
     HESTIA_PROJECT_VERSION: "0.0.0"
     HESTIA_BUILD_TESTS: "OFF"
     HESTIA_BUILD_DOCUMENTATION: "ON"
@@ -191,7 +191,7 @@ Release:
 
 Unit_test:
   <<: *default_job
-#  stage: test
+  stage: test
   dependencies:
     - Release
   variables:

@@ -59,10 +59,7 @@ class Package(object):
     def install_rpm(self, package_path: Path):
         devel_package_path =  package_path
         logging.info(f"Installing RPMs: {package_path}, {devel_package_path}")
-        #fix order of package installs
         cmd = f"dnf install -y {package_path} {devel_package_path}"
-        #extra dnf flag to install deps from rpm
-        # if {package_name}_devel exists as an rpm, install it 
         subprocess.run(cmd, shell=True)
         logging.info(f"RPM installed")
     

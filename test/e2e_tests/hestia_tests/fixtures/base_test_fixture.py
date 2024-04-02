@@ -103,7 +103,7 @@ class BaseTestFixture(object):
     
     def start_process(self, op):
         logging.info("Starting process: " + op)
-        return subprocess.Popen("exec " + op, shell=True, 
+        return subprocess.Popen(op, shell=True, 
                                 cwd=self.runtime_path, 
                                 env=self.runtime_env)
 

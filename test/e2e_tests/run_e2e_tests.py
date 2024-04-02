@@ -24,7 +24,11 @@ class E2eTests():
         print("E2E Tests work dir is: " + str(self.work_dir))
         Path.mkdir(self.work_dir, parents=True, exist_ok=True)
 
-        hestia_tests.utils.setup_default_logging(self.work_dir / 'e2e_tests.log', log_to_console)
+        self.log_dir = self.work_dir / 'e2e_tests.log'
+        if log_to_console:
+            self.log_dir=None
+            
+        hestia_tests.utils.setup_default_logging(self.log_dir)
 
     def setup_environment(self):
         test_data_src = self.source_dir / "test" / "data"

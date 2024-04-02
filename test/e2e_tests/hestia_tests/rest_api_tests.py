@@ -26,8 +26,6 @@ class RestApiTestFixture(ServerTestFixture):
             create_cmd += " " + id
         
         response = self.run_ops([create_cmd])
-        print("Response is: ")
-        print(response)
         object = json.loads(self.string_from_shell_result(response))[0]
         return object["id"]
     

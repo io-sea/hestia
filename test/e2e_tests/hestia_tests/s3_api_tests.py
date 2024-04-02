@@ -35,7 +35,6 @@ class S3ApiTestFixture(ServerTestFixture):
         self.get_token()
 
         self.start_server("s3_server", f"s3server")
-        #may need new argument re auth
 
         endpoint = f"http://{self.host}:{self.port}"
         logging.info("Hitting endpoint: " + endpoint + " with token " + self.token + " and file " + str(object_content))
