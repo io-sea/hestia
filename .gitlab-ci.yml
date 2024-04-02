@@ -104,6 +104,13 @@ stages:
   - &zip_coverage
     tar -czvf ${CMAKE_BUILD_DIR}/hestia-coverage-${HESTIA_PROJECT_VERSION}.tar.gz --directory=${CMAKE_BUILD_DIR}/ccov all-merged
 
+.cache:
+  cmake_install_cache: &cmake_install_cache
+    key: "cmake_3.26.3"
+    paths:
+      - .cache/cmake/
+
+
 .artifacts:
   build_artifacts: &build_artifacts
     name:  "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
