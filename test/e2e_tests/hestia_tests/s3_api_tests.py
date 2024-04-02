@@ -56,7 +56,7 @@ class S3ApiTestFixture(ServerTestFixture):
 
         logging.info("Finished S3 tests")
 
-        
+    
 if __name__ == "__main__":
 
     work_dir = Path(os.getcwd())
