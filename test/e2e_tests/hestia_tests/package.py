@@ -15,7 +15,8 @@ class Package(object):
     def install(self) -> bool:
         packages = self.find_packages()
 
-        rpm_packages = [p for p in packages if p.suffix == ".rpm"]
+        rpm_packages = [p for p in packages if p.suffix == ".rpm"and "devel" not in str(p)]
+        rpm_packages_devel = [p for p in packages if p.suffix == ".rpm" and "devel" in str(p)]
         archives = [p for p in packages if str(p).endswith(".tar.gz")]
 
         installed_archive = False
@@ -34,6 +35,12 @@ class Package(object):
             if ".src.rpm" not in str(rpm):
                 self.install_rpm(rpm)
                 installed_system = True
+
+        for rpm in rpm_packages_devel:
+            if ".src.rpm" not in str(rpm):
+                self.install_rpm(rpm)
+                installed_system = True
+                
         return installed_archive, installed_system
         
     def find_packages(self) -> Path:
