@@ -59,6 +59,7 @@ class S3ApiTestFixture(ServerTestFixture):
         s3_client.get(str(returned_object), bucket_name, object_name)
 
         logging.info("Finished S3 tests")
+        self.stop_server()
 
         
 if __name__ == "__main__":
