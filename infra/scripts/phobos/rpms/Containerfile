@@ -1,0 +1,7 @@
+FROM rockylinux:8
+
+COPY build_rpms.sh deps phobos_ldm_common_page_size.patch /
+COPY deps /
+
+RUN dnf check-update; dnf update -y; dnf install -y dnf-plugins-core epel-release; dnf install -y 'dnf-command(config-manager)'; dnf config-manager --set-enabled powertools; dnf update -y
+RUN dnf install -qy $(cat /deps);

@@ -15,7 +15,7 @@ Vendor:         @CPACK_RPM_PACKAGE_VENDOR@
 @TMP_RPM_SOURCE@
 
 # Build the integration with the phobos object store:
-%bcond phobos 0
+%bcond_with phobos
 
 @TMP_RPM_BUILD_REQUIRES@
 @TMP_RPM_BUILDARCH@
