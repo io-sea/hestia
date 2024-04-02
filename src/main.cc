@@ -3,19 +3,17 @@
 #include "HestiaServer.h"
 
 #include <iostream>
-#include <signal.h>
+#include <csignal>
 
-void SignalHandler(int nSignalNumber)
+void SignalHandler(int SignalNumber)
 {
-    std::cout << "received signal " << nSignalNumber << std::endl;
+    std::cout << "received signal " << SignalNumber << std::endl;
+    exit(SignalNumber);
 }
 
 int main(int argc, char** argv)
 {
-    struct sigaction SignalAction;
-    memset(&SignalAction, 0, sizeof(SignalAction));
-    SignalAction.sa_handler = SignalHandler;
-    sigaction(SIGTERM, &SignalAction, NULL);
+    signal(SIGINT, SignalHandler);
 
     hestia::HestiaCli hestia_cli;
     try {
