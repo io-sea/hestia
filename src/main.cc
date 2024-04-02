@@ -3,18 +3,9 @@
 #include "HestiaServer.h"
 
 #include <iostream>
-#include <csignal>
-
-void SignalHandler(int SignalNumber)
-{
-    std::cout << "received signal " << SignalNumber << std::endl;
-    exit(SignalNumber);
-}
 
 int main(int argc, char** argv)
 {
-    signal(SIGINT, SignalHandler);
-
     hestia::HestiaCli hestia_cli;
     try {
         hestia_cli.parse_args(argc, argv);
