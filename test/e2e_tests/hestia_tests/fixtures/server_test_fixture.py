@@ -62,24 +62,10 @@ class ServerTestFixture(BaseTestFixture):
         except:
             return False
     
-    def kill(self, pid):
-        process = psutil.Process(pid)
-        count =0
-        for proc in process.children(recursive=True):
-            count = count +1 
-            print("Found child process " + str(count))
-            proc.kill()
-        process.kill()
-    
     def stop_server(self):
-        #self.server_process.poll()
         print("Shutting down server " + self.host + ":" + str(self.port))
-        #self.kill(self.server_process.pid)
         self.server_process.terminate()
-        #os.killpg(os.getpgid(self.server_process.pid), signal.SIGKILL)
-        #os.kill(self.server_process.pid, signal.SIGKILL)
-        #self.server_process.poll()
-        #self.check_server_down()
+
 
     def check_server_down(self):
         max_tries = 10
@@ -89,9 +75,6 @@ class ServerTestFixture(BaseTestFixture):
             count = count + 1
             if count == max_tries:
                 raise RuntimeError("Failed to bring server down quickly enough")
-
-
-    
 
     def login(self):
         login_cmd = self.web_client.post_cmd("login", f"user={self.user_name}&password={self.password}")

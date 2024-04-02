@@ -42,8 +42,6 @@ class RestApiTestFixture(ServerTestFixture):
     
         update_cmd = self.web_client.put_cmd(headers, path, body)
         response = self.run_ops([update_cmd])
-        print ("Add metadata response is: ")
-        print(self.string_from_shell_result(response))
         object = json.loads(self.string_from_shell_result(response))
         return object["id"]
     

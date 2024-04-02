@@ -135,7 +135,7 @@ stages:
     - *configure
     - *build
 
-.Format:
+Format:
   <<: *default_job
   stage: static analysis
   before_script:
@@ -147,7 +147,7 @@ stages:
       && git diff-index --quiet HEAD
       || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
 
-.Lint:
+Lint:
   <<: *default_job
   stage: static analysis
   variables:
@@ -189,7 +189,7 @@ Release:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 day
 
-.Unit_test:
+Unit_test:
   <<: *default_job
 #  stage: test
   dependencies:

@@ -48,9 +48,6 @@ class S3ApiTestFixture(ServerTestFixture):
         s3_client.create_bucket(bucket_name)
 
         object_name = "my_object"
-        print("Object content is: ")
-        print(object_content)
-        print(type(object_content))
         s3_client.put(str(object_content), bucket_name, object_name)
 
         objects = s3_client.list_objects(bucket_name)
