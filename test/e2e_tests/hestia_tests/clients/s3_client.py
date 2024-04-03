@@ -1,5 +1,6 @@
 import boto3
 from botocore.client import Config
+from botocore.client import ClientError
 import uuid
 import sys
 
@@ -11,6 +12,7 @@ class S3Client:
     def __init__(self, server_url, user_id, user_key):
         self.session = boto3.session.Session(
             aws_access_key_id=user_id, aws_secret_access_key=user_key)
+        
         self.client = self.session.client(service_name='s3', endpoint_url=server_url, config=Config(s3={'addressing_style': 'path',
                                                                                                         'payload_signing_enabled' : False}))
         self.client.meta.events.register("before-send.s3.*", _boto_patch_headers)
@@ -36,7 +38,17 @@ class S3Client:
         return self.client.list_objects_v2(Bucket=bucket_name)["Contents"]
 
     def list_buckets(self):
+        try:
+            self.client.list_buckets()['Buckets']
+        except ClientError as err: 
+            if err.response['Error']['Code'] == 'InternalError': # Generic error
+                print('Error Message: {}'.format(err.response['Error']['Message']))
+                print('Request ID: {}'.format(err.response['ResponseMetadata']['RequestId']))
+                print('Http code: {}'.format(err.response['ResponseMetadata']['HTTPStatusCode']))
+            else:
+                raise err
         return self.client.list_buckets()['Buckets']
+        
 
     def delete_object(self, bucket_name, key):
         return self.client.delete_object(Bucket=bucket_name, Key=key)

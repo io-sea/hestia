@@ -221,6 +221,11 @@ E2E_test:
     - *install_e2e_dependencies
   script:
     - *e2e_test
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - ${CMAKE_BUILD_DIR}/e2e_tests/e2e_tests.log
+    expire_in: 1 day
 
 # Scheduled Builds
 .nightly_snippets:

@@ -86,6 +86,8 @@ def test_sample_s3_client():
         assert returned_payload == payload
 
         response = client.head_object(Bucket=bucket_name, Key=object_key)
+        value=response["Metadata"]['key_0']
+        print(value)
         assert response["Metadata"]['key_0'] == "value_0"
 
     print("test_sample_s3_client: Everything is Ok 👍")
