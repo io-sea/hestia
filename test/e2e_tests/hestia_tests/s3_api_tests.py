@@ -34,7 +34,7 @@ class S3ApiTestFixture(ServerTestFixture):
         # Start the regular rest server and get an auth token - then fire up the s3 server
         self.get_token()
 
-        self.start_server("s3_server", False)
+        self.start_server("s3_server", f"s3server")
 
         endpoint = f"http://{self.host}:{self.port}"
         logging.info("Hitting endpoint: " + endpoint + " with token " + self.token + " and file " + str(object_content))
@@ -47,14 +47,15 @@ class S3ApiTestFixture(ServerTestFixture):
         s3_client.create_bucket(bucket_name)
 
         object_name = "my_object"
-        s3_client.put(object_content, bucket_name, object_name)
+        s3_client.put(str(object_content), bucket_name, object_name)
 
         objects = s3_client.list_objects(bucket_name)
         logging.info("Got: " + str(len(objects)) + "objects")
 
-        s3_client.get(returned_object, bucket_name, object_name)
+        s3_client.get(str(returned_object), bucket_name, object_name)
 
         logging.info("Finished S3 tests")
+        self.stop_server()
 
     
 if __name__ == "__main__":

@@ -16,7 +16,8 @@ class Package(object):
     def install(self) -> tuple:
         packages = self.find_packages()
 
-        rpm_packages = [p for p in packages if p.suffix == ".rpm"]
+        rpm_packages = [p for p in packages if p.suffix == ".rpm"and "devel" not in str(p)]
+        rpm_packages_devel = [p for p in packages if p.suffix == ".rpm" and "devel" in str(p)]
         archives = [p for p in packages if str(p).endswith(".tar.gz")]
 
         installed_archive = False
