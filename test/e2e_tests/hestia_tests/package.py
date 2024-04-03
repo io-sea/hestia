@@ -16,8 +16,7 @@ class Package(object):
     def install(self) -> tuple:
         packages = self.find_packages()
 
-        rpm_packages = [p for p in packages if p.suffix == ".rpm"and "devel" not in str(p)]
-        rpm_packages_devel = [p for p in packages if p.suffix == ".rpm" and "devel" in str(p)]
+        rpm_packages = [p for p in packages if p.suffix == ".rpm"]
         archives = [p for p in packages if str(p).endswith(".tar.gz")]
 
         installed_archive = False
@@ -38,7 +37,7 @@ class Package(object):
 
         return installed_archive, installed_system
 
-    def find_packages(self) -> list[Path]:
+    def find_packages(self) -> list:
         if sys.platform == "darwin":
             search_extensions = [".tar.gz"]
         else:
@@ -51,7 +50,7 @@ class Package(object):
                         package_paths.append(entry)
         return package_paths
 
-    def install_rpms(self, paths: list[Path]):
+    def install_rpms(self, paths: list):
         logging.info(f"Installing {len(paths)} RPMs")
         paths_str = " ".join([str(p) for p in paths])
 
