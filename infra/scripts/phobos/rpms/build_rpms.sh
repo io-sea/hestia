@@ -1,10 +1,14 @@
+#!/usr/bin/env bash
+
 export PHOBOS_VERSION="1.95.1"
 wget https://github.com/cea-hpc/phobos/archive/refs/tags/$PHOBOS_VERSION.tar.gz
 tar -xvf $PHOBOS_VERSION.tar.gz
 cd phobos-$PHOBOS_VERSION/
 ./autogen.sh
+patch -p1 --forward < ../phobos_ldm_common_page_size.patch
 cd ..
 tar cvf phobos-$PHOBOS_VERSION.tar.gz phobos-$PHOBOS_VERSION/
+mkdir -p /root/rpmbuild/SOURCES/
 cp phobos-$PHOBOS_VERSION.tar.gz /root/rpmbuild/SOURCES/
 cd phobos-$PHOBOS_VERSION
 ./configure

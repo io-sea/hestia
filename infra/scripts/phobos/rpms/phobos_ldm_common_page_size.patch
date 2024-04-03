@@ -1,0 +1,21 @@
+diff --git a/src/ldm-modules/ldm_common.c b/src/ldm-modules/ldm_common.c
+index 7be2fd0..d8e021a 100644
+--- a/src/ldm-modules/ldm_common.c
++++ b/src/ldm-modules/ldm_common.c
+@@ -29,6 +29,7 @@
+ #include "pho_common.h"
+ #include "ldm_common.h"
+ 
++#include <unistd.h>
+ #include <sys/user.h>
+ #include <assert.h>
+ #include <sys/statfs.h>
+@@ -40,7 +41,7 @@
+     struct mntent *p_mnt;
+     FILE          *fp;
+     int            rc = 0;
+-    char           mnt_buff[PAGE_SIZE];
++    char           mnt_buff[getpagesize()];
+ 
+     assert(cb_func != NULL);
+ 

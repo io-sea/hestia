@@ -1,9 +1,10 @@
 import sys
-import logging 
+import logging
 import tarfile
 import shutil
 from pathlib import Path
 import subprocess
+
 
 class Package(object):
 
@@ -12,11 +13,10 @@ class Package(object):
         self.work_dir = work_dir
         self.project_name = project_name
 
-    def install(self) -> bool:
+    def install(self) -> tuple:
         packages = self.find_packages()
 
-        rpm_packages = [p for p in packages if p.suffix == ".rpm"and "devel" not in str(p)]
-        rpm_packages_devel = [p for p in packages if p.suffix == ".rpm" and "devel" in str(p)]
+        rpm_packages = [p for p in packages if p.suffix == ".rpm"]
         archives = [p for p in packages if str(p).endswith(".tar.gz")]
 
         installed_archive = False
@@ -25,25 +25,19 @@ class Package(object):
         if sys.platform == "darwin":
             archive_suffix = "Darwin"
 
-        for archive in archives:
-            if archive_suffix in str(archive):
-                self.install_tgz(archive)
-                installed_archive = True
-                break
+        installable_archives = [a for a in archives if archive_suffix in str(a)]
 
-        for rpm in rpm_packages:
-            if ".src.rpm" not in str(rpm):
-                self.install_rpm(rpm)
-                installed_system = True
+        for archive in installable_archives:
+            self.install_tgz(archive)
+        installed_archive = bool(installable_archives)
 
-        for rpm in rpm_packages_devel:
-            if ".src.rpm" not in str(rpm):
-                self.install_rpm(rpm)
-                installed_system = True
-                
+        installable_rpms = [p for p in rpm_packages if ".src.rpm" not in str(p)]
+        self.install_rpms(installable_rpms)
+        installed_system = bool(installable_rpms)
+
         return installed_archive, installed_system
-        
-    def find_packages(self) -> Path:
+
+    def find_packages(self) -> list:
         if sys.platform == "darwin":
             search_extensions = [".tar.gz"]
         else:
@@ -55,14 +49,15 @@ class Package(object):
                     if str(entry).endswith(ext):
                         package_paths.append(entry)
         return package_paths
-    
-    def install_rpm(self, package_path: Path):
-        devel_package_path =  package_path
-        logging.info(f"Installing RPMs: {package_path}, {devel_package_path}")
-        cmd = f"dnf install -y {package_path} {devel_package_path}"
-        subprocess.run(cmd, shell=True)
-        logging.info(f"RPM installed")
-    
+
+    def install_rpms(self, paths: list):
+        logging.info(f"Installing {len(paths)} RPMs")
+        paths_str = " ".join([str(p) for p in paths])
+
+        cmd = f"dnf install -y {paths_str}"
+        subprocess.run(cmd, shell=True, check=True)
+        logging.info("RPM installed")
+
     def install_tgz(self, package_path: Path):
         installed_path = self.work_dir / self.project_name
         if installed_path.is_dir():
@@ -76,7 +71,6 @@ class Package(object):
         package_name = package_path.stem
 
         # Remove .tar from package name
-        components = package_path.stem.split(".")
         package_name = package_name[0:-4]
         extracted_path = self.work_dir / package_name
         extracted_path.rename(installed_path)

@@ -1,15 +1,3 @@
-set(STANDALONE_MODULES_FOR_EXPORT "")
-
-if(HESTIA_WITH_MOTR)
-        list(APPEND STANDALONE_MODULES_FOR_EXPORT ${PROJECT_NAME}_motr_plugin)
-endif()
-
-if(HESTIA_WITH_PHOBOS)
-if(NOT APPLE)
-        list(APPEND STANDALONE_MODULES_FOR_EXPORT ${PROJECT_NAME}_phobos_plugin)
-endif()
-endif()
-
 add_library(${PROJECT_NAME} INTERFACE)
 target_link_libraries(${PROJECT_NAME} INTERFACE ${PROJECT_NAME}_lib)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -24,7 +12,6 @@ if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 
 install(TARGETS 
         ${PROJECT_NAME}_main 
-        ${STANDALONE_MODULES_FOR_EXPORT}
         LIBRARY 
                 COMPONENT runtime
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
@@ -32,6 +19,17 @@ install(TARGETS
                 COMPONENT runtime
                 DESTINATION bin
         )
+
+if(HESTIA_WITH_PHOBOS)
+if(NOT APPLE)
+install(TARGETS 
+        ${PROJECT_NAME}_phobos_plugin
+        LIBRARY 
+                COMPONENT phobos
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
+        )
+endif()
+endif()
 
 if(HESTIA_BUILD_TESTS)
         set(TEST_MODULES_FOR_EXPORT

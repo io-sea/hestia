@@ -13,6 +13,10 @@ Group:          @CPACK_RPM_PACKAGE_GROUP@
 Vendor:         @CPACK_RPM_PACKAGE_VENDOR@
 
 @TMP_RPM_SOURCE@
+
+# Build the integration with the phobos object store:
+%bcond_with phobos
+
 @TMP_RPM_BUILD_REQUIRES@
 @TMP_RPM_BUILDARCH@
 @TMP_RPM_PREFIXES@
@@ -44,7 +48,7 @@ Vendor:         @CPACK_RPM_PACKAGE_VENDOR@
 mkdir cpack_rpm_build_dir
 cd cpack_rpm_build_dir
 
-cmake @CPACK_RPM_SOURCE_PKG_BUILD_PARAMS@ -DCPACK_PACKAGING_INSTALL_PREFIX=/usr ../@CPACK_PACKAGE_FILE_NAME@
+cmake @CPACK_RPM_SOURCE_PKG_BUILD_PARAMS@ -DCPACK_PACKAGING_INSTALL_PREFIX=/usr -DHESTIA_WITH_PHOBOS=%{with phobos} ../@CPACK_PACKAGE_FILE_NAME@
 make %{?_smp_mflags} 
 #p build
 
