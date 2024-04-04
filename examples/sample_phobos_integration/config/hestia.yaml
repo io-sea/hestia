@@ -1,4 +1,4 @@
-#cache_path: /cache
+cache_path: /cache # Comment this when running outside of a container
 
 server:
   host: 127.0.0.1
@@ -13,13 +13,30 @@ server:
 tiers:
   - id: "00000000-0000-0000-0000-000000000001"
     priority: 0
+  - id: "00000000-0000-0000-0000-000000000002"
+    priority: 1
+  - id: "00000000-0000-0000-0000-000000000003"
+    priority: 2
+  - id: "00000000-0000-0000-0000-000000000004"
+    priority: 3
+  - id: "00000000-0000-0000-0000-000000000005"
+    priority: 4
 
 object_store_backends:
-  - backend_type: file
+  - backend_type: file_hsm
     tiers: 
-      ids: ["00000000-0000-0000-0000-000000000001"]
-    config: 
-      root: s3_server_object_store
+      ids: ["00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003",
+            "00000000-0000-0000-0000-000000000004"]
+    config:
+      root: hestia_object_store
+  - backend_type: phobos
+    tiers: 
+      ids: ["00000000-0000-0000-0000-000000000005"]
 
 logger:
   level: info
+
+event_feed:
+  active: true

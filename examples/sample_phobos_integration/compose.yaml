@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  hestia:
+    # We can't build on Mac M1 because podman compose lacks a pass-through for --platform 
+    # https://github.com/containers/podman-compose/issues/551
+    # Commented lines would do it - for now we pull from dockerhub
+    # build:
+    #  context: .
+    # platform: linux/amd64
+    image: docker.io/jagrogan/hestia
+    volumes:
+      - ./hestia_cache/:/cache
+      - ./phobos_cache/:/phobos_mount
+    ports:
+      - 8080:8080
+      - 8090:8090

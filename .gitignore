@@ -8,5 +8,6 @@ build/
 .cache/
 __pycache__/
 *.pyc
+*.rpm
 .venv/
 .mypy_cache/
