@@ -92,8 +92,9 @@ stages:
     cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
   - &build_from_source_package
-    rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
+    rpmbuild --rebuild -with phobos ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
     cp /root/rpmbuild/RPMS/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
+    cp /root/rpmbuild/RPMS/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
     cp /root/rpmbuild/RPMS/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
     cp /root/rpmbuild/RPMS/hestia-debuginfo-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR}
   - &generate_docs
@@ -343,6 +344,7 @@ Nightly_deploy:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
@@ -399,6 +401,7 @@ Master_build:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 week

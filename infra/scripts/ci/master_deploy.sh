@@ -6,6 +6,7 @@ registry_url="$HESTIA_API_URL/packages/generic/hestia/$HESTIA_PROJECT_VERSION"
 
 main_rpm=hestia-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 devel_rpm=hestia-devel-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
+phobos_rpm=hestia-phobos-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 debuginfo_rpm=hestia-debuginfo-$HESTIA_PROJECT_VERSION-1.$ARCH.rpm
 src_rpm=hestia-$HESTIA_PROJECT_VERSION-1.src.rpm
 
@@ -21,6 +22,11 @@ do echo "will retry in 2 seconds"; sleep 2; done
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
     "$registry_url/$devel_rpm" \
     --upload-file "$CMAKE_BUILD_DIR/$devel_rpm"
+do echo "will retry in 2 seconds"; sleep 2; done
+
+while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+    "$registry_url/$devel_rpm" \
+    --upload-file "$CMAKE_BUILD_DIR/$phobos_rpm"
 do echo "will retry in 2 seconds"; sleep 2; done
 
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
@@ -63,6 +69,11 @@ curl --request POST -H "PRIVATE-TOKEN: $(cat $CI_CUSTOM_JOB_TOKEN)" \
             \"name\": \"$devel_rpm\",
             \"url\": \"$registry_url/$devel_rpm\",
             \"direct_asset_path\": \"/binaries/$devel_rpm\",
+            \"link_type\": \"package\"
+          },
+            \"name\": \"$phobos_rpm\",
+            \"url\": \"$registry_url/$phobos_rpm\",
+            \"direct_asset_path\": \"/binaries/$phobos_rpm\",
             \"link_type\": \"package\"
           },
           {
