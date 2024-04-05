@@ -8,7 +8,7 @@ namespace hestia {
 
 HttpHeader::HttpHeader()
 {
-    set_item("Content-Type", m_content_type);
+    // set_item("Content-Type", m_content_type);
 }
 
 HttpHeader::HttpHeader(const std::vector<std::string>& lines)

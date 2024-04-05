@@ -6,8 +6,8 @@ This sample involves running Hestia with a [Phobos](https://github.com/cea-hpc/p
 
 You can get the image on Dockerhub:
 
-```
-
+```sh
+podman pull docker://docker.io/jagrogan/hestia:latest
 ```
 
 ## Building it yourself
@@ -23,7 +23,7 @@ rpmbuild --rebuild -with phobos hestia-1.3.0-1.src.rpm
 Then you can do:
 
 ```sh
-podman build -t hestia_phobos .
+podman build -t hestia .
 ```
 
 Switching in `docker` is also supported.
@@ -35,7 +35,7 @@ Switching in `docker` is also supported.
 To launch a container you can do:
 
 ```sh
-podman run -v `pwd`:/host -v $HESTIA_CACHE_DIR:/cache -v $PHOBOS_CACHE_DIR:/phobos_mount -p 8080:8080 -p 8090:8090 hestia_phobos
+podman run -v `pwd`:/host -v $HESTIA_CACHE_DIR:/cache -v $PHOBOS_CACHE_DIR:/phobos_mount -p 8080:8080 -p 8090:8090 hestia
 ```
 
 where `$HESTIA_CACHE_DIR` is somewhere on the host that you would like the Hestia cache (logs, event feed, object store) to go and similar for the phobos cache and `$PHOBOS_CACHE_DIR`. Port `8080` is the Hestia http interface and `8090` is the s3 interface.

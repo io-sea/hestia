@@ -49,11 +49,9 @@ stages:
     dnf install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
   - &install_phobos
-    dnf install -qy $(cat ${HESTIA_DEPS}/phobos);
-    pip3 install -r ${PHOBOS_SCRIPTS_DIR}/phobos_requirements.txt;
-    export PHOBOS_SRC=/phobos; cd /;cp ${PHOBOS_SCRIPTS_DIR}/*.patch .;
-    ${PHOBOS_SCRIPTS_DIR}/build_phobos.sh;
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/phobos
+    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-1.95.1-2.el8.x86_64.rpm;
+    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-devel-1.95.1-2.el8.x86_64.rpm;
+    dnf install -y phobos*.rpm;
   - &start_phobos 
     ${PHOBOS_SCRIPTS_DIR}/init_phobos_db.sh;
     ${PHOBOS_SCRIPTS_DIR}/start_phobos.sh ${PHOBOS_SCRIPTS_DIR}/phobos.conf;
@@ -92,8 +90,9 @@ stages:
     cmake -DHESTIA_USE_SRC_RPM_SPEC=ON ${CMAKE_BUILD_DIR};
     make -C "${CMAKE_BUILD_DIR}" package_source
   - &build_from_source_package
-    rpmbuild --rebuild ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
+    rpmbuild --rebuild -with phobos ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm;
     cp /root/rpmbuild/RPMS/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
+    cp /root/rpmbuild/RPMS/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
     cp /root/rpmbuild/RPMS/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR};
     cp /root/rpmbuild/RPMS/hestia-debuginfo-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm ${CMAKE_BUILD_DIR}
   - &generate_docs
@@ -174,6 +173,7 @@ Release:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos
     - *install_release_dependencies
   script:
     - *configure
@@ -185,6 +185,7 @@ Release:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 day
 
@@ -219,6 +220,7 @@ E2E_test:
   before_script:
     - *update_distro
     - *install_e2e_dependencies
+    - *install_phobos
   script:
     - *e2e_test
   artifacts:
@@ -252,6 +254,7 @@ Nightly_build:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos
     - *install_release_dependencies
   script:
     - *configure
@@ -265,6 +268,7 @@ Nightly_build:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 hour
 
@@ -343,6 +347,7 @@ Nightly_deploy:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
@@ -379,6 +384,7 @@ Nightly_cleanup:
   before_script:
     - *update_distro
     - *install_base_dependencies
+    - *install_phobos
     - *install_release_dependencies
   script:
     - *configure
@@ -399,6 +405,7 @@ Master_build:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
       - ${CMAKE_BUILD_DIR}/*.tar.gz
     expire_in: 1 week
