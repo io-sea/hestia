@@ -12,4 +12,4 @@ make
 openssl-devel
 python3
 rpm-build
-wget 
+wget
