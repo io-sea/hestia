@@ -133,6 +133,37 @@ stages:
     - *configure
     - *build
 
+Format:
+  <<: *default_job
+  stage: static analysis
+  before_script:
+    - *update_distro
+    - dnf install -qy $(cat ${HESTIA_DEPS}/format)
+  script:
+    - ./infra/scripts/run_format.sh
+      && git status
+      && git diff-index --quiet HEAD
+      || { echo "This commit contains unformatted files! Run tools/run_format.sh to format them correctly."; false; }
+
+Lint:
+  <<: *default_job
+  stage: static analysis
+  variables:
+    <<: *default_variables
+    CMAKE_BUILD_TYPE: "Debug"
+    CMAKE_EXPORT_COMPILE_COMMANDS: "ON"
+    CXX: "clang++"
+    CC: "clang"
+    HESTIA_BUILD_TESTS: "ON"
+  before_script:
+    - *update_distro
+    - *install_base_dependencies
+    - dnf install -qy $(cat ${HESTIA_DEPS}/lint)
+    - *configure
+    - make -C "${CMAKE_BUILD_DIR}" hestia_fetch_lint_dependencies -j$(nproc)
+  script:
+    - make -C "${CMAKE_BUILD_DIR}" hestia_check_tidy -j$(nproc)
+
 Release:
   <<: *default_job
   stage: build
@@ -154,6 +185,7 @@ Release:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 day
 
@@ -187,8 +219,8 @@ E2E_test:
     - Release
   before_script:
     - *update_distro
-    - *install_phobos
     - *install_e2e_dependencies
+    - *install_phobos
   script:
     - *e2e_test
   artifacts:
@@ -236,6 +268,7 @@ Nightly_build:
     paths:
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-devel-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
+      - ${CMAKE_BUILD_DIR}/hestia-phobos-${HESTIA_PROJECT_VERSION}-1.x86_64.rpm
       - ${CMAKE_BUILD_DIR}/hestia-${HESTIA_PROJECT_VERSION}-1.src.rpm
     expire_in: 1 hour
 
