@@ -49,8 +49,8 @@ stages:
     dnf install -qy $(cat ${HESTIA_DEPS}/e2e_test);
     pip3 install -r ${CI_PROJECT_DIR}/test/e2e_tests/requirements.txt; 
   - &install_phobos
-    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-1.95.1-2.el8.x86_64.rpm
-    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-devel-1.95.1-2.el8.x86_64.rpm
+    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-1.95.1-2.el8.x86_64.rpm;
+    wget https://ocean.eupex.eu/download/3.8/ocean/x86_64/phobos-devel-1.95.1-2.el8.x86_64.rpm;
     dnf install -y phobos*.rpm;
   - &start_phobos 
     ${PHOBOS_SCRIPTS_DIR}/init_phobos_db.sh;
