@@ -25,7 +25,7 @@ while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
 do echo "will retry in 2 seconds"; sleep 2; done
 
 while ! curl --request PUT -H "JOB-TOKEN: $CI_JOB_TOKEN" \
-    "$registry_url/$devel_rpm" \
+    "$registry_url/$phobos_rpm" \
     --upload-file "$CMAKE_BUILD_DIR/$phobos_rpm"
 do echo "will retry in 2 seconds"; sleep 2; done
 
