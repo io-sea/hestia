@@ -71,7 +71,7 @@ With the server running in the container you can use the Hestia client (or curl 
 ```sh
 hestia object create 1234 --host 127.0.0.1
 echo "test data" > test_file.dat
-hestia object put_data --file test_file.dat 1234
+hestia object put_data --file test_file.dat 1234 --host 127.0.0.1
 ```
 
 Notice that logs, event feed and object store have all now been updated in `$HESTIA_CACHE_DIR`.
@@ -79,7 +79,7 @@ Notice that logs, event feed and object store have all now been updated in `$HES
 We will now use the `copytool` to move objects to the Phobos object store (tier). 
 
 ```sh
-hestia object move_data --source 0 --target 4 1234
+hestia object move_data --source 0 --target 4 1234 --host 127.0.0.1
 ```
 
 Note that a new directory will have been created in `$PHOBOS_CACHE_DIR`, holding the object data.
@@ -89,7 +89,7 @@ Note: the `copy` operation currently doesn't work between container and host mou
 We can now read the object content back from the phobos tier to the host:
 
 ```sh
-hestia object get_data --tier 4 --file test_file_ret.dat 1234
+hestia object get_data --tier 4 --file test_file_ret.dat 1234 --host 127.0.0.1
 ```
 
 You can compare the two files to check that they are the same:
