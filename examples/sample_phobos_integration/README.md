@@ -6,18 +6,24 @@ This sample involves running Hestia with a [Phobos](https://github.com/cea-hpc/p
 
 You can get the image on Dockerhub:
 
+### x86_64 Platforms
+
 ```sh
 podman pull docker://docker.io/jagrogan/hestia:latest
 ```
 
-## Building it yourself
-
-To build the image you will need a Phobos rpm for your architecture (aarch64, x86_64 etc) in this directory. You will also need a Hestia binary rpm and Hestia-phobos plugin rpm. To create the latter you can download Hestia source rpm from the releases page: https://git.ichec.ie/io-sea-internal/hestia/-/releases/v1.3.0/downloads/binaries/hestia-1.3.0-1.src.rpm
-
-To build the Hestia binary rpms with the phobos plugin you can do:
+### ARM Platforms
 
 ```sh
-rpmbuild --rebuild -with phobos hestia-1.3.0-1.src.rpm
+podman pull docker://docker.io/jagrogan/hestia_arm:latest
+```
+
+## Building it yourself
+
+To build the image you will need a Phobos rpm for your architecture (aarch64, x86_64 etc) in this directory. You will also need a Hestia binary rpm and Hestia-phobos plugin rpm. To create the latter on a RHEL 8 x86_64 system you can do:
+
+```sh
+./build_hestia_rpms.sh
 ```
 
 Then you can do:
@@ -26,7 +32,7 @@ Then you can do:
 podman build -t hestia .
 ```
 
-Switching in `docker` is also supported.
+To build the image. Switching in `docker` is also supported. Swap `hestia` with `hestia_arm` on ARM systems.
 
 # Launching the container
 
@@ -35,10 +41,12 @@ Switching in `docker` is also supported.
 To launch a container you can do:
 
 ```sh
-podman run -v `pwd`:/host -v $HESTIA_CACHE_DIR:/cache -v $PHOBOS_CACHE_DIR:/phobos_mount -p 8080:8080 -p 8090:8090 hestia
+podman run -v $HESTIA_CACHE_DIR:/cache -v $PHOBOS_CACHE_DIR:/phobos_mount -p 8080:8080 -p 8090:8090 hestia
 ```
 
-where `$HESTIA_CACHE_DIR` is somewhere on the host that you would like the Hestia cache (logs, event feed, object store) to go and similar for the phobos cache and `$PHOBOS_CACHE_DIR`. Port `8080` is the Hestia http interface and `8090` is the s3 interface.
+where `$HESTIA_CACHE_DIR` is somewhere on the host that you would like the Hestia cache (logs, event feed, object store) to go and similar for the phobos cache and `$PHOBOS_CACHE_DIR`. Port `8080` is the Hestia http interface and `8090` is the s3 interface. Make sure the cache directories are empty on each launch.
+
+Swap `hestia` with `hestia_arm` on ARM systems.
 
 ## With compose
 
@@ -56,6 +64,39 @@ and to shut down:
 podman-compose -f compose.yaml down -v
 ```
 
+# Manipulating objects
+
+With the server running in the container you can use the Hestia client (or curl as per examples in the `sample_shell` directory) in the host to manipulate objects. For example
+
+```sh
+hestia object create 1234 --host 127.0.0.1
+echo "test data" > test_file.dat
+hestia object put_data --file test_file.dat 1234
+```
+
+Notice that logs, event feed and object store have all now been updated in `$HESTIA_CACHE_DIR`.
+
+We will now use the `copytool` to move objects to the Phobos object store (tier). 
+
+```sh
+hestia object move_data --source 0 --target 4 1234
+```
+
+Note that a new directory will have been created in `$PHOBOS_CACHE_DIR`, holding the object data.
+
+Note: the `copy` operation currently doesn't work between container and host mounts due to an issue with a system library.
+
+We can now read the object content back from the phobos tier to the host:
+
+```sh
+hestia object get_data --tier 4 --file test_file_ret.dat 1234
+```
+
+You can compare the two files to check that they are the same:
+
+```sh
+diff test_file.dat test_file_ret.dat
+```
 
 
 
